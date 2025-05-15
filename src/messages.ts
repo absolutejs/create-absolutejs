@@ -33,7 +33,7 @@ export const getSummaryMessage = ({
 		authProvider,
 		plugins,
 		initializeGit,
-		installDeps,
+		installDependencies,
 		htmlScriptOption,
 		frontendConfigurations
 	},
@@ -96,7 +96,7 @@ ${magenta('ORM')}:                	${orm ?? dim('None')}
 ${magenta('Auth')}:               	${authProvider === 'none' ? dim('None') : authProvider}
 ${magenta('Plugins')}:            	${plugins.length ? plugins.join(', ') : dim('None')}
 ${magenta('Git Repository')}:     	${initializeGit ? green('Initialized') : dim('None')}
-${magenta('Install Dependencies')}:   ${installDeps ? green('Yes') : red('No')}
+${magenta('Install Dependencies')}:   ${installDependencies ? green('Yes') : red('No')}
 ${magenta('Framework Config')}:
     ${configString}`;
 };

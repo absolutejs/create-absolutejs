@@ -7,7 +7,7 @@ import {
 } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import type { PromptResponse, FrontendConfiguration } from './types';
+import type { PackageJson, PromptResponse } from './types';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -17,8 +17,10 @@ export const scaffold = ({
 	codeQualityTool,
 	initializeGit,
 	orm,
+	tailwind,
+	installDependencies,
 	frontendConfigurations
-}: PromptResponse & { orm: 'drizzle' | 'prisma' | undefined }) => {
+}: PromptResponse) => {
 	const root = projectName;
 	if (existsSync(root)) {
 		throw new Error(
@@ -78,15 +80,43 @@ export const scaffold = ({
 		}
 	}
 
-	// write package.json and other files
-	writeFileSync(
-		join(root, 'package.json'),
-		JSON.stringify(
-			{ name: projectName, type: 'module', version: '0.1.0' },
-			null,
-			2
-		)
-	);
+	// copy Tailwind configs if requested
+	if (tailwind) {
+		copyFileSync(
+			join(templatesDir, 'tailwind', 'postcss.config.ts'),
+			join(root, 'postcss.config.ts')
+		);
+		copyFileSync(
+			join(templatesDir, 'tailwind', 'tailwind.config.ts'),
+			join(root, 'tailwind.config.ts')
+		);
+	}
+
+	// Create the package.json file
+	const dependencies: PackageJson['dependencies'] = {};
+
+	const devDependencies: PackageJson['devDependencies'] = {};
+
+	const scripts: PackageJson['scripts'] = {
+		test: 'echo "Error: no test specified" && exit 1',
+		format: 'prettier --write "./**/*.{js,jsx,ts,tsx,css,json}"',
+		dev: 'bun run src/index.ts',
+		lint: 'eslint ./src',
+		typecheck: 'bun run tsc --noEmit'
+	};
+
+	const packageJson: PackageJson = {
+		name: projectName,
+		type: 'module',
+		version: '0.1.0',
+		dependencies,
+		devDependencies,
+		scripts
+	};
+
+	writeFileSync(join(root, 'package.json'), JSON.stringify(packageJson));
+
+	// copy other files
 	copyFileSync(join(templatesDir, 'README.md'), join(root, 'README.md'));
 
 	if (initializeGit) {

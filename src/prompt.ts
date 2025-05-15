@@ -237,8 +237,8 @@ export const prompt = async (
 	if (isCancel(initializeGit)) abort();
 
 	// 15. Install dependencies
-	const installDeps = await confirm({ message: 'Install dependencies now?' });
-	if (isCancel(installDeps)) abort();
+	const installDependencies = await confirm({ message: 'Install dependencies now?' });
+	if (isCancel(installDependencies)) abort();
 
 	const values: PromptResponse = {
 		assetsDir,
@@ -251,7 +251,7 @@ export const prompt = async (
 		frontends,
 		htmlScriptOption,
 		initializeGit,
-		installDeps,
+		installDependencies,
 		language,
 		orm,
 		plugins,
