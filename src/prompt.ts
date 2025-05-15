@@ -14,7 +14,7 @@ import type {
 	PromptResponse
 } from './types';
 
-const { blueBright, yellow, cyan, green, magenta, reset } = colors;
+const { blueBright, yellow, cyan, green, magenta } = colors;
 
 /* eslint-disable */
 function abort(): never {
@@ -183,7 +183,7 @@ export const prompt = async (
 	const dbProvider = await select({
 		message: 'Database provider:',
 		options: [
-			{ label: reset('None'), value: 'none' },
+			{ label: 'None', value: 'none' },
 			{ label: cyan('PostgreSQL'), value: 'postgres' },
 			{ label: green('MySQL'), value: 'mysql' }
 		]
@@ -196,7 +196,7 @@ export const prompt = async (
 		const ormChoice = await select({
 			message: 'Choose an ORM (optional):',
 			options: [
-				{ label: reset('None'), value: 'none' },
+				{ label: 'None', value: 'none' },
 				{ label: cyan('Drizzle'), value: 'drizzle' },
 				{ label: magenta('Prisma'), value: 'prisma' }
 			]
@@ -209,9 +209,8 @@ export const prompt = async (
 	const authProvider = await select({
 		message: 'Auth provider:',
 		options: [
-			{ label: reset('None'), value: 'none' },
-			{ label: cyan('Absolute Auth'), value: 'absoluteAuth' },
-			{ label: yellow('JWT'), value: 'jwt' }
+			{ label: 'None', value: 'none' },
+			{ label: cyan('Absolute Auth'), value: 'absoluteAuth' }
 		]
 	});
 	if (isCancel(authProvider)) abort();

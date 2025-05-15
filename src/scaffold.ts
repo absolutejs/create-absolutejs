@@ -12,6 +12,7 @@ import { fileURLToPath } from 'node:url';
 import { spinner } from '@clack/prompts';
 import type { PackageJson, PromptResponse } from './types';
 import type { PackageManager } from './utils';
+import { dim, yellow } from 'picocolors';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -140,7 +141,10 @@ export const scaffold = (
 			join(templatesDir, '.prettierrc.json'),
 			join(root, '.prettierrc.json')
 		);
-	} else console.warn('⚠️  Biome support not implemented yet');
+	} else
+		console.warn(
+			`${dim('│')}\n${yellow('▲')}  Biome support not implemented yet`
+		);
 
 	if (!installDependencies) return;
 
