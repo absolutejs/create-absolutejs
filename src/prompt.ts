@@ -8,12 +8,8 @@ import {
 	confirm
 } from '@clack/prompts';
 import colors from 'picocolors';
-import type {
-	AvailablePlugin,
-	FrontendConfiguration,
-	FrontendFramework,
-	PromptResponse
-} from './types';
+import { availableFrontends, availablePlugins } from './data';
+import type { FrontendConfiguration, PromptResponse } from './types';
 
 const { blueBright, yellow, cyan, green, magenta } = colors;
 
@@ -24,10 +20,7 @@ function abort(): never {
 }
 /* eslint-enable */
 
-export const prompt = async (
-	availableFrontends: Record<string, FrontendFramework>,
-	availablePlugins: AvailablePlugin[]
-) => {
+export const prompt = async () => {
 	// 1. Project name
 	const projectName = await text({
 		message: 'Project name:',

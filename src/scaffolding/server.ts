@@ -1,9 +1,6 @@
 import { writeFileSync } from 'fs';
+import { defaultPlugins } from '../data';
 import type { AvailablePlugin } from '../types';
-
-const defaultPlugins: AvailablePlugin[] = [
-	{ import: 'Elysia', value: 'elysia' }
-];
 
 export const createServerFile = (
 	serverFilePath: string,
@@ -19,12 +16,17 @@ export const createServerFile = (
 	// dedupe by value, then sort alphabetically by module path
 	const all = merged
 		.reduce<AvailablePlugin[]>((acc, p) => {
-			if (!acc.find((x) => x.value === p.value)) {
+			if (
+				!acc.find((existingPlugin) => existingPlugin.value === p.value)
+			) {
 				acc.push(p);
 			}
+
 			return acc;
 		}, [])
-		.sort((a, b) => a.value.localeCompare(b.value));
+		.sort((firstPlugin, secondPlugin) =>
+			firstPlugin.value.localeCompare(secondPlugin.value)
+		);
 
 	// build sorted import block
 	const importLines = all

@@ -12,6 +12,7 @@ export type AvailablePlugin = {
 	value: string;
 	label?: string;
 	import: string;
+	latestVersion: string;
 };
 
 export type PromptResponse = {

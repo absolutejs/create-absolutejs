@@ -10,9 +10,10 @@ import { join, dirname } from 'node:path';
 import { exit } from 'node:process';
 import { fileURLToPath } from 'node:url';
 import { spinner } from '@clack/prompts';
-import type { AvailablePlugin, PackageJson, PromptResponse } from '../types';
-import type { PackageManager } from '../utils';
 import { dim, yellow } from 'picocolors';
+import { availablePlugins } from '../data';
+import type { PackageJson, PromptResponse } from '../types';
+import type { PackageManager } from '../utils/t3-utils';
 import { createServerFile } from './server';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -29,8 +30,7 @@ export const scaffold = (
 		installDependencies,
 		frontendConfigurations
 	}: PromptResponse,
-	packageManager: PackageManager,
-	availablePlugins: AvailablePlugin[]
+	packageManager: PackageManager
 ) => {
 	const root = projectName;
 	if (existsSync(root))
