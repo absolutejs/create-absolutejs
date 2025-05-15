@@ -4,7 +4,7 @@ import colors from 'picocolors';
 import { prompt } from './prompt';
 import type { FrontendFramework } from './types';
 
-const { blueBright, cyan, green, magenta, red } = colors;
+const { blueBright, cyan, green, magenta, red, dim } = colors;
 
 // eslint-disable-next-line absolute/sort-keys-fixable
 const availableFrontends: Record<string, FrontendFramework> = {
@@ -24,6 +24,7 @@ const {
 	lintTool,
 	tailwind,
 	frameworks,
+	htmlScriptOption,
 	buildDir,
 	assetsDir,
 	frameworkConfigurations,
@@ -42,21 +43,32 @@ outro(`
   Language:         ${language === 'ts' ? 'TypeScript' : 'JavaScript'}
   Linting:          ${lintTool === 'eslint' ? 'ESLint + Prettier' : 'Biome'}
   Tailwind:         ${tailwind ? `input: ${tailwind.input}, output: ${tailwind.output}` : 'None'}
-  Framework(s):     ${frameworks.join(', ')}
+  Framework(s):     ${frameworks.join(', ')}${
+		frameworks.includes('html')
+			? `
+  HTML Scripting:   ${
+		htmlScriptOption === 'ssr'
+			? `${language === 'ts' ? 'TypeScript + SSR' : 'JavaScript + SSR'}`
+			: htmlScriptOption === 'script'
+				? `${language === 'ts' ? 'TypeScript' : 'JavaScript'}`
+				: 'None'
+  }`
+			: ''
+  }
   Build Directory:  ${buildDir}
   Assets Directory: ${assetsDir}
-  Database:         ${dbProvider === 'none' ? 'None' : dbProvider}
-  ORM:              ${orm ?? 'None'}
-  Auth:             ${authProvider === 'none' ? 'None' : authProvider}
-  Plugins:          ${plugins.length ? plugins.join(', ') : 'None'}
-  Git Repository:   ${initGit ? 'Initialized' : 'None'}
-  Install Deps:     ${installDeps ? 'Yes' : 'No'}
+  Database:         ${dbProvider === 'none' ? dim('None') : dbProvider}
+  ORM:              ${orm ?? dim('None')}
+  Auth:             ${authProvider === 'none' ? dim('None') : authProvider}
+  Plugins:          ${plugins.length ? plugins.join(', ') : dim('None')}
+  Git Repository:   ${initGit ? 'Initialized' : dim('None')}
+  Install Deps:     ${installDeps ? green('Yes') : red('No')}
 
   Framework Config:
     ${frameworkConfigurations
 		.map(
 			({ framework, pages, index }) =>
-				`${availableFrontends[framework] ?? framework} ⇒ pages: ${pages}, index: ${index}`
+				`${availableFrontends[framework]?.label ?? framework} ⇒ pages: ${pages}, index: ${index}`
 		)
 		.join('\n    ')}
 `);

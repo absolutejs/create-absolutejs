@@ -36,11 +36,11 @@ export const prompt = async (
 	if (values.help) {
 		// prettier-ignore
 		console.log(`
-			Usage: create-absolute [OPTION]...
+      Usage: create-absolute [OPTION]...
 
-			Options:
-			-h, --help    Show this help message and exit
-		`);
+      Options:
+      -h, --help    Show this help message and exit
+    `);
 		exit(0);
 	}
 
@@ -84,7 +84,23 @@ export const prompt = async (
 	});
 	if (isCancel(frameworks)) abort();
 
-	// 6. Configuration type
+	// 6. HTML scripting option (if HTML was selected)
+	let htmlScriptOption;
+	if (frameworks.includes('html')) {
+		const langLabel =
+			language === 'ts' ? blueBright('TypeScript') : yellow('JavaScript');
+		htmlScriptOption = await select({
+			message: `Add HTML scripting option (${langLabel}):`,
+			options: [
+				{ label: `${langLabel} + SSR`, value: 'ssr' },
+				{ label: langLabel, value: 'script' },
+				{ label: 'None', value: 'none' }
+			]
+		});
+		if (isCancel(htmlScriptOption)) abort();
+	}
+
+	// 7. Configuration type
 	const configType = await select({
 		message: 'Select configuration:',
 		options: [
@@ -94,7 +110,7 @@ export const prompt = async (
 	});
 	if (isCancel(configType)) abort();
 
-	// 7. Build / Tailwind / Assets (custom vs default)
+	// 8. Build / Tailwind / Assets (custom vs default)
 	let tailwind: { input: string; output: string } | undefined;
 	let buildDir: string;
 	let assetsDir: string;
@@ -146,8 +162,8 @@ export const prompt = async (
 		tailwind = { input, output };
 	}
 
-	// 8. Framework-specific directories
-	let frameworkConfigurations;
+	// 9. Framework-specific directories
+	let frameworkConfigurations: FrameworkConfiguration[];
 	const single = frameworks.length === 1;
 
 	if (configType === 'custom') {
@@ -176,12 +192,16 @@ export const prompt = async (
 	} else {
 		frameworkConfigurations = frameworks.map((framework) => ({
 			framework,
-			index: `${single ? 'src/frontend' : `src/frontend/${framework}`}/indexes`,
-			pages: `${single ? 'src/frontend' : `src/frontend/${framework}`}/pages`
+			index: `${
+				single ? 'src/frontend' : `src/frontend/${framework}`
+			}/indexes`,
+			pages: `${
+				single ? 'src/frontend' : `src/frontend/${framework}`
+			}/pages`
 		}));
 	}
 
-	// 9. Database provider
+	// 10. Database provider
 	const dbProvider = await select({
 		message: 'Database provider:',
 		options: [
@@ -192,7 +212,7 @@ export const prompt = async (
 	});
 	if (isCancel(dbProvider)) abort();
 
-	// 10. ORM choice (optional)
+	// 11. ORM choice (optional)
 	let orm: 'drizzle' | 'prisma' | undefined;
 	if (dbProvider !== 'none') {
 		const ormChoice = await select({
@@ -207,7 +227,7 @@ export const prompt = async (
 		orm = ormChoice === 'none' ? undefined : ormChoice;
 	}
 
-	// 11. Auth provider
+	// 12. Auth provider
 	const authProvider = await select({
 		message: 'Auth provider:',
 		options: [
@@ -218,7 +238,7 @@ export const prompt = async (
 	});
 	if (isCancel(authProvider)) abort();
 
-	// 12. Additional plugins (optional)
+	// 13. Additional plugins (optional)
 	const plugins = await multiselect({
 		message:
 			'Select additional Elysia plugins (space to select, enter to submit):',
@@ -232,30 +252,32 @@ export const prompt = async (
 	});
 	if (isCancel(plugins)) abort();
 
-	// 13. Initialize Git repository
+	// 14. Initialize Git repository
 	const initGit = await confirm({ message: 'Initialize a git repository?' });
 	if (isCancel(initGit)) abort();
 
-	// 14. Install dependencies
+	// 15. Install dependencies
 	const installDeps = await confirm({ message: 'Install dependencies now?' });
 	if (isCancel(installDeps)) abort();
 
 	return {
-		assetsDir,
-		authProvider,
-		buildDir,
-		dbProvider,
-		frameworkConfigurations,
-		frameworks,
-		initGit,
-		installDeps,
+		projectName,
 		language,
 		lintTool,
-		orm,
-		pkgManager,
-		plugins,
-		projectName,
+		useTailwind,
+		frameworks,
+		htmlScriptOption,
+		configType,
+		buildDir,
+		assetsDir,
 		tailwind,
-		useTailwind
+		frameworkConfigurations,
+		dbProvider,
+		orm,
+		authProvider,
+		plugins,
+		initGit,
+		installDeps,
+		pkgManager
 	};
 };
