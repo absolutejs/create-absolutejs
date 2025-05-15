@@ -36,12 +36,29 @@ export const scaffold = (
 		);
 
 	mkdirSync(root, { recursive: true });
+
 	const srcDir = join(root, 'src');
 	mkdirSync(srcDir, { recursive: true });
+
 	const frontendDir = join(srcDir, 'frontend');
+	const backendDir = join(srcDir, 'backend');
 	mkdirSync(frontendDir, { recursive: true });
-	mkdirSync(join(srcDir, 'backend'), { recursive: true });
+	mkdirSync(backendDir, { recursive: true });
 	mkdirSync(join(srcDir, 'types'), { recursive: true });
+
+	const serverFilePath = join(backendDir, 'server.ts');
+	const serverFileContent = `import { Elysia } from 'elysia';
+
+const app = new Elysia();
+
+// basic health-check endpoint
+app.get('/', () => 'Hello, world!');
+
+app.listen(3000, () => {
+  console.log('🚀 Server running at http://localhost:3000');
+});
+`;
+	writeFileSync(serverFilePath, serverFileContent);
 
 	if (orm === 'drizzle') mkdirSync(join(root, 'db'), { recursive: true });
 
