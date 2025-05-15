@@ -1,1 +1,0 @@
-{"dependencies":{"elysia":"1.2.0"},"devDependencies":{},"name":"absolutejs-project","scripts":{"dev":"bun run src/index.ts","format":"prettier --write \"./**/*.{js,jsx,ts,tsx,css,json}\"","lint":"eslint ./src","test":"echo \"Error: no test specified\" && exit 1","typecheck":"bun run tsc --noEmit"},"type":"module","version":"0.1.0"}
