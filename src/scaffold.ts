@@ -8,11 +8,16 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 export const scaffold = ({
 	projectName,
 	language,
-	codeQualityTool,
-	buildDir
+	codeQualityTool
 }: PromptResponse) => {
 	const root = projectName;
 	mkdirSync(root, { recursive: true });
+
+	// create src folders: frontend, backend, types
+	const srcDir = join(root, 'src');
+	mkdirSync(join(srcDir, 'frontend'), { recursive: true });
+	mkdirSync(join(srcDir, 'backend'), { recursive: true });
+	mkdirSync(join(srcDir, 'types'), { recursive: true });
 
 	// package.json
 	writeFileSync(
@@ -25,23 +30,14 @@ export const scaffold = ({
 	);
 
 	// README.md (from templates)
-	const templatesDir = join(__dirname, '/templates');
+	const templatesDir = join(__dirname, 'templates');
 	copyFileSync(join(templatesDir, 'README.md'), join(root, 'README.md'));
 
-	// tsconfig.json (if TS)
+	// tsconfig.json (if TS) — copy example template
 	if (language === 'ts') {
-		writeFileSync(
-			join(root, 'tsconfig.json'),
-			JSON.stringify({
-				compilerOptions: {
-					module: 'ESNext',
-					moduleResolution: 'node',
-					outDir: buildDir,
-					strict: true,
-					target: 'ESNext'
-				},
-				include: ['src']
-			})
+		copyFileSync(
+			join(templatesDir, 'tsconfig.example.json'),
+			join(root, 'tsconfig.json')
 		);
 	}
 
