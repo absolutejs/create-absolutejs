@@ -3,10 +3,10 @@ export type FrontendFramework = {
 	label: string;
 };
 
-export type FrameworkConfiguration = {
-	framework: string;
-	pages: string;
-	index: string;
+export type FrontendConfiguration = {
+	name: string;
+	pagesDirectory: string;
+	indexesDirectory: string;
 };
 
 export type PromptResponse = {
@@ -15,8 +15,8 @@ export type PromptResponse = {
 	buildDir: string;
 	configType: 'default' | 'custom';
 	dbProvider: 'none' | 'postgres' | 'mysql';
-	frameworkConfigurations: FrameworkConfiguration[];
-	frameworks: string[];
+	frontendConfigurations: FrontendConfiguration[];
+	frontends: string[];
 	htmlScriptOption: 'none' | 'script' | 'ssr' | undefined;
 	initializeGit: boolean;
 	installDeps: boolean;

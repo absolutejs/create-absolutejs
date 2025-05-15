@@ -9,7 +9,7 @@ import {
 } from '@clack/prompts';
 import colors from 'picocolors';
 import type {
-	FrameworkConfiguration,
+	FrontendConfiguration,
 	FrontendFramework,
 	PromptResponse
 } from './types';
@@ -61,17 +61,17 @@ export const prompt = async (
 	if (isCancel(useTailwind)) abort();
 
 	// 5. Framework(s)
-	const frameworks = await multiselect({
+	const frontends = await multiselect({
 		message: 'Framework(s) (space to select, enter to finish):',
 		options: Object.entries(availableFrontends).map(
 			([value, { label }]) => ({ label, value })
 		)
 	});
-	if (isCancel(frameworks)) abort();
+	if (isCancel(frontends)) abort();
 
 	// 6. HTML scripting option (if HTML was selected)
 	let htmlScriptOption;
-	if (frameworks.includes('html')) {
+	if (frontends.includes('html')) {
 		const langLabel =
 			language === 'ts' ? blueBright('TypeScript') : yellow('JavaScript');
 		htmlScriptOption = await select({
@@ -148,40 +148,43 @@ export const prompt = async (
 	}
 
 	// 9. Framework-specific directories
-	let frameworkConfigurations: FrameworkConfiguration[];
-	const single = frameworks.length === 1;
+	let frontendConfigurations: FrontendConfiguration[];
+	const single = frontends.length === 1;
 
 	if (configType === 'custom') {
-		frameworkConfigurations = await frameworks.reduce<
-			Promise<FrameworkConfiguration[]>
-		>(async (prevP, framework) => {
+		frontendConfigurations = await frontends.reduce<
+			Promise<FrontendConfiguration[]>
+		>(async (prevP, frontend) => {
 			const prev = await prevP;
-			const pretty = availableFrontends[framework]?.name ?? framework;
-			const base = single ? 'src/frontend' : `src/frontend/${framework}`;
+			const pretty = availableFrontends[frontend]?.name ?? frontend;
+			const base = single ? 'src/frontend' : `src/frontend/${frontend}`;
 			const defPages = `${base}/pages`;
 			const defIndex = `${base}/indexes`;
 
-			const pages = await text({
+			const pagesDirectory = await text({
 				message: `${pretty} pages directory:`,
 				placeholder: defPages
 			});
-			if (isCancel(pages)) abort();
-			const index = await text({
+			if (isCancel(pagesDirectory)) abort();
+			const indexesDirectory = await text({
 				message: `${pretty} index directory:`,
 				placeholder: defIndex
 			});
-			if (isCancel(index)) abort();
+			if (isCancel(indexesDirectory)) abort();
 
-			return [...prev, { framework, index, pages }];
+			return [
+				...prev,
+				{ frontend, indexesDirectory, pagesDirectory, name: frontend }
+			];
 		}, Promise.resolve([]));
 	} else {
-		frameworkConfigurations = frameworks.map((framework) => ({
-			framework,
-			index: `${
-				single ? 'src/frontend' : `src/frontend/${framework}`
+		frontendConfigurations = frontends.map((frontend) => ({
+			name: frontend,
+			indexesDirectory: `${
+				single ? 'src/frontend' : `src/frontend/${frontend}`
 			}/indexes`,
-			pages: `${
-				single ? 'src/frontend' : `src/frontend/${framework}`
+			pagesDirectory: `${
+				single ? 'src/frontend' : `src/frontend/${frontend}`
 			}/pages`
 		}));
 	}
@@ -254,8 +257,8 @@ export const prompt = async (
 		codeQualityTool,
 		configType,
 		dbProvider,
-		frameworkConfigurations,
-		frameworks,
+		frontendConfigurations,
+		frontends,
 		htmlScriptOption,
 		initializeGit,
 		installDeps,

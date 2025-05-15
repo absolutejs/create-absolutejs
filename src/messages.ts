@@ -1,4 +1,4 @@
-import { dim, green, red } from 'picocolors';
+import { blueBright, cyan, dim, green, magenta, red, yellow } from 'picocolors';
 import type { FrontendFramework, PromptResponse } from './types';
 
 export const helpMessage = `
@@ -25,7 +25,7 @@ export const getSummaryMessage = ({
 		language,
 		codeQualityTool,
 		tailwind,
-		frameworks,
+		frontends,
 		buildDir,
 		assetsDir,
 		dbProvider,
@@ -35,18 +35,20 @@ export const getSummaryMessage = ({
 		initializeGit,
 		installDeps,
 		htmlScriptOption,
-		frameworkConfigurations
+		frontendConfigurations
 	},
 	packageManager,
 	availableFrontends
 }: DebugMessageProps) => {
-	// map HTML options to labels
 	const htmlLabels: Record<'ssr' | 'script', string> = {
-		script: language === 'ts' ? 'TypeScript' : 'JavaScript',
-		ssr: language === 'ts' ? 'TypeScript + SSR' : 'JavaScript + SSR'
+		script:
+			language === 'ts' ? blueBright('TypeScript') : yellow('JavaScript'),
+		ssr:
+			language === 'ts'
+				? blueBright('TypeScript + SSR')
+				: yellow('JavaScript + SSR')
 	};
 
-	// determine the HTML scripting value in a flat if‐else (no nested blocks)
 	let htmlScriptingValue = 'None';
 	if (htmlScriptOption === 'ssr') {
 		htmlScriptingValue = htmlLabels.ssr;
@@ -54,33 +56,41 @@ export const getSummaryMessage = ({
 		htmlScriptingValue = htmlLabels.script;
 	}
 
-	// only show the line if "html" is among the chosen frameworks
-	const htmlScriptingLine = frameworks.includes('html')
+	const htmlScriptingLine = frontends.includes('html')
 		? `\nHTML Scripting:   ${htmlScriptingValue}`
 		: '';
 
-	return `
-Project Name:     ${projectName}
-Package Manager:  ${packageManager}
-Language:         ${language === 'ts' ? 'TypeScript' : 'JavaScript'}
-Linting:          ${codeQualityTool === 'eslint+prettier' ? 'ESLint + Prettier' : 'Biome'}
-Tailwind:         ${tailwind ? `input: ${tailwind.input}, output: ${tailwind.output}` : 'None'}
-Framework(s):     ${frameworks.join(', ')}${htmlScriptingLine}
-Build Directory:  ${buildDir}
-Assets Directory: ${assetsDir}
-Database:         ${dbProvider === 'none' ? dim('None') : dbProvider}
-ORM:              ${orm ?? dim('None')}
-Auth:             ${authProvider === 'none' ? dim('None') : authProvider}
-Plugins:          ${plugins.length ? plugins.join(', ') : dim('None')}
-Git Repository:   ${initializeGit ? 'Initialized' : dim('None')}
-Install Deps:     ${installDeps ? green('Yes') : red('No')}
+	const configString = frontendConfigurations.reduce(
+		(acc, { name, pagesDirectory, indexesDirectory }, idx, arr) => {
+			const label = availableFrontends[name]?.label ?? name;
+			acc += `${label}     ⇒     ${cyan('pages')}: ${pagesDirectory}  ${cyan('indexes')}: ${indexesDirectory}`;
+			if (idx < arr.length - 1) {
+				acc += '\n    ';
+			}
+			return acc;
+		},
+		''
+	);
 
-Framework Config:
-${frameworkConfigurations
-	.map(
-		({ framework, pages, index }) =>
-			`${availableFrontends[framework]?.label ?? framework} ⇒ pages: ${pages}, index: ${index}`
-	)
-	.join('\n    ')}
-`;
+	const tailwindSection = tailwind
+		? `\n    ${cyan('Input')}:	    ${tailwind.input}\n    ${cyan('Output')}:	    ${tailwind.output}`
+		: dim('None');
+
+	return `
+${magenta('Project Name')}:       ${projectName}
+${magenta('Package Manager')}:    ${packageManager}
+${magenta('Language')}:           ${language === 'ts' ? blueBright('TypeScript') : yellow('JavaScript')}
+${magenta('Linting')}:            ${codeQualityTool === 'eslint+prettier' ? 'ESLint + Prettier' : 'Biome'}
+${magenta('Tailwind')}:           ${tailwindSection}
+${magenta('Frontend(s)')}:        ${frontends.join(', ')}${htmlScriptingLine}
+${magenta('Build Directory')}:    ${buildDir}
+${magenta('Assets Directory')}:   ${assetsDir}
+${magenta('Database')}:           ${dbProvider === 'none' ? dim('None') : dbProvider}
+${magenta('ORM')}:                ${orm ?? dim('None')}
+${magenta('Auth')}:               ${authProvider === 'none' ? dim('None') : authProvider}
+${magenta('Plugins')}:            ${plugins.length ? plugins.join(', ') : dim('None')}
+${magenta('Git Repository')}:     ${initializeGit ? green('Initialized') : dim('None')}
+${magenta('Install Deps')}:       ${installDeps ? green('Yes') : red('No')}
+${magenta('Framework Config')}:
+    ${configString}`;
 };

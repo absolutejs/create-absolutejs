@@ -23,7 +23,10 @@ const availableFrontends: Record<string, FrontendFramework> = {
 const DEFAULT_ARG_LENGTH = 2;
 const { values } = parseArgs({
 	args: argv.slice(DEFAULT_ARG_LENGTH),
-	options: { help: { default: false, short: 'h', type: 'boolean' } },
+	options: {
+		help: { default: false, short: 'h', type: 'boolean' },
+		summary: { default: false, short: 's', type: 'boolean' }
+	},
 	strict: false
 });
 
@@ -35,8 +38,19 @@ if (values.help) {
 }
 
 const response = await prompt(availableFrontends);
-const debugMessage = getSummaryMessage({
-	response, packageManager, availableFrontends });
+const summaryMessage = getSummaryMessage({
+	response,
+	packageManager,
+	availableFrontends
+});
 
-// Summary
-outro(debugMessage);
+let outroMessage = `${green('Created successfully')}, you can now run:\n
+${cyan('cd')} ${response.projectName}
+${cyan(`${packageManager} dev`)}
+${response.installDeps ? cyan(`${packageManager} install`) : ''}`;
+
+if (values.summary) {
+	outroMessage += `\n${summaryMessage}`;
+}
+
+outro(outroMessage);
