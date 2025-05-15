@@ -157,7 +157,7 @@ export const prompt = async (
 		>(async (prevP, frontend) => {
 			const prev = await prevP;
 			const pretty = availableFrontends[frontend]?.name ?? frontend;
-			const base = single ? 'src/frontend' : `src/frontend/${frontend}`;
+			const base = single ? '' : `${frontend}`;
 			const defDir = base;
 
 			const frontendDirectory = await text({
@@ -173,7 +173,7 @@ export const prompt = async (
 		}, Promise.resolve([]));
 	} else {
 		frontendConfigurations = frontends.map((frontend) => ({
-			directory: single ? 'src/frontend' : `src/frontend/${frontend}`,
+			directory: single ? '' : frontend,
 			frontend,
 			name: frontend
 		}));

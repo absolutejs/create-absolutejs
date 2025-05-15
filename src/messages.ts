@@ -69,7 +69,7 @@ export const getSummaryMessage = ({
 	const configString = frontendConfigurations.reduce(
 		(accumulator, { name, directory }, idx, arr) => {
 			const label = availableFrontends[name]?.label ?? name;
-			const segment = `${label}:		${directory}${
+			const segment = `${label}:		src/frontend/${directory}${
 				idx < arr.length - 1 ? '\n    ' : ''
 			}`;
 
