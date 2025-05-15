@@ -166,7 +166,7 @@ export default defineConfig([
 
   {
     files: [
-      'index.ts'
+      'src/index.ts'
     ],
     rules: {
       'import/no-unused-modules': 'off',
