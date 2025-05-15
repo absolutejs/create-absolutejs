@@ -1,74 +1,40 @@
 #!/usr/bin/env node
+import { argv, exit } from 'node:process';
+import { parseArgs } from 'node:util';
 import { outro } from '@clack/prompts';
-import colors from 'picocolors';
+import { blueBright, cyan, green, magenta, red } from 'picocolors';
+import { debugMessage, helpMessage } from './messages';
 import { prompt } from './prompt';
 import type { FrontendFramework } from './types';
+import { getUserPkgManager } from './utils';
 
-const { blueBright, cyan, green, magenta, red, dim } = colors;
-
-// eslint-disable-next-line absolute/sort-keys-fixable
+/* eslint-disable absolute/sort-keys-fixable */
 const availableFrontends: Record<string, FrontendFramework> = {
 	react: { label: cyan('React'), name: 'React' },
 	html: { label: 'HTML', name: 'HTML' },
-	svelte: { label: magenta('Svelte'), name: 'Svelte' },
 	angular: { label: red('Angular'), name: 'Angular' },
-	solid: { label: blueBright('Solid'), name: 'Solid' },
 	vue: { label: green('Vue'), name: 'Vue' },
-	htmx: { label: 'HTMX', name: 'HTMX' }
+	svelte: { label: magenta('Svelte'), name: 'Svelte' },
+	htmx: { label: 'HTMX', name: 'HTMX' },
+	solid: { label: blueBright('Solid'), name: 'Solid' }
 };
+/* eslint-enable absolute/sort-keys-fixable */
 
-const {
-	pkgManager,
-	projectName,
-	language,
-	lintTool,
-	tailwind,
-	frameworks,
-	htmlScriptOption,
-	buildDir,
-	assetsDir,
-	frameworkConfigurations,
-	dbProvider,
-	orm,
-	authProvider,
-	plugins,
-	initGit,
-	installDeps
-} = await prompt(availableFrontends);
+const DEFAULT_ARG_LENGTH = 2;
+const { values } = parseArgs({
+	args: argv.slice(DEFAULT_ARG_LENGTH),
+	options: { help: { default: false, short: 'h', type: 'boolean' } },
+	strict: false
+});
+
+const packageManager = getUserPkgManager();
+
+if (values.help) {
+	console.log(helpMessage);
+	exit(0);
+}
+
+const response = await prompt(availableFrontends);
 
 // Summary
-outro(`
-  Project Name:     ${projectName}
-  Package Manager:  ${pkgManager}
-  Language:         ${language === 'ts' ? 'TypeScript' : 'JavaScript'}
-  Linting:          ${lintTool === 'eslint' ? 'ESLint + Prettier' : 'Biome'}
-  Tailwind:         ${tailwind ? `input: ${tailwind.input}, output: ${tailwind.output}` : 'None'}
-  Framework(s):     ${frameworks.join(', ')}${
-		frameworks.includes('html')
-			? `
-  HTML Scripting:   ${
-		htmlScriptOption === 'ssr'
-			? `${language === 'ts' ? 'TypeScript + SSR' : 'JavaScript + SSR'}`
-			: htmlScriptOption === 'script'
-				? `${language === 'ts' ? 'TypeScript' : 'JavaScript'}`
-				: 'None'
-  }`
-			: ''
-  }
-  Build Directory:  ${buildDir}
-  Assets Directory: ${assetsDir}
-  Database:         ${dbProvider === 'none' ? dim('None') : dbProvider}
-  ORM:              ${orm ?? dim('None')}
-  Auth:             ${authProvider === 'none' ? dim('None') : authProvider}
-  Plugins:          ${plugins.length ? plugins.join(', ') : dim('None')}
-  Git Repository:   ${initGit ? 'Initialized' : dim('None')}
-  Install Deps:     ${installDeps ? green('Yes') : red('No')}
-
-  Framework Config:
-    ${frameworkConfigurations
-		.map(
-			({ framework, pages, index }) =>
-				`${availableFrontends[framework]?.label ?? framework} ⇒ pages: ${pages}, index: ${index}`
-		)
-		.join('\n    ')}
-`);
+outro(debugMessage({ availableFrontends, packageManager, response }));

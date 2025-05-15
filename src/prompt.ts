@@ -1,5 +1,4 @@
-import { argv, exit } from 'node:process';
-import { parseArgs } from 'node:util';
+import { exit } from 'node:process';
 import {
 	cancel,
 	isCancel,
@@ -9,8 +8,11 @@ import {
 	confirm
 } from '@clack/prompts';
 import colors from 'picocolors';
-import type { FrameworkConfiguration, FrontendFramework } from './types';
-import { getUserPkgManager } from './utils';
+import type {
+	FrameworkConfiguration,
+	FrontendFramework,
+	PromptResponse
+} from './types';
 
 const { blueBright, yellow, cyan, green, magenta, reset } = colors;
 
@@ -24,26 +26,6 @@ function abort(): never {
 export const prompt = async (
 	availableFrontends: Record<string, FrontendFramework>
 ) => {
-	const DEFAULT_ARG_LENGTH = 2;
-	const { values } = parseArgs({
-		args: argv.slice(DEFAULT_ARG_LENGTH),
-		options: { help: { default: false, short: 'h', type: 'boolean' } },
-		strict: false
-	});
-
-	const pkgManager = getUserPkgManager();
-
-	if (values.help) {
-		// prettier-ignore
-		console.log(`
-      Usage: create-absolute [OPTION]...
-
-      Options:
-      -h, --help    Show this help message and exit
-    `);
-		exit(0);
-	}
-
 	// 1. Project name
 	const projectName = await text({
 		message: 'Project name:',
@@ -62,14 +44,17 @@ export const prompt = async (
 	if (isCancel(language)) abort();
 
 	// 3. Linting/formatting tool
-	const lintTool = await select({
+	const codeQualityTool = await select({
 		message: 'Choose linting and formatting tool:',
 		options: [
-			{ label: blueBright('ESLint + Prettier'), value: 'eslint' },
+			{
+				label: blueBright('ESLint + Prettier'),
+				value: 'eslint+prettier'
+			},
 			{ label: yellow('Biome'), value: 'biome' }
 		]
 	});
-	if (isCancel(lintTool)) abort();
+	if (isCancel(codeQualityTool)) abort();
 
 	// 4. Tailwind support?
 	const useTailwind = await confirm({ message: 'Add Tailwind support?' });
@@ -253,31 +238,34 @@ export const prompt = async (
 	if (isCancel(plugins)) abort();
 
 	// 14. Initialize Git repository
-	const initGit = await confirm({ message: 'Initialize a git repository?' });
-	if (isCancel(initGit)) abort();
+	const initializeGit = await confirm({
+		message: 'Initialize a git repository?'
+	});
+	if (isCancel(initializeGit)) abort();
 
 	// 15. Install dependencies
 	const installDeps = await confirm({ message: 'Install dependencies now?' });
 	if (isCancel(installDeps)) abort();
 
-	return {
-		projectName,
-		language,
-		lintTool,
-		useTailwind,
+	const values: PromptResponse = {
+		assetsDir,
+		authProvider,
+		buildDir,
+		codeQualityTool,
+		configType,
+		dbProvider,
+		frameworkConfigurations,
 		frameworks,
 		htmlScriptOption,
-		configType,
-		buildDir,
-		assetsDir,
-		tailwind,
-		frameworkConfigurations,
-		dbProvider,
-		orm,
-		authProvider,
-		plugins,
-		initGit,
+		initializeGit,
 		installDeps,
-		pkgManager
+		language,
+		orm,
+		plugins,
+		projectName,
+		tailwind,
+		useTailwind
 	};
+
+	return values;
 };
