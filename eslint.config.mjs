@@ -163,7 +163,7 @@ export default defineConfig([
     }
   },
   {
-    files: ['eslint.config.mjs'],
+    files: ['eslint.config.mjs','src/templates/eslint.config.mjs'],
     rules: {
       'no-magic-numbers': 'off'
     }
@@ -175,7 +175,7 @@ export default defineConfig([
     }
   },
   {
-    files: ['eslint.config.mjs'],
+    files: ['eslint.config.mjs','src/templates/eslint.config.mjs'],
     rules: {
       'import/no-default-export': 'off'
     }

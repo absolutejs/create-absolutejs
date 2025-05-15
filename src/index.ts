@@ -5,6 +5,7 @@ import { outro } from '@clack/prompts';
 import { blueBright, cyan, green, magenta, red } from 'picocolors';
 import { getSummaryMessage, helpMessage } from './messages';
 import { prompt } from './prompt';
+import { scaffold } from './scaffold';
 import type { FrontendFramework } from './types';
 import { getUserPkgManager } from './utils';
 
@@ -52,5 +53,7 @@ ${response.installDeps ? cyan(`${packageManager} install`) : ''}`;
 if (values.summary) {
 	outroMessage += `\n${summaryMessage}`;
 }
+
+scaffold(response);
 
 outro(outroMessage);
