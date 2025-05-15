@@ -3,9 +3,13 @@
  * @see https://github.com/t3-oss/create-t3-app
  * @license MIT
  */
-
 export type PackageManager = 'npm' | 'pnpm' | 'yarn' | 'bun';
 
+/**
+ * @author Adapted from the create-t3-app project
+ * @see https://github.com/t3-oss/create-t3-app
+ * @license MIT
+ */
 export const getUserPkgManager: () => PackageManager = () => {
 	// This environment variable is set by npm and yarn but pnpm seems less consistent
 	const userAgent = process.env.npm_config_user_agent;

@@ -13,16 +13,6 @@ import { getUserPkgManager, type PackageManager } from './utils';
 
 const { blueBright, yellow, cyan, green, magenta, red, reset, white } = colors;
 
-const frameworkNames: Record<string, string> = {
-	angular: 'Angular',
-	html: 'HTML',
-	htmx: 'HTMX',
-	react: 'React',
-	solid: 'Solid',
-	svelte: 'Svelte',
-	vue: 'Vue'
-};
-
 function abort(): never {
 	cancel('Operation cancelled');
 	exit(0);
@@ -30,7 +20,7 @@ function abort(): never {
 
 type Config = { framework: string; pages: string; index: string };
 
-export async function prompt() {
+export async function prompt(availableFrameworks: Record<string, string>) {
 	const DEFAULT_ARG_LENGTH = 2;
 	const { values } = parseArgs({
 		args: argv.slice(DEFAULT_ARG_LENGTH),
@@ -91,8 +81,8 @@ export async function prompt() {
 			{ label: magenta('Svelte'), value: 'svelte' },
 			{ label: red('Angular'), value: 'angular' },
 			{ label: blueBright('Solid'), value: 'solid' },
-			{ label: white('HTML'), value: 'html' },
-			{ label: white('HTMX'), value: 'htmx' }
+			{ label: 'HTML', value: 'html' },
+			{ label: 'HTMX', value: 'htmx' }
 		]
 	});
 	if (isCancel(frameworks)) abort();
@@ -159,7 +149,7 @@ export async function prompt() {
 		configs = await frameworks.reduce<Promise<Config[]>>(
 			async (prevP, framework) => {
 				const prev = await prevP;
-				const pretty = frameworkNames[framework] ?? framework;
+				const pretty = availableFrameworks[framework] ?? framework;
 				const base = single
 					? 'src/frontend'
 					: `src/frontend/${framework}`;
@@ -254,7 +244,6 @@ export async function prompt() {
 		lintTool,
 		useTailwind,
 		frameworks,
-		configType,
 		tailwind,
 		buildDir,
 		assetsDir,
