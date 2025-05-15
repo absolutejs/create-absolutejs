@@ -5,8 +5,8 @@ import { outro } from '@clack/prompts';
 import { blueBright, cyan, green, magenta, red } from 'picocolors';
 import { getSummaryMessage, helpMessage } from './messages';
 import { prompt } from './prompt';
-import { scaffold } from './scaffold';
-import type { FrontendFramework } from './types';
+import { scaffold } from './scaffolding/scaffold';
+import type { AvailablePlugin, FrontendFramework } from './types';
 import { getUserPkgManager } from './utils';
 
 /* eslint-disable absolute/sort-keys-fixable */
@@ -19,6 +19,25 @@ const availableFrontends: Record<string, FrontendFramework> = {
 	htmx: { label: 'HTMX', name: 'HTMX' },
 	solid: { label: blueBright('Solid'), name: 'Solid' }
 };
+
+const availablePlugins: AvailablePlugin[] = [
+	{
+		value: '@elysia-static',
+		label: cyan('📦 @elysia-static'),
+		import: 'staticPlugin'
+	},
+	{ value: '@elysia-cors', label: cyan('⚙️ @elysia-cors'), import: 'cors' },
+	{
+		value: '@elysiajs/swagger',
+		label: cyan('📑 @elysiajs/swagger'),
+		import: 'swagger'
+	},
+	{
+		value: 'elysia-rate-limit',
+		label: green('🛠️ elysia-rate-limit'),
+		import: 'rateLimit'
+	}
+];
 /* eslint-enable absolute/sort-keys-fixable */
 
 const DEFAULT_ARG_LENGTH = 2;
@@ -38,7 +57,7 @@ if (values.help) {
 	exit(0);
 }
 
-const response = await prompt(availableFrontends);
+const response = await prompt(availableFrontends, availablePlugins);
 const summaryMessage = getSummaryMessage({
 	availableFrontends,
 	packageManager,
@@ -58,6 +77,6 @@ if (values.summary) {
 	outroMessage += `\n${summaryMessage}`;
 }
 
-scaffold(response, packageManager);
+scaffold(response, packageManager,availablePlugins);
 
 outro(outroMessage);

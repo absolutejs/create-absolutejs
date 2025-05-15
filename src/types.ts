@@ -8,6 +8,12 @@ export type FrontendConfiguration = {
 	directory: string;
 };
 
+export type AvailablePlugin = {
+	value: string;
+	label?: string;
+	import: string;
+};
+
 export type PromptResponse = {
 	assetsDir: string;
 	authProvider: 'none' | 'absoluteAuth' | 'jwt';

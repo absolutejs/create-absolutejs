@@ -9,6 +9,7 @@ import {
 } from '@clack/prompts';
 import colors from 'picocolors';
 import type {
+	AvailableProvider,
 	FrontendConfiguration,
 	FrontendFramework,
 	PromptResponse
@@ -24,7 +25,8 @@ function abort(): never {
 /* eslint-enable */
 
 export const prompt = async (
-	availableFrontends: Record<string, FrontendFramework>
+	availableFrontends: Record<string, FrontendFramework>,
+	availablePlugins: AvailableProvider[]
 ) => {
 	// 1. Project name
 	const projectName = await text({
@@ -219,12 +221,7 @@ export const prompt = async (
 	const plugins = await multiselect({
 		message:
 			'Select additional Elysia plugins (space to select, enter to submit):',
-		options: [
-			{ label: cyan('📦 @elysia-static'), value: 'static' },
-			{ label: cyan('⚙️ @elysia-cors'), value: 'cors' },
-			{ label: cyan('📑 @elysiajs/swagger'), value: 'swagger' },
-			{ label: green('🛠️ elysia-rate-limit'), value: 'rateLimit' }
-		],
+		options: availablePlugins,
 		required: false
 	});
 	if (isCancel(plugins)) abort();

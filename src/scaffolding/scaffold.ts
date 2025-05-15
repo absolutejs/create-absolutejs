@@ -10,9 +10,10 @@ import { join, dirname } from 'node:path';
 import { exit } from 'node:process';
 import { fileURLToPath } from 'node:url';
 import { spinner } from '@clack/prompts';
-import type { PackageJson, PromptResponse } from './types';
-import type { PackageManager } from './utils';
+import type { AvailablePlugin, PackageJson, PromptResponse } from '../types';
+import type { PackageManager } from '../utils';
 import { dim, yellow } from 'picocolors';
+import { createServerFile } from './server';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -23,11 +24,13 @@ export const scaffold = (
 		codeQualityTool,
 		initializeGit,
 		orm,
+		plugins,
 		tailwind,
 		installDependencies,
 		frontendConfigurations
 	}: PromptResponse,
-	packageManager: PackageManager
+	packageManager: PackageManager,
+	availablePlugins: AvailablePlugin[]
 ) => {
 	const root = projectName;
 	if (existsSync(root))
@@ -47,22 +50,12 @@ export const scaffold = (
 	mkdirSync(join(srcDir, 'types'), { recursive: true });
 
 	const serverFilePath = join(backendDir, 'server.ts');
-	const serverFileContent = `import { Elysia } from 'elysia';
-
-const app = new Elysia();
-
-// basic health-check endpoint
-app.get('/', () => 'Hello, world!');
-
-app.listen(3000, () => {
-  console.log('🚀 Server running at http://localhost:3000');
-});
-`;
-	writeFileSync(serverFilePath, serverFileContent);
+	createServerFile(serverFilePath,availablePlugins, plugins);
+	
 
 	if (orm === 'drizzle') mkdirSync(join(root, 'db'), { recursive: true });
 
-	const templatesDir = join(__dirname, 'templates');
+	const templatesDir = join(__dirname, '../templates');
 
 	frontendConfigurations.forEach(({ name, directory }) => {
 		const targetDir = join(frontendDir, directory);
