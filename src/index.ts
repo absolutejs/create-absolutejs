@@ -1,18 +1,20 @@
 #!/usr/bin/env node
-import {
-	outro,
-
-} from '@clack/prompts';
+import { outro } from '@clack/prompts';
+import colors from 'picocolors';
 import { prompt } from './prompt';
+import type { FrontendFramework } from './types';
 
-const availableFrontends: Record<string, string> = {
-	angular: 'Angular',
-	html: 'HTML',
-	htmx: 'HTMX',
-	react: 'React',
-	solid: 'Solid',
-	svelte: 'Svelte',
-	vue: 'Vue'
+const { blueBright, cyan, green, magenta, red } = colors;
+
+// eslint-disable-next-line absolute/sort-keys-fixable
+const availableFrontends: Record<string, FrontendFramework> = {
+	react: { label: cyan('React'), name: 'React' },
+	html: { label: 'HTML', name: 'HTML' },
+	svelte: { label: magenta('Svelte'), name: 'Svelte' },
+	angular: { label: red('Angular'), name: 'Angular' },
+	solid: { label: blueBright('Solid'), name: 'Solid' },
+	vue: { label: green('Vue'), name: 'Vue' },
+	htmx: { label: 'HTMX', name: 'HTMX' }
 };
 
 const {
@@ -24,14 +26,14 @@ const {
 	frameworks,
 	buildDir,
 	assetsDir,
-	configs,
+	frameworkConfigurations,
 	dbProvider,
 	orm,
 	authProvider,
 	plugins,
 	initGit,
 	installDeps
-} = await prompt(availableFrontends)
+} = await prompt(availableFrontends);
 
 // Summary
 outro(`
@@ -51,7 +53,7 @@ outro(`
   Install Deps:     ${installDeps ? 'Yes' : 'No'}
 
   Framework Config:
-    ${configs
+    ${frameworkConfigurations
 		.map(
 			({ framework, pages, index }) =>
 				`${availableFrontends[framework] ?? framework} ⇒ pages: ${pages}, index: ${index}`

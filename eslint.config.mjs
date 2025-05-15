@@ -96,7 +96,6 @@ export default defineConfig([
       'import/no-unused-modules': ['error', { missingExports: true }],
       'import/order': ['error', { alphabetize: { order: 'asc' } }],
       'no-await-in-loop': 'error',
-      'no-console': ['error', { allow: ['warn', 'error'] }],
       'no-debugger': 'error',
       'no-duplicate-case': 'error',
       'no-duplicate-imports': 'error',
@@ -163,23 +162,18 @@ export default defineConfig([
       'promise/param-names': 'error'
     }
   },
-
-  {
-    files: [
-      'src/index.ts'
-    ],
-    rules: {
-      'import/no-unused-modules': 'off',
-      'no-console': 'off'
-    }
-  },
   {
     files: ['eslint.config.mjs'],
     rules: {
       'no-magic-numbers': 'off'
     }
   },
-
+  {
+    files: ['src/index.ts'],
+    rules: {
+      'import/no-unused-modules': 'off'
+    }
+  },
   {
     files: ['eslint.config.mjs'],
     rules: {

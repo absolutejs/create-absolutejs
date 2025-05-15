@@ -9,18 +9,21 @@ import {
 	confirm
 } from '@clack/prompts';
 import colors from 'picocolors';
-import { getUserPkgManager, type PackageManager } from './utils';
+import type { FrameworkConfiguration, FrontendFramework } from './types';
+import { getUserPkgManager } from './utils';
 
-const { blueBright, yellow, cyan, green, magenta, red, reset, white } = colors;
+const { blueBright, yellow, cyan, green, magenta, reset } = colors;
 
+/* eslint-disable */
 function abort(): never {
 	cancel('Operation cancelled');
 	exit(0);
 }
+/* eslint-enable */
 
-type Config = { framework: string; pages: string; index: string };
-
-export async function prompt(availableFrontends: Record<string, string>) {
+export const prompt = async (
+	availableFrontends: Record<string, FrontendFramework>
+) => {
 	const DEFAULT_ARG_LENGTH = 2;
 	const { values } = parseArgs({
 		args: argv.slice(DEFAULT_ARG_LENGTH),
@@ -33,11 +36,11 @@ export async function prompt(availableFrontends: Record<string, string>) {
 	if (values.help) {
 		// prettier-ignore
 		console.log(`
-    Usage: create-absolute [OPTION]...
+			Usage: create-absolute [OPTION]...
 
-    Options:
-    -h, --help    Show this help message and exit
-  `);
+			Options:
+			-h, --help    Show this help message and exit
+		`);
 		exit(0);
 	}
 
@@ -75,15 +78,9 @@ export async function prompt(availableFrontends: Record<string, string>) {
 	// 5. Framework(s)
 	const frameworks = await multiselect({
 		message: 'Framework(s) (space to select, enter to finish):',
-		options: [
-			{ label: cyan('React'), value: 'react' },
-			{ label: green('Vue'), value: 'vue' },
-			{ label: magenta('Svelte'), value: 'svelte' },
-			{ label: red('Angular'), value: 'angular' },
-			{ label: blueBright('Solid'), value: 'solid' },
-			{ label: 'HTML', value: 'html' },
-			{ label: 'HTMX', value: 'htmx' }
-		]
+		options: Object.entries(availableFrontends).map(
+			([value, { label }]) => ({ label, value })
+		)
 	});
 	if (isCancel(frameworks)) abort();
 
@@ -102,6 +99,7 @@ export async function prompt(availableFrontends: Record<string, string>) {
 	let buildDir: string;
 	let assetsDir: string;
 
+	// Build directory
 	if (configType === 'custom') {
 		const _buildDir = await text({
 			message: 'Build directory:',
@@ -109,21 +107,12 @@ export async function prompt(availableFrontends: Record<string, string>) {
 		});
 		if (isCancel(_buildDir)) abort();
 		buildDir = _buildDir;
+	} else {
+		buildDir = 'build';
+	}
 
-		if (useTailwind) {
-			const input = await text({
-				message: 'Tailwind input CSS file:',
-				placeholder: './example/styles/tailwind.css'
-			});
-			if (isCancel(input)) abort();
-			const output = await text({
-				message: 'Tailwind output CSS file:',
-				placeholder: '/assets/css/tailwind.generated.css'
-			});
-			if (isCancel(output)) abort();
-			tailwind = { input, output };
-		}
-
+	// Assets directory
+	if (configType === 'custom') {
 		const _assetsDir = await text({
 			message: 'Assets directory:',
 			placeholder: 'src/backend/assets'
@@ -131,50 +120,64 @@ export async function prompt(availableFrontends: Record<string, string>) {
 		if (isCancel(_assetsDir)) abort();
 		assetsDir = _assetsDir;
 	} else {
-		if (useTailwind) {
-			tailwind = {
-				input: './example/styles/tailwind.css',
-				output: '/assets/css/tailwind.generated.css'
-			};
-		}
-		buildDir = 'build';
 		assetsDir = 'src/backend/assets';
 	}
 
+	// Tailwind
+	if (useTailwind) {
+		const input =
+			configType === 'custom'
+				? await text({
+						message: 'Tailwind input CSS file:',
+						placeholder: './example/styles/tailwind.css'
+					})
+				: './example/styles/tailwind.css';
+		if (isCancel(input)) abort();
+
+		const output =
+			configType === 'custom'
+				? await text({
+						message: 'Tailwind output CSS file:',
+						placeholder: '/assets/css/tailwind.generated.css'
+					})
+				: '/assets/css/tailwind.generated.css';
+		if (isCancel(output)) abort();
+
+		tailwind = { input, output };
+	}
+
 	// 8. Framework-specific directories
-	let configs: Config[];
+	let frameworkConfigurations;
 	const single = frameworks.length === 1;
 
 	if (configType === 'custom') {
-		configs = await frameworks.reduce<Promise<Config[]>>(
-			async (prevP, framework) => {
-				const prev = await prevP;
-				const pretty = availableFrontends[framework] ?? framework;
-				const base = single
-					? 'src/frontend'
-					: `src/frontend/${framework}`;
-				const defPages = `${base}/pages`;
-				const defIndex = `${base}/indexes`;
+		frameworkConfigurations = await frameworks.reduce<
+			Promise<FrameworkConfiguration[]>
+		>(async (prevP, framework) => {
+			const prev = await prevP;
+			const pretty = availableFrontends[framework]?.name ?? framework;
+			const base = single ? 'src/frontend' : `src/frontend/${framework}`;
+			const defPages = `${base}/pages`;
+			const defIndex = `${base}/indexes`;
 
-				const pages = await text({
-					message: `${pretty} pages directory:`,
-					placeholder: defPages
-				});
-				if (isCancel(pages)) abort();
-				const index = await text({
-					message: `${pretty} index directory:`,
-					placeholder: defIndex
-				});
-				if (isCancel(index)) abort();
-				return [...prev, { framework, pages, index }];
-			},
-			Promise.resolve([])
-		);
+			const pages = await text({
+				message: `${pretty} pages directory:`,
+				placeholder: defPages
+			});
+			if (isCancel(pages)) abort();
+			const index = await text({
+				message: `${pretty} index directory:`,
+				placeholder: defIndex
+			});
+			if (isCancel(index)) abort();
+
+			return [...prev, { framework, index, pages }];
+		}, Promise.resolve([]));
 	} else {
-		configs = frameworks.map((framework) => ({
+		frameworkConfigurations = frameworks.map((framework) => ({
 			framework,
-			pages: `${single ? 'src/frontend' : `src/frontend/${framework}`}/pages`,
-			index: `${single ? 'src/frontend' : `src/frontend/${framework}`}/indexes`
+			index: `${single ? 'src/frontend' : `src/frontend/${framework}`}/indexes`,
+			pages: `${single ? 'src/frontend' : `src/frontend/${framework}`}/pages`
 		}));
 	}
 
@@ -220,8 +223,8 @@ export async function prompt(availableFrontends: Record<string, string>) {
 		message:
 			'Select additional Elysia plugins (space to select, enter to submit):',
 		options: [
-			{ label: cyan('📦 @elysia/static'), value: 'static' },
-			{ label: cyan('⚙️ @elysia/cors'), value: 'cors' },
+			{ label: cyan('📦 @elysia-static'), value: 'static' },
+			{ label: cyan('⚙️ @elysia-cors'), value: 'cors' },
 			{ label: cyan('📑 @elysiajs/swagger'), value: 'swagger' },
 			{ label: green('🛠️ elysia-rate-limit'), value: 'rateLimit' }
 		],
@@ -238,21 +241,21 @@ export async function prompt(availableFrontends: Record<string, string>) {
 	if (isCancel(installDeps)) abort();
 
 	return {
-		pkgManager,
-		projectName,
+		assetsDir,
+		authProvider,
+		buildDir,
+		dbProvider,
+		frameworkConfigurations,
+		frameworks,
+		initGit,
+		installDeps,
 		language,
 		lintTool,
-		useTailwind,
-		frameworks,
-		tailwind,
-		buildDir,
-		assetsDir,
-		configs,
-		dbProvider,
 		orm,
-		authProvider,
+		pkgManager,
 		plugins,
-		initGit,
-		installDeps
+		projectName,
+		tailwind,
+		useTailwind
 	};
-}
+};
