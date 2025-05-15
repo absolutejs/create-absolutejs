@@ -10,7 +10,7 @@ Arguments:
 
 Options:
     -h, --help      Show this help message and exit
-    -d, --debug     Show debug information after the prompt
+    -s, --summary   Show a summary of the project configuration after creation
 `;
 
 type DebugMessageProps = {
@@ -19,7 +19,7 @@ type DebugMessageProps = {
 	availableFrontends: Record<string, FrontendFramework>;
 };
 
-export const debugMessage = ({
+export const getSummaryMessage = ({
 	response: {
 		projectName,
 		language,

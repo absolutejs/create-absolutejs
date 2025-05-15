@@ -3,7 +3,7 @@ import { argv, exit } from 'node:process';
 import { parseArgs } from 'node:util';
 import { outro } from '@clack/prompts';
 import { blueBright, cyan, green, magenta, red } from 'picocolors';
-import { debugMessage, helpMessage } from './messages';
+import { getSummaryMessage, helpMessage } from './messages';
 import { prompt } from './prompt';
 import type { FrontendFramework } from './types';
 import { getUserPkgManager } from './utils';
@@ -35,6 +35,8 @@ if (values.help) {
 }
 
 const response = await prompt(availableFrontends);
+const debugMessage = getSummaryMessage({
+	response, packageManager, availableFrontends });
 
 // Summary
-outro(debugMessage({ availableFrontends, packageManager, response }));
+outro(debugMessage);
