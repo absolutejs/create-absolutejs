@@ -50,8 +50,7 @@ export const scaffold = (
 	mkdirSync(join(srcDir, 'types'), { recursive: true });
 
 	const serverFilePath = join(backendDir, 'server.ts');
-	createServerFile(serverFilePath,availablePlugins, plugins);
-	
+	createServerFile(serverFilePath, availablePlugins, plugins);
 
 	if (orm === 'drizzle') mkdirSync(join(root, 'db'), { recursive: true });
 

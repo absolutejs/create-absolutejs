@@ -77,6 +77,6 @@ if (values.summary) {
 	outroMessage += `\n${summaryMessage}`;
 }
 
-scaffold(response, packageManager,availablePlugins);
+scaffold(response, packageManager, availablePlugins);
 
 outro(outroMessage);
