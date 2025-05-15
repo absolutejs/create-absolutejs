@@ -69,7 +69,7 @@ export const getSummaryMessage = ({
 	const configString = frontendConfigurations.reduce(
 		(accumulator, { name, pagesDirectory, indexesDirectory }, idx, arr) => {
 			const label = availableFrontends[name]?.label ?? name;
-			const segment = `${label} ⇒ ${cyan('pages')}: ${pagesDirectory}  ${cyan('indexes')}: ${indexesDirectory}${
+			const segment = `${label} ⇒  ${cyan('pages')}: ${pagesDirectory}  ${cyan('indexes')}: ${indexesDirectory}${
 				idx < arr.length - 1 ? '\n    ' : ''
 			}`;
 
