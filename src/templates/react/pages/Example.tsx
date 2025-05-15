@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Head } from '../components/utils/Head';
 import {
 	bodyDefault,

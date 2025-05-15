@@ -7,28 +7,31 @@ import {
 } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { execSync } from 'node:child_process';
 import type { PackageJson, PromptResponse } from './types';
+import type { PackageManager } from './utils';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-export const scaffold = ({
-	projectName,
-	language,
-	codeQualityTool,
-	initializeGit,
-	orm,
-	tailwind,
-	installDependencies,
-	frontendConfigurations
-}: PromptResponse) => {
+export const scaffold = (
+	{
+		projectName,
+		language,
+		codeQualityTool,
+		initializeGit,
+		orm,
+		tailwind,
+		installDependencies,
+		frontendConfigurations
+	}: PromptResponse,
+	packageManager: PackageManager
+) => {
 	const root = projectName;
-	if (existsSync(root)) {
+	if (existsSync(root))
 		throw new Error(
 			`Cannot create project "${projectName}": directory already exists.`
 		);
-	}
 
-	// create base directories
 	mkdirSync(root, { recursive: true });
 	const srcDir = join(root, 'src');
 	mkdirSync(srcDir, { recursive: true });
@@ -37,14 +40,10 @@ export const scaffold = ({
 	mkdirSync(join(srcDir, 'backend'), { recursive: true });
 	mkdirSync(join(srcDir, 'types'), { recursive: true });
 
-	// create db folder at project root if using Drizzle
-	if (orm === 'drizzle') {
-		mkdirSync(join(root, 'db'), { recursive: true });
-	}
+	if (orm === 'drizzle') mkdirSync(join(root, 'db'), { recursive: true });
 
 	const templatesDir = join(__dirname, 'templates');
 
-	// scaffold each frontend
 	frontendConfigurations.forEach(({ name, directory }) => {
 		const targetDir = join(frontendDir, directory);
 		mkdirSync(targetDir, { recursive: true });
@@ -65,7 +64,6 @@ export const scaffold = ({
 		}
 	});
 
-	// copy React styles
 	const hasReact = frontendConfigurations.some((f) => f.name === 'react');
 	if (hasReact) {
 		const reactStylesSrc = join(templatesDir, 'react', 'styles');
@@ -80,7 +78,6 @@ export const scaffold = ({
 		}
 	}
 
-	// copy Tailwind configs if requested
 	if (tailwind) {
 		copyFileSync(
 			join(templatesDir, 'tailwind', 'postcss.config.ts'),
@@ -92,11 +89,10 @@ export const scaffold = ({
 		);
 	}
 
-	// Create the package.json file
-	const dependencies: PackageJson['dependencies'] = {};
-
+	const dependencies: PackageJson['dependencies'] = {
+		elysia: '1.2.0'
+	};
 	const devDependencies: PackageJson['devDependencies'] = {};
-
 	const scripts: PackageJson['scripts'] = {
 		test: 'echo "Error: no test specified" && exit 1',
 		format: 'prettier --write "./**/*.{js,jsx,ts,tsx,css,json}"',
@@ -115,24 +111,18 @@ export const scaffold = ({
 	};
 
 	writeFileSync(join(root, 'package.json'), JSON.stringify(packageJson));
-
-	// copy other files
 	copyFileSync(join(templatesDir, 'README.md'), join(root, 'README.md'));
 
-	if (initializeGit) {
+	if (initializeGit)
 		copyFileSync(
 			join(templatesDir, '.gitignore'),
 			join(root, '.gitignore')
 		);
-	}
-
-	if (language === 'ts') {
+	if (language === 'ts')
 		copyFileSync(
 			join(templatesDir, 'tsconfig.example.json'),
 			join(root, 'tsconfig.json')
 		);
-	}
-
 	if (codeQualityTool === 'eslint+prettier') {
 		copyFileSync(
 			join(templatesDir, 'eslint.config.mjs'),
@@ -146,7 +136,18 @@ export const scaffold = ({
 			join(templatesDir, '.prettierrc.json'),
 			join(root, '.prettierrc.json')
 		);
-	} else {
-		console.warn('⚠️  Biome support not implemented yet');
+	} else console.warn('⚠️  Biome support not implemented yet');
+
+	if (installDependencies) {
+		execSync(
+			packageManager === 'npm'
+				? 'npm install'
+				: packageManager === 'pnpm'
+					? 'pnpm install'
+					: packageManager === 'yarn'
+						? 'yarn install'
+						: 'bun install',
+			{ cwd: root, stdio: 'inherit' }
+		);
 	}
 };

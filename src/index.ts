@@ -49,12 +49,14 @@ let outroMessage =
 	`${green('Created successfully')}, you can now run:\n\n` +
 	`${cyan('cd')} ${response.projectName}\n` +
 	`${cyan(`${packageManager} dev`)}` +
-	(response.installDependencies ? '' : `\n${cyan(`${packageManager} install`)}`);
+	(response.installDependencies
+		? ''
+		: `\n${cyan(`${packageManager} install`)}`);
 
 if (values.summary) {
 	outroMessage += `\n${summaryMessage}`;
 }
 
-scaffold(response);
+scaffold(response, packageManager);
 
 outro(outroMessage);

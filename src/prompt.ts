@@ -237,7 +237,9 @@ export const prompt = async (
 	if (isCancel(initializeGit)) abort();
 
 	// 15. Install dependencies
-	const installDependencies = await confirm({ message: 'Install dependencies now?' });
+	const installDependencies = await confirm({
+		message: 'Install dependencies now?'
+	});
 	if (isCancel(installDependencies)) abort();
 
 	const values: PromptResponse = {
