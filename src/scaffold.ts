@@ -1,4 +1,10 @@
-import { mkdirSync, writeFileSync, copyFileSync } from 'node:fs';
+import {
+	existsSync,
+	mkdirSync,
+	writeFileSync,
+	copyFileSync,
+	cpSync
+} from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { PromptResponse, FrontendConfiguration } from './types';
@@ -13,9 +19,14 @@ export const scaffold = ({
 	frontendConfigurations
 }: PromptResponse) => {
 	const root = projectName;
-	mkdirSync(root, { recursive: true });
 
-	// create src folders: frontend, backend, types
+	if (existsSync(root)) {
+		throw new Error(
+			`Cannot create project "${projectName}": directory already exists.`
+		);
+	}
+
+	mkdirSync(root, { recursive: true });
 	const srcDir = join(root, 'src');
 	mkdirSync(srcDir, { recursive: true });
 	const frontendDir = join(srcDir, 'frontend');
@@ -23,26 +34,45 @@ export const scaffold = ({
 	mkdirSync(join(srcDir, 'backend'), { recursive: true });
 	mkdirSync(join(srcDir, 'types'), { recursive: true });
 
-	// create any additional frontend subdirectories
-	frontendConfigurations.forEach(({ directory }: FrontendConfiguration) => {
-		mkdirSync(join(frontendDir, directory), { recursive: true });
-	});
+	const templatesDir = join(__dirname, 'templates');
 
-	// package.json
-	writeFileSync(
-		join(root, 'package.json'),
-		JSON.stringify({
-			name: projectName,
-			type: 'module',
-			version: '0.1.0'
-		})
+	frontendConfigurations.forEach(
+		({ name, directory }: FrontendConfiguration) => {
+			const targetDir = join(frontendDir, directory);
+			mkdirSync(targetDir, { recursive: true });
+
+			if (name === 'react') {
+				const reactTemplates = join(templatesDir, 'react');
+				cpSync(
+					join(reactTemplates, 'pages'),
+					join(targetDir, 'pages'),
+					{ recursive: true }
+				);
+				cpSync(
+					join(reactTemplates, 'components'),
+					join(targetDir, 'components'),
+					{ recursive: true }
+				);
+				cpSync(
+					join(reactTemplates, 'hooks'),
+					join(targetDir, 'hooks'),
+					{ recursive: true }
+				);
+			}
+		}
 	);
 
-	// README.md (from templates)
-	const templatesDir = join(__dirname, 'templates');
+	writeFileSync(
+		join(root, 'package.json'),
+		JSON.stringify(
+			{ name: projectName, type: 'module', version: '0.1.0' },
+			null,
+			2
+		)
+	);
+
 	copyFileSync(join(templatesDir, 'README.md'), join(root, 'README.md'));
 
-	// optionally add .gitignore
 	if (initializeGit) {
 		copyFileSync(
 			join(templatesDir, '.gitignore'),
@@ -50,7 +80,6 @@ export const scaffold = ({
 		);
 	}
 
-	// tsconfig.json (if TS) — copy example template
 	if (language === 'ts') {
 		copyFileSync(
 			join(templatesDir, 'tsconfig.example.json'),
@@ -58,7 +87,6 @@ export const scaffold = ({
 		);
 	}
 
-	// ESLint + Prettier (from templates) or warn for Biome
 	if (codeQualityTool === 'eslint+prettier') {
 		copyFileSync(
 			join(templatesDir, 'eslint.config.mjs'),
