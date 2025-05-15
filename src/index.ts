@@ -5,7 +5,7 @@ import {
 } from '@clack/prompts';
 import { prompt } from './prompt';
 
-const availableFrameworks: Record<string, string> = {
+const availableFrontends: Record<string, string> = {
 	angular: 'Angular',
 	html: 'HTML',
 	htmx: 'HTMX',
@@ -31,7 +31,7 @@ const {
 	plugins,
 	initGit,
 	installDeps
-} = await prompt(availableFrameworks)
+} = await prompt(availableFrontends)
 
 // Summary
 outro(`
@@ -54,7 +54,7 @@ outro(`
     ${configs
 		.map(
 			({ framework, pages, index }) =>
-				`${availableFrameworks[framework] ?? framework} ⇒ pages: ${pages}, index: ${index}`
+				`${availableFrontends[framework] ?? framework} ⇒ pages: ${pages}, index: ${index}`
 		)
 		.join('\n    ')}
 `);

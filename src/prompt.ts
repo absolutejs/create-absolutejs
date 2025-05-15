@@ -20,7 +20,7 @@ function abort(): never {
 
 type Config = { framework: string; pages: string; index: string };
 
-export async function prompt(availableFrameworks: Record<string, string>) {
+export async function prompt(availableFrontends: Record<string, string>) {
 	const DEFAULT_ARG_LENGTH = 2;
 	const { values } = parseArgs({
 		args: argv.slice(DEFAULT_ARG_LENGTH),
@@ -149,7 +149,7 @@ export async function prompt(availableFrameworks: Record<string, string>) {
 		configs = await frameworks.reduce<Promise<Config[]>>(
 			async (prevP, framework) => {
 				const prev = await prevP;
-				const pretty = availableFrameworks[framework] ?? framework;
+				const pretty = availableFrontends[framework] ?? framework;
 				const base = single
 					? 'src/frontend'
 					: `src/frontend/${framework}`;
