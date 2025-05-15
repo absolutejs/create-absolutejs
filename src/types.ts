@@ -5,8 +5,7 @@ export type FrontendFramework = {
 
 export type FrontendConfiguration = {
 	name: string;
-	pagesDirectory: string;
-	indexesDirectory: string;
+	directory: string;
 };
 
 export type PromptResponse = {

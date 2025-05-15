@@ -158,34 +158,24 @@ export const prompt = async (
 			const prev = await prevP;
 			const pretty = availableFrontends[frontend]?.name ?? frontend;
 			const base = single ? 'src/frontend' : `src/frontend/${frontend}`;
-			const defPages = `${base}/pages`;
-			const defIndex = `${base}/indexes`;
+			const defDir = base;
 
-			const pagesDirectory = await text({
-				message: `${pretty} pages directory:`,
-				placeholder: defPages
+			const frontendDirectory = await text({
+				message: `${pretty} directory:`,
+				placeholder: defDir
 			});
-			if (isCancel(pagesDirectory)) abort();
-			const indexesDirectory = await text({
-				message: `${pretty} index directory:`,
-				placeholder: defIndex
-			});
-			if (isCancel(indexesDirectory)) abort();
+			if (isCancel(frontendDirectory)) abort();
 
 			return [
 				...prev,
-				{ frontend, indexesDirectory, name: frontend, pagesDirectory }
+				{ directory: frontendDirectory, frontend, name: frontend }
 			];
 		}, Promise.resolve([]));
 	} else {
 		frontendConfigurations = frontends.map((frontend) => ({
-			indexesDirectory: `${
-				single ? 'src/frontend' : `src/frontend/${frontend}`
-			}/indexes`,
-			name: frontend,
-			pagesDirectory: `${
-				single ? 'src/frontend' : `src/frontend/${frontend}`
-			}/pages`
+			directory: single ? 'src/frontend' : `src/frontend/${frontend}`,
+			frontend,
+			name: frontend
 		}));
 	}
 

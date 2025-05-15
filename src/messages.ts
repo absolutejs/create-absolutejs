@@ -67,9 +67,9 @@ export const getSummaryMessage = ({
 		frontends.length === 1 ? magenta('Frontend') : magenta('Frontends');
 
 	const configString = frontendConfigurations.reduce(
-		(accumulator, { name, pagesDirectory, indexesDirectory }, idx, arr) => {
+		(accumulator, { name, directory }, idx, arr) => {
 			const label = availableFrontends[name]?.label ?? name;
-			const segment = `${label} ⇒  ${cyan('pages')}: ${pagesDirectory}  ${cyan('indexes')}: ${indexesDirectory}${
+			const segment = `${label}:		${directory}${
 				idx < arr.length - 1 ? '\n    ' : ''
 			}`;
 
