@@ -19,13 +19,13 @@ export const scaffold = ({
 	frontendConfigurations
 }: PromptResponse) => {
 	const root = projectName;
-
 	if (existsSync(root)) {
 		throw new Error(
 			`Cannot create project "${projectName}": directory already exists.`
 		);
 	}
 
+	// create base directories
 	mkdirSync(root, { recursive: true });
 	const srcDir = join(root, 'src');
 	mkdirSync(srcDir, { recursive: true });
@@ -36,6 +36,7 @@ export const scaffold = ({
 
 	const templatesDir = join(__dirname, 'templates');
 
+	// scaffold each frontend
 	frontendConfigurations.forEach(
 		({ name, directory }: FrontendConfiguration) => {
 			const targetDir = join(frontendDir, directory);
@@ -62,6 +63,24 @@ export const scaffold = ({
 		}
 	);
 
+	// copy React styles
+	const hasReact = frontendConfigurations.some((f) => f.name === 'react');
+	if (hasReact) {
+		const reactStylesSrc = join(templatesDir, 'react', 'styles');
+		const stylesDir = join(frontendDir, 'styles');
+
+		if (frontendConfigurations.length === 1) {
+			// only React: copy entire styles folder
+			cpSync(reactStylesSrc, stylesDir, { recursive: true });
+		} else {
+			// multiple frameworks: copy default into react/defaults
+			const dest = join(stylesDir, 'react', 'defaults');
+			mkdirSync(dest, { recursive: true });
+			cpSync(join(reactStylesSrc, 'default'), dest, { recursive: true });
+		}
+	}
+
+	// write package.json and other files
 	writeFileSync(
 		join(root, 'package.json'),
 		JSON.stringify(
@@ -70,7 +89,6 @@ export const scaffold = ({
 			2
 		)
 	);
-
 	copyFileSync(join(templatesDir, 'README.md'), join(root, 'README.md'));
 
 	if (initializeGit) {
