@@ -9,7 +9,7 @@ import {
 } from '@clack/prompts';
 import colors from 'picocolors';
 import type {
-	AvailableProvider,
+	AvailablePlugin,
 	FrontendConfiguration,
 	FrontendFramework,
 	PromptResponse
@@ -26,7 +26,7 @@ function abort(): never {
 
 export const prompt = async (
 	availableFrontends: Record<string, FrontendFramework>,
-	availablePlugins: AvailableProvider[]
+	availablePlugins: AvailablePlugin[]
 ) => {
 	// 1. Project name
 	const projectName = await text({
