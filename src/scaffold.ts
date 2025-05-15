@@ -16,8 +16,9 @@ export const scaffold = ({
 	language,
 	codeQualityTool,
 	initializeGit,
+	orm,
 	frontendConfigurations
-}: PromptResponse) => {
+}: PromptResponse & { orm: 'drizzle' | 'prisma' | undefined }) => {
 	const root = projectName;
 	if (existsSync(root)) {
 		throw new Error(
@@ -34,34 +35,33 @@ export const scaffold = ({
 	mkdirSync(join(srcDir, 'backend'), { recursive: true });
 	mkdirSync(join(srcDir, 'types'), { recursive: true });
 
+	// create db folder at project root if using Drizzle
+	if (orm === 'drizzle') {
+		mkdirSync(join(root, 'db'), { recursive: true });
+	}
+
 	const templatesDir = join(__dirname, 'templates');
 
 	// scaffold each frontend
-	frontendConfigurations.forEach(
-		({ name, directory }: FrontendConfiguration) => {
-			const targetDir = join(frontendDir, directory);
-			mkdirSync(targetDir, { recursive: true });
+	frontendConfigurations.forEach(({ name, directory }) => {
+		const targetDir = join(frontendDir, directory);
+		mkdirSync(targetDir, { recursive: true });
 
-			if (name === 'react') {
-				const reactTemplates = join(templatesDir, 'react');
-				cpSync(
-					join(reactTemplates, 'pages'),
-					join(targetDir, 'pages'),
-					{ recursive: true }
-				);
-				cpSync(
-					join(reactTemplates, 'components'),
-					join(targetDir, 'components'),
-					{ recursive: true }
-				);
-				cpSync(
-					join(reactTemplates, 'hooks'),
-					join(targetDir, 'hooks'),
-					{ recursive: true }
-				);
-			}
+		if (name === 'react') {
+			const reactTemplates = join(templatesDir, 'react');
+			cpSync(join(reactTemplates, 'pages'), join(targetDir, 'pages'), {
+				recursive: true
+			});
+			cpSync(
+				join(reactTemplates, 'components'),
+				join(targetDir, 'components'),
+				{ recursive: true }
+			);
+			cpSync(join(reactTemplates, 'hooks'), join(targetDir, 'hooks'), {
+				recursive: true
+			});
 		}
-	);
+	});
 
 	// copy React styles
 	const hasReact = frontendConfigurations.some((f) => f.name === 'react');
@@ -70,10 +70,8 @@ export const scaffold = ({
 		const stylesDir = join(frontendDir, 'styles');
 
 		if (frontendConfigurations.length === 1) {
-			// only React: copy entire styles folder
 			cpSync(reactStylesSrc, stylesDir, { recursive: true });
 		} else {
-			// multiple frameworks: copy default into react/defaults
 			const dest = join(stylesDir, 'react', 'defaults');
 			mkdirSync(dest, { recursive: true });
 			cpSync(join(reactStylesSrc, 'default'), dest, { recursive: true });

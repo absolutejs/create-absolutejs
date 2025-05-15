@@ -45,10 +45,11 @@ const summaryMessage = getSummaryMessage({
 	response
 });
 
-let outroMessage = `${green('Created successfully')}, you can now run:\n
-${cyan('cd')} ${response.projectName}
-${cyan(`${packageManager} dev`)}
-${response.installDeps ? cyan(`${packageManager} install`) : ''}`;
+let outroMessage =
+	`${green('Created successfully')}, you can now run:\n\n` +
+	`${cyan('cd')} ${response.projectName}\n` +
+	`${cyan(`${packageManager} dev`)}` +
+	(response.installDeps ? '' : `\n${cyan(`${packageManager} install`)}`);
 
 if (values.summary) {
 	outroMessage += `\n${summaryMessage}`;
