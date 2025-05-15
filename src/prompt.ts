@@ -174,15 +174,15 @@ export const prompt = async (
 
 			return [
 				...prev,
-				{ frontend, indexesDirectory, pagesDirectory, name: frontend }
+				{ frontend, indexesDirectory, name: frontend, pagesDirectory }
 			];
 		}, Promise.resolve([]));
 	} else {
 		frontendConfigurations = frontends.map((frontend) => ({
-			name: frontend,
 			indexesDirectory: `${
 				single ? 'src/frontend' : `src/frontend/${frontend}`
 			}/indexes`,
+			name: frontend,
 			pagesDirectory: `${
 				single ? 'src/frontend' : `src/frontend/${frontend}`
 			}/pages`

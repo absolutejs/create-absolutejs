@@ -39,9 +39,9 @@ if (values.help) {
 
 const response = await prompt(availableFrontends);
 const summaryMessage = getSummaryMessage({
-	response,
+	availableFrontends,
 	packageManager,
-	availableFrontends
+	response
 });
 
 let outroMessage = `${green('Created successfully')}, you can now run:\n

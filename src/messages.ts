@@ -57,40 +57,46 @@ export const getSummaryMessage = ({
 	}
 
 	const htmlScriptingLine = frontends.includes('html')
-		? `\nHTML Scripting:   ${htmlScriptingValue}`
+		? `\n${magenta('HTML Scripting')}:   	${htmlScriptingValue}`
 		: '';
 
+	const frontendLabels = frontends.map(
+		(name) => availableFrontends[name]?.label ?? name
+	);
+	const frontendHeading =
+		frontends.length === 1 ? magenta('Frontend') : magenta('Frontends');
+
 	const configString = frontendConfigurations.reduce(
-		(acc, { name, pagesDirectory, indexesDirectory }, idx, arr) => {
+		(accumulator, { name, pagesDirectory, indexesDirectory }, idx, arr) => {
 			const label = availableFrontends[name]?.label ?? name;
-			acc += `${label}     ⇒     ${cyan('pages')}: ${pagesDirectory}  ${cyan('indexes')}: ${indexesDirectory}`;
-			if (idx < arr.length - 1) {
-				acc += '\n    ';
-			}
-			return acc;
+			const segment = `${label} ⇒ ${cyan('pages')}: ${pagesDirectory}  ${cyan('indexes')}: ${indexesDirectory}${
+				idx < arr.length - 1 ? '\n    ' : ''
+			}`;
+
+			return accumulator + segment;
 		},
 		''
 	);
 
 	const tailwindSection = tailwind
-		? `\n    ${cyan('Input')}:	    ${tailwind.input}\n    ${cyan('Output')}:	    ${tailwind.output}`
+		? `\n    ${cyan('Input')}:          	${tailwind.input}\n    ${cyan('Output')}:         	${tailwind.output}`
 		: dim('None');
 
 	return `
-${magenta('Project Name')}:       ${projectName}
-${magenta('Package Manager')}:    ${packageManager}
-${magenta('Language')}:           ${language === 'ts' ? blueBright('TypeScript') : yellow('JavaScript')}
-${magenta('Linting')}:            ${codeQualityTool === 'eslint+prettier' ? 'ESLint + Prettier' : 'Biome'}
-${magenta('Tailwind')}:           ${tailwindSection}
-${magenta('Frontend(s)')}:        ${frontends.join(', ')}${htmlScriptingLine}
-${magenta('Build Directory')}:    ${buildDir}
-${magenta('Assets Directory')}:   ${assetsDir}
-${magenta('Database')}:           ${dbProvider === 'none' ? dim('None') : dbProvider}
-${magenta('ORM')}:                ${orm ?? dim('None')}
-${magenta('Auth')}:               ${authProvider === 'none' ? dim('None') : authProvider}
-${magenta('Plugins')}:            ${plugins.length ? plugins.join(', ') : dim('None')}
-${magenta('Git Repository')}:     ${initializeGit ? green('Initialized') : dim('None')}
-${magenta('Install Deps')}:       ${installDeps ? green('Yes') : red('No')}
+${magenta('Project Name')}:       	${projectName}
+${magenta('Package Manager')}:    	${packageManager}
+${magenta('Language')}:           	${language === 'ts' ? blueBright('TypeScript') : yellow('JavaScript')}
+${magenta('Linting')}:            	${codeQualityTool === 'eslint+prettier' ? 'ESLint + Prettier' : 'Biome'}
+${magenta('Tailwind')}:           	${tailwindSection}
+${frontendHeading}:           	${frontendLabels.join(', ')}${htmlScriptingLine}
+${magenta('Build Directory')}:    	${buildDir}
+${magenta('Assets Directory')}:   	${assetsDir}
+${magenta('Database')}:           	${dbProvider === 'none' ? dim('None') : dbProvider}
+${magenta('ORM')}:                	${orm ?? dim('None')}
+${magenta('Auth')}:               	${authProvider === 'none' ? dim('None') : authProvider}
+${magenta('Plugins')}:            	${plugins.length ? plugins.join(', ') : dim('None')}
+${magenta('Git Repository')}:     	${initializeGit ? green('Initialized') : dim('None')}
+${magenta('Install Dependencies')}:   ${installDeps ? green('Yes') : red('No')}
 ${magenta('Framework Config')}:
     ${configString}`;
 };
