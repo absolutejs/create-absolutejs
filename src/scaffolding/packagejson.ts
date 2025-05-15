@@ -1,17 +1,26 @@
 import { writeFileSync } from 'fs';
 import { join } from 'path';
-import type { AvailablePlugin, PackageJson } from '../types';
+import { availablePlugins } from '../data';
+import type { PackageJson } from '../types';
 
 export const createPackageJson = (
 	root: string,
 	projectName: string,
-	plugins: AvailablePlugin[]
+	plugins: string[]
 ) => {
 	const dependencies: PackageJson['dependencies'] = {
-		elysia: '1.2.0',
-        
+		elysia: '1.3.0'
 	};
+
+	plugins.forEach((plugin) => {
+		const foundPlugin = availablePlugins.find((p) => p.value === plugin);
+		if (foundPlugin) {
+			dependencies[foundPlugin.value] = foundPlugin.latestVersion;
+		}
+	});
+
 	const devDependencies: PackageJson['devDependencies'] = {};
+
 	const scripts: PackageJson['scripts'] = {
 		dev: 'bun run src/index.ts',
 		format: 'prettier --write "./**/*.{js,jsx,ts,tsx,css,json}"',

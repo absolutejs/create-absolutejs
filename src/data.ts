@@ -17,15 +17,15 @@ export const availableFrontends: Record<string, FrontendFramework> = {
 export const availablePlugins: AvailablePlugin[] = [
 	{
 		import: 'staticPlugin',
-		label: cyan('📦 @elysia-static'),
-		latestVersion: getPackageVersion('@elysia-static') ?? '0.0.0',
-		value: '@elysia-static'
+		label: cyan('📦 @elysiajs/static'),
+		latestVersion: getPackageVersion('@elysiajs/static') ?? '0.0.0',
+		value: '@elysiajs/static'
 	},
 	{
 		import: 'cors',
-		label: cyan('⚙️ @elysia-cors'),
-		latestVersion: getPackageVersion('@elysia-cors') ?? '0.0.0',
-		value: '@elysia-cors'
+		label: cyan('⚙️ @elysiajs/cors'),
+		latestVersion: getPackageVersion('@elysiajs/cors') ?? '0.0.0',
+		value: '@elysiajs/cors'
 	},
 	{
 		import: 'swagger',

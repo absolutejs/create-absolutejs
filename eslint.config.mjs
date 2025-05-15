@@ -16,7 +16,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url))
 
 export default defineConfig([
   {
-    ignores: ['dist/**']
+    ignores: ['dist/**','absolutejs-project/**']
   },
 
   pluginJs.configs.recommended,

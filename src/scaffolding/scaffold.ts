@@ -1,19 +1,14 @@
 import { execSync } from 'node:child_process';
-import {
-	existsSync,
-	mkdirSync,
-	writeFileSync,
-	copyFileSync,
-	cpSync
-} from 'node:fs';
+import { existsSync, mkdirSync, copyFileSync, cpSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { exit } from 'node:process';
 import { fileURLToPath } from 'node:url';
 import { spinner } from '@clack/prompts';
 import { dim, yellow } from 'picocolors';
 import { availablePlugins } from '../data';
-import type { PackageJson, PromptResponse } from '../types';
+import type { PromptResponse } from '../types';
 import type { PackageManager } from '../utils/t3-utils';
+import { createPackageJson } from './packagejson';
 import { createServerFile } from './server';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -103,28 +98,8 @@ export const scaffold = (
 		);
 	}
 
-	const dependencies: PackageJson['dependencies'] = {
-		elysia: '1.2.0'
-	};
-	const devDependencies: PackageJson['devDependencies'] = {};
-	const scripts: PackageJson['scripts'] = {
-		dev: 'bun run src/index.ts',
-		format: 'prettier --write "./**/*.{js,jsx,ts,tsx,css,json}"',
-		lint: 'eslint ./src',
-		test: 'echo "Error: no test specified" && exit 1',
-		typecheck: 'bun run tsc --noEmit'
-	};
+	createPackageJson(root, projectName, plugins);
 
-	const packageJson: PackageJson = {
-		dependencies,
-		devDependencies,
-		name: projectName,
-		scripts,
-		type: 'module',
-		version: '0.1.0'
-	};
-
-	writeFileSync(join(root, 'package.json'), JSON.stringify(packageJson));
 	copyFileSync(join(templatesDir, 'README.md'), join(root, 'README.md'));
 
 	if (initializeGit)
@@ -172,9 +147,20 @@ export const scaffold = (
 	try {
 		execSync(cmd, { cwd: root, stdio: 'pipe' });
 		s.stop('Dependencies installed');
+
+		const formatCmds: Record<string, string> = {
+			bun: 'bun run format',
+			npm: 'npm run format',
+			pnpm: 'pnpm run format',
+			yarn: 'yarn format'
+		};
+		const fmt = formatCmds[packageManager] ?? 'bun run format';
+		s.start('Formatting files…');
+		execSync(fmt, { cwd: root, stdio: 'pipe' });
+		s.stop('Files formatted');
 	} catch (err) {
 		s.stop('Installation failed');
-		console.error('Error installing dependencies:', err);
+		console.error('Error installing dependencies or formatting:', err);
 		exit(1);
 	}
 };
