@@ -1,12 +1,13 @@
+import { env } from 'bun';
 import { defineConfig } from 'drizzle-kit';
 
-if (!process.env.DATABASE_URL) {
+if (env.DATABASE_URL === undefined) {
 	throw new Error('DATABASE_URL must be set in the environment variables');
 }
 
 export default defineConfig({
-	dialect: 'postgresql',
 	dbCredentials: {
-		url: process.env.DATABASE_URL
-	}
+		url: env.DATABASE_URL
+	},
+	dialect: 'postgresql'
 });

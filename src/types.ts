@@ -55,7 +55,7 @@ export interface PackageJson {
 	private?: boolean;
 	publishConfig?: {
 		registry?: string;
-		[key: string]: any;
+		[key: string]: unknown;
 	};
 
 	// Dependencies
@@ -96,8 +96,8 @@ export interface PackageJson {
 	sideEffects?: boolean | string[];
 
 	// Misc
-	config?: Record<string, any>;
+	config?: Record<string, unknown>;
 	resolution?: Record<string, string>;
 	resolutions?: Record<string, string>;
-	[customField: string]: any;
+	[customField: string]: unknown;
 }

@@ -1,3 +1,4 @@
+import { execSync } from 'node:child_process';
 import {
 	existsSync,
 	mkdirSync,
@@ -6,8 +7,9 @@ import {
 	cpSync
 } from 'node:fs';
 import { join, dirname } from 'node:path';
+import { exit } from 'node:process';
 import { fileURLToPath } from 'node:url';
-import { execSync } from 'node:child_process';
+import { spinner } from '@clack/prompts';
 import type { PackageJson, PromptResponse } from './types';
 import type { PackageManager } from './utils';
 
@@ -65,17 +67,19 @@ export const scaffold = (
 	});
 
 	const hasReact = frontendConfigurations.some((f) => f.name === 'react');
-	if (hasReact) {
-		const reactStylesSrc = join(templatesDir, 'react', 'styles');
-		const stylesDir = join(frontendDir, 'styles');
+	const reactStylesSrc = join(templatesDir, 'react', 'styles');
+	const stylesDir = join(frontendDir, 'styles');
+	const isSingle = hasReact && frontendConfigurations.length === 1;
+	const isMulti = hasReact && frontendConfigurations.length > 1;
 
-		if (frontendConfigurations.length === 1) {
-			cpSync(reactStylesSrc, stylesDir, { recursive: true });
-		} else {
-			const dest = join(stylesDir, 'react', 'defaults');
-			mkdirSync(dest, { recursive: true });
-			cpSync(join(reactStylesSrc, 'default'), dest, { recursive: true });
-		}
+	if (isSingle) {
+		cpSync(reactStylesSrc, stylesDir, { recursive: true });
+	}
+
+	if (isMulti) {
+		const dest = join(stylesDir, 'react', 'defaults');
+		mkdirSync(dest, { recursive: true });
+		cpSync(join(reactStylesSrc, 'default'), dest, { recursive: true });
 	}
 
 	if (tailwind) {
@@ -94,20 +98,20 @@ export const scaffold = (
 	};
 	const devDependencies: PackageJson['devDependencies'] = {};
 	const scripts: PackageJson['scripts'] = {
-		test: 'echo "Error: no test specified" && exit 1',
-		format: 'prettier --write "./**/*.{js,jsx,ts,tsx,css,json}"',
 		dev: 'bun run src/index.ts',
+		format: 'prettier --write "./**/*.{js,jsx,ts,tsx,css,json}"',
 		lint: 'eslint ./src',
+		test: 'echo "Error: no test specified" && exit 1',
 		typecheck: 'bun run tsc --noEmit'
 	};
 
 	const packageJson: PackageJson = {
-		name: projectName,
-		type: 'module',
-		version: '0.1.0',
 		dependencies,
 		devDependencies,
-		scripts
+		name: projectName,
+		scripts,
+		type: 'module',
+		version: '0.1.0'
 	};
 
 	writeFileSync(join(root, 'package.json'), JSON.stringify(packageJson));
@@ -138,16 +142,26 @@ export const scaffold = (
 		);
 	} else console.warn('⚠️  Biome support not implemented yet');
 
-	if (installDependencies) {
-		execSync(
-			packageManager === 'npm'
-				? 'npm install'
-				: packageManager === 'pnpm'
-					? 'pnpm install'
-					: packageManager === 'yarn'
-						? 'yarn install'
-						: 'bun install',
-			{ cwd: root, stdio: 'inherit' }
-		);
+	if (!installDependencies) return;
+
+	const s = spinner();
+	s.start('Installing dependencies…');
+
+	const commands: Record<string, string> = {
+		bun: 'bun install',
+		npm: 'npm install',
+		pnpm: 'pnpm install',
+		yarn: 'yarn install'
+	};
+
+	const cmd = commands[packageManager] ?? 'bun install';
+
+	try {
+		execSync(cmd, { cwd: root, stdio: 'pipe' });
+		s.stop('Dependencies installed');
+	} catch (err) {
+		s.stop('Installation failed');
+		console.error('Error installing dependencies:', err);
+		exit(1);
 	}
 };

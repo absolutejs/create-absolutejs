@@ -29,14 +29,18 @@ export const Example = () => {
 							src="/assets/svg/react-logo.svg"
 							alt="React logo"
 							style={{
-								height: 145,
-								animation: 'spin 20s linear infinite'
+								animation: 'spin 20s linear infinite',
+								height: 145
 							}}
 						/>
 					</a>
 					<h1>AbsoluteJS + React</h1>
 					<div>
-						<button onClick={() => setCount((c) => c + 1)}>
+						<button
+							onClick={() =>
+								setCount((prevCount) => prevCount + 1)
+							}
+						>
 							count is {count}
 						</button>
 					</div>

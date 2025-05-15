@@ -1,106 +1,102 @@
+// eslint.config.mjs
+import { dirname } from 'path';
+import { fileURLToPath } from 'url';
 import pluginJs from '@eslint/js';
 import stylisticTs from '@stylistic/eslint-plugin-ts';
 import tsParser from '@typescript-eslint/parser';
-import { defineConfig } from "eslint/config";
+import { defineConfig } from 'eslint/config';
+import absolutePlugin from 'eslint-plugin-absolute';
 import importPlugin from 'eslint-plugin-import';
-import jsxA11y from 'eslint-plugin-jsx-a11y';
-import promise from 'eslint-plugin-promise';
-import pluginReact from 'eslint-plugin-react';
-import reactCompiler from 'eslint-plugin-react-compiler';
-import pluginReactHooks from 'eslint-plugin-react-hooks';
-import security from 'eslint-plugin-security';
+import jsxA11yPlugin from 'eslint-plugin-jsx-a11y';
+import promisePlugin from 'eslint-plugin-promise';
+import reactPlugin from 'eslint-plugin-react';
+import reactCompilerPlugin from 'eslint-plugin-react-compiler';
+import reactHooksPlugin from 'eslint-plugin-react-hooks';
+import securityPlugin from 'eslint-plugin-security';
 import globals from 'globals';
 import tseslint from 'typescript-eslint';
-import custom from './eslint/custom-rules-plugin.js';
-import { overrides } from './eslint/overrides.js';
-import { restrictedSyntax } from './eslint/restrictedSyntax.js';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig([
-	// Global file patterns and environments
-	{ files: ['**/*.{js,mjs,cjs,ts,jsx,tsx}'] },
-	{ languageOptions: { globals: globals.browser } },
-	jsxA11y.flatConfigs.recommended,
 	pluginJs.configs.recommended,
+
 	...tseslint.configs.recommended,
-	pluginReact.configs.flat.recommended,
+
 	{
-		// TypeScript parser options for TS files
+		files: ['**/*.{ts,tsx}'],
 		languageOptions: {
+			globals: globals.browser,
 			parser: tsParser,
-			parserOptions: { project: './tsconfig.json' }
+			parserOptions: {
+				createDefaultProgram: true,
+				project: './tsconfig.json',
+				tsconfigRootDir: __dirname
+			}
 		}
 	},
+
 	{
-		plugins: {
-			'@stylistic/ts': stylisticTs,
-			custom: custom,
-			import: importPlugin,
-			promise: promise,
-			'react-compiler': reactCompiler,
-			'react-hooks': pluginReactHooks,
-			security: security
-		},
+		files: ['**/*.{ts,tsx}'],
+		plugins: { '@stylistic/ts': stylisticTs },
 		rules: {
 			'@stylistic/ts/padding-line-between-statements': [
 				'error',
+				{ blankLine: 'always', next: 'return', prev: '*' }
+			]
+		}
+	},
+
+	{
+		files: ['**/*.{js,mjs,cjs,ts,tsx,jsx}'],
+		ignores: ['example/build/**'],
+		plugins: {
+			absolute: absolutePlugin,
+			import: importPlugin,
+			promise: promisePlugin,
+			security: securityPlugin
+		},
+		rules: {
+			'absolute/explicit-object-types': 'error',
+			'absolute/localize-react-props': 'error',
+			'absolute/max-depth-extended': ['error', 1],
+			'absolute/max-jsxnesting': ['error', 5],
+			'absolute/min-var-length': [
+				'error',
+				{ allowedVars: ['_', 'id', 'db', 'OK'], minLength: 3 }
+			],
+			'absolute/no-button-navigation': 'error',
+			'absolute/no-explicit-return-type': 'error',
+			'absolute/no-inline-prop-types': 'error',
+			'absolute/no-multi-style-objects': 'error',
+			'absolute/no-nested-jsx-return': 'error',
+			'absolute/no-or-none-component': 'error',
+			'absolute/no-transition-cssproperties': 'error',
+			'absolute/no-type-cast': 'error',
+			'absolute/no-unnecessary-div': 'error',
+			'absolute/no-unnecessary-key': 'error',
+			'absolute/no-useless-function': 'error',
+			'absolute/seperate-style-files': 'error',
+			'absolute/sort-exports': [
+				'error',
 				{
-					blankLine: 'always',
-					next: 'return',
-					prev: '*'
+					caseSensitive: true,
+					natural: true,
+					order: 'asc',
+					variablesBeforeFunctions: true
 				}
 			],
-			'@typescript-eslint/consistent-type-definitions': ['error', 'type'],
-			'@typescript-eslint/no-confusing-void-expression': 'error',
-			'@typescript-eslint/no-duplicate-enum-values': 'error',
-			'@typescript-eslint/no-duplicate-type-constituents': 'error',
-			'@typescript-eslint/no-empty-object-type': 'error',
-			'@typescript-eslint/no-explicit-any': 'error',
-			'@typescript-eslint/no-floating-promises': 'error',
-			'@typescript-eslint/no-non-null-assertion': 'error',
-			'@typescript-eslint/prefer-nullish-coalescing': 'error',
-			'@typescript-eslint/strict-boolean-expressions': 'error',
+			'absolute/sort-keys-fixable': [
+				'error',
+				{
+					caseSensitive: true,
+					natural: true,
+					order: 'asc',
+					variablesBeforeFunctions: true
+				}
+			],
 			'arrow-body-style': ['error', 'as-needed'],
 			'consistent-return': 'error',
-			'custom/explicit-object-types': 'error',
-			'custom/localize-react-props': 'error',
-			'custom/max-depth-extended': ['error', 1],
-			'custom/max-jsxnesting': ['error', 5],
-			'custom/min-var-length': [
-				'error',
-				{ allowedVars: ['_', 'id', 'db'], minLength: 3 }
-			],
-			'custom/no-button-navigation': 'error',
-			'custom/no-explicit-return-type': 'error',
-			'custom/no-inline-prop-types': 'error',
-			'custom/no-multi-style-objects': 'error',
-			'custom/no-nested-jsx-return': 'error',
-			'custom/no-or-none-component': 'error',
-			'custom/no-transition-cssproperties': 'error',
-			'custom/no-type-cast': 'error',
-			'custom/no-unnecessary-div': 'error',
-			'custom/no-unnecessary-key': 'error',
-			// 'custom/spring-naming-convention': 'error', // TODO: Chris first task uncomment and fix
-			// 'custom/inline-style-limit': ['error', 3], // TODO: Chris first task uncomment and fix
-			'custom/no-useless-function': 'error',
-			'custom/seperate-style-files': 'error',
-			'custom/sort-exports': [
-				'error',
-				{
-					caseSensitive: true,
-					natural: true,
-					order: 'asc',
-					variablesBeforeFunctions: true
-				}
-			],
-			'custom/sort-keys-fixable': [
-				'error',
-				{
-					caseSensitive: true,
-					natural: true,
-					order: 'asc',
-					variablesBeforeFunctions: true
-				}
-			],
 			eqeqeq: 'error',
 			'func-style': [
 				'error',
@@ -110,14 +106,8 @@ export default defineConfig([
 			'import/no-cycle': 'error',
 			'import/no-default-export': 'error',
 			'import/no-relative-packages': 'error',
-			'import/no-unused-modules': [
-				'error',
-				{
-					missingExports: true
-				}
-			],
+			'import/no-unused-modules': ['error', { missingExports: true }],
 			'import/order': ['error', { alphabetize: { order: 'asc' } }],
-			'jsx-a11y/prefer-tag-over-role': 'error',
 			'no-await-in-loop': 'error',
 			'no-console': ['error', { allow: ['warn', 'error'] }],
 			'no-debugger': 'error',
@@ -149,19 +139,17 @@ export default defineConfig([
 						{
 							importNames: ['default'],
 							message:
-								'Importing the entire React object is not allowed. Please import only the required exports for better tree shaking.',
+								'Import only named React exports for tree-shaking.',
 							name: 'react'
 						},
 						{
 							importNames: ['default'],
-							message:
-								'Importing the entire Bun object is not allowed. Please import only the required exports for better tree shaking.',
+							message: 'Import only the required Bun exports.',
 							name: 'bun'
 						}
 					]
 				}
 			],
-			'no-restricted-syntax': ['error', ...restrictedSyntax],
 			'no-return-await': 'error',
 			'no-shadow': 'error',
 			'no-undef': 'error',
@@ -186,7 +174,19 @@ export default defineConfig([
 			'promise/no-nesting': 'warn',
 			'promise/no-promise-in-callback': 'warn',
 			'promise/no-return-wrap': 'error',
-			'promise/param-names': 'error',
+			'promise/param-names': 'error'
+		}
+	},
+	{
+		files: ['example/**/*.{js,jsx,ts,tsx}'],
+		plugins: {
+			'jsx-a11y': jsxA11yPlugin,
+			react: reactPlugin,
+			'react-compiler': reactCompilerPlugin,
+			'react-hooks': reactHooksPlugin
+		},
+		rules: {
+			'jsx-a11y/prefer-tag-over-role': 'error',
 			'react-compiler/react-compiler': 'error',
 			'react-hooks/exhaustive-deps': 'warn',
 			'react-hooks/rules-of-hooks': 'error',
@@ -203,10 +203,41 @@ export default defineConfig([
 			'react/self-closing-comp': 'error'
 		},
 		settings: {
-			react: {
-				version: 'detect'
-			}
+			react: { version: 'detect' }
 		}
 	},
-	...overrides
+	{
+		files: [
+			'example/server.ts',
+			'example/indexes/*.tsx',
+			'example/db/migrate.ts'
+		],
+		rules: {
+			'import/no-unused-modules': 'off'
+		}
+	},
+	{
+		files: ['example/db/migrate.ts','example/utils/absoluteAuthConfig.ts'],
+		rules: {
+			'no-console': 'off'
+		}
+	},
+	{
+		files: ['eslint.config.mjs'],
+		rules: {
+			'no-magic-numbers': 'off'
+		}
+	},
+	{
+		files: ['eslint.config.mjs'],
+		rules: {
+			'import/no-default-export': 'off'
+		}
+	},
+	{
+		files: ['example/db/schema.ts'],
+		rules: {
+			'absolute/explicit-object-types': 'off'
+		}
+	}
 ]);
