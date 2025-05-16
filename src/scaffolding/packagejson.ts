@@ -1,23 +1,34 @@
 import { writeFileSync } from 'fs';
 import { join } from 'path';
-import { availablePlugins, defaultPlugins } from '../data';
-import type { PackageJson } from '../types';
+import { absoluteAuthPlugin, availablePlugins, defaultPlugins } from '../data';
+import type { AuthProvier, PackageJson } from '../types';
 import { getPackageVersion } from '../utils/getPackageVersion';
 
-export const createPackageJson = (
-	root: string,
-	projectName: string,
-	plugins: string[],
+type CreatePackageJsonProps = {
+	root: string;
+	authProvider: AuthProvier;
+	projectName: string;
+	plugins: string[];
 	spin: {
 		start: (msg?: string) => void;
 		stop: (msg?: string, code?: number) => void;
 		message: (msg?: string) => void;
-	}
-) => {
+	};
+};
+
+export const createPackageJson = ({
+	root,
+	projectName,
+	authProvider,
+	plugins,
+	spin
+}: CreatePackageJsonProps) => {
 	spin.message('Getting latest package versions…');
 
+	const authPlugin =
+		authProvider === 'absoluteAuth' ? absoluteAuthPlugin : [];
 	const dependencies: PackageJson['dependencies'] = {};
-	for (const p of defaultPlugins) {
+	for (const p of defaultPlugins.concat(authPlugin)) {
 		const version = getPackageVersion(p.value);
 		dependencies[p.value] = version ?? p.latestVersion;
 	}

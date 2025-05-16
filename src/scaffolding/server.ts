@@ -1,20 +1,22 @@
 import { writeFileSync } from 'fs';
-import { defaultDependencies, defaultPlugins } from '../data';
-import type { AvailableDependency } from '../types';
+import {
+	absoluteAuthPlugin,
+	defaultDependencies,
+	defaultPlugins
+} from '../data';
+import type {
+	AuthProvier,
+	AvailableDependency,
+	FrontendConfiguration,
+	TailwindConfig
+} from '../types';
 
 type CreateServerFileProps = {
-	tailwind:
-		| {
-				input: string;
-				output: string;
-		  }
-		| undefined;
-	frontendConfigurations: {
-		name: string;
-		directory: string;
-	}[];
+	tailwind: TailwindConfig;
+	frontendConfigurations: FrontendConfiguration[];
 	serverFilePath: string;
 	availablePlugins: AvailableDependency[];
+	authProvider: AuthProvier;
 	plugins: string[];
 	buildDir: string;
 	assetsDir: string;
@@ -24,13 +26,20 @@ export const createServerFile = ({
 	tailwind,
 	frontendConfigurations,
 	serverFilePath,
+	authProvider,
 	availablePlugins,
 	buildDir,
 	assetsDir,
 	plugins
 }: CreateServerFileProps) => {
 	const custom = availablePlugins.filter((p) => plugins.includes(p.value));
-	const allDeps = defaultDependencies.concat(defaultPlugins, custom);
+	const authPlugin =
+		authProvider === 'absoluteAuth' ? [absoluteAuthPlugin] : [];
+	const allDeps = defaultDependencies.concat(
+		defaultPlugins,
+		custom,
+		authPlugin
+	);
 
 	const uniqueDeps = allDeps
 		.reduce<AvailableDependency[]>(

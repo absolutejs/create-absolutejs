@@ -6,7 +6,7 @@ import { cyan, green } from 'picocolors';
 import { availableFrontends } from './data';
 import { getSummaryMessage, helpMessage } from './messages';
 import { prompt } from './prompt';
-import { scaffold } from './scaffolding/scaffold';
+import { scaffold } from './scaffold';
 import { getUserPackageManager } from './utils/t3-utils';
 
 const DEFAULT_ARG_LENGTH = 2;

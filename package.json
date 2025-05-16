@@ -22,6 +22,7 @@
 		"release": "bun run format && bun run build && bun publish"
 	},
 	"devDependencies": {
+		"@absolutejs/auth": "0.8.0",
 		"@stylistic/eslint-plugin-ts": "4.2.0",
 		"@types/bun": "latest",
 		"@types/react": "19.1.4",

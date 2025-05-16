@@ -5,11 +5,11 @@ import { exit } from 'node:process';
 import { fileURLToPath } from 'node:url';
 import { spinner } from '@clack/prompts';
 import { dim, yellow } from 'picocolors';
-import { availablePlugins } from '../data';
-import type { PromptResponse } from '../types';
-import type { PackageManager } from '../utils/t3-utils';
-import { createPackageJson } from './packagejson';
-import { createServerFile } from './server';
+import { availablePlugins } from './data';
+import { createPackageJson } from './scaffolding/packagejson';
+import { createServerFile } from './scaffolding/server';
+import type { PromptResponse } from './types';
+import type { PackageManager } from './utils/t3-utils';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -21,6 +21,7 @@ export const scaffold = (
 		initializeGit,
 		orm,
 		plugins,
+		authProvider,
 		buildDir,
 		assetsDir,
 		tailwind,
@@ -49,6 +50,7 @@ export const scaffold = (
 	const serverFilePath = join(backendDir, 'server.ts');
 	createServerFile({
 		assetsDir,
+		authProvider,
 		availablePlugins,
 		buildDir,
 		frontendConfigurations,
@@ -59,7 +61,7 @@ export const scaffold = (
 
 	if (orm === 'drizzle') mkdirSync(join(root, 'db'), { recursive: true });
 
-	const templatesDir = join(__dirname, '../templates');
+	const templatesDir = join(__dirname, '/templates');
 
 	frontendConfigurations.forEach(({ name, directory }) => {
 		const targetDir = join(frontendDir, directory);
@@ -143,7 +145,7 @@ export const scaffold = (
 	const s = spinner();
 	s.start('Installing dependencies…');
 
-	createPackageJson(root, projectName, plugins, s);
+	createPackageJson({ authProvider, plugins, projectName, root, spin: s });
 
 	const commands: Record<string, string> = {
 		bun: 'bun install',

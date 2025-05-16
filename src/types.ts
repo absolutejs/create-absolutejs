@@ -21,23 +21,37 @@ export type AvailableDependency = {
 	latestVersion: string;
 };
 
+export type AuthProvier = 'none' | 'absoluteAuth';
+export type DBProvider = 'none' | 'postgres' | 'mysql';
+export type HTMLScriptOption = 'none' | 'script' | 'ssr' | undefined;
+export type ConfigType = 'default' | 'custom';
+export type ORM = 'drizzle' | 'prisma' | undefined;
+export type CodeQualityTool = 'eslint+prettier' | 'biome';
+export type Language = 'ts' | 'js';
+export type TailwindConfig =
+	| {
+			input: string;
+			output: string;
+	  }
+	| undefined;
+
 export type PromptResponse = {
 	assetsDir: string;
-	authProvider: 'none' | 'absoluteAuth' | 'jwt';
+	authProvider: AuthProvier;
 	buildDir: string;
-	configType: 'default' | 'custom';
-	dbProvider: 'none' | 'postgres' | 'mysql';
+	configType: ConfigType;
+	dbProvider: DBProvider;
 	frontendConfigurations: FrontendConfiguration[];
 	frontends: string[];
-	htmlScriptOption: 'none' | 'script' | 'ssr' | undefined;
+	htmlScriptOption: HTMLScriptOption;
 	initializeGit: boolean;
 	installDependencies: boolean;
-	language: 'ts' | 'js';
-	codeQualityTool: 'eslint+prettier' | 'biome';
-	orm: 'drizzle' | 'prisma' | undefined;
+	language: Language;
+	codeQualityTool: CodeQualityTool;
+	orm: ORM;
 	plugins: string[];
 	projectName: string;
-	tailwind: { input: string; output: string } | undefined;
+	tailwind: TailwindConfig;
 	useTailwind: boolean;
 };
 

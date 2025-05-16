@@ -42,6 +42,18 @@ export const availablePlugins: AvailableDependency[] = [
 	}
 ];
 
+export const absoluteAuthPlugin: AvailableDependency = {
+	imports: [
+		{
+			config: { providersConfiguration: {} },
+			isPlugin: true,
+			packageName: 'absoluteAuth'
+		}
+	],
+	latestVersion: '0.3.2',
+	value: '@absolutejs/auth'
+};
+
 export const defaultDependencies: AvailableDependency[] = [
 	{
 		imports: [{ isPlugin: false, packageName: 'Elysia' }],
