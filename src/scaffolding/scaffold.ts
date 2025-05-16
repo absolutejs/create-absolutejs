@@ -21,6 +21,8 @@ export const scaffold = (
 		initializeGit,
 		orm,
 		plugins,
+		buildDir,
+		assetsDir,
 		tailwind,
 		installDependencies,
 		frontendConfigurations
@@ -45,7 +47,15 @@ export const scaffold = (
 	mkdirSync(join(srcDir, 'types'), { recursive: true });
 
 	const serverFilePath = join(backendDir, 'server.ts');
-	createServerFile(serverFilePath, availablePlugins, plugins);
+	createServerFile({
+		assetsDir,
+		availablePlugins,
+		buildDir,
+		frontendConfigurations,
+		plugins,
+		serverFilePath,
+		tailwind
+	});
 
 	if (orm === 'drizzle') mkdirSync(join(root, 'db'), { recursive: true });
 

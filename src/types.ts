@@ -9,19 +9,17 @@ export type FrontendConfiguration = {
 };
 
 export type ImportEntry = {
-  packageName: string
-  isPlugin: boolean
-  config?: Record<string, unknown> | null
-}
+	packageName: string;
+	isPlugin: boolean;
+	config?: Record<string, unknown> | null;
+};
 
 export type AvailableDependency = {
-  value: string
-  label?: string
-  imports: ImportEntry[]
-  latestVersion: string
-}
-
-
+	value: string;
+	label?: string;
+	imports: ImportEntry[];
+	latestVersion: string;
+};
 
 export type PromptResponse = {
 	assetsDir: string;
@@ -115,4 +113,4 @@ export type PackageJson = {
 	resolution?: Record<string, string>;
 	resolutions?: Record<string, string>;
 	[customField: string]: unknown;
-}
+};

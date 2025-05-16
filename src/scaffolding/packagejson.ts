@@ -8,13 +8,13 @@ export const createPackageJson = (
 	root: string,
 	projectName: string,
 	plugins: string[],
-	s: {
+	spin: {
 		start: (msg?: string) => void;
 		stop: (msg?: string, code?: number) => void;
 		message: (msg?: string) => void;
 	}
 ) => {
-	s.message('Getting latest package versions…');
+	spin.message('Getting latest package versions…');
 
 	const dependencies: PackageJson['dependencies'] = {};
 	for (const p of defaultPlugins) {
@@ -24,10 +24,9 @@ export const createPackageJson = (
 
 	for (const pluginValue of plugins) {
 		const meta = availablePlugins.find((p) => p.value === pluginValue);
-		if (meta) {
-			const ver = getPackageVersion(meta.value);
-			dependencies[meta.value] = ver ?? meta.latestVersion;
-		}
+		if (!meta) continue;
+		dependencies[meta.value] =
+			getPackageVersion(meta.value) ?? meta.latestVersion;
 	}
 
 	const devDependencies: PackageJson['devDependencies'] = {};
@@ -41,12 +40,12 @@ export const createPackageJson = (
 	};
 
 	const packageJson: PackageJson = {
-		name: projectName,
-		version: '0.1.0',
-		type: 'module',
 		dependencies,
 		devDependencies,
-		scripts
+		name: projectName,
+		scripts,
+		type: 'module',
+		version: '0.1.0'
 	};
 
 	writeFileSync(join(root, 'package.json'), JSON.stringify(packageJson));
