@@ -1,5 +1,14 @@
 import { type CSSProperties } from 'react';
 
+export const styleReset = `
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-weight: inherit;
+    }
+`;
+
 export const bodyDefault: CSSProperties = {
 	backgroundColor: '#f5f5f5',
 	color: '#333',

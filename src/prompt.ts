@@ -72,12 +72,14 @@ export const prompt = async () => {
 		htmlScriptOption = await select({
 			message: `Add HTML scripting option (${langLabel}):`,
 			options: [
-				{ label: `${langLabel} + SSR`, value: 'ssr' },
-				{ label: langLabel, value: 'script' },
+				{ label: `${langLabel} + SSR`, value: `${language}+ssr` },
+				{ label: langLabel, value: language },
 				{ label: 'None', value: 'none' }
 			]
 		});
 		if (isCancel(htmlScriptOption)) abort();
+		htmlScriptOption =
+			htmlScriptOption === 'none' ? undefined : htmlScriptOption;
 	}
 
 	// 7. Configuration type
@@ -175,7 +177,7 @@ export const prompt = async () => {
 	}
 
 	// 10. Database provider
-	const dbProvider = await select({
+	const dbProviderResponse = await select({
 		message: 'Database provider:',
 		options: [
 			{ label: 'None', value: 'none' },
@@ -183,12 +185,14 @@ export const prompt = async () => {
 			{ label: green('MySQL'), value: 'mysql' }
 		]
 	});
-	if (isCancel(dbProvider)) abort();
+	if (isCancel(dbProviderResponse)) abort();
+	const dbProvider =
+		dbProviderResponse === 'none' ? undefined : dbProviderResponse;
 
+	let ormResponse;
 	// 11. ORM choice (optional)
-	let orm: 'drizzle' | 'prisma' | undefined;
-	if (dbProvider !== 'none') {
-		const ormChoice = await select({
+	if (dbProvider !== undefined) {
+		ormResponse = await select({
 			message: 'Choose an ORM (optional):',
 			options: [
 				{ label: 'None', value: 'none' },
@@ -196,19 +200,21 @@ export const prompt = async () => {
 				{ label: magenta('Prisma'), value: 'prisma' }
 			]
 		});
-		if (isCancel(ormChoice)) abort();
-		orm = ormChoice === 'none' ? undefined : ormChoice;
+		if (isCancel(ormResponse)) abort();
 	}
+	const orm = ormResponse === 'none' ? undefined : ormResponse;
 
 	// 12. Auth provider
-	const authProvider = await select({
+	const authProviderResponse = await select({
 		message: 'Auth provider:',
 		options: [
 			{ label: 'None', value: 'none' },
 			{ label: cyan('Absolute Auth'), value: 'absoluteAuth' }
 		]
 	});
-	if (isCancel(authProvider)) abort();
+	if (isCancel(authProviderResponse)) abort();
+	const authProvider =
+		authProviderResponse === 'none' ? undefined : authProviderResponse;
 
 	// 13. Additional plugins (optional)
 	const plugins = await multiselect({

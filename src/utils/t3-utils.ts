@@ -1,6 +1,5 @@
 import { env } from 'node:process';
-
-export type PackageManager = 'npm' | 'pnpm' | 'yarn' | 'bun';
+import type { PackageManager } from '../types';
 
 /**
  * @author Adapted from the create-t3-app project

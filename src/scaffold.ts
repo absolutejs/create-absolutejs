@@ -6,10 +6,9 @@ import { fileURLToPath } from 'node:url';
 import { spinner } from '@clack/prompts';
 import { dim, yellow } from 'picocolors';
 import { availablePlugins } from './data';
-import { createPackageJson } from './scaffolding/packagejson';
-import { createServerFile } from './scaffolding/server';
-import type { PromptResponse } from './types';
-import type { PackageManager } from './utils/t3-utils';
+import { createPackageJson } from './generators/packagejson';
+import { createServerFile } from './generators/server';
+import type { PackageManager, PromptResponse } from './types';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 

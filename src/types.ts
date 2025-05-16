@@ -21,9 +21,16 @@ export type AvailableDependency = {
 	latestVersion: string;
 };
 
-export type AuthProvier = 'none' | 'absoluteAuth';
-export type DBProvider = 'none' | 'postgres' | 'mysql';
-export type HTMLScriptOption = 'none' | 'script' | 'ssr' | undefined;
+export type PackageManager = 'npm' | 'pnpm' | 'yarn' | 'bun';
+
+export type AuthProvier = 'absoluteAuth' | undefined;
+export type DBProvider =
+	| 'postgres'
+	| 'mysql'
+	| 'sqlite'
+	| 'mongodb'
+	| undefined;
+export type HTMLScriptOption = 'ts' | 'js' | 'ts+ssr' | 'js+ssr' | undefined;
 export type ConfigType = 'default' | 'custom';
 export type ORM = 'drizzle' | 'prisma' | undefined;
 export type CodeQualityTool = 'eslint+prettier' | 'biome';
