@@ -18,25 +18,25 @@ export const availablePlugins: AvailablePlugin[] = [
 	{
 		import: 'staticPlugin',
 		label: cyan('📦 @elysiajs/static'),
-		latestVersion: getPackageVersion('@elysiajs/static') ?? '0.0.0',
+		latestVersion: '1.3.0',
 		value: '@elysiajs/static'
 	},
 	{
 		import: 'cors',
 		label: cyan('⚙️ @elysiajs/cors'),
-		latestVersion: getPackageVersion('@elysiajs/cors') ?? '0.0.0',
+		latestVersion: '1.3.3',
 		value: '@elysiajs/cors'
 	},
 	{
 		import: 'swagger',
 		label: cyan('📑 @elysiajs/swagger'),
-		latestVersion: getPackageVersion('@elysiajs/swagger') ?? '0.0.0',
+		latestVersion: '1.3.0',
 		value: '@elysiajs/swagger'
 	},
 	{
 		import: 'rateLimit',
 		label: green('🛠️ elysia-rate-limit'),
-		latestVersion: getPackageVersion('elysia-rate-limit') ?? '0.0.0',
+		latestVersion: '4.3.0',
 		value: 'elysia-rate-limit'
 	}
 ];
@@ -44,7 +44,7 @@ export const availablePlugins: AvailablePlugin[] = [
 export const defaultPlugins: AvailablePlugin[] = [
 	{
 		import: 'Elysia',
-		latestVersion: getPackageVersion('elysia') ?? '1.3.0',
+		latestVersion: '1.3.0',
 		value: 'elysia'
 	}
 ];

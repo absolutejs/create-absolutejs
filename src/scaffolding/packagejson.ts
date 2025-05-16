@@ -2,20 +2,29 @@ import { writeFileSync } from 'fs';
 import { join } from 'path';
 import { availablePlugins } from '../data';
 import type { PackageJson } from '../types';
+import { getPackageVersion } from '../utils/getPackageVersion';
 
 export const createPackageJson = (
 	root: string,
 	projectName: string,
-	plugins: string[]
+	plugins: string[],
+	s: {
+		start: (msg?: string) => void;
+		stop: (msg?: string, code?: number) => void;
+		message: (msg?: string) => void;
+	}
 ) => {
 	const dependencies: PackageJson['dependencies'] = {
 		elysia: '1.3.0'
 	};
 
+	s.message('Getting latest package versions...');
 	plugins.forEach((plugin) => {
 		const foundPlugin = availablePlugins.find((p) => p.value === plugin);
 		if (foundPlugin) {
-			dependencies[foundPlugin.value] = foundPlugin.latestVersion;
+			dependencies[foundPlugin.value] =
+				getPackageVersion(foundPlugin.value) ??
+				foundPlugin.latestVersion;
 		}
 	});
 

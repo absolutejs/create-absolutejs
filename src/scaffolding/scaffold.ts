@@ -98,8 +98,6 @@ export const scaffold = (
 		);
 	}
 
-	createPackageJson(root, projectName, plugins);
-
 	copyFileSync(join(templatesDir, 'README.md'), join(root, 'README.md'));
 
 	if (initializeGit)
@@ -134,6 +132,8 @@ export const scaffold = (
 
 	const s = spinner();
 	s.start('Installing dependencies…');
+
+	createPackageJson(root, projectName, plugins, s);
 
 	const commands: Record<string, string> = {
 		bun: 'bun install',
