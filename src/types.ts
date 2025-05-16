@@ -8,12 +8,20 @@ export type FrontendConfiguration = {
 	directory: string;
 };
 
-export type AvailablePlugin = {
-	value: string;
-	label?: string;
-	import: string;
-	latestVersion: string;
-};
+export type ImportEntry = {
+  packageName: string
+  isPlugin: boolean
+  config?: Record<string, unknown> | null
+}
+
+export type AvailableDependency = {
+  value: string
+  label?: string
+  imports: ImportEntry[]
+  latestVersion: string
+}
+
+
 
 export type PromptResponse = {
 	assetsDir: string;
@@ -35,7 +43,7 @@ export type PromptResponse = {
 	useTailwind: boolean;
 };
 
-export interface PackageJson {
+export type PackageJson = {
 	// Basic identity
 	name: string;
 	version: string;

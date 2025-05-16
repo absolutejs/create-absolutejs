@@ -1,6 +1,6 @@
 import { writeFileSync } from 'fs';
 import { join } from 'path';
-import { availablePlugins } from '../data';
+import { availablePlugins, defaultPlugins } from '../data';
 import type { PackageJson } from '../types';
 import { getPackageVersion } from '../utils/getPackageVersion';
 
@@ -14,19 +14,21 @@ export const createPackageJson = (
 		message: (msg?: string) => void;
 	}
 ) => {
-	const dependencies: PackageJson['dependencies'] = {
-		elysia: '1.3.0'
-	};
+	s.message('Getting latest package versions…');
 
-	s.message('Getting latest package versions...');
-	plugins.forEach((plugin) => {
-		const foundPlugin = availablePlugins.find((p) => p.value === plugin);
-		if (foundPlugin) {
-			dependencies[foundPlugin.value] =
-				getPackageVersion(foundPlugin.value) ??
-				foundPlugin.latestVersion;
+	const dependencies: PackageJson['dependencies'] = {};
+	for (const p of defaultPlugins) {
+		const version = getPackageVersion(p.value);
+		dependencies[p.value] = version ?? p.latestVersion;
+	}
+
+	for (const pluginValue of plugins) {
+		const meta = availablePlugins.find((p) => p.value === pluginValue);
+		if (meta) {
+			const ver = getPackageVersion(meta.value);
+			dependencies[meta.value] = ver ?? meta.latestVersion;
 		}
-	});
+	}
 
 	const devDependencies: PackageJson['devDependencies'] = {};
 
@@ -39,12 +41,12 @@ export const createPackageJson = (
 	};
 
 	const packageJson: PackageJson = {
+		name: projectName,
+		version: '0.1.0',
+		type: 'module',
 		dependencies,
 		devDependencies,
-		name: projectName,
-		scripts,
-		type: 'module',
-		version: '0.1.0'
+		scripts
 	};
 
 	writeFileSync(join(root, 'package.json'), JSON.stringify(packageJson));

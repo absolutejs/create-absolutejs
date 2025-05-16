@@ -1,7 +1,7 @@
 {
 	"name": "create-absolutejs",
 	"description": "A CLI tool to create a new AbsoluteJS project",
-	"version": "0.0.8",
+	"version": "0.0.9",
 	"license": "CC BY-NC 4.0",
 	"author": "Alex Kahn",
 	"type": "module",
@@ -13,7 +13,7 @@
 		"dist"
 	],
 	"scripts": {
-		"build": "rm -rf dist && bun build src/index.ts --outdir dist --target=esnext && tsc --emitDeclarationOnly --project tsconfig.json",
+		"build": "rm -rf dist && bun build src/index.ts --outdir dist && tsc --emitDeclarationOnly --project tsconfig.json",
 		"test": "echo \"Error: no test specified\" && exit 1",
 		"format": "prettier --write \"./**/*.{js,jsx,ts,tsx,css,json}\"",
 		"dev": "rm -rf absolutejs-project && bun run src/index.ts",

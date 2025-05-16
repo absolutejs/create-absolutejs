@@ -1,10 +1,5 @@
 import { env } from 'node:process';
 
-/**
- * @author Adapted from the create-t3-app project
- * @see https://github.com/t3-oss/create-t3-app
- * @license MIT
- */
 export type PackageManager = 'npm' | 'pnpm' | 'yarn' | 'bun';
 
 /**

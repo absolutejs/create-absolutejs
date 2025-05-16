@@ -1,49 +1,57 @@
-import { writeFileSync } from 'fs';
-import { defaultPlugins } from '../data';
-import type { AvailablePlugin } from '../types';
+import { writeFileSync } from 'fs'
+import { defaultDependencies, defaultPlugins } from '../data'
+import type { AvailableDependency } from '../types'
 
 export const createServerFile = (
-	serverFilePath: string,
-	availablePlugins: AvailablePlugin[],
-	plugins: string[]
+  serverFilePath: string,
+  availablePlugins: AvailableDependency[],
+  plugins: string[]
 ) => {
-	// pick up any custom plugins the user selected
-	const custom = availablePlugins.filter((p) => plugins.includes(p.value));
+  const custom = availablePlugins.filter(p => plugins.includes(p.value))
+  const allDeps = defaultDependencies.concat(defaultPlugins, custom)
 
-	// merge defaultPlugins + custom without spread
-	const merged = defaultPlugins.concat(custom);
+  const uniqueDeps = allDeps
+    .reduce<AvailableDependency[]>((acc, dep) => {
+      if (!acc.find(e => e.value === dep.value)) acc.push(dep)
+      return acc
+    }, [])
+    .sort((a, b) => a.value.localeCompare(b.value))
 
-	// dedupe by value, then sort alphabetically by module path
-	const all = merged
-		.reduce<AvailablePlugin[]>((acc, p) => {
-			if (
-				!acc.find((existingPlugin) => existingPlugin.value === p.value)
-			) {
-				acc.push(p);
-			}
+  // group imports by package
+  const importLines = uniqueDeps
+    .map(dep => {
+      const names = dep.imports.map(i => i.packageName).join(', ')
+      return `import { ${names} } from '${dep.value}';`
+    })
+    .join('\n')
 
-			return acc;
-		}, [])
-		.sort((firstPlugin, secondPlugin) =>
-			firstPlugin.value.localeCompare(secondPlugin.value)
-		);
+  const uses = uniqueDeps
+    .flatMap(dep =>
+      dep.imports
+        .filter(i => i.isPlugin)
+        .map(i => {
+          const fn = i.packageName
+          if (i.config === undefined) {
+            return `\t.use(${fn})`
+          } else if (i.config === null) {
+            return `\t.use(${fn}())`
+          } else {
+            return `\t.use(${fn}(${JSON.stringify(i.config)}))`
+          }
+        })
+    )
+    .join('\n')
 
-	// build sorted import block
-	const importLines = all
-		.map((p) => `import { ${p.import} } from '${p.value}';`)
-		.join('\n');
-
-	// build chained .use() calls for each custom plugin only
-	const chainedUses = custom.map((p) => `  .use(${p.import}())`).join('\n');
-
-	const content = `${importLines}
+  const content = `\
+${importLines}
 
 new Elysia()
-  .get('/', () => 'Hello, world!')
-${chainedUses}
-  .listen(3000, () => {
-    console.log('🚀 Server running at http://localhost:3000');
-  });`;
+\t.get('/', () => 'Hello, world!')
+${uses}
+\t.on("error", (error) => {
+\t\tconst { request } = error
+\t\tconsole.error(\`Server error on \${request.method} \${request.url}: \${error.message}\`)
+\t})`
 
-	writeFileSync(serverFilePath, content);
-};
+  writeFileSync(serverFilePath, content)
+}
