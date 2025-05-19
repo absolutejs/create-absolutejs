@@ -4,12 +4,11 @@ import { join, dirname } from 'node:path';
 import { exit } from 'node:process';
 import { fileURLToPath } from 'node:url';
 import { spinner } from '@clack/prompts';
-import { dim, yellow } from 'picocolors';
 import { availablePlugins } from './data';
-import { createPackageJson } from './generators/packagejson';
-import { createServerFile } from './generators/server';
-import type { PackageManager, PromptResponse } from './types';
 import { addConfigurationFiles } from './generators/addConfigurationFiles';
+import { createPackageJson } from './generators/createPackageJson';
+import { createServerFile } from './generators/createServer';
+import type { PackageManager, PromptResponse } from './types';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -102,12 +101,12 @@ export const scaffold = (
 	copyFileSync(join(templatesDir, 'README.md'), join(root, 'README.md'));
 
 	addConfigurationFiles({
-		tailwind,
-		templatesDir,
-		language,
 		codeQualityTool,
 		initializeGit,
+		language,
 		root,
+		tailwind,
+		templatesDir
 	});
 
 	if (!installDependencies) return;

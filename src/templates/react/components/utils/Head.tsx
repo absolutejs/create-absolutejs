@@ -1,4 +1,4 @@
-import { styleReset } from "../../styles/default/pageDefault";
+import { styleReset } from '../../styles/default/pageDefault';
 
 type HeadProps = {
 	title?: string;

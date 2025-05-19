@@ -1,22 +1,25 @@
 import { copyFileSync } from 'fs';
 import { join } from 'path';
-import type { PromptResponse } from '../types';
 import { dim, yellow } from 'picocolors';
+import type { PromptResponse } from '../types';
 
-type AddConfigurationProps = Pick<PromptResponse, 'tailwind' | 'language' | 'initializeGit' | 'codeQualityTool'> & {
-    templatesDir: string;
-    root: string;
+type AddConfigurationProps = Pick<
+	PromptResponse,
+	'tailwind' | 'language' | 'initializeGit' | 'codeQualityTool'
+> & {
+	templatesDir: string;
+	root: string;
 };
 
 export const addConfigurationFiles = ({
-    tailwind,
-    templatesDir,
-    language,
-    codeQualityTool,
-    initializeGit,
-    root,
+	tailwind,
+	templatesDir,
+	language,
+	codeQualityTool,
+	initializeGit,
+	root
 }: AddConfigurationProps) => {
-    if (tailwind) {
+	if (tailwind) {
 		copyFileSync(
 			join(templatesDir, 'tailwind', 'postcss.config.ts'),
 			join(root, 'postcss.config.ts')
@@ -53,4 +56,4 @@ export const addConfigurationFiles = ({
 		console.warn(
 			`${dim('│')}\n${yellow('▲')}  Biome support not implemented yet`
 		);
-}
+};
