@@ -64,6 +64,24 @@ export const scaffold = (
 	const templatesDir = join(__dirname, '/templates');
 	const isSingle = frontendConfigurations.length === 1;
 
+	const dirMap = new Map<string, string>();
+	frontendConfigurations.forEach(({ name, directory }) => {
+		const dir =
+			directory && directory.trim() !== ''
+				? directory
+				: isSingle
+					? ''
+					: name;
+		if (dirMap.has(dir)) {
+			throw new Error(
+				`Frontend directory collision: "${dir}" is assigned to both "${dirMap.get(
+					dir
+				)}" and "${name}". Please pick unique directories.`
+			);
+		}
+		dirMap.set(dir, name);
+	});
+
 	frontendConfigurations.forEach(({ name, directory }) => {
 		const dir =
 			directory && directory.trim() !== ''
@@ -98,13 +116,17 @@ export const scaffold = (
 	const stylesDir = join(frontendDir, 'styles');
 
 	if (hasReact && isSingle) {
-		cpSync(reactStylesSrc, stylesDir, { recursive: true });
+		cpSync(reactStylesSrc, stylesDir, {
+			recursive: true
+		});
 	}
 
 	if (hasReact && !isSingle) {
 		const dest = join(stylesDir, 'react', 'defaults');
 		mkdirSync(dest, { recursive: true });
-		cpSync(join(reactStylesSrc, 'default'), dest, { recursive: true });
+		cpSync(join(reactStylesSrc, 'default'), dest, {
+			recursive: true
+		});
 	}
 
 	copyFileSync(join(templatesDir, 'README.md'), join(root, 'README.md'));
