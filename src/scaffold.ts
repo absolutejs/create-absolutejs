@@ -36,7 +36,6 @@ export const scaffold = (
 		);
 
 	mkdirSync(root, { recursive: true });
-
 	const srcDir = join(root, 'src');
 	mkdirSync(srcDir, { recursive: true });
 
@@ -58,12 +57,22 @@ export const scaffold = (
 		tailwind
 	});
 
-	if (orm === 'drizzle') mkdirSync(join(root, 'db'), { recursive: true });
+	if (orm === 'drizzle') {
+		mkdirSync(join(root, 'db'), { recursive: true });
+	}
 
 	const templatesDir = join(__dirname, '/templates');
+	const isSingle = frontendConfigurations.length === 1;
 
 	frontendConfigurations.forEach(({ name, directory }) => {
-		const targetDir = join(frontendDir, directory);
+		const dir =
+			directory && directory.trim() !== ''
+				? directory
+				: isSingle
+					? ''
+					: name;
+
+		const targetDir = join(frontendDir, dir);
 		mkdirSync(targetDir, { recursive: true });
 
 		if (name === 'react') {
@@ -74,7 +83,9 @@ export const scaffold = (
 			cpSync(
 				join(reactTemplates, 'components'),
 				join(targetDir, 'components'),
-				{ recursive: true }
+				{
+					recursive: true
+				}
 			);
 			cpSync(join(reactTemplates, 'hooks'), join(targetDir, 'hooks'), {
 				recursive: true
@@ -85,14 +96,12 @@ export const scaffold = (
 	const hasReact = frontendConfigurations.some((f) => f.name === 'react');
 	const reactStylesSrc = join(templatesDir, 'react', 'styles');
 	const stylesDir = join(frontendDir, 'styles');
-	const isSingle = hasReact && frontendConfigurations.length === 1;
-	const isMulti = hasReact && frontendConfigurations.length > 1;
 
-	if (isSingle) {
+	if (hasReact && isSingle) {
 		cpSync(reactStylesSrc, stylesDir, { recursive: true });
 	}
 
-	if (isMulti) {
+	if (hasReact && !isSingle) {
 		const dest = join(stylesDir, 'react', 'defaults');
 		mkdirSync(dest, { recursive: true });
 		cpSync(join(reactStylesSrc, 'default'), dest, { recursive: true });
@@ -122,7 +131,6 @@ export const scaffold = (
 		pnpm: 'pnpm install',
 		yarn: 'yarn install'
 	};
-
 	const cmd = commands[packageManager] ?? 'bun install';
 
 	try {
