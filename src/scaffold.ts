@@ -9,6 +9,7 @@ import { availablePlugins } from './data';
 import { createPackageJson } from './generators/packagejson';
 import { createServerFile } from './generators/server';
 import type { PackageManager, PromptResponse } from './types';
+import { addConfigurationFiles } from './generators/addConfigurationFiles';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -98,46 +99,16 @@ export const scaffold = (
 		cpSync(join(reactStylesSrc, 'default'), dest, { recursive: true });
 	}
 
-	if (tailwind) {
-		copyFileSync(
-			join(templatesDir, 'tailwind', 'postcss.config.ts'),
-			join(root, 'postcss.config.ts')
-		);
-		copyFileSync(
-			join(templatesDir, 'tailwind', 'tailwind.config.ts'),
-			join(root, 'tailwind.config.ts')
-		);
-	}
-
 	copyFileSync(join(templatesDir, 'README.md'), join(root, 'README.md'));
 
-	if (initializeGit)
-		copyFileSync(
-			join(templatesDir, '.gitignore'),
-			join(root, '.gitignore')
-		);
-	if (language === 'ts')
-		copyFileSync(
-			join(templatesDir, 'tsconfig.example.json'),
-			join(root, 'tsconfig.json')
-		);
-	if (codeQualityTool === 'eslint+prettier') {
-		copyFileSync(
-			join(templatesDir, 'eslint.config.mjs'),
-			join(root, 'eslint.config.mjs')
-		);
-		copyFileSync(
-			join(templatesDir, '.prettierignore'),
-			join(root, '.prettierignore')
-		);
-		copyFileSync(
-			join(templatesDir, '.prettierrc.json'),
-			join(root, '.prettierrc.json')
-		);
-	} else
-		console.warn(
-			`${dim('│')}\n${yellow('▲')}  Biome support not implemented yet`
-		);
+	addConfigurationFiles({
+		tailwind,
+		templatesDir,
+		language,
+		codeQualityTool,
+		initializeGit,
+		root,
+	});
 
 	if (!installDependencies) return;
 
