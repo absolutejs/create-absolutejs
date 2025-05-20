@@ -3,11 +3,17 @@ import { join } from 'node:path';
 import type { FrontendConfiguration } from '../types';
 import { createReact } from './createReact';
 
-export const createFrontends = (
-	frontendDir: string,
-	templatesDir: string,
-	frontendConfigurations: FrontendConfiguration[]
-) => {
+type CreateFrontendsProps = {
+	frontendDir: string;
+	templatesDir: string;
+	frontendConfigurations: FrontendConfiguration[];
+};
+
+export const createFrontends = ({
+	frontendDir,
+	templatesDir,
+	frontendConfigurations
+}: CreateFrontendsProps) => {
 	const isSingle = frontendConfigurations.length === 1;
 
 	const dirMap = new Map<string, string>();

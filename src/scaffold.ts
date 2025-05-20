@@ -3,6 +3,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spinner } from '@clack/prompts';
 import { availablePlugins } from './data';
+import { formatProject } from './executors/formatProject';
 import { installDependencies } from './executors/installDependencies';
 import { addConfigurationFiles } from './generators/addConfigurationFiles';
 import { createFrontends } from './generators/createFrontends';
@@ -66,9 +67,15 @@ export const scaffold = (
 		mkdirSync(join(projectName, 'db'), { recursive: true });
 	}
 
-	createFrontends(frontendDir, templatesDir, frontendConfigurations);
+	createFrontends({ frontendConfigurations, frontendDir, templatesDir });
+
+	formatProject({
+		packageManager,
+		projectName,
+		spinner: s
+	});
 
 	if (installDependenciesNow) {
-		installDependencies(projectName, packageManager, s);
+		installDependencies({ packageManager, projectName, spinner: s });
 	}
 };
