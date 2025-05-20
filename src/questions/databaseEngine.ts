@@ -4,7 +4,7 @@ import { abort } from '../utils/abort';
 
 export const getDatabaseEngine = async () => {
 	const databaseDialectResponse = await select({
-		message: 'Database provider:',
+		message: 'Database engine:',
 		options: [
 			{ label: 'None', value: 'none' },
 			{ label: cyan('PostgreSQL'), value: 'postgresql' },

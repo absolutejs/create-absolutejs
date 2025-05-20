@@ -14,7 +14,7 @@ export const createDrizzleConfig = ({
 	const drizzleConfig = `import { defineConfig } from "drizzle-kit";
     
     export default defineConfig({
-    dialect: ${databaseEngine}
+    dialect: '${databaseEngine}'
     });
     `;
 
