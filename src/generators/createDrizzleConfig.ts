@@ -13,5 +13,5 @@ export const createDrizzleConfig = ({ root }: CreateDrizzleConfigProps) => {
     });
     `;
 
-	writeFileSync(join(root, 'package.json'), drizzleConfig);
+	writeFileSync(join(root, 'drizzle.config.ts'), drizzleConfig);
 };

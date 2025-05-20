@@ -64,7 +64,7 @@ export const scaffold = (
 		tailwind
 	});
 
-	scaffoldDatabase(projectName, orm);
+	scaffoldDatabase({ projectName, orm, root: __dirname });
 
 	createFrontends({ frontendConfigurations, frontendDir, templatesDir });
 

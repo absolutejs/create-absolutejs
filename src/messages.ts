@@ -117,8 +117,8 @@ ${magenta('Database')}:           	${databaseDialect === undefined ? dim('None')
 ${magenta('ORM')}:                	${orm ?? dim('None')}
 ${magenta('Auth')}:               	${authProvider === undefined ? dim('None') : authProvider}
 ${magenta('Plugins')}:            	${plugins.length ? plugins.join(', ') : dim('None')}
-${magenta('Git Repository')}:     	${initializeGitNow ? green('Initialized') : dim('None')}
+${magenta('Initialize Git')}:     	${initializeGitNow ? green('Yes') : dim('None')}
 ${magenta('Install Dependencies')}:   ${installDependenciesNow ? green('Yes') : red('No')}
 ${magenta('Framework Config')}:
-    ${configString}`;
+    ${configString}\n\n`;
 };

@@ -30,7 +30,7 @@ const response = await prompt();
 scaffold(response, packageManager);
 
 const debugMessage =
-	values.debug !== undefined
+	values.debug !== false
 		? getDebugMessage({
 				availableFrontends,
 				packageManager,
