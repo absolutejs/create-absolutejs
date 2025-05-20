@@ -47,8 +47,8 @@ export const getDebugMessage = ({
 		codeQualityTool,
 		tailwind,
 		frontends,
-		buildDir,
-		assetsDir,
+		buildDirectory,
+		assetsDirectory,
 		databaseDialect,
 		orm,
 		authProvider,
@@ -106,8 +106,8 @@ ${magenta('Language')}:           	${language === 'ts' ? blueBright('TypeScript'
 ${magenta('Linting')}:            	${codeQualityTool === 'eslint+prettier' ? 'ESLint + Prettier' : 'Biome'}
 ${magenta('Tailwind')}:           	${tailwindSection}
 ${frontendHeading}:           	${frontendLabels.join(', ')}${htmlScriptingLine}
-${magenta('Build Directory')}:    	${buildDir}
-${magenta('Assets Directory')}:   	${assetsDir}
+${magenta('Build Directory')}:    	${buildDirectory}
+${magenta('Assets Directory')}:   	${assetsDirectory}
 ${magenta('Database')}:           	${databaseDialect === undefined ? dim('None') : databaseDialect}
 ${magenta('ORM')}:                	${orm ?? dim('None')}
 ${magenta('Auth')}:               	${authProvider === undefined ? dim('None') : authProvider}

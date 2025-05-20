@@ -22,8 +22,8 @@ export const scaffold = (
 		orm,
 		plugins,
 		authProvider,
-		buildDir,
-		assetsDir,
+		buildDirectory,
+		assetsDirectory,
 		tailwind,
 		installDependenciesNow,
 		frontendConfigurations
@@ -54,10 +54,10 @@ export const scaffold = (
 
 	const serverFilePath = join(backendDir, 'server.ts');
 	createServerFile({
-		assetsDir,
+		assetsDirectory,
 		authProvider,
 		availablePlugins,
-		buildDir,
+		buildDirectory,
 		frontendConfigurations,
 		plugins,
 		serverFilePath,

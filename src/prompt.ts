@@ -36,26 +36,28 @@ export const prompt = async () => {
 		? await getHtmlScriptingOption(language)
 		: undefined;
 
-	// 7. Configuration type
+	// 7. Database provider
+	const databaseDialect = await getDatabaseDialect();
+
+	// 8. ORM choice (optional)
+	const orm = databaseDialect !== undefined ? await getORM() : undefined;
+
+	// 9. Configuration type
 	const configType = await getConfigurationType();
 
-	// 8. Directory configurations
-	const { buildDir, assetsDir, tailwind } = await getDirectoryConfiguration(
-		configType,
-		useTailwind
-	);
+	// 10. Directory configurations
+	const { buildDirectory, assetsDirectory, tailwind, databaseDirectory } =
+		await getDirectoryConfiguration({
+			configType,
+			databaseDialect,
+			useTailwind
+		});
 
-	// 9. Framework-specific directories
+	// 11. Framework-specific directories
 	const frontendConfigurations = await getFrontendDirectoryConfigurations(
 		configType,
 		frontends
 	);
-
-	// 10. Database provider
-	const databaseDialect = await getDatabaseDialect();
-
-	// 11. ORM choice (optional)
-	const orm = databaseDialect !== undefined ? await getORM() : undefined;
 
 	// 12. Auth provider
 	const authProvider = await getAuthProvider();
@@ -70,15 +72,15 @@ export const prompt = async () => {
 	const installDependenciesNow = await getInstallDependencies();
 
 	const values: PromptResponse = {
-		assetsDir,
+		assetsDirectory,
 		authProvider,
-		buildDir,
+		buildDirectory,
 		codeQualityTool,
 		configType,
 		databaseDialect,
+		databaseDirectory,
 		frontendConfigurations,
-		frontends,
-		// @ts-expect-error //TODO: The script comes back as a string and needs to be verified as a specific string beforehand in the function
+		frontends, // @ts-expect-error //TODO: The script comes back as a string and needs to be verified as a specific string beforehand in the function
 		htmlScriptOption,
 		initializeGitNow,
 		installDependenciesNow,

@@ -46,9 +46,9 @@ export type TailwindConfig =
 	| undefined;
 
 export type PromptResponse = {
-	assetsDir: string;
+	assetsDirectory: string;
 	authProvider: AuthProvier;
-	buildDir: string;
+	buildDirectory: string;
 	configType: ConfigType;
 	databaseDialect: DatabaseDialect;
 	frontendConfigurations: FrontendConfiguration[];
@@ -63,6 +63,7 @@ export type PromptResponse = {
 	projectName: string;
 	tailwind: TailwindConfig;
 	useTailwind: boolean;
+	databaseDirectory: string | undefined;
 };
 
 export type PackageJson = {

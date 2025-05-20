@@ -1,64 +1,80 @@
 import { text, isCancel } from '@clack/prompts';
+import type { DatabaseDialect } from '../types';
 import { abort } from '../utils/abort';
 
-export const getDirectoryConfiguration = async (
-	configType: 'custom' | 'default',
-	useTailwind: boolean
-) => {
-	let tailwind: { input: string; output: string } | undefined;
-	let buildDir: string;
-	let assetsDir: string;
+type GetDirectoryConfigurationProps = {
+	configType: 'custom' | 'default';
+	useTailwind: boolean;
+	databaseDialect: DatabaseDialect;
+};
+
+export const getDirectoryConfiguration = async ({
+	configType,
+	useTailwind,
+	databaseDialect
+}: GetDirectoryConfigurationProps) => {
+	if (configType === 'default') {
+		return {
+			assetsDirectory: 'src/backend/assets',
+			buildDirectory: 'build',
+			databaseDirectory: databaseDialect && 'db',
+			tailwind: useTailwind
+				? {
+						input: './example/styles/tailwind.css',
+						output: '/assets/css/tailwind.generated.css'
+					}
+				: undefined
+		};
+	}
 
 	// Build directory
-	if (configType === 'custom') {
-		const _buildDir = await text({
-			message: 'Build directory:',
-			placeholder: 'build'
-		});
-		if (isCancel(_buildDir)) abort();
-		buildDir = _buildDir;
-	} else {
-		buildDir = 'build';
-	}
+	const buildDirectory = await text({
+		message: 'Build directory:',
+		placeholder: 'build'
+	});
+	if (isCancel(buildDirectory)) abort();
 
 	// Assets directory
-	if (configType === 'custom') {
-		const _assetsDir = await text({
-			message: 'Assets directory:',
-			placeholder: 'src/backend/assets'
-		});
-		if (isCancel(_assetsDir)) abort();
-		assetsDir = _assetsDir;
-	} else {
-		assetsDir = 'src/backend/assets';
-	}
+	const assetsDirectory = await text({
+		message: 'Assets directory:',
+		placeholder: 'src/backend/assets'
+	});
+	if (isCancel(assetsDirectory)) abort();
 
-	// Tailwind
+	// Tailwind directory
+	let tailwind;
 	if (useTailwind) {
-		const input =
-			configType === 'custom'
-				? await text({
-						message: 'Tailwind input CSS file:',
-						placeholder: './example/styles/tailwind.css'
-					})
-				: './example/styles/tailwind.css';
+		const input = await text({
+			message: 'Tailwind input CSS file:',
+			placeholder: './example/styles/tailwind.css'
+		});
 		if (isCancel(input)) abort();
 
-		const output =
-			configType === 'custom'
-				? await text({
-						message: 'Tailwind output CSS file:',
-						placeholder: '/assets/css/tailwind.generated.css'
-					})
-				: '/assets/css/tailwind.generated.css';
+		const output = await text({
+			message: 'Tailwind output CSS file:',
+			placeholder: '/assets/css/tailwind.generated.css'
+		});
 		if (isCancel(output)) abort();
 
 		tailwind = { input, output };
+	} else {
+		tailwind = undefined;
+	}
+
+	// Database
+	let databaseDirectory;
+	if (databaseDialect !== undefined) {
+		databaseDirectory = await text({
+			message: 'Database directory:',
+			placeholder: 'db'
+		});
+		if (isCancel(databaseDirectory)) abort();
 	}
 
 	return {
-		assetsDir,
-		buildDir,
+		assetsDirectory,
+		buildDirectory,
+		databaseDirectory,
 		tailwind
 	};
 };

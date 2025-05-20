@@ -5,22 +5,19 @@ import {
 	defaultDependencies,
 	defaultPlugins
 } from '../data';
-import type {
-	AuthProvier,
-	AvailableDependency,
-	FrontendConfiguration,
-	TailwindConfig
-} from '../types';
+import type { AvailableDependency, PromptResponse } from '../types';
 
-export type CreateServerFileProps = {
-	tailwind: TailwindConfig;
-	frontendConfigurations: FrontendConfiguration[];
-	serverFilePath: string;
+type CreateServerFileProps = Pick<
+	PromptResponse,
+	| 'tailwind'
+	| 'authProvider'
+	| 'plugins'
+	| 'buildDirectory'
+	| 'assetsDirectory'
+	| 'frontendConfigurations'
+> & {
 	availablePlugins: AvailableDependency[];
-	authProvider: AuthProvier;
-	plugins: string[];
-	buildDir: string;
-	assetsDir: string;
+	serverFilePath: string;
 };
 
 export const createServerFile = ({
@@ -29,8 +26,8 @@ export const createServerFile = ({
 	serverFilePath,
 	authProvider,
 	availablePlugins,
-	buildDir,
-	assetsDir,
+	buildDirectory,
+	assetsDirectory,
 	plugins
 }: CreateServerFileProps) => {
 	const customPlugins = availablePlugins.filter(
@@ -79,8 +76,8 @@ export const createServerFile = ({
 	});
 
 	const manifestOptionList: string[] = [];
-	manifestOptionList.push(`buildDirectory: '${buildDir}'`);
-	manifestOptionList.push(`assetsDirectory: '${assetsDir}'`);
+	manifestOptionList.push(`buildDirectory: '${buildDirectory}'`);
+	manifestOptionList.push(`assetsDirectory: '${assetsDirectory}'`);
 	const frameworkNames = [
 		'react',
 		'vue',

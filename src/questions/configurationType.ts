@@ -4,7 +4,7 @@ import { abort } from '../utils/abort';
 
 export const getConfigurationType = async () => {
 	const configType = await select({
-		message: 'Select configuration:',
+		message: 'Choose folder naming configuration:',
 		options: [
 			{ label: blueBright('Default'), value: 'default' },
 			{ label: yellow('Custom'), value: 'custom' }
