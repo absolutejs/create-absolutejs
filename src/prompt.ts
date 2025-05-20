@@ -2,6 +2,7 @@ import { getAuthProvider } from './questions/authProvider';
 import { getCodeQualityTool } from './questions/codeQualityTool';
 import { getConfigurationType } from './questions/configurationType';
 import { getDatabaseEngine } from './questions/databaseEngine';
+import { getDatabaseHost } from './questions/databaseHost';
 import { getDirectoryConfiguration } from './questions/directoryConfiguration';
 import { getFrontendDirectoryConfigurations } from './questions/frontendDirectoryConfigurations';
 import { getFrontends } from './questions/frontends';
@@ -40,7 +41,7 @@ export const prompt = async () => {
 	const databaseEngine = await getDatabaseEngine();
 
 	// 8. Database host
-	// const databaseHost = await getDatabaseHost();
+	const databaseHost = await getDatabaseHost(databaseEngine);
 
 	// 9. ORM choice
 	const orm = databaseEngine !== undefined ? await getORM() : undefined;
@@ -88,6 +89,7 @@ export const prompt = async () => {
 		initializeGitNow,
 		installDependenciesNow,
 		language,
+		databaseHost,
 		orm,
 		plugins,
 		projectName,

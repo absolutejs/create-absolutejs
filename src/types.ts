@@ -40,7 +40,9 @@ export type DatabaseHost =
 	| 'supabase'
 	| 'turso'
 	| 'vercel'
-	| 'upstash';
+	| 'upstash'
+	| 'atlas'
+	| undefined;
 
 export type HTMLScriptOption = 'ts' | 'js' | 'ts+ssr' | 'js+ssr' | undefined;
 export type ConfigType = 'default' | 'custom';
@@ -73,6 +75,7 @@ export type PromptResponse = {
 	tailwind: TailwindConfig;
 	useTailwind: boolean;
 	databaseDirectory: string | undefined;
+	databaseHost: DatabaseHost;
 };
 
 export type PackageJson = {
