@@ -19,6 +19,7 @@ export const scaffold = (
 		language,
 		codeQualityTool,
 		initializeGitNow,
+		databaseProvider,
 		orm,
 		plugins,
 		authProvider,
@@ -64,7 +65,7 @@ export const scaffold = (
 		tailwind
 	});
 
-	scaffoldDatabase({ orm, projectName });
+	scaffoldDatabase({ orm, projectName, databaseProvider });
 
 	createFrontends({ frontendConfigurations, frontendDir, templatesDir });
 

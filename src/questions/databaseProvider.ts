@@ -14,8 +14,8 @@ export const getDatabaseProvider = async () => {
 			{ label: blueBright('Turso'), value: 'turso' },
 			{ label: green('MongoDB'), value: 'mongodb' },
 			{ label: magenta('SingleStore'), value: 'singlestore' },
-			      { label: yellow('SQL Server'),  value: 'mssql'    },
-      { label: cyan('CockroachDB'),   value: 'cockroachdb' },
+			{ label: yellow('SQL Server'), value: 'mssql' },
+			{ label: cyan('CockroachDB'), value: 'cockroachdb' }
 		]
 	});
 	if (isCancel(databaseDialectResponse)) abort();
