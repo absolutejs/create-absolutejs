@@ -1,23 +1,23 @@
 import { text, isCancel } from '@clack/prompts';
-import type { DatabaseProvider } from '../types';
+import type { DatabaseEngine } from '../types';
 import { abort } from '../utils/abort';
 
 type GetDirectoryConfigurationProps = {
 	configType: 'custom' | 'default';
 	useTailwind: boolean;
-	databaseProvider: DatabaseProvider;
+	databaseEngine: DatabaseEngine;
 };
 
 export const getDirectoryConfiguration = async ({
 	configType,
 	useTailwind,
-	databaseProvider
+	databaseEngine
 }: GetDirectoryConfigurationProps) => {
 	if (configType === 'default') {
 		return {
 			assetsDirectory: 'src/backend/assets',
 			buildDirectory: 'build',
-			databaseDirectory: databaseProvider && 'db',
+			databaseDirectory: databaseEngine && 'db',
 			tailwind: useTailwind
 				? {
 						input: './example/styles/tailwind.css',
@@ -63,7 +63,7 @@ export const getDirectoryConfiguration = async ({
 
 	// Database
 	let databaseDirectory;
-	if (databaseProvider !== undefined) {
+	if (databaseEngine !== undefined) {
 		databaseDirectory = await text({
 			message: 'Database directory:',
 			placeholder: 'db'

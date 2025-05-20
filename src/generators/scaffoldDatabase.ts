@@ -1,23 +1,23 @@
 import { mkdirSync } from 'fs';
 import { join } from 'path';
-import type { DatabaseProvider, ORM } from '../types';
+import type { DatabaseEngine, ORM } from '../types';
 import { createDrizzleConfig } from './createDrizzleConfig';
 import { dim, yellow } from 'picocolors';
 
 type ScaffoldDatabaseProps = {
 	projectName: string;
 	orm: ORM;
-	databaseProvider: DatabaseProvider;
+	databaseEngine: DatabaseEngine;
 };
 
 export const scaffoldDatabase = ({
 	projectName,
-	databaseProvider,
+	databaseEngine,
 	orm
 }: ScaffoldDatabaseProps) => {
 	mkdirSync(join(projectName, 'db'), { recursive: true });
 
-	if (databaseProvider === 'postgres') {
+	if (databaseEngine === 'postgres') {
 	} else {
 		console.warn(
 			`${dim('│')}\n${yellow('▲')}  Only PostgreSQL is supported on this version`

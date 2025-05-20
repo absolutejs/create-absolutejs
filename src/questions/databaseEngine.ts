@@ -2,7 +2,7 @@ import { select, isCancel } from '@clack/prompts';
 import { cyan, magenta, green, red, blueBright, yellow } from 'picocolors';
 import { abort } from '../utils/abort';
 
-export const getDatabaseProvider = async () => {
+export const getDatabaseEngine = async () => {
 	const databaseDialectResponse = await select({
 		message: 'Database provider:',
 		options: [
