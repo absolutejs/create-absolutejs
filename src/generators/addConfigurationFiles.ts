@@ -31,25 +31,25 @@ export const addConfigurationFiles = ({
 	}
 	if (initializeGitNow)
 		copyFileSync(
-			join(templatesDir, '.gitignore'),
+			join(templatesDir, 'git', '.gitignore'),
 			join(projectName, '.gitignore')
 		);
 	if (language === 'ts')
 		copyFileSync(
-			join(templatesDir, 'tsconfig.example.json'),
+			join(templatesDir, 'configurations', 'tsconfig.example.json'),
 			join(projectName, 'tsconfig.json')
 		);
 	if (codeQualityTool === 'eslint+prettier') {
 		copyFileSync(
-			join(templatesDir, 'eslint.config.mjs'),
+			join(templatesDir, 'configurations', 'eslint.config.mjs'),
 			join(projectName, 'eslint.config.mjs')
 		);
 		copyFileSync(
-			join(templatesDir, '.prettierignore'),
+			join(templatesDir, 'configurations', '.prettierignore'),
 			join(projectName, '.prettierignore')
 		);
 		copyFileSync(
-			join(templatesDir, '.prettierrc.json'),
+			join(templatesDir, 'configurations', '.prettierrc.json'),
 			join(projectName, '.prettierrc.json')
 		);
 	} else

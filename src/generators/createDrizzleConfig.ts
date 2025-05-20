@@ -2,10 +2,12 @@ import { writeFileSync } from 'fs';
 import { join } from 'path';
 
 type CreateDrizzleConfigProps = {
-	root: string;
+	projectName: string;
 };
 
-export const createDrizzleConfig = ({ root }: CreateDrizzleConfigProps) => {
+export const createDrizzleConfig = ({
+	projectName
+}: CreateDrizzleConfigProps) => {
 	const drizzleConfig = `import { defineConfig } from "drizzle-kit";
     
     export default defineConfig({
@@ -13,5 +15,5 @@ export const createDrizzleConfig = ({ root }: CreateDrizzleConfigProps) => {
     });
     `;
 
-	writeFileSync(join(root, 'drizzle.config.ts'), drizzleConfig);
+	writeFileSync(join(projectName, 'drizzle.config.ts'), drizzleConfig);
 };

@@ -163,7 +163,7 @@ export default defineConfig([
     }
   },
   {
-    files: ['eslint.config.mjs','src/templates/eslint.config.mjs'],
+    files: ['eslint.config.mjs','src/templates/configurations/eslint.config.mjs'],
     rules: {
       'no-magic-numbers': 'off'
     }
@@ -175,13 +175,13 @@ export default defineConfig([
     }
   },
   {
-    files: ['eslint.config.mjs','src/templates/eslint.config.mjs','src/templates/tailwind.config.ts','src/templates/tailwind/postcss.config.ts','src/templates/drizzle.config.ts','src/templates/tailwind/tailwind.config.ts'],
+    files: ['eslint.config.mjs','src/templates/configurations/*','src/templates/tailwind.config.ts','src/templates/tailwind/postcss.config.ts','src/templates/drizzle.config.ts','src/templates/tailwind/tailwind.config.ts'],
     rules: {
       'import/no-default-export': 'off'
     }
   },
   {
-    files: ['src/templates/db/schema.ts','src/templates/tailwind/postcss.config.ts'],
+    files: ['src/templates/db/drizzle-schema.ts','src/templates/tailwind/postcss.config.ts'],
     rules: {
       'absolute/explicit-object-types': 'off',
     }

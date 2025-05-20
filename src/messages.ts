@@ -27,17 +27,12 @@ export const getOutroMessage = ({
 	projectName,
 	packageManager,
 	installDependenciesNow
-}: OutroMessageProps) => {
-	return (
-		`${green('Created successfully')}, you can now run:\n\n` +
-		`${cyan('cd')} ${projectName}\n` +
-		`${cyan(`${packageManager} dev`)}${
-			installDependenciesNow
-				? ''
-				: `\n${cyan(`${packageManager} install`)}`
-		}`
-	);
-};
+}: OutroMessageProps) =>
+	`${green('Created successfully')}, you can now run:\n\n` +
+	`${cyan('cd')} ${projectName}\n` +
+	`${cyan(`${packageManager} dev`)}${
+		installDependenciesNow ? '' : `\n${cyan(`${packageManager} install`)}`
+	}`;
 
 type DebugMessageProps = {
 	response: PromptResponse;

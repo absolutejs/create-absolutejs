@@ -2,18 +2,18 @@
 import { argv, exit } from 'node:process';
 import { parseArgs } from 'node:util';
 import { outro } from '@clack/prompts';
+import { DEFAULT_ARG_LENGTH } from './constants';
 import { availableFrontends } from './data';
 import { getDebugMessage, getOutroMessage, helpMessage } from './messages';
 import { prompt } from './prompt';
 import { scaffold } from './scaffold';
 import { getUserPackageManager } from './utils/t3-utils';
-import { DEFAULT_ARG_LENGTH } from './constants';
 
 const { values } = parseArgs({
 	args: argv.slice(DEFAULT_ARG_LENGTH),
 	options: {
-		help: { default: false, short: 'h', type: 'boolean' },
-		debug: { default: false, short: 'd', type: 'boolean' }
+		debug: { default: false, short: 'd', type: 'boolean' },
+		help: { default: false, short: 'h', type: 'boolean' }
 	},
 	strict: false
 });
@@ -39,9 +39,9 @@ const debugMessage =
 		: '';
 
 const outroMessage = getOutroMessage({
-	projectName: response.projectName,
+	installDependenciesNow: response.installDependenciesNow,
 	packageManager,
-	installDependenciesNow: response.installDependenciesNow
+	projectName: response.projectName
 });
 
 outro(debugMessage + outroMessage);
