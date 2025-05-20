@@ -11,7 +11,6 @@ export const getDatabaseEngine = async () => {
 			{ label: magenta('SQLite'), value: 'sqlite' },
 			{ label: green('MySQL'), value: 'mysql' },
 			{ label: red('Redis'), value: 'redis' },
-			{ label: blueBright('Turso'), value: 'turso' },
 			{ label: green('MongoDB'), value: 'mongodb' },
 			{ label: magenta('SingleStore'), value: 'singlestore' },
 			{ label: yellow('SQL Server'), value: 'mssql' },

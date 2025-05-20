@@ -65,7 +65,8 @@ export const scaffold = (
 		tailwind
 	});
 
-	scaffoldDatabase({ orm, projectName, databaseEngine });
+	databaseEngine !== undefined &&
+		scaffoldDatabase({ orm, projectName, databaseEngine });
 
 	createFrontends({ frontendConfigurations, frontendDir, templatesDir });
 

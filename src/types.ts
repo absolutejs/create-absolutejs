@@ -31,10 +31,17 @@ export type DatabaseEngine =
 	| 'mongodb'
 	| 'redis'
 	| 'singlestore'
-	| 'turso'
 	| 'cockroachdb'
 	| 'mssql'
 	| undefined;
+export type DatabaseHost =
+	| 'neon'
+	| 'planetscale'
+	| 'supabase'
+	| 'turso'
+	| 'vercel'
+	| 'upstash';
+
 export type HTMLScriptOption = 'ts' | 'js' | 'ts+ssr' | 'js+ssr' | undefined;
 export type ConfigType = 'default' | 'custom';
 export type ORM = 'drizzle' | 'prisma' | undefined;

@@ -36,16 +36,19 @@ export const prompt = async () => {
 		? await getHtmlScriptingOption(language)
 		: undefined;
 
-	// 7. Database provider
+	// 7. Database engine
 	const databaseEngine = await getDatabaseEngine();
 
-	// 8. ORM choice (optional)
+	// 8. Database host
+	// const databaseHost = await getDatabaseHost();
+
+	// 9. ORM choice
 	const orm = databaseEngine !== undefined ? await getORM() : undefined;
 
-	// 9. Configuration type
+	// 10. Configuration type
 	const configType = await getConfigurationType();
 
-	// 10. Directory configurations
+	// 11. Directory configurations
 	const { buildDirectory, assetsDirectory, tailwind, databaseDirectory } =
 		await getDirectoryConfiguration({
 			configType,
@@ -53,22 +56,22 @@ export const prompt = async () => {
 			useTailwind
 		});
 
-	// 11. Framework-specific directories
+	// 12. Framework-specific directories
 	const frontendConfigurations = await getFrontendDirectoryConfigurations(
 		configType,
 		frontends
 	);
 
-	// 12. Auth provider
+	// 13. Auth provider
 	const authProvider = await getAuthProvider();
 
-	// 13. Additional plugins (optional)
+	// 14. Additional plugins
 	const plugins = await getPlugins();
 
-	// 14. Initialize Git repository
+	// 15. Initialize Git repository
 	const initializeGitNow = await getInitializeGit();
 
-	// 15. Install dependencies
+	// 16. Install dependencies
 	const installDependenciesNow = await getInstallDependencies();
 
 	const values: PromptResponse = {

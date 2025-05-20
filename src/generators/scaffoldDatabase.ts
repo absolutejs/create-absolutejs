@@ -20,7 +20,7 @@ export const scaffoldDatabase = ({
 	if (databaseEngine === 'postgres') {
 	} else {
 		console.warn(
-			`${dim('│')}\n${yellow('▲')}  Only PostgreSQL is supported on this version`
+			`${dim('│')}\n${yellow('▲')}  Only PostgreSQL support is implemented so far`
 		);
 	}
 
