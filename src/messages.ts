@@ -45,18 +45,22 @@ export const getDebugMessage = ({
 		projectName,
 		language,
 		codeQualityTool,
+		configType,
+		useTailwind,
 		tailwind,
 		frontends,
+		htmlScriptOption,
+		frontendConfigurations,
 		buildDirectory,
 		assetsDirectory,
 		databaseEngine,
+		databaseHost,
+		databaseDirectory,
 		orm,
 		authProvider,
 		plugins,
 		initializeGitNow,
-		installDependenciesNow,
-		htmlScriptOption,
-		frontendConfigurations
+		installDependenciesNow
 	},
 	packageManager,
 	availableFrontends
@@ -84,36 +88,40 @@ export const getDebugMessage = ({
 		frontends.length === 1 ? magenta('Frontend') : magenta('Frontends');
 
 	const configString = frontendConfigurations.reduce(
-		(accumulator, { name, directory }, idx, arr) => {
+		(acc, { name, directory }, idx, arr) => {
 			const label = availableFrontends[name]?.label ?? name;
 			const segment = `${label}:		src/frontend/${directory}${
 				idx < arr.length - 1 ? '\n    ' : ''
 			}`;
 
-			return accumulator + segment;
+			return acc + segment;
 		},
 		''
 	);
 
-	const tailwindSection = tailwind
-		? `\n    ${cyan('Input')}:          	${tailwind.input}\n    ${cyan('Output')}:         	${tailwind.output}`
-		: dim('None');
+	const tailwindSection =
+		tailwind && useTailwind
+			? `\n    ${cyan('Input')}:          	${tailwind.input}\n    ${cyan('Output')}:         	${tailwind.output}`
+			: dim('None');
 
 	return `
 ${magenta('Project Name')}:       	${projectName}
 ${magenta('Package Manager')}:    	${packageManager}
+${magenta('Config Type')}:        	${configType === 'custom' ? green('Custom') : dim('Default')}
 ${magenta('Language')}:           	${language === 'ts' ? blueBright('TypeScript') : yellow('JavaScript')}
 ${magenta('Linting')}:            	${codeQualityTool === 'eslint+prettier' ? 'ESLint + Prettier' : 'Biome'}
-${magenta('Tailwind')}:           	${tailwindSection}
+${magenta('Tailwind Configuration')}:    	${tailwindSection}
 ${frontendHeading}:           	${frontendLabels.join(', ')}${htmlScriptingLine}
 ${magenta('Build Directory')}:    	${buildDirectory}
 ${magenta('Assets Directory')}:   	${assetsDirectory}
-${magenta('Database')}:           	${databaseEngine === undefined ? dim('None') : databaseEngine}
+${magenta('Database Engine')}:    	${databaseEngine ?? dim('None')}
+${magenta('Database Host')}:      	${databaseHost ?? dim('None')}
+${magenta('Database Directory')}:       	${databaseDirectory ?? dim('None')}
 ${magenta('ORM')}:                	${orm ?? dim('None')}
-${magenta('Auth')}:               	${authProvider === undefined ? dim('None') : authProvider}
+${magenta('Authorization Provider')}:               	${authProvider ?? dim('None')}
 ${magenta('Plugins')}:            	${plugins.length ? plugins.join(', ') : dim('None')}
-${magenta('Initialize Git')}:     	${initializeGitNow ? green('Yes') : dim('None')}
-${magenta('Install Dependencies')}:   ${installDependenciesNow ? green('Yes') : red('No')}
+${magenta('Initialize Git')}:     	${initializeGitNow ? green('Yes') : dim('No')}
+${magenta('Install Dependencies')}:	${installDependenciesNow ? green('Yes') : red('No')}
 ${magenta('Framework Config')}:
     ${configString}\n\n`;
 };

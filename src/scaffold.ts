@@ -20,6 +20,7 @@ export const scaffold = (
 		codeQualityTool,
 		initializeGitNow,
 		databaseEngine,
+		databaseHost,
 		orm,
 		plugins,
 		authProvider,
@@ -66,7 +67,11 @@ export const scaffold = (
 	});
 
 	databaseEngine !== undefined &&
-		scaffoldDatabase({ orm, projectName, databaseEngine });
+		void scaffoldDatabase({
+			databaseEngine,
+			orm,
+			projectName
+		});
 
 	createFrontends({ frontendConfigurations, frontendDir, templatesDir });
 

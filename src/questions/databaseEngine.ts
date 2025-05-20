@@ -1,5 +1,5 @@
 import { select, isCancel } from '@clack/prompts';
-import { cyan, magenta, green, red, blueBright, yellow } from 'picocolors';
+import { cyan, magenta, green, red, yellow } from 'picocolors';
 import { abort } from '../utils/abort';
 
 export const getDatabaseEngine = async () => {
@@ -7,7 +7,7 @@ export const getDatabaseEngine = async () => {
 		message: 'Database provider:',
 		options: [
 			{ label: 'None', value: 'none' },
-			{ label: cyan('PostgreSQL'), value: 'postgres' },
+			{ label: cyan('PostgreSQL'), value: 'postgresql' },
 			{ label: magenta('SQLite'), value: 'sqlite' },
 			{ label: green('MySQL'), value: 'mysql' },
 			{ label: red('Redis'), value: 'redis' },

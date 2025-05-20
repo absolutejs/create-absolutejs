@@ -1,10 +1,10 @@
+import { select, isCancel, confirm } from '@clack/prompts';
 import { cyan } from 'picocolors';
 import type { DatabaseEngine } from '../types';
-import { select, isCancel, confirm } from '@clack/prompts';
 import { abort } from '../utils/abort';
 
 export const getDatabaseHost = async (databaseEngine: DatabaseEngine) => {
-	if (databaseEngine === 'postgres') {
+	if (databaseEngine === 'postgresql') {
 		const databaseHost = await select({
 			message: 'Select database host:',
 			options: [
@@ -14,6 +14,7 @@ export const getDatabaseHost = async (databaseEngine: DatabaseEngine) => {
 			]
 		});
 		if (isCancel(databaseHost)) abort();
+
 		return databaseHost === 'none' ? undefined : databaseHost;
 	}
 
@@ -22,6 +23,7 @@ export const getDatabaseHost = async (databaseEngine: DatabaseEngine) => {
 			message: 'Are you using PlanetScale?'
 		});
 		if (isCancel(databaseHost)) abort();
+
 		return databaseHost ? 'planetscale' : undefined;
 	}
 
@@ -30,6 +32,7 @@ export const getDatabaseHost = async (databaseEngine: DatabaseEngine) => {
 			message: 'Are you using Turso?'
 		});
 		if (isCancel(databaseHost)) abort();
+
 		return databaseHost ? 'turso' : undefined;
 	}
 
@@ -38,6 +41,7 @@ export const getDatabaseHost = async (databaseEngine: DatabaseEngine) => {
 			message: 'Are you using Atlas?'
 		});
 		if (isCancel(databaseHost)) abort();
+
 		return databaseHost ? 'atlas' : undefined;
 	}
 
@@ -46,6 +50,9 @@ export const getDatabaseHost = async (databaseEngine: DatabaseEngine) => {
 			message: 'Are you using Upstash?'
 		});
 		if (isCancel(databaseHost)) abort();
+
 		return databaseHost ? 'upstash' : undefined;
 	}
+
+	return undefined;
 };

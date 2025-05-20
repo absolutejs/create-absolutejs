@@ -25,7 +25,7 @@ export type PackageManager = 'npm' | 'pnpm' | 'yarn' | 'bun';
 
 export type AuthProvier = 'absoluteAuth' | undefined;
 export type DatabaseEngine =
-	| 'postgres'
+	| 'postgresql'
 	| 'mysql'
 	| 'sqlite'
 	| 'mongodb'
