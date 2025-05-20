@@ -14,8 +14,30 @@ Arguments:
 
 Options:
     -h, --help      Show this help message and exit
-    -s, --summary   Show a summary of the project configuration after creation
+    -d, --debug     Show a summary of the project configuration after creation
 `;
+
+type OutroMessageProps = {
+	projectName: string;
+	packageManager: string;
+	installDependenciesNow: boolean;
+};
+
+export const getOutroMessage = ({
+	projectName,
+	packageManager,
+	installDependenciesNow
+}: OutroMessageProps) => {
+	return (
+		`${green('Created successfully')}, you can now run:\n\n` +
+		`${cyan('cd')} ${projectName}\n` +
+		`${cyan(`${packageManager} dev`)}${
+			installDependenciesNow
+				? ''
+				: `\n${cyan(`${packageManager} install`)}`
+		}`
+	);
+};
 
 type DebugMessageProps = {
 	response: PromptResponse;
@@ -23,7 +45,7 @@ type DebugMessageProps = {
 	availableFrontends: Record<string, FrontendFramework>;
 };
 
-export const getSummaryMessage = ({
+export const getDebugMessage = ({
 	response: {
 		projectName,
 		language,
