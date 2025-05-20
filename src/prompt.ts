@@ -1,7 +1,7 @@
 import { getAuthProvider } from './questions/authProvider';
 import { getCodeQualityTool } from './questions/codeQualityTool';
 import { getConfigurationType } from './questions/configurationType';
-import { getDatabaseProvider } from './questions/databaseDialect';
+import { getDatabaseProvider } from './questions/databaseProvider';
 import { getDirectoryConfiguration } from './questions/directoryConfiguration';
 import { getFrontendDirectoryConfigurations } from './questions/frontendDirectoryConfigurations';
 import { getFrontends } from './questions/frontends';

@@ -32,6 +32,8 @@ export type DatabaseProvider =
 	| 'redis'
 	| 'singlestore'
 	| 'turso'
+	| 'cockroachdb'
+	| 'mssql'
 	| undefined;
 export type HTMLScriptOption = 'ts' | 'js' | 'ts+ssr' | 'js+ssr' | undefined;
 export type ConfigType = 'default' | 'custom';

@@ -1,5 +1,5 @@
 import { select, isCancel } from '@clack/prompts';
-import { cyan, magenta, green, red, blueBright } from 'picocolors';
+import { cyan, magenta, green, red, blueBright, yellow } from 'picocolors';
 import { abort } from '../utils/abort';
 
 export const getDatabaseProvider = async () => {
@@ -13,7 +13,9 @@ export const getDatabaseProvider = async () => {
 			{ label: red('Redis'), value: 'redis' },
 			{ label: blueBright('Turso'), value: 'turso' },
 			{ label: green('MongoDB'), value: 'mongodb' },
-			{ label: magenta('SingleStore'), value: 'singlestore' }
+			{ label: magenta('SingleStore'), value: 'singlestore' },
+			      { label: yellow('SQL Server'),  value: 'mssql'    },
+      { label: cyan('CockroachDB'),   value: 'cockroachdb' },
 		]
 	});
 	if (isCancel(databaseDialectResponse)) abort();
