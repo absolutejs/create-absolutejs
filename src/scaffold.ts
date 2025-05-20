@@ -11,6 +11,7 @@ import { createPackageJson } from './generators/createPackageJson';
 import { createServerFile } from './generators/createServer';
 import { initalizeRoot } from './generators/initializeRoot';
 import type { PackageManager, PromptResponse } from './types';
+import { scaffoldDatabase } from './generators/scaffoldDatabase';
 
 export const scaffold = (
 	{
@@ -63,9 +64,7 @@ export const scaffold = (
 		tailwind
 	});
 
-	if (orm === 'drizzle') {
-		mkdirSync(join(projectName, 'db'), { recursive: true });
-	}
+	scaffoldDatabase(projectName, orm);
 
 	createFrontends({ frontendConfigurations, frontendDir, templatesDir });
 
