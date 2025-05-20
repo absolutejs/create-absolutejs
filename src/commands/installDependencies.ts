@@ -1,5 +1,6 @@
 import { execSync } from 'child_process';
 import { exit } from 'process';
+import { installCommands } from '../utils/commandMaps';
 
 type InstallDependenciesProps = {
 	projectName: string;
@@ -16,13 +17,7 @@ export const installDependencies = async ({
 	packageManager,
 	spinner
 }: InstallDependenciesProps) => {
-	const commands: Record<string, string> = {
-		bun: 'bun install',
-		npm: 'npm install',
-		pnpm: 'pnpm install',
-		yarn: 'yarn install'
-	};
-	const cmd = commands[packageManager] ?? 'bun install';
+	const cmd = installCommands[packageManager] ?? 'bun install';
 
 	try {
 		spinner.start('Installing dependencies…');

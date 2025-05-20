@@ -4,3 +4,10 @@ export const formatCommands: Record<string, string> = {
 	pnpm: 'pnpm run format',
 	yarn: 'yarn format'
 };
+
+export const installCommands: Record<string, string> = {
+	bun: 'bun install',
+	npm: 'npm install',
+	pnpm: 'pnpm install',
+	yarn: 'yarn install'
+};
