@@ -6,8 +6,8 @@ import { getDirectoryConfiguration } from './questions/directoryConfiguration';
 import { getFrontendDirectoryConfigurations } from './questions/frontendDirectoryConfigurations';
 import { getFrontends } from './questions/frontends';
 import { getHtmlScriptingOption } from './questions/htmlScriptingOption';
-import { getInitializeGit } from './questions/initializeGit';
-import { getInstallDependencies } from './questions/installDependencies';
+import { getInitializeGit } from './questions/initializeGitNow';
+import { getInstallDependencies } from './questions/installDependenciesNow';
 import { getLanguage } from './questions/language';
 import { getORM } from './questions/orm';
 import { getPlugins } from './questions/plugins';
@@ -64,10 +64,10 @@ export const prompt = async () => {
 	const plugins = await getPlugins();
 
 	// 14. Initialize Git repository
-	const initializeGit = await getInitializeGit();
+	const initializeGitNow = await getInitializeGit();
 
 	// 15. Install dependencies
-	const installDependencies = await getInstallDependencies();
+	const installDependenciesNow = await getInstallDependencies();
 
 	const values: PromptResponse = {
 		assetsDir,
@@ -80,8 +80,8 @@ export const prompt = async () => {
 		frontends,
 		// @ts-expect-error //TODO: The script comes back as a string and needs to be verified as a specific string beforehand in the function
 		htmlScriptOption,
-		initializeGit,
-		installDependencies,
+		initializeGitNow,
+		installDependenciesNow,
 		language,
 		orm,
 		plugins,

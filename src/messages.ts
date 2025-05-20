@@ -1,5 +1,9 @@
 import { blueBright, cyan, dim, green, magenta, red, yellow } from 'picocolors';
-import type { FrontendFramework, PromptResponse } from './types';
+import type {
+	FrontendFramework,
+	HTMLScriptOption,
+	PromptResponse
+} from './types';
 
 export const helpMessage = `
 Usage: create-absolute [options] [dir]
@@ -32,29 +36,25 @@ export const getSummaryMessage = ({
 		orm,
 		authProvider,
 		plugins,
-		initializeGit,
-		installDependencies,
+		initializeGitNow,
+		installDependenciesNow,
 		htmlScriptOption,
 		frontendConfigurations
 	},
 	packageManager,
 	availableFrontends
 }: DebugMessageProps) => {
-	const htmlLabels: Record<'ssr' | 'script', string> = {
-		script:
-			language === 'ts' ? blueBright('TypeScript') : yellow('JavaScript'),
-		ssr:
-			language === 'ts'
-				? blueBright('TypeScript + SSR')
-				: yellow('JavaScript + SSR')
+	const htmlLabels: Record<Exclude<HTMLScriptOption, undefined>, string> = {
+		js: yellow('JavaScript'),
+		'js+ssr': yellow('JavaScript + SSR'),
+		ts: blueBright('TypeScript'),
+		'ts+ssr': blueBright('TypeScript + SSR')
 	};
 
-	let htmlScriptingValue = 'None';
-	if (htmlScriptOption === 'ssr') {
-		htmlScriptingValue = htmlLabels.ssr;
-	} else if (htmlScriptOption === 'script') {
-		htmlScriptingValue = htmlLabels.script;
-	}
+	const htmlScriptingValue =
+		htmlScriptOption !== undefined
+			? htmlLabels[htmlScriptOption]
+			: dim('None');
 
 	const htmlScriptingLine = frontends.includes('html')
 		? `\n${magenta('HTML Scripting')}:   	${htmlScriptingValue}`
@@ -91,12 +91,12 @@ ${magenta('Tailwind')}:           	${tailwindSection}
 ${frontendHeading}:           	${frontendLabels.join(', ')}${htmlScriptingLine}
 ${magenta('Build Directory')}:    	${buildDir}
 ${magenta('Assets Directory')}:   	${assetsDir}
-${magenta('Database')}:           	${databaseDialect === 'none' ? dim('None') : databaseDialect}
+${magenta('Database')}:           	${databaseDialect === undefined ? dim('None') : databaseDialect}
 ${magenta('ORM')}:                	${orm ?? dim('None')}
-${magenta('Auth')}:               	${authProvider === 'none' ? dim('None') : authProvider}
+${magenta('Auth')}:               	${authProvider === undefined ? dim('None') : authProvider}
 ${magenta('Plugins')}:            	${plugins.length ? plugins.join(', ') : dim('None')}
-${magenta('Git Repository')}:     	${initializeGit ? green('Initialized') : dim('None')}
-${magenta('Install Dependencies')}:   ${installDependencies ? green('Yes') : red('No')}
+${magenta('Git Repository')}:     	${initializeGitNow ? green('Initialized') : dim('None')}
+${magenta('Install Dependencies')}:   ${installDependenciesNow ? green('Yes') : red('No')}
 ${magenta('Framework Config')}:
     ${configString}`;
 };

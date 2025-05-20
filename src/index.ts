@@ -37,7 +37,7 @@ let outroMessage =
 	`${green('Created successfully')}, you can now run:\n\n` +
 	`${cyan('cd')} ${response.projectName}\n` +
 	`${cyan(`${packageManager} dev`)}${
-		response.installDependencies
+		response.installDependenciesNow
 			? ''
 			: `\n${cyan(`${packageManager} install`)}`
 	}`;

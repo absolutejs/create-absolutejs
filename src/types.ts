@@ -54,8 +54,8 @@ export type PromptResponse = {
 	frontendConfigurations: FrontendConfiguration[];
 	frontends: string[];
 	htmlScriptOption: HTMLScriptOption;
-	initializeGit: boolean;
-	installDependencies: boolean;
+	initializeGitNow: boolean;
+	installDependenciesNow: boolean;
 	language: Language;
 	codeQualityTool: CodeQualityTool;
 	orm: ORM;

@@ -5,9 +5,8 @@ import type { AuthProvier, PackageJson } from '../types';
 import { getPackageVersion } from '../utils/getPackageVersion';
 
 type CreatePackageJsonProps = {
-	root: string;
-	authProvider: AuthProvier;
 	projectName: string;
+	authProvider: AuthProvier;
 	plugins: string[];
 	spin: {
 		start: (msg?: string) => void;
@@ -17,7 +16,6 @@ type CreatePackageJsonProps = {
 };
 
 export const createPackageJson = ({
-	root,
 	projectName,
 	authProvider,
 	plugins,
@@ -43,7 +41,7 @@ export const createPackageJson = ({
 	const devDependencies: PackageJson['devDependencies'] = {};
 
 	const scripts: PackageJson['scripts'] = {
-		dev: 'bun run src/index.ts',
+		dev: 'bun run src/backend/server.ts',
 		format: 'prettier --write "./**/*.{js,jsx,ts,tsx,css,json}"',
 		lint: 'eslint ./src',
 		test: 'echo "Error: no test specified" && exit 1',
@@ -59,5 +57,8 @@ export const createPackageJson = ({
 		version: '0.1.0'
 	};
 
-	writeFileSync(join(root, 'package.json'), JSON.stringify(packageJson));
+	writeFileSync(
+		join(projectName, 'package.json'),
+		JSON.stringify(packageJson)
+	);
 };

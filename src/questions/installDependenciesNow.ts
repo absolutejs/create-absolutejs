@@ -2,10 +2,10 @@ import { isCancel, confirm } from '@clack/prompts';
 import { abort } from '../utils/abort';
 
 export const getInstallDependencies = async () => {
-	const installDependencies = await confirm({
+	const installDependenciesNow = await confirm({
 		message: 'Install dependencies now?'
 	});
-	if (isCancel(installDependencies)) abort();
+	if (isCancel(installDependenciesNow)) abort();
 
-	return installDependencies;
+	return installDependenciesNow;
 };

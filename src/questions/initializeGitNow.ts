@@ -2,10 +2,10 @@ import { isCancel, confirm } from '@clack/prompts';
 import { abort } from '../utils/abort';
 
 export const getInitializeGit = async () => {
-	const initializeGit = await confirm({
+	const initializeGitNow = await confirm({
 		message: 'Initialize a git repository?'
 	});
-	if (isCancel(initializeGit)) abort();
+	if (isCancel(initializeGitNow)) abort();
 
-	return initializeGit;
+	return initializeGitNow;
 };
