@@ -28,7 +28,7 @@ export const getSummaryMessage = ({
 		frontends,
 		buildDir,
 		assetsDir,
-		dbProvider,
+		databaseDialect,
 		orm,
 		authProvider,
 		plugins,
@@ -91,7 +91,7 @@ ${magenta('Tailwind')}:           	${tailwindSection}
 ${frontendHeading}:           	${frontendLabels.join(', ')}${htmlScriptingLine}
 ${magenta('Build Directory')}:    	${buildDir}
 ${magenta('Assets Directory')}:   	${assetsDir}
-${magenta('Database')}:           	${dbProvider === 'none' ? dim('None') : dbProvider}
+${magenta('Database')}:           	${databaseDialect === 'none' ? dim('None') : databaseDialect}
 ${magenta('ORM')}:                	${orm ?? dim('None')}
 ${magenta('Auth')}:               	${authProvider === 'none' ? dim('None') : authProvider}
 ${magenta('Plugins')}:            	${plugins.length ? plugins.join(', ') : dim('None')}

@@ -1,241 +1,73 @@
-import { exit } from 'node:process';
-import {
-	cancel,
-	isCancel,
-	multiselect,
-	select,
-	text,
-	confirm
-} from '@clack/prompts';
-import colors from 'picocolors';
-import { availableFrontends, availablePlugins } from './data';
-import type { FrontendConfiguration, PromptResponse } from './types';
-
-const { blueBright, yellow, cyan, green, magenta } = colors;
-
-/* eslint-disable */
-function abort(): never {
-	cancel('Operation cancelled');
-	exit(0);
-}
-/* eslint-enable */
+import { getAuthProvider } from './questions/authProvider';
+import { getCodeQualityTool } from './questions/codeQualityTool';
+import { getConfigurationType } from './questions/configurationType';
+import { getDatabaseDialect } from './questions/databaseDialect';
+import { getDirectoryConfiguration } from './questions/directoryConfiguration';
+import { getFrontendDirectoryConfigurations } from './questions/frontendDirectoryConfigurations';
+import { getFrontends } from './questions/frontends';
+import { getHtmlScriptingOption } from './questions/htmlScriptingOption';
+import { getInitializeGit } from './questions/initializeGit';
+import { getInstallDependencies } from './questions/installDependencies';
+import { getLanguage } from './questions/language';
+import { getORM } from './questions/orm';
+import { getPlugins } from './questions/plugins';
+import { getProjectName } from './questions/projectName';
+import { getUseTailwind } from './questions/useTailwind';
+import type { PromptResponse } from './types';
 
 export const prompt = async () => {
 	// 1. Project name
-	const projectName = await text({
-		message: 'Project name:',
-		placeholder: 'absolutejs-project'
-	});
-	if (isCancel(projectName)) abort();
+	const projectName = await getProjectName();
 
 	// 2. Language
-	const language = await select({
-		message: 'Language:',
-		options: [
-			{ label: blueBright('TypeScript'), value: 'ts' },
-			{ label: yellow('JavaScript'), value: 'js' }
-		]
-	});
-	if (isCancel(language)) abort();
+	const language = await getLanguage();
 
 	// 3. Linting/formatting tool
-	const codeQualityTool = await select({
-		message: 'Choose linting and formatting tool:',
-		options: [
-			{
-				label: blueBright('ESLint + Prettier'),
-				value: 'eslint+prettier'
-			},
-			{ label: yellow('Biome'), value: 'biome' }
-		]
-	});
-	if (isCancel(codeQualityTool)) abort();
+	const codeQualityTool = await getCodeQualityTool();
 
 	// 4. Tailwind support?
-	const useTailwind = await confirm({ message: 'Add Tailwind support?' });
-	if (isCancel(useTailwind)) abort();
+	const useTailwind = await getUseTailwind();
 
-	// 5. Framework(s)
-	const frontends = await multiselect({
-		message: 'Framework(s) (space to select, enter to finish):',
-		options: Object.entries(availableFrontends).map(
-			([value, { label }]) => ({ label, value })
-		)
-	});
-	if (isCancel(frontends)) abort();
+	// 5. Frontend(s)
+	const frontends = await getFrontends();
 
 	// 6. HTML scripting option (if HTML was selected)
-	let htmlScriptOption;
-	if (frontends.includes('html')) {
-		const langLabel =
-			language === 'ts' ? blueBright('TypeScript') : yellow('JavaScript');
-		htmlScriptOption = await select({
-			message: `Add HTML scripting option (${langLabel}):`,
-			options: [
-				{ label: `${langLabel} + SSR`, value: `${language}+ssr` },
-				{ label: langLabel, value: language },
-				{ label: 'None', value: 'none' }
-			]
-		});
-		if (isCancel(htmlScriptOption)) abort();
-		htmlScriptOption =
-			htmlScriptOption === 'none' ? undefined : htmlScriptOption;
-	}
+	const htmlScriptOption = frontends.includes('html')
+		? await getHtmlScriptingOption(language)
+		: undefined;
 
 	// 7. Configuration type
-	const configType = await select({
-		message: 'Select configuration:',
-		options: [
-			{ label: blueBright('Default'), value: 'default' },
-			{ label: yellow('Custom'), value: 'custom' }
-		]
-	});
-	if (isCancel(configType)) abort();
+	const configType = await getConfigurationType();
 
-	// 8. Build / Tailwind / Assets (custom vs default)
-	let tailwind: { input: string; output: string } | undefined;
-	let buildDir: string;
-	let assetsDir: string;
-
-	// Build directory
-	if (configType === 'custom') {
-		const _buildDir = await text({
-			message: 'Build directory:',
-			placeholder: 'build'
-		});
-		if (isCancel(_buildDir)) abort();
-		buildDir = _buildDir;
-	} else {
-		buildDir = 'build';
-	}
-
-	// Assets directory
-	if (configType === 'custom') {
-		const _assetsDir = await text({
-			message: 'Assets directory:',
-			placeholder: 'src/backend/assets'
-		});
-		if (isCancel(_assetsDir)) abort();
-		assetsDir = _assetsDir;
-	} else {
-		assetsDir = 'src/backend/assets';
-	}
-
-	// Tailwind
-	if (useTailwind) {
-		const input =
-			configType === 'custom'
-				? await text({
-						message: 'Tailwind input CSS file:',
-						placeholder: './example/styles/tailwind.css'
-					})
-				: './example/styles/tailwind.css';
-		if (isCancel(input)) abort();
-
-		const output =
-			configType === 'custom'
-				? await text({
-						message: 'Tailwind output CSS file:',
-						placeholder: '/assets/css/tailwind.generated.css'
-					})
-				: '/assets/css/tailwind.generated.css';
-		if (isCancel(output)) abort();
-
-		tailwind = { input, output };
-	}
+	// 8. Directory configurations
+	const { buildDir, assetsDir, tailwind } = await getDirectoryConfiguration(
+		configType,
+		useTailwind
+	);
 
 	// 9. Framework-specific directories
-	let frontendConfigurations: FrontendConfiguration[];
-	const single = frontends.length === 1;
-
-	if (configType === 'custom') {
-		frontendConfigurations = await frontends.reduce<
-			Promise<FrontendConfiguration[]>
-		>(async (prevP, frontend) => {
-			const prev = await prevP;
-			const pretty = availableFrontends[frontend]?.name ?? frontend;
-			const base = single ? '' : `${frontend}`;
-			const defDir = base;
-
-			const frontendDirectory = await text({
-				message: `${pretty} directory:`,
-				placeholder: defDir
-			});
-			if (isCancel(frontendDirectory)) abort();
-
-			return [
-				...prev,
-				{ directory: frontendDirectory, frontend, name: frontend }
-			];
-		}, Promise.resolve([]));
-	} else {
-		frontendConfigurations = frontends.map((frontend) => ({
-			directory: single ? '' : frontend,
-			frontend,
-			name: frontend
-		}));
-	}
+	const frontendConfigurations = await getFrontendDirectoryConfigurations(
+		configType,
+		frontends
+	);
 
 	// 10. Database provider
-	const dbProviderResponse = await select({
-		message: 'Database provider:',
-		options: [
-			{ label: 'None', value: 'none' },
-			{ label: cyan('PostgreSQL'), value: 'postgres' },
-			{ label: green('MySQL'), value: 'mysql' }
-		]
-	});
-	if (isCancel(dbProviderResponse)) abort();
-	const dbProvider =
-		dbProviderResponse === 'none' ? undefined : dbProviderResponse;
+	const databaseDialect = await getDatabaseDialect();
 
-	let ormResponse;
 	// 11. ORM choice (optional)
-	if (dbProvider !== undefined) {
-		ormResponse = await select({
-			message: 'Choose an ORM (optional):',
-			options: [
-				{ label: 'None', value: 'none' },
-				{ label: cyan('Drizzle'), value: 'drizzle' },
-				{ label: magenta('Prisma'), value: 'prisma' }
-			]
-		});
-		if (isCancel(ormResponse)) abort();
-	}
-	const orm = ormResponse === 'none' ? undefined : ormResponse;
+	const orm = databaseDialect !== undefined ? await getORM() : undefined;
 
 	// 12. Auth provider
-	const authProviderResponse = await select({
-		message: 'Auth provider:',
-		options: [
-			{ label: 'None', value: 'none' },
-			{ label: cyan('Absolute Auth'), value: 'absoluteAuth' }
-		]
-	});
-	if (isCancel(authProviderResponse)) abort();
-	const authProvider =
-		authProviderResponse === 'none' ? undefined : authProviderResponse;
+	const authProvider = await getAuthProvider();
 
 	// 13. Additional plugins (optional)
-	const plugins = await multiselect({
-		message:
-			'Select additional Elysia plugins (space to select, enter to submit):',
-		options: availablePlugins,
-		required: false
-	});
-	if (isCancel(plugins)) abort();
+	const plugins = await getPlugins();
 
 	// 14. Initialize Git repository
-	const initializeGit = await confirm({
-		message: 'Initialize a git repository?'
-	});
-	if (isCancel(initializeGit)) abort();
+	const initializeGit = await getInitializeGit();
 
 	// 15. Install dependencies
-	const installDependencies = await confirm({
-		message: 'Install dependencies now?'
-	});
-	if (isCancel(installDependencies)) abort();
+	const installDependencies = await getInstallDependencies();
 
 	const values: PromptResponse = {
 		assetsDir,
@@ -243,9 +75,10 @@ export const prompt = async () => {
 		buildDir,
 		codeQualityTool,
 		configType,
-		dbProvider,
+		databaseDialect,
 		frontendConfigurations,
 		frontends,
+		// @ts-expect-error //TODO: The script comes back as a string and needs to be verified as a specific string beforehand in the function
 		htmlScriptOption,
 		initializeGit,
 		installDependencies,

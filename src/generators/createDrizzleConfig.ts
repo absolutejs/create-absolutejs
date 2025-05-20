@@ -1,7 +1,17 @@
-export const createDrizzleConfig =
-	() => `import { defineConfig } from "drizzle-kit";
+import { writeFileSync } from 'fs';
+import { join } from 'path';
 
-export default defineConfig({
+type CreateDrizzleConfigProps = {
+	root: string;
+};
+
+export const createDrizzleConfig = ({ root }: CreateDrizzleConfigProps) => {
+	const drizzleConfig = `import { defineConfig } from "drizzle-kit";
+    
+    export default defineConfig({
     dialect: 'postgresql'
-});
-`;
+    });
+    `;
+
+	writeFileSync(join(root, 'package.json'), drizzleConfig);
+};

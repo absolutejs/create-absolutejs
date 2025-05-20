@@ -24,11 +24,14 @@ export type AvailableDependency = {
 export type PackageManager = 'npm' | 'pnpm' | 'yarn' | 'bun';
 
 export type AuthProvier = 'absoluteAuth' | undefined;
-export type DBProvider =
+export type DatabaseDialect =
 	| 'postgres'
 	| 'mysql'
 	| 'sqlite'
 	| 'mongodb'
+	| 'redis'
+	| 'singlestore'
+	| 'turso'
 	| undefined;
 export type HTMLScriptOption = 'ts' | 'js' | 'ts+ssr' | 'js+ssr' | undefined;
 export type ConfigType = 'default' | 'custom';
@@ -47,7 +50,7 @@ export type PromptResponse = {
 	authProvider: AuthProvier;
 	buildDir: string;
 	configType: ConfigType;
-	dbProvider: DBProvider;
+	databaseDialect: DatabaseDialect;
 	frontendConfigurations: FrontendConfiguration[];
 	frontends: string[];
 	htmlScriptOption: HTMLScriptOption;

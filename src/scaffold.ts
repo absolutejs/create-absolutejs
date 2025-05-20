@@ -66,12 +66,8 @@ export const scaffold = (
 
 	const dirMap = new Map<string, string>();
 	frontendConfigurations.forEach(({ name, directory }) => {
-		const dir =
-			directory && directory.trim() !== ''
-				? directory
-				: isSingle
-					? ''
-					: name;
+		const dir = directory?.trim() || (isSingle ? '' : name);
+
 		if (dirMap.has(dir)) {
 			throw new Error(
 				`Frontend directory collision: "${dir}" is assigned to both "${dirMap.get(
@@ -80,15 +76,6 @@ export const scaffold = (
 			);
 		}
 		dirMap.set(dir, name);
-	});
-
-	frontendConfigurations.forEach(({ name, directory }) => {
-		const dir =
-			directory && directory.trim() !== ''
-				? directory
-				: isSingle
-					? ''
-					: name;
 
 		const targetDir = join(frontendDir, dir);
 		mkdirSync(targetDir, { recursive: true });
@@ -101,9 +88,7 @@ export const scaffold = (
 			cpSync(
 				join(reactTemplates, 'components'),
 				join(targetDir, 'components'),
-				{
-					recursive: true
-				}
+				{ recursive: true }
 			);
 			cpSync(join(reactTemplates, 'hooks'), join(targetDir, 'hooks'), {
 				recursive: true
