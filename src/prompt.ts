@@ -1,7 +1,7 @@
 import { getAuthProvider } from './questions/authProvider';
 import { getCodeQualityTool } from './questions/codeQualityTool';
 import { getConfigurationType } from './questions/configurationType';
-import { getDatabaseDialect } from './questions/databaseDialect';
+import { getDatabaseProvider } from './questions/databaseDialect';
 import { getDirectoryConfiguration } from './questions/directoryConfiguration';
 import { getFrontendDirectoryConfigurations } from './questions/frontendDirectoryConfigurations';
 import { getFrontends } from './questions/frontends';
@@ -37,10 +37,10 @@ export const prompt = async () => {
 		: undefined;
 
 	// 7. Database provider
-	const databaseDialect = await getDatabaseDialect();
+	const databaseProvider = await getDatabaseProvider();
 
 	// 8. ORM choice (optional)
-	const orm = databaseDialect !== undefined ? await getORM() : undefined;
+	const orm = databaseProvider !== undefined ? await getORM() : undefined;
 
 	// 9. Configuration type
 	const configType = await getConfigurationType();
@@ -49,7 +49,7 @@ export const prompt = async () => {
 	const { buildDirectory, assetsDirectory, tailwind, databaseDirectory } =
 		await getDirectoryConfiguration({
 			configType,
-			databaseDialect,
+			databaseProvider,
 			useTailwind
 		});
 
@@ -77,8 +77,8 @@ export const prompt = async () => {
 		buildDirectory,
 		codeQualityTool,
 		configType,
-		databaseDialect,
 		databaseDirectory,
+		databaseProvider,
 		frontendConfigurations,
 		frontends, // @ts-expect-error //TODO: The script comes back as a string and needs to be verified as a specific string beforehand in the function
 		htmlScriptOption,

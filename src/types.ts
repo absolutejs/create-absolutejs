@@ -24,7 +24,7 @@ export type AvailableDependency = {
 export type PackageManager = 'npm' | 'pnpm' | 'yarn' | 'bun';
 
 export type AuthProvier = 'absoluteAuth' | undefined;
-export type DatabaseDialect =
+export type DatabaseProvider =
 	| 'postgres'
 	| 'mysql'
 	| 'sqlite'
@@ -50,7 +50,7 @@ export type PromptResponse = {
 	authProvider: AuthProvier;
 	buildDirectory: string;
 	configType: ConfigType;
-	databaseDialect: DatabaseDialect;
+	databaseProvider: DatabaseProvider;
 	frontendConfigurations: FrontendConfiguration[];
 	frontends: string[];
 	htmlScriptOption: HTMLScriptOption;

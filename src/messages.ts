@@ -49,7 +49,7 @@ export const getDebugMessage = ({
 		frontends,
 		buildDirectory,
 		assetsDirectory,
-		databaseDialect,
+		databaseProvider,
 		orm,
 		authProvider,
 		plugins,
@@ -108,7 +108,7 @@ ${magenta('Tailwind')}:           	${tailwindSection}
 ${frontendHeading}:           	${frontendLabels.join(', ')}${htmlScriptingLine}
 ${magenta('Build Directory')}:    	${buildDirectory}
 ${magenta('Assets Directory')}:   	${assetsDirectory}
-${magenta('Database')}:           	${databaseDialect === undefined ? dim('None') : databaseDialect}
+${magenta('Database')}:           	${databaseProvider === undefined ? dim('None') : databaseProvider}
 ${magenta('ORM')}:                	${orm ?? dim('None')}
 ${magenta('Auth')}:               	${authProvider === undefined ? dim('None') : authProvider}
 ${magenta('Plugins')}:            	${plugins.length ? plugins.join(', ') : dim('None')}
