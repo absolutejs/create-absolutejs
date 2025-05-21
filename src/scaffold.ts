@@ -5,12 +5,12 @@ import { spinner } from '@clack/prompts';
 import { formatProject } from './commands/formatProject';
 import { installDependencies } from './commands/installDependencies';
 import { availablePlugins } from './data';
-import { addConfigurationFiles } from './generators/addConfigurationFiles';
+import { addConfigurationFiles } from './generators/configurations/addConfigurationFiles';
 import { createFrontends } from './generators/createFrontends';
-import { createPackageJson } from './generators/createPackageJson';
+import { createPackageJson } from './generators/configurations/createPackageJson';
 import { createServerFile } from './generators/createServer';
-import { initalizeRoot } from './generators/initializeRoot';
-import { scaffoldDatabase } from './generators/scaffoldDatabase';
+import { initalizeRoot } from './generators/configurations/initializeRoot';
+import { scaffoldDatabase } from './generators/db/scaffoldDatabase';
 import type { PackageManager, PromptResponse } from './types';
 
 export const scaffold = (

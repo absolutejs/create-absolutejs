@@ -1,8 +1,8 @@
 import { mkdirSync, cpSync } from 'node:fs';
 import { join } from 'node:path';
 import type { FrontendConfiguration, HTMLScriptOption } from '../types';
-import { createHTML } from './createHTML';
-import { createReact } from './createReact';
+import { createHTML } from './project/html/createHTML';
+import { createReact } from './project/react/createReact';
 
 type CreateFrontendsProps = {
 	frontendDirectory: string;
@@ -19,6 +19,7 @@ export const createFrontends = ({
 }: CreateFrontendsProps) => {
 	const isSingle = frontendConfigurations.length === 1;
 	const stylesDirectory = join(frontendDirectory, 'styles');
+	mkdirSync(stylesDirectory);
 
 	const dirMap = new Map<string, string>();
 	frontendConfigurations.forEach(({ name, directory }) => {
@@ -34,7 +35,7 @@ export const createFrontends = ({
 		dirMap.set(dir, name);
 
 		const targetDirectory = join(frontendDirectory, dir);
-		mkdirSync(targetDirectory, { recursive: true });
+		mkdirSync(targetDirectory);
 
 		if (name === 'react') {
 			createReact({

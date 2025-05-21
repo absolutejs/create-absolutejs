@@ -1,7 +1,7 @@
 import { copyFileSync } from 'fs';
 import { join } from 'path';
 import { dim, yellow } from 'picocolors';
-import type { PromptResponse } from '../types';
+import type { PromptResponse } from '../../types';
 
 type AddConfigurationProps = Pick<
 	PromptResponse,

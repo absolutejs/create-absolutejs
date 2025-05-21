@@ -1,5 +1,6 @@
-import { cpSync, mkdirSync } from 'node:fs';
+import { cpSync, mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { generateReactPage } from './generateReactPage';
 
 type CreateReactProps = {
 	stylesDirectory: string;
@@ -16,10 +17,12 @@ export const createReact = ({
 }: CreateReactProps) => {
 	const reactStylesSrc = join(templatesDirectory, 'react', 'styles');
 	const reactTemplates = join(templatesDirectory, 'react');
+	const pagesDirectory = join(targetDirectory, 'pages');
+	const reactPageExample = generateReactPage(isSingle);
 
-	cpSync(join(reactTemplates, 'pages'), join(targetDirectory, 'pages'), {
-		recursive: true
-	});
+	mkdirSync(pagesDirectory);
+	writeFileSync(join(pagesDirectory, 'Example.tsx'), reactPageExample);
+
 	cpSync(
 		join(reactTemplates, 'components'),
 		join(targetDirectory, 'components'),
@@ -27,6 +30,7 @@ export const createReact = ({
 			recursive: true
 		}
 	);
+
 	cpSync(join(reactTemplates, 'hooks'), join(targetDirectory, 'hooks'), {
 		recursive: true
 	});
@@ -36,8 +40,8 @@ export const createReact = ({
 			recursive: true
 		});
 	} else {
-		const dest = join(stylesDirectory, 'react', 'defaults');
-		mkdirSync(dest, { recursive: true });
+		const dest = join(stylesDirectory, 'react');
+		mkdirSync(dest);
 		cpSync(reactStylesSrc, dest, {
 			recursive: true
 		});

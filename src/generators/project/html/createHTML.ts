@@ -20,16 +20,16 @@ export const createHTML = ({
 	});
 
 	const scriptsDir = join(targetDirectory, 'scripts');
-	mkdirSync(scriptsDir, { recursive: true });
+	mkdirSync(scriptsDir);
 	// TODO: copy file here
 
 	const htmlStylesSrc = join(htmlTemplates, 'styles');
 	if (isSingle) {
-		mkdirSync(stylesDirectory, { recursive: true });
+		mkdirSync(stylesDirectory);
 		cpSync(htmlStylesSrc, stylesDirectory, { recursive: true });
 	} else {
-		const dest = join(stylesDirectory, 'html', 'defaults');
-		mkdirSync(dest, { recursive: true });
+		const dest = join(stylesDirectory, 'html');
+		mkdirSync(dest);
 		cpSync(htmlStylesSrc, dest, { recursive: true });
 	}
 };

@@ -1,8 +1,12 @@
 import { writeFileSync } from 'fs';
 import { join } from 'path';
-import { absoluteAuthPlugin, availablePlugins, defaultPlugins } from '../data';
-import type { AuthProvier, PackageJson } from '../types';
-import { getPackageVersion } from '../utils/getPackageVersion';
+import {
+	absoluteAuthPlugin,
+	availablePlugins,
+	defaultPlugins
+} from '../../data';
+import type { AuthProvier, PackageJson } from '../../types';
+import { getPackageVersion } from '../../utils/getPackageVersion';
 
 type CreatePackageJsonProps = {
 	projectName: string;

@@ -1,6 +1,6 @@
 import { writeFileSync } from 'fs';
 import { join } from 'path';
-import type { DatabaseEngine } from '../types';
+import type { DatabaseEngine } from '../../types';
 
 type CreateDrizzleConfigProps = {
 	projectName: string;
