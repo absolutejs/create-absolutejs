@@ -35,13 +35,13 @@ export const scaffold = (
 	packageManager: PackageManager
 ) => {
 	const __dirname = dirname(fileURLToPath(import.meta.url));
-	const templatesDir = join(__dirname, '/templates');
+	const templatesDirectory = join(__dirname, '/templates');
 	const s = spinner();
 
-	const { frontendDir, backendDir } = initalizeRoot(projectName);
+	const { frontendDirectory, backendDirectory } = initalizeRoot(projectName);
 
 	copyFileSync(
-		join(templatesDir, 'README.md'),
+		join(templatesDirectory, 'README.md'),
 		join(projectName, 'README.md')
 	);
 
@@ -51,12 +51,12 @@ export const scaffold = (
 		language,
 		projectName,
 		tailwind,
-		templatesDir
+		templatesDirectory
 	});
 
 	createPackageJson({ authProvider, plugins, projectName, spin: s });
 
-	const serverFilePath = join(backendDir, 'server.ts');
+	const serverFilePath = join(backendDirectory, 'server.ts');
 	createServerFile({
 		assetsDirectory,
 		authProvider,
@@ -79,9 +79,9 @@ export const scaffold = (
 
 	createFrontends({
 		frontendConfigurations,
-		frontendDir,
+		frontendDirectory,
 		htmlScriptOption,
-		templatesDir
+		templatesDirectory
 	});
 
 	formatProject({

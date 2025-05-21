@@ -2,42 +2,43 @@ import { cpSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 
 type CreateReactProps = {
-	frontendDir: string;
-	templatesDir: string;
+	stylesDirectory: string;
+	templatesDirectory: string;
 	isSingle: boolean;
-	targetDir: string;
+	targetDirectory: string;
 };
 
 export const createReact = ({
-	frontendDir,
-	templatesDir,
+	stylesDirectory,
+	templatesDirectory,
 	isSingle,
-	targetDir
+	targetDirectory
 }: CreateReactProps) => {
-	const reactStylesSrc = join(templatesDir, 'react', 'styles');
-	const stylesDir = join(frontendDir, 'styles');
-	const reactTemplates = join(templatesDir, 'react');
+	const reactStylesSrc = join(templatesDirectory, 'react', 'styles');
+	const reactTemplates = join(templatesDirectory, 'react');
 
-	cpSync(join(reactTemplates, 'pages'), join(targetDir, 'pages'), {
+	cpSync(join(reactTemplates, 'pages'), join(targetDirectory, 'pages'), {
 		recursive: true
 	});
-	cpSync(join(reactTemplates, 'components'), join(targetDir, 'components'), {
-		recursive: true
-	});
-	cpSync(join(reactTemplates, 'hooks'), join(targetDir, 'hooks'), {
+	cpSync(
+		join(reactTemplates, 'components'),
+		join(targetDirectory, 'components'),
+		{
+			recursive: true
+		}
+	);
+	cpSync(join(reactTemplates, 'hooks'), join(targetDirectory, 'hooks'), {
 		recursive: true
 	});
 
 	if (isSingle) {
-		cpSync(reactStylesSrc, stylesDir, {
+		cpSync(reactStylesSrc, stylesDirectory, {
 			recursive: true
 		});
-	}
-
-	if (!isSingle) {
-		const dest = join(stylesDir, 'react', 'defaults');
+	} else {
+		const dest = join(stylesDirectory, 'react', 'defaults');
 		mkdirSync(dest, { recursive: true });
-		cpSync(join(reactStylesSrc, 'default'), dest, {
+		cpSync(reactStylesSrc, dest, {
 			recursive: true
 		});
 	}

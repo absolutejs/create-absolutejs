@@ -11,14 +11,14 @@ export const initalizeRoot = (projectName: string) => {
 	const srcDir = join(projectName, 'src');
 	mkdirSync(srcDir, { recursive: true });
 
-	const frontendDir = join(srcDir, 'frontend');
-	const backendDir = join(srcDir, 'backend');
-	mkdirSync(frontendDir, { recursive: true });
-	mkdirSync(backendDir, { recursive: true });
+	const frontendDirectory = join(srcDir, 'frontend');
+	const backendDirectory = join(srcDir, 'backend');
+	mkdirSync(frontendDirectory, { recursive: true });
+	mkdirSync(backendDirectory, { recursive: true });
 	mkdirSync(join(srcDir, 'types'), { recursive: true });
 
 	return {
-		backendDir,
-		frontendDir
+		backendDirectory,
+		frontendDirectory
 	};
 };

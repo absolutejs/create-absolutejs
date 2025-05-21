@@ -7,13 +7,13 @@ type AddConfigurationProps = Pick<
 	PromptResponse,
 	'tailwind' | 'language' | 'initializeGitNow' | 'codeQualityTool'
 > & {
-	templatesDir: string;
+	templatesDirectory: string;
 	projectName: string;
 };
 
 export const addConfigurationFiles = ({
 	tailwind,
-	templatesDir,
+	templatesDirectory,
 	language,
 	codeQualityTool,
 	initializeGitNow,
@@ -21,35 +21,35 @@ export const addConfigurationFiles = ({
 }: AddConfigurationProps) => {
 	if (tailwind) {
 		copyFileSync(
-			join(templatesDir, 'tailwind', 'postcss.config.ts'),
+			join(templatesDirectory, 'tailwind', 'postcss.config.ts'),
 			join(projectName, 'postcss.config.ts')
 		);
 		copyFileSync(
-			join(templatesDir, 'tailwind', 'tailwind.config.ts'),
+			join(templatesDirectory, 'tailwind', 'tailwind.config.ts'),
 			join(projectName, 'tailwind.config.ts')
 		);
 	}
 	if (initializeGitNow)
 		copyFileSync(
-			join(templatesDir, 'git', '.gitignore'),
+			join(templatesDirectory, 'git', '.gitignore'),
 			join(projectName, '.gitignore')
 		);
 	if (language === 'ts')
 		copyFileSync(
-			join(templatesDir, 'configurations', 'tsconfig.example.json'),
+			join(templatesDirectory, 'configurations', 'tsconfig.example.json'),
 			join(projectName, 'tsconfig.json')
 		);
 	if (codeQualityTool === 'eslint+prettier') {
 		copyFileSync(
-			join(templatesDir, 'configurations', 'eslint.config.mjs'),
+			join(templatesDirectory, 'configurations', 'eslint.config.mjs'),
 			join(projectName, 'eslint.config.mjs')
 		);
 		copyFileSync(
-			join(templatesDir, 'configurations', '.prettierignore'),
+			join(templatesDirectory, 'configurations', '.prettierignore'),
 			join(projectName, '.prettierignore')
 		);
 		copyFileSync(
-			join(templatesDir, 'configurations', '.prettierrc.json'),
+			join(templatesDirectory, 'configurations', '.prettierrc.json'),
 			join(projectName, '.prettierrc.json')
 		);
 	} else

@@ -1,22 +1,24 @@
 import { mkdirSync, cpSync } from 'node:fs';
 import { join } from 'node:path';
 import type { FrontendConfiguration, HTMLScriptOption } from '../types';
+import { createHTML } from './createHTML';
 import { createReact } from './createReact';
 
 type CreateFrontendsProps = {
-	frontendDir: string;
-	templatesDir: string;
+	frontendDirectory: string;
+	templatesDirectory: string;
 	frontendConfigurations: FrontendConfiguration[];
 	htmlScriptOption: HTMLScriptOption;
 };
 
 export const createFrontends = ({
-	frontendDir,
-	templatesDir,
+	frontendDirectory,
+	templatesDirectory,
 	frontendConfigurations,
 	htmlScriptOption
 }: CreateFrontendsProps) => {
 	const isSingle = frontendConfigurations.length === 1;
+	const stylesDirectory = join(frontendDirectory, 'styles');
 
 	const dirMap = new Map<string, string>();
 	frontendConfigurations.forEach(({ name, directory }) => {
@@ -31,24 +33,25 @@ export const createFrontends = ({
 		}
 		dirMap.set(dir, name);
 
-		const targetDir = join(frontendDir, dir);
-		mkdirSync(targetDir, { recursive: true });
+		const targetDirectory = join(frontendDirectory, dir);
+		mkdirSync(targetDirectory, { recursive: true });
 
 		if (name === 'react') {
-			createReact({ frontendDir, isSingle, targetDir, templatesDir });
+			createReact({
+				isSingle,
+				stylesDirectory,
+				targetDirectory,
+				templatesDirectory
+			});
 		}
 
 		if (name === 'html') {
-			const htmlTemplates = join(templatesDir, 'html');
-			cpSync(join(htmlTemplates, 'pages'), join(targetDir, 'pages'), {
-				recursive: true
+			createHTML({
+				isSingle,
+				stylesDirectory,
+				targetDirectory,
+				templatesDirectory
 			});
-			cpSync(join(htmlTemplates, 'styles'), join(targetDir, 'styles'), {
-				recursive: true
-			});
-			const scriptsDir = join(targetDir, 'scripts');
-			mkdirSync(scriptsDir, { recursive: true });
-			// TODO: copy file here
 		}
 	});
 };
