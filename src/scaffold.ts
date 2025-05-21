@@ -8,9 +8,9 @@ import { availablePlugins } from './data';
 import { addConfigurationFiles } from './generators/configurations/addConfigurationFiles';
 import { createPackageJson } from './generators/configurations/createPackageJson';
 import { initalizeRoot } from './generators/configurations/initializeRoot';
-import { createFrontends } from './generators/createFrontends';
 import { createServerFile } from './generators/createServer';
 import { scaffoldDatabase } from './generators/db/scaffoldDatabase';
+import { scaffoldFrontends } from './generators/scaffoldFrontends';
 import type { PackageManager, PromptResponse } from './types';
 
 export const scaffold = (
@@ -77,7 +77,7 @@ export const scaffold = (
 			projectName
 		});
 
-	createFrontends({
+	scaffoldFrontends({
 		frontendConfigurations,
 		frontendDirectory,
 		htmlScriptOption,

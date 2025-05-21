@@ -1,22 +1,22 @@
-import { mkdirSync, cpSync } from 'node:fs';
+import { mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import type { FrontendConfiguration, HTMLScriptOption } from '../types';
-import { createHTML } from './html/createHTML';
-import { createReact } from './react/createReact';
+import { scaffoldHTML } from './html/scaffoldHTML';
+import { scaffoldReact } from './react/scaffoldReact';
 
-type CreateFrontendsProps = {
+type ScaffoldFrontendsProps = {
 	frontendDirectory: string;
 	templatesDirectory: string;
 	frontendConfigurations: FrontendConfiguration[];
 	htmlScriptOption: HTMLScriptOption;
 };
 
-export const createFrontends = ({
+export const scaffoldFrontends = ({
 	frontendDirectory,
 	templatesDirectory,
 	frontendConfigurations,
 	htmlScriptOption
-}: CreateFrontendsProps) => {
+}: ScaffoldFrontendsProps) => {
 	const isSingle = frontendConfigurations.length === 1;
 	const stylesDirectory = join(frontendDirectory, 'styles');
 	mkdirSync(stylesDirectory);
@@ -38,7 +38,7 @@ export const createFrontends = ({
 		mkdirSync(targetDirectory);
 
 		if (name === 'react') {
-			createReact({
+			scaffoldReact({
 				isSingle,
 				stylesDirectory,
 				targetDirectory,
@@ -47,7 +47,7 @@ export const createFrontends = ({
 		}
 
 		if (name === 'html') {
-			createHTML({
+			scaffoldHTML({
 				isSingle,
 				stylesDirectory,
 				targetDirectory,

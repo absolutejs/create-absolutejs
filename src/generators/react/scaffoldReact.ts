@@ -2,19 +2,19 @@ import { cpSync, mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { generateReactPage } from './generateReactPage';
 
-type CreateReactProps = {
+type ScaffoldReactProps = {
 	stylesDirectory: string;
 	templatesDirectory: string;
 	isSingle: boolean;
 	targetDirectory: string;
 };
 
-export const createReact = ({
+export const scaffoldReact = ({
 	stylesDirectory,
 	templatesDirectory,
 	isSingle,
 	targetDirectory
-}: CreateReactProps) => {
+}: ScaffoldReactProps) => {
 	const reactStylesSrc = join(templatesDirectory, 'react', 'styles');
 	const reactTemplates = join(templatesDirectory, 'react');
 	const pagesDirectory = join(targetDirectory, 'pages');

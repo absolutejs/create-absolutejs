@@ -8,7 +8,7 @@ type CreateReactProps = {
 	stylesDirectory: string;
 };
 
-export const createHTML = ({
+export const scaffoldHTML = ({
 	templatesDirectory,
 	isSingle,
 	targetDirectory,
