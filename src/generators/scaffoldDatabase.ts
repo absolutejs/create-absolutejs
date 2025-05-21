@@ -8,7 +8,7 @@ type ScaffoldDatabaseProps = {
 	projectName: string;
 	orm: ORM;
 	databaseEngine: DatabaseEngine;
-	databaseDirectory: string
+	databaseDirectory: string;
 };
 
 export const scaffoldDatabase = ({

@@ -15,6 +15,7 @@ type CreateServerFileProps = Pick<
 	| 'buildDirectory'
 	| 'assetsDirectory'
 	| 'frontendConfigurations'
+	| 'htmlScriptOption'
 > & {
 	availablePlugins: AvailableDependency[];
 	serverFilePath: string;
@@ -26,6 +27,7 @@ export const createServerFile = ({
 	serverFilePath,
 	authProvider,
 	availablePlugins,
+	htmlScriptOption,
 	buildDirectory,
 	assetsDirectory,
 	plugins
@@ -37,81 +39,73 @@ export const createServerFile = ({
 	if (authProvider === 'absoluteAuth') {
 		authenticationPluginList.push(absoluteAuthPlugin);
 	}
-	let combinedDependencies = defaultDependencies.concat(defaultPlugins);
-	combinedDependencies = combinedDependencies.concat(customPlugins);
-	combinedDependencies = combinedDependencies.concat(
-		authenticationPluginList
-	);
+
+	const combinedDependencies = defaultDependencies
+		.concat(defaultPlugins)
+		.concat(customPlugins)
+		.concat(authenticationPluginList);
+
 	const uniqueDependencies: AvailableDependency[] = [];
 	combinedDependencies.forEach((dependency) => {
-		const existsInList = uniqueDependencies.some(
-			(existing) => existing.value === dependency.value
-		);
-		if (!existsInList) {
+		if (!uniqueDependencies.some((d) => d.value === dependency.value)) {
 			uniqueDependencies.push(dependency);
 		}
 	});
-	uniqueDependencies.sort((first, second) =>
-		first.value.localeCompare(second.value)
+	uniqueDependencies.sort((a, b) => a.value.localeCompare(b.value));
+
+	const importStatementLines = uniqueDependencies.flatMap((dependency) =>
+		dependency.imports.length
+			? [
+					`import { ${dependency.imports
+						.map((i) => i.packageName)
+						.join(', ')} } from '${dependency.value}';`
+				]
+			: []
 	);
-	const importStatementLines: string[] = [];
-	uniqueDependencies.forEach((dependency) => {
-		const importNames = dependency.imports
-			.map((i) => i.packageName)
-			.join(', ');
-		importStatementLines.push(
-			`import { ${importNames} } from '${dependency.value}';`
-		);
-	});
 
-	const pluginItems = uniqueDependencies
+	const pluginUseStatements = uniqueDependencies
 		.flatMap((dep) => dep.imports)
-		.filter((item) => item.isPlugin);
-
-	const pluginUseStatements = pluginItems.map((item) => {
-		if (item.config === undefined) return `.use(${item.packageName})`;
-		if (item.config === null) return `.use(${item.packageName}())`;
-
-		return `.use(${item.packageName}(${JSON.stringify(item.config)}))`;
-	});
-
-	const manifestOptionList: string[] = [];
-	manifestOptionList.push(`buildDirectory: '${buildDirectory}'`);
-	manifestOptionList.push(`assetsDirectory: '${assetsDirectory}'`);
-	const frameworkNames = [
-		'react',
-		'vue',
-		'angular',
-		'svelte',
-		'astro',
-		'html',
-		'htmx'
-	];
-	frameworkNames.forEach((frameworkName) => {
-		const cfg = frontendConfigurations.find(
-			(c) => c.name === frameworkName
+		.filter((i) => i.isPlugin)
+		.map((item) =>
+			item.config === undefined
+				? `.use(${item.packageName})`
+				: item.config === null
+					? `.use(${item.packageName}())`
+					: `.use(${item.packageName}(${JSON.stringify(item.config)}))`
 		);
-		if (cfg && cfg.directory !== undefined) {
-			const prop =
-				frameworkName === 'html' ? 'html' : `${frameworkName}Directory`;
-			manifestOptionList.push(`${prop}: '${cfg.directory}'`);
+
+	const manifestOptionList: string[] = [
+		`buildDirectory: '${buildDirectory}'`,
+		`assetsDirectory: '${assetsDirectory}'`
+	];
+
+	frontendConfigurations.forEach((cfg) => {
+		if (cfg.name === 'html' && cfg.directory !== undefined) {
+			manifestOptionList.push(
+				`html: { directory: '${cfg.directory}', scriptingOption: ${JSON.stringify(
+					htmlScriptOption
+				)} }`
+			);
+		} else if (cfg.name !== 'html' && cfg.directory !== undefined) {
+			manifestOptionList.push(`${cfg.name}Directory: '${cfg.directory}'`);
 		}
 	});
 
 	if (tailwind) {
 		manifestOptionList.push(`tailwind: ${JSON.stringify(tailwind)}`);
 	}
+
 	const buildStep = `const manifest = build({\n  ${manifestOptionList.join(
 		',\n  '
 	)}\n});`;
-	let fileContent = `${importStatementLines.join('\n')}\n\n${
-		buildStep
-	}\n\nnew Elysia()\n  .get('/', () => 'Hello, world!')`;
+
+	let fileContent = `${importStatementLines.join('\n')}\n\n${buildStep}\n\nnew Elysia()\n  .get('/', () => 'Hello, world!')`;
+
 	pluginUseStatements.forEach((useStatement) => {
-		fileContent = `${fileContent}\n  ${useStatement}`;
+		fileContent += `\n  ${useStatement}`;
 	});
-	fileContent = `${
-		fileContent
-	}\n  .on('error', (error) => { const { request } = error; console.error(\`Server error on \${request.method} \${request.url}: \${error.message}\`); });\n`;
+
+	fileContent += `\n  .on('error', (error) => { const { request } = error; console.error(\`Server error on \${request.method} \${request.url}: \${error.message}\`); });\n`;
+
 	writeFileSync(serverFilePath, fileContent);
 };
