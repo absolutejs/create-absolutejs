@@ -1,12 +1,12 @@
 export const generateReactPage = (
 	isSingle: boolean
-): string => `import { useState } from 'react';
+) => `import { useState } from 'react';
 import { Head } from '../components/utils/Head';
 import {
   bodyDefault,
   htmlDefault,
   mainDefault
-} from '../../styles/${isSingle ? '' : 'react/'}defaultStyles';
+} from '${isSingle ? '../styles' : '../../styles/react'}/defaultStyles';
 
 export const Example = () => {
   const [count, setCount] = useState(0);

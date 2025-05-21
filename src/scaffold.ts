@@ -69,13 +69,15 @@ export const scaffold = (
 		tailwind
 	});
 
-	databaseDirectory !== undefined &&
-		void scaffoldDatabase({
+	void (
+		databaseDirectory !== undefined &&
+		scaffoldDatabase({
 			databaseDirectory,
 			databaseEngine,
 			orm,
 			projectName
-		});
+		})
+	);
 
 	scaffoldFrontends({
 		frontendConfigurations,

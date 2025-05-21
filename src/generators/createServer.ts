@@ -64,15 +64,15 @@ export const createServerFile = ({
 	);
 
 	const pluginUseStatements = uniqueDependencies
-		.flatMap((dep) => dep.imports)
-		.filter((i) => i.isPlugin)
-		.map((item) =>
-			item.config === undefined
-				? `.use(${item.packageName})`
-				: item.config === null
-					? `.use(${item.packageName}())`
-					: `.use(${item.packageName}(${JSON.stringify(item.config)}))`
-		);
+		.flatMap((dependency) => dependency.imports)
+		.filter((importEntry) => importEntry.isPlugin)
+		.map((importEntry) => {
+			const { packageName, config } = importEntry;
+			if (config === undefined) return `.use(${packageName})`;
+			if (config === null) return `.use(${packageName}())`;
+
+			return `.use(${packageName}(${JSON.stringify(config)}))`;
+		});
 
 	const manifestOptionList: string[] = [
 		`buildDirectory: '${buildDirectory}'`,

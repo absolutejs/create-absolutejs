@@ -1,5 +1,6 @@
 import { cpSync, mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { generateHeadComponent } from './generateHeadComponent';
 import { generateReactPage } from './generateReactPage';
 
 type ScaffoldReactProps = {
@@ -18,17 +19,18 @@ export const scaffoldReact = ({
 	const reactStylesSrc = join(templatesDirectory, 'react', 'styles');
 	const reactTemplates = join(templatesDirectory, 'react');
 	const pagesDirectory = join(targetDirectory, 'pages');
-	const reactPageExample = generateReactPage(isSingle);
+	const componentsDirectory = join(targetDirectory, 'components');
+
+	const pageExample = generateReactPage(isSingle);
+	const headComponent = generateHeadComponent(isSingle);
 
 	mkdirSync(pagesDirectory);
-	writeFileSync(join(pagesDirectory, 'Example.tsx'), reactPageExample);
+	writeFileSync(join(pagesDirectory, 'Example.tsx'), pageExample);
 
-	cpSync(
-		join(reactTemplates, 'components'),
-		join(targetDirectory, 'components'),
-		{
-			recursive: true
-		}
+	mkdirSync(join(componentsDirectory, 'utils'), { recursive: true });
+	writeFileSync(
+		join(componentsDirectory, 'utils', 'Head.tsx'),
+		headComponent
 	);
 
 	cpSync(join(reactTemplates, 'hooks'), join(targetDirectory, 'hooks'), {

@@ -35,7 +35,7 @@ export const scaffoldFrontends = ({
 		dirMap.set(dir, name);
 
 		const targetDirectory = join(frontendDirectory, dir);
-		mkdirSync(targetDirectory);
+		void (!isSingle && mkdirSync(targetDirectory));
 
 		if (name === 'react') {
 			scaffoldReact({
