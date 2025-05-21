@@ -21,6 +21,7 @@ export const scaffold = (
 		initializeGitNow,
 		databaseEngine,
 		databaseHost,
+		databaseDirectory,
 		orm,
 		plugins,
 		authProvider,
@@ -66,11 +67,12 @@ export const scaffold = (
 		tailwind
 	});
 
-	databaseEngine !== undefined &&
+	databaseDirectory !== undefined &&
 		void scaffoldDatabase({
 			databaseEngine,
 			orm,
-			projectName
+			projectName,
+			databaseDirectory
 		});
 
 	createFrontends({ frontendConfigurations, frontendDir, templatesDir });

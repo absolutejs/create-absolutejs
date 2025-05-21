@@ -8,14 +8,16 @@ type ScaffoldDatabaseProps = {
 	projectName: string;
 	orm: ORM;
 	databaseEngine: DatabaseEngine;
+	databaseDirectory: string
 };
 
 export const scaffoldDatabase = ({
 	projectName,
 	databaseEngine,
+	databaseDirectory,
 	orm
 }: ScaffoldDatabaseProps) => {
-	mkdirSync(join(projectName, 'db'), { recursive: true });
+	mkdirSync(join(projectName, databaseDirectory), { recursive: true });
 
 	if (databaseEngine !== 'postgresql') {
 		console.warn(
