@@ -1,35 +1,43 @@
 import { writeFileSync } from 'fs';
 import { join } from 'path';
+import { spinner } from '@clack/prompts';
 import {
 	absoluteAuthPlugin,
 	availablePlugins,
 	defaultPlugins
 } from '../../data';
-import type { AuthProvier, PackageJson } from '../../types';
+import type {
+	AuthProvier,
+	FrontendConfiguration,
+	PackageJson
+} from '../../types';
 import { getPackageVersion } from '../../utils/getPackageVersion';
 
 type CreatePackageJsonProps = {
 	projectName: string;
 	authProvider: AuthProvier;
+	useTailwind: boolean;
 	plugins: string[];
-	spin: {
-		start: (msg?: string) => void;
-		stop: (msg?: string, code?: number) => void;
-		message: (msg?: string) => void;
-	};
+	frontendConfigurations: FrontendConfiguration[];
 };
 
 export const createPackageJson = ({
 	projectName,
 	authProvider,
 	plugins,
-	spin
+	useTailwind,
+	frontendConfigurations
 }: CreatePackageJsonProps) => {
-	spin.message('Getting latest package versions…');
+	const s = spinner();
+
+	s.start('Getting latest package versions…');
+
+	const dependencies: PackageJson['dependencies'] = {};
+	const devDependencies: PackageJson['devDependencies'] = {};
 
 	const authPlugin =
 		authProvider === 'absoluteAuth' ? absoluteAuthPlugin : [];
-	const dependencies: PackageJson['dependencies'] = {};
+
 	for (const p of defaultPlugins.concat(authPlugin)) {
 		const version = getPackageVersion(p.value);
 		dependencies[p.value] = version ?? p.latestVersion;
@@ -42,7 +50,24 @@ export const createPackageJson = ({
 			getPackageVersion(meta.value) ?? meta.latestVersion;
 	}
 
-	const devDependencies: PackageJson['devDependencies'] = {};
+	if (useTailwind) {
+		devDependencies['autoprefixer'] =
+			getPackageVersion('autoprefixer') ?? '10.4.21';
+		devDependencies['postcss'] = getPackageVersion('postcss') ?? '8.5.3';
+		devDependencies['tailwindcss'] =
+			getPackageVersion('tailwindcss') ?? '4.1.7';
+	}
+
+	if (frontendConfigurations.find((f) => f.name === 'react')) {
+		dependencies['react'] = getPackageVersion('react') ?? '19.1.0';
+		dependencies['react-dom'] = getPackageVersion('react-dom') ?? '19.1.0';
+		devDependencies['@types/react'] =
+			getPackageVersion('@types/react') ?? '19.1.5';
+		devDependencies['@types/react-dom'] =
+			getPackageVersion('@types/react-dom') ?? '19.1.5';
+	}
+
+	s.stop('Package versions fetched');
 
 	const scripts: PackageJson['scripts'] = {
 		dev: 'bun run src/backend/server.ts',

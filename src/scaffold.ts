@@ -1,16 +1,15 @@
 import { copyFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { spinner } from '@clack/prompts';
 import { formatProject } from './commands/formatProject';
 import { installDependencies } from './commands/installDependencies';
 import { availablePlugins } from './data';
 import { addConfigurationFiles } from './generators/configurations/addConfigurationFiles';
 import { createPackageJson } from './generators/configurations/createPackageJson';
 import { initalizeRoot } from './generators/configurations/initializeRoot';
-import { createServerFile } from './generators/createServer';
 import { scaffoldDatabase } from './generators/db/scaffoldDatabase';
-import { scaffoldFrontends } from './generators/scaffoldFrontends';
+import { createServerFile } from './generators/project/createServer';
+import { scaffoldFrontends } from './generators/project/scaffoldFrontends';
 import type { PackageManager, PromptResponse } from './types';
 
 export const scaffold = (
@@ -22,6 +21,7 @@ export const scaffold = (
 		databaseEngine,
 		databaseHost,
 		htmlScriptOption,
+		useTailwind,
 		databaseDirectory,
 		orm,
 		plugins,
@@ -36,9 +36,11 @@ export const scaffold = (
 ) => {
 	const __dirname = dirname(fileURLToPath(import.meta.url));
 	const templatesDirectory = join(__dirname, '/templates');
-	const s = spinner();
 
-	const { frontendDirectory, backendDirectory } = initalizeRoot(projectName);
+	const { frontendDirectory, backendDirectory } = initalizeRoot(
+		projectName,
+		templatesDirectory
+	);
 
 	copyFileSync(
 		join(templatesDirectory, 'README.md'),
@@ -54,7 +56,13 @@ export const scaffold = (
 		templatesDirectory
 	});
 
-	createPackageJson({ authProvider, plugins, projectName, spin: s });
+	createPackageJson({
+		authProvider,
+		frontendConfigurations,
+		plugins,
+		projectName,
+		useTailwind
+	});
 
 	const serverFilePath = join(backendDirectory, 'server.ts');
 	createServerFile({
@@ -86,13 +94,12 @@ export const scaffold = (
 		templatesDirectory
 	});
 
+	if (installDependenciesNow) {
+		installDependencies({ packageManager, projectName });
+	}
+
 	formatProject({
 		packageManager,
-		projectName,
-		spinner: s
+		projectName
 	});
-
-	if (installDependenciesNow) {
-		installDependencies({ packageManager, projectName, spinner: s });
-	}
 };

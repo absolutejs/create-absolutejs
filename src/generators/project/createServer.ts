@@ -1,11 +1,11 @@
 import { writeFileSync } from 'fs';
-import { UNFOUND_INDEX } from '../constants';
+import { UNFOUND_INDEX } from '../../constants';
 import {
 	absoluteAuthPlugin,
 	defaultDependencies,
 	defaultPlugins
-} from '../data';
-import type { AvailableDependency, PromptResponse } from '../types';
+} from '../../data';
+import type { AvailableDependency, PromptResponse } from '../../types';
 
 type CreateServerFileProps = Pick<
 	PromptResponse,
@@ -82,12 +82,14 @@ export const createServerFile = ({
 	frontendConfigurations.forEach((cfg) => {
 		if (cfg.name === 'html' && cfg.directory !== undefined) {
 			manifestOptionList.push(
-				`html: { directory: '${cfg.directory}', scriptingOption: ${JSON.stringify(
+				`html: { directory: './src/frontend/${cfg.directory}', scriptingOption: ${JSON.stringify(
 					htmlScriptOption
 				)} }`
 			);
 		} else if (cfg.name !== 'html' && cfg.directory !== undefined) {
-			manifestOptionList.push(`${cfg.name}Directory: '${cfg.directory}'`);
+			manifestOptionList.push(
+				`${cfg.name}Directory: './src/frontend/${cfg.directory}'`
+			);
 		}
 	});
 

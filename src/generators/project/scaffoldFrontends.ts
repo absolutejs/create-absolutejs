@@ -1,8 +1,8 @@
 import { mkdirSync } from 'node:fs';
 import { join } from 'node:path';
-import type { FrontendConfiguration, HTMLScriptOption } from '../types';
-import { scaffoldHTML } from './html/scaffoldHTML';
-import { scaffoldReact } from './react/scaffoldReact';
+import type { FrontendConfiguration, HTMLScriptOption } from '../../types';
+import { scaffoldHTML } from '../html/scaffoldHTML';
+import { scaffoldReact } from '../react/scaffoldReact';
 
 type ScaffoldFrontendsProps = {
 	frontendDirectory: string;
