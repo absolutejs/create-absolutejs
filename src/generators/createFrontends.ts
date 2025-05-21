@@ -1,8 +1,8 @@
 import { mkdirSync, cpSync } from 'node:fs';
 import { join } from 'node:path';
 import type { FrontendConfiguration, HTMLScriptOption } from '../types';
-import { createHTML } from './project/html/createHTML';
-import { createReact } from './project/react/createReact';
+import { createHTML } from './html/createHTML';
+import { createReact } from './react/createReact';
 
 type CreateFrontendsProps = {
 	frontendDirectory: string;
