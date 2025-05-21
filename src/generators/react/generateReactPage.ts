@@ -1,5 +1,6 @@
-export const generateReactPage = (isSingle: boolean): string => {
-	return `import { useState } from 'react';
+export const generateReactPage = (
+	isSingle: boolean
+): string => `import { useState } from 'react';
 import { Head } from '../components/utils/Head';
 import {
   bodyDefault,
@@ -50,4 +51,3 @@ export const Example = () => {
   );
 };
 `;
-};

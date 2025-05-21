@@ -6,10 +6,10 @@ import { formatProject } from './commands/formatProject';
 import { installDependencies } from './commands/installDependencies';
 import { availablePlugins } from './data';
 import { addConfigurationFiles } from './generators/configurations/addConfigurationFiles';
-import { createFrontends } from './generators/createFrontends';
 import { createPackageJson } from './generators/configurations/createPackageJson';
-import { createServerFile } from './generators/createServer';
 import { initalizeRoot } from './generators/configurations/initializeRoot';
+import { createFrontends } from './generators/createFrontends';
+import { createServerFile } from './generators/createServer';
 import { scaffoldDatabase } from './generators/db/scaffoldDatabase';
 import type { PackageManager, PromptResponse } from './types';
 
