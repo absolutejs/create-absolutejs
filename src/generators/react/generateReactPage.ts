@@ -8,43 +8,90 @@ import {
   mainDefault
 } from '${isSingle ? '../styles' : '../../styles/react'}/defaultStyles';
 
-export const Example = () => {
+export const ReactExample = () => {
   const [count, setCount] = useState(0);
 
   return (
     <html lang="en" style={htmlDefault}>
       <Head />
-      <style>{\`
-        @keyframes spin {
-          from { transform: rotate(0deg); }
-          to   { transform: rotate(360deg); }
-        }
-      \`}</style>
       <body style={bodyDefault}>
         <main style={mainDefault}>
-          <a
-            href="https://absolutejs.dev"
-            target="_blank"
-            rel="noreferrer"
+          <style>{\`
+            @keyframes spin {
+              from { transform: rotate(0deg); }
+              to   { transform: rotate(360deg); }
+            }
+          \`}</style>
+          <div
+            style={{
+              flex: 1,
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'center',
+              alignItems: 'center',
+              padding: '1rem',
+              gap: '1.5rem'
+            }}
           >
-            <img
-              src="/assets/svg/react-logo.svg"
-              alt="React logo"
+            <a
+              href="https://react.dev"
+              target="_blank"
+              rel="noreferrer"
               style={{
-                animation: 'spin 20s linear infinite',
-                height: 145
+                textDecoration: 'none'
               }}
-            />
-          </a>
-          <h1>AbsoluteJS + React</h1>
-          <div>
-            <button onClick={() => setCount(prev => prev + 1)}>
+            >
+              <img
+                src="/assets/svg/react.svg"
+                alt="React logo"
+                style={{
+                  animation: 'spin 20s linear infinite',
+                  transformOrigin: 'center center',
+                  height: 145,
+                  display: 'block'
+                }}
+              />
+            </a>
+            <h1
+              style={{
+                fontSize: '2rem',
+                fontWeight: 600,
+                color: '#333',
+                margin: 0
+              }}
+            >
+              AbsoluteJS + React
+            </h1>
+            <button
+              onClick={() => setCount(prev => prev + 1)}
+              style={{
+                padding: '0.75rem 1.5rem',
+                fontSize: '1rem',
+                fontWeight: 500,
+                backgroundColor: '#0070f3',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '5px',
+                cursor: 'pointer'
+              }}
+            >
               count is {count}
             </button>
+            <p style={{ fontSize: '1rem', color: '#555', margin: 0 }}>
+              Edit{' '}
+              <code
+                style={{
+                  backgroundColor: '#f5f5f5',
+                  padding: '0.2rem 0.4rem',
+                  borderRadius: '3px',
+                  fontFamily: 'monospace'
+                }}
+              >
+                src/frontend/${isSingle ? '' : 'react'}/pages/ReactExample.tsx
+              </code>{' '}
+              to edit this page
+            </p>
           </div>
-          <p>
-            Edit <code>src/pages/Example.tsx</code> and save to test HMR
-          </p>
         </main>
       </body>
     </html>

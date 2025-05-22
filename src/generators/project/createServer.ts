@@ -15,7 +15,6 @@ type CreateServerFileProps = Pick<
 	| 'buildDirectory'
 	| 'assetsDirectory'
 	| 'frontendConfigurations'
-	| 'htmlScriptOption'
 > & {
 	availablePlugins: AvailableDependency[];
 	serverFilePath: string;
@@ -27,81 +26,169 @@ export const createServerFile = ({
 	serverFilePath,
 	authProvider,
 	availablePlugins,
-	htmlScriptOption,
 	buildDirectory,
 	assetsDirectory,
 	plugins
 }: CreateServerFileProps) => {
-	const customPlugins = availablePlugins.filter(
+	const requiresHtml = frontendConfigurations.some(
+		(configuration) => configuration.name === 'html'
+	);
+	const requiresReact = frontendConfigurations.some(
+		(configuration) => configuration.name === 'react'
+	);
+	const isSingleFrontend = frontendConfigurations.length === 1;
+
+	const selectedCustomPlugins = availablePlugins.filter(
 		(plugin) => plugins.indexOf(plugin.value) !== UNFOUND_INDEX
 	);
-	const authenticationPluginList: AvailableDependency[] = [];
+
+	const authenticationPlugins: AvailableDependency[] = [];
 	if (authProvider === 'absoluteAuth') {
-		authenticationPluginList.push(absoluteAuthPlugin);
+		authenticationPlugins.push(absoluteAuthPlugin);
 	}
 
-	const combinedDependencies = defaultDependencies
-		.concat(defaultPlugins)
-		.concat(customPlugins)
-		.concat(authenticationPluginList);
+	const combinedDependencies = [
+		...defaultDependencies,
+		...defaultPlugins,
+		...selectedCustomPlugins,
+		...authenticationPlugins
+	];
 
 	const uniqueDependencies: AvailableDependency[] = [];
 	combinedDependencies.forEach((dependency) => {
-		if (!uniqueDependencies.some((d) => d.value === dependency.value)) {
+		if (
+			!uniqueDependencies.some(
+				(existingDependency) =>
+					existingDependency.value === dependency.value
+			)
+		) {
 			uniqueDependencies.push(dependency);
 		}
 	});
-	uniqueDependencies.sort((a, b) => a.value.localeCompare(b.value));
+	uniqueDependencies.sort((firstDependency, secondDependency) =>
+		firstDependency.value.localeCompare(secondDependency.value)
+	);
 
-	const importStatementLines = uniqueDependencies.flatMap((dependency) =>
-		dependency.imports.length
+	const importLines = uniqueDependencies.flatMap((dependency) =>
+		dependency.imports.length > 0
 			? [
 					`import { ${dependency.imports
-						.map((i) => i.packageName)
+						.map((importEntry) => importEntry.packageName)
 						.join(', ')} } from '${dependency.value}';`
 				]
 			: []
 	);
 
-	const pluginUseStatements = uniqueDependencies
+	const absoluteImportLineIndex = importLines.findIndex((importLine) =>
+		importLine.includes("from '@absolutejs/absolute'")
+	);
+	if (absoluteImportLineIndex >= 0) {
+		const originalImportLine = importLines[absoluteImportLineIndex]!;
+		importLines[absoluteImportLineIndex] = originalImportLine.replace(
+			/import\s*\{([\s\S]*?)\}\s*from '@absolutejs\/absolute';/,
+			(_fullMatch, importList) => {
+				const importedItems = importList
+					.split(',')
+					.map((item: string) => item.trim())
+					.filter(Boolean);
+
+				if (
+					requiresHtml &&
+					!importedItems.includes('handleHTMLPageRequest')
+				) {
+					importedItems.push('handleHTMLPageRequest');
+				}
+				if (
+					requiresReact &&
+					!importedItems.includes('handleReactPageRequest')
+				) {
+					importedItems.push('handleReactPageRequest');
+				}
+
+				return `import { ${importedItems.join(', ')} } from '@absolutejs/absolute';`;
+			}
+		);
+	}
+
+	if (requiresReact) {
+		const reactImportSource = isSingleFrontend
+			? '../frontend/pages/ReactExample'
+			: '../frontend/react/pages/ReactExample';
+		importLines.push(
+			`import { ReactExample } from '${reactImportSource}';`
+		);
+	}
+
+	const useStatements = uniqueDependencies
 		.flatMap((dependency) => dependency.imports)
 		.filter((importEntry) => importEntry.isPlugin)
 		.map((importEntry) => {
-			const { packageName, config } = importEntry;
-			if (config === undefined) return `.use(${packageName})`;
-			if (config === null) return `.use(${packageName}())`;
+			if (importEntry.config === undefined) {
+				return `.use(${importEntry.packageName})`;
+			}
+			if (importEntry.config === null) {
+				return `.use(${importEntry.packageName}())`;
+			}
 
-			return `.use(${packageName}(${JSON.stringify(config)}))`;
+			return `.use(${importEntry.packageName}(${JSON.stringify(importEntry.config)}))`;
 		});
 
-	const manifestOptionList: string[] = [
+	const manifestOptions = [
 		`buildDirectory: '${buildDirectory}'`,
-		`assetsDirectory: '${assetsDirectory}'`
+		`assetsDirectory: '${assetsDirectory}'`,
+		...frontendConfigurations
+			.map((configuration) =>
+				configuration.directory
+					? `${configuration.name}Directory: './src/frontend/${configuration.directory}'`
+					: ''
+			)
+			.filter((option) => option !== ''),
+		tailwind ? `tailwind: ${JSON.stringify(tailwind)}` : ''
 	];
 
-	frontendConfigurations.forEach(({ name, directory }) => {
-		if (directory !== undefined) {
-			manifestOptionList.push(
-				`${name}Directory: './src/frontend/${directory}'`
-			);
-		}
-	});
-
-	if (tailwind) {
-		manifestOptionList.push(`tailwind: ${JSON.stringify(tailwind)}`);
-	}
-
-	const buildStep = `const manifest = await build({\n  ${manifestOptionList.join(
+	const buildStatement = `const manifest = await build({\n  ${manifestOptions.join(
 		',\n  '
 	)}\n});`;
 
-	let fileContent = `${importStatementLines.join('\n')}\n\n${buildStep}\n\nnew Elysia()\n  .get('/', () => 'Hello, world!')`;
+	let guardStatements = `if (manifest === null) throw new Error('Manifest was not generated');`;
+	if (requiresReact) {
+		guardStatements += `
+const { ReactExampleIndex } = manifest;
+if (ReactExampleIndex === undefined) throw new Error('ReactExampleIndex was not generated');`;
+	}
 
-	pluginUseStatements.forEach((useStatement) => {
-		fileContent += `\n  ${useStatement}`;
+	let routeDefinitions = '';
+	frontendConfigurations.forEach((configuration, index) => {
+		const routePath = index === 0 ? '/' : `/${configuration.name}`;
+		if (configuration.name === 'html') {
+			routeDefinitions += `
+  .get('${routePath}', () =>
+    handleHTMLPageRequest(\`${buildDirectory}/html/pages/HtmlExample.html\`)
+  )`;
+		} else if (configuration.name === 'react') {
+			routeDefinitions += `
+  .get('${routePath}', () =>
+    handleReactPageRequest(ReactExample, ReactExampleIndex)
+  )`;
+		}
 	});
 
-	fileContent += `\n  .on('error', (error) => { const { request } = error; console.error(\`Server error on \${request.method} \${request.url}: \${error.message}\`); });\n`;
+	let serverFileContent = `${importLines.join('\n')}
 
-	writeFileSync(serverFilePath, fileContent);
+${buildStatement}
+
+${guardStatements}
+
+new Elysia()${routeDefinitions}`;
+	useStatements.forEach((statement) => {
+		serverFileContent += `\n  ${statement}`;
+	});
+	serverFileContent += `
+  .on('error', (error) => {
+    const { request } = error;
+    console.error(\`Server error on \${request.method} \${request.url}: \${error.message}\`);
+  });
+`;
+
+	writeFileSync(serverFilePath, serverFileContent);
 };

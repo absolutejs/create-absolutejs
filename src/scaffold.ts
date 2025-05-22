@@ -79,7 +79,6 @@ export const scaffold = ({
 		availablePlugins,
 		buildDirectory,
 		frontendConfigurations,
-		htmlScriptOption,
 		plugins,
 		serverFilePath,
 		tailwind

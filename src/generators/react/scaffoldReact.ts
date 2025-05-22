@@ -25,7 +25,7 @@ export const scaffoldReact = ({
 	const headComponent = generateHeadComponent(isSingle);
 
 	mkdirSync(pagesDirectory);
-	writeFileSync(join(pagesDirectory, 'Example.tsx'), pageExample);
+	writeFileSync(join(pagesDirectory, 'ReactExample.tsx'), pageExample);
 
 	mkdirSync(join(componentsDirectory, 'utils'), { recursive: true });
 	writeFileSync(
