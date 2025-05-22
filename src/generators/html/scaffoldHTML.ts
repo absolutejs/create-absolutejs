@@ -25,7 +25,6 @@ export const scaffoldHTML = ({
 
 	const htmlStylesSrc = join(htmlTemplates, 'styles');
 	if (isSingle) {
-		mkdirSync(stylesDirectory);
 		cpSync(htmlStylesSrc, stylesDirectory, { recursive: true });
 	} else {
 		const dest = join(stylesDirectory, 'html');
