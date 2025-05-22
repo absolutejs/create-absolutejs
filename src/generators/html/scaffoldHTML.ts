@@ -1,19 +1,22 @@
-import { cpSync, mkdirSync } from 'fs';
+import { copyFileSync, cpSync, mkdirSync } from 'fs';
 import { join } from 'path';
+import type { HTMLScriptOption } from '../../types';
 
-type CreateReactProps = {
+type ScaffoldHTMLProps = {
 	templatesDirectory: string;
 	isSingle: boolean;
 	targetDirectory: string;
 	stylesDirectory: string;
+	htmlScriptOption: HTMLScriptOption;
 };
 
 export const scaffoldHTML = ({
 	templatesDirectory,
 	isSingle,
 	targetDirectory,
-	stylesDirectory
-}: CreateReactProps) => {
+	stylesDirectory,
+	htmlScriptOption
+}: ScaffoldHTMLProps) => {
 	const htmlTemplates = join(templatesDirectory, 'html');
 	cpSync(join(htmlTemplates, 'pages'), join(targetDirectory, 'pages'), {
 		recursive: true
@@ -21,7 +24,32 @@ export const scaffoldHTML = ({
 
 	const scriptsDir = join(targetDirectory, 'scripts');
 	mkdirSync(scriptsDir);
-	// TODO: copy file here
+	switch (htmlScriptOption) {
+		case 'js':
+			copyFileSync(
+				join(htmlTemplates, 'scripts', 'javascriptExample.js'),
+				join(scriptsDir, 'javascriptExample.js')
+			);
+			break;
+		case 'ts':
+			copyFileSync(
+				join(htmlTemplates, 'scripts', 'typescriptExample.ts'),
+				join(scriptsDir, 'typescriptExample.ts')
+			);
+			break;
+		case 'js+ssr':
+			copyFileSync(
+				join(htmlTemplates, 'scripts', 'javascriptSSRExample.js'),
+				join(scriptsDir, 'javascriptSSRExample.js')
+			);
+			break;
+		case 'ts+ssr':
+			copyFileSync(
+				join(htmlTemplates, 'scripts', 'typescriptSSRExample.ts'),
+				join(scriptsDir, 'typescriptSSRExample.ts')
+			);
+			break;
+	}
 
 	const htmlStylesSrc = join(htmlTemplates, 'styles');
 	if (isSingle) {

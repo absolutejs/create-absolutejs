@@ -64,7 +64,8 @@ export const scaffoldFrontends = ({
 				isSingle,
 				stylesDirectory,
 				targetDirectory,
-				templatesDirectory
+				templatesDirectory,
+				htmlScriptOption
 			});
 		}
 	});

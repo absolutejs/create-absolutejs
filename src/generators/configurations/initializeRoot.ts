@@ -1,4 +1,4 @@
-import { cpSync, existsSync, mkdirSync } from 'node:fs';
+import { copyFileSync, cpSync, existsSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 
 export const initalizeRoot = (
@@ -14,6 +14,11 @@ export const initalizeRoot = (
 
 	const srcDir = join(projectName, 'src');
 	mkdirSync(srcDir);
+
+	copyFileSync(
+		join(templatesDirectory, 'constants.ts'),
+		join(projectName, 'src', 'constants.ts')
+	);
 
 	const frontendDirectory = join(srcDir, 'frontend');
 	const backendDirectory = join(srcDir, 'backend');
