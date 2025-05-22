@@ -7,7 +7,7 @@ node_modules/
 **/*.env
 
 .git
-.gitignore
+/.gitignore
 .github
 .prettierrc
 .eslintrc.js
@@ -47,5 +47,4 @@ server
 
 src/**
 
-!dist/src/
-!dist/src/**
+!dist/**

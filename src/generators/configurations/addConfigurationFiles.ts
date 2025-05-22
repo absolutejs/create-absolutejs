@@ -31,7 +31,7 @@ export const addConfigurationFiles = ({
 	}
 	if (initializeGitNow)
 		copyFileSync(
-			join(templatesDirectory, 'git', '.gitignore'),
+			join(templatesDirectory, 'git', 'gitignore'),
 			join(projectName, '.gitignore')
 		);
 	if (language === 'ts')

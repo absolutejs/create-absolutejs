@@ -1,7 +1,7 @@
 {
 	"name": "create-absolutejs",
 	"description": "A CLI tool to create a new AbsoluteJS project",
-	"version": "0.1.0",
+	"version": "0.1.7",
 	"license": "CC BY-NC 4.0",
 	"author": "Alex Kahn",
 	"type": "module",
@@ -10,10 +10,11 @@
 		"create-absolutejs": "dist/index.js"
 	},
 	"files": [
-		"dist"
+		"dist",
+		"dist/templates"
 	],
 	"scripts": {
-		"build": "rm -rf dist && bun build src/index.ts --target node --outdir dist && tsc --emitDeclarationOnly --project tsconfig.json",
+		"build": "rm -rf dist && bun build src/index.ts --target node --outdir dist && cp -R src/templates dist/templates && tsc --emitDeclarationOnly --project tsconfig.json",
 		"test": "cd absolutejs-project && bun dev",
 		"format": "prettier --write \"./**/*.{js,jsx,ts,tsx,css,json,mjs,md}\"",
 		"dev": "rm -rf absolutejs-project && bun run src/index.ts",
