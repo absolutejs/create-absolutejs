@@ -69,15 +69,16 @@ export const createServerFile = ({
 		firstDependency.value.localeCompare(secondDependency.value)
 	);
 
-	const importLines = uniqueDependencies.flatMap((dependency) =>
-		dependency.imports.length > 0
+	const importLines = uniqueDependencies.flatMap((dependency) => {
+		const importsArray = dependency.imports ?? [];
+		return importsArray.length > 0
 			? [
-					`import { ${dependency.imports
+					`import { ${importsArray
 						.map((importEntry) => importEntry.packageName)
 						.join(', ')} } from '${dependency.value}';`
 				]
-			: []
-	);
+			: [];
+	});
 
 	const absoluteImportLineIndex = importLines.findIndex((importLine) =>
 		importLine.includes("from '@absolutejs/absolute'")
@@ -121,10 +122,10 @@ export const createServerFile = ({
 
 	const useStatements = uniqueDependencies
 		.flatMap((dependency) => dependency.imports)
-		.filter((importEntry) => importEntry.isPlugin)
+		.filter((importEntry) => importEntry?.isPlugin)
 		.map((importEntry) => {
-			if (importEntry.config === undefined) {
-				return `.use(${importEntry.packageName})`;
+			if (importEntry?.config === undefined) {
+				return `.use(${importEntry?.packageName})`;
 			}
 			if (importEntry.config === null) {
 				return `.use(${importEntry.packageName}())`;

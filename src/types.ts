@@ -17,7 +17,7 @@ export type ImportEntry = {
 export type AvailableDependency = {
 	value: string;
 	label?: string;
-	imports: ImportEntry[];
+	imports?: ImportEntry[];
 	latestVersion: string;
 };
 

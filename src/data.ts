@@ -46,6 +46,17 @@ export const absoluteAuthPlugin: AvailableDependency = {
 	value: '@absolutejs/auth'
 };
 
+export const eslintAndPrettierDependencies: AvailableDependency[] = [
+	{
+		latestVersion: '9.27.0',
+		value: 'eslint'
+	},
+	{
+		latestVersion: '3.5.3',
+		value: 'prettier'
+	}
+];
+
 export const defaultDependencies: AvailableDependency[] = [
 	{
 		imports: [{ isPlugin: false, packageName: 'Elysia' }],

@@ -65,6 +65,7 @@ export const scaffold = ({
 
 	createPackageJson({
 		authProvider,
+		codeQualityTool,
 		frontendConfigurations,
 		latest,
 		plugins,

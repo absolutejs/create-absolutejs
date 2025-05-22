@@ -5,10 +5,12 @@ import { green } from 'picocolors';
 import {
 	absoluteAuthPlugin,
 	availablePlugins,
-	defaultPlugins
+	defaultPlugins,
+	eslintAndPrettierDependencies
 } from '../../data';
 import type {
 	AuthProvier,
+	CodeQualityTool,
 	FrontendConfiguration,
 	PackageJson
 } from '../../types';
@@ -21,6 +23,7 @@ type CreatePackageJsonProps = {
 	plugins: string[];
 	latest: boolean;
 	frontendConfigurations: FrontendConfiguration[];
+	codeQualityTool: CodeQualityTool;
 };
 
 export const createPackageJson = ({
@@ -29,7 +32,8 @@ export const createPackageJson = ({
 	plugins,
 	useTailwind,
 	latest,
-	frontendConfigurations
+	frontendConfigurations,
+	codeQualityTool
 }: CreatePackageJsonProps) => {
 	const s = spinner();
 	void (latest && s.start('Resolving package versions…'));
@@ -58,6 +62,15 @@ export const createPackageJson = ({
 			meta.value,
 			meta.latestVersion
 		);
+	}
+
+	if (codeQualityTool === 'eslint+prettier') {
+		eslintAndPrettierDependencies.forEach((dep) => {
+			devDependencies[dep.value] = resolveVersion(
+				dep.value,
+				dep.latestVersion
+			);
+		});
 	}
 
 	if (useTailwind) {
