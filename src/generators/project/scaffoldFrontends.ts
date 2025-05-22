@@ -1,6 +1,10 @@
-import { mkdirSync } from 'node:fs';
+import { copyFileSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
-import type { FrontendConfiguration, HTMLScriptOption } from '../../types';
+import type {
+	FrontendConfiguration,
+	HTMLScriptOption,
+	TailwindConfig
+} from '../../types';
 import { scaffoldHTML } from '../html/scaffoldHTML';
 import { scaffoldReact } from '../react/scaffoldReact';
 
@@ -9,17 +13,26 @@ type ScaffoldFrontendsProps = {
 	templatesDirectory: string;
 	frontendConfigurations: FrontendConfiguration[];
 	htmlScriptOption: HTMLScriptOption;
+	tailwind: TailwindConfig;
 };
 
 export const scaffoldFrontends = ({
 	frontendDirectory,
 	templatesDirectory,
 	frontendConfigurations,
+	tailwind,
 	htmlScriptOption
 }: ScaffoldFrontendsProps) => {
 	const isSingle = frontendConfigurations.length === 1;
 	const stylesDirectory = join(frontendDirectory, 'styles');
 	mkdirSync(stylesDirectory);
+
+	if (tailwind !== undefined) {
+		copyFileSync(
+			join(templatesDirectory, 'tailwind', 'tailwind.css'),
+			join(stylesDirectory, 'tailwind.css')
+		);
+	}
 
 	const dirMap = new Map<string, string>();
 	frontendConfigurations.forEach(({ name, directory }) => {

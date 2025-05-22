@@ -56,6 +56,8 @@ export const createPackageJson = ({
 		devDependencies['postcss'] = getPackageVersion('postcss') ?? '8.5.3';
 		devDependencies['tailwindcss'] =
 			getPackageVersion('tailwindcss') ?? '4.1.7';
+		devDependencies['@tailwindcss/cli'] =
+			getPackageVersion('@tailwindcss/cli') ?? '4.1.7';
 	}
 
 	if (frontendConfigurations.find((f) => f.name === 'react')) {

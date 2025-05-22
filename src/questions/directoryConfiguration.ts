@@ -20,7 +20,7 @@ export const getDirectoryConfiguration = async ({
 			databaseDirectory: databaseEngine && 'db',
 			tailwind: useTailwind
 				? {
-						input: './example/styles/tailwind.css',
+						input: './src/frontend/styles/tailwind.css',
 						output: '/assets/css/tailwind.generated.css'
 					}
 				: undefined
@@ -46,7 +46,7 @@ export const getDirectoryConfiguration = async ({
 	if (useTailwind) {
 		const input = await text({
 			message: 'Tailwind input CSS file:',
-			placeholder: './example/styles/tailwind.css'
+			placeholder: './src/frontend/styles/tailwind.css'
 		});
 		if (isCancel(input)) abort();
 
