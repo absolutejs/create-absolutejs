@@ -8,12 +8,12 @@
 
 This boilerplate gives you a head-start with:
 
-- ✅ **TypeScript** or **JavaScript** support  
-- 🔍 **ESLint + Prettier** (or Biome, coming soon)  
+- ✅ **TypeScript** or **JavaScript** support
+- 🔍 **ESLint + Prettier** (or Biome, coming soon)
 - 🎨 **Tailwind CSS** integration (optional)
-- 📦 A sensible project layout (frontend & backend folders)  
-- 📄 Preconfigured `tsconfig.json`, `eslint.config.mjs`, and Prettier settings  
-- ⚙️ Git initialization ready to go  
+- 📦 A sensible project layout (frontend & backend folders)
+- 📄 Preconfigured `tsconfig.json`, `eslint.config.mjs`, and Prettier settings
+- ⚙️ Git initialization ready to go
 
 ---
 

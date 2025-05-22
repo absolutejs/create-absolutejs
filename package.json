@@ -15,7 +15,7 @@
 	"scripts": {
 		"build": "rm -rf dist && bun build src/index.ts --outdir dist && tsc --emitDeclarationOnly --project tsconfig.json",
 		"test": "echo \"Error: no test specified\" && exit 1",
-		"format": "prettier --write \"./**/*.{js,jsx,ts,tsx,css,json}\"",
+		"format": "prettier --write \"./**/*.{js,jsx,ts,tsx,css,json,mjs,md}\"",
 		"dev": "rm -rf absolutejs-project && bun run src/index.ts",
 		"lint": "eslint ./",
 		"typecheck": "bun run tsc --noEmit",

@@ -15,14 +15,6 @@ export const availableFrontends: Record<string, FrontendFramework> = {
 
 export const availablePlugins: AvailableDependency[] = [
 	{
-		imports: [
-			{ config: null, isPlugin: true, packageName: 'staticPlugin' }
-		],
-		label: cyan('📦 @elysiajs/static'),
-		latestVersion: '1.3.0',
-		value: '@elysiajs/static'
-	},
-	{
 		imports: [{ config: null, isPlugin: true, packageName: 'cors' }],
 		label: cyan('⚙️ @elysiajs/cors'),
 		latestVersion: '1.3.3',
@@ -57,7 +49,7 @@ export const absoluteAuthPlugin: AvailableDependency = {
 export const defaultDependencies: AvailableDependency[] = [
 	{
 		imports: [{ isPlugin: false, packageName: 'Elysia' }],
-		latestVersion: '1.3.0',
+		latestVersion: '1.3.1',
 		value: 'elysia'
 	}
 ];
@@ -70,5 +62,16 @@ export const defaultPlugins: AvailableDependency[] = [
 		],
 		latestVersion: '0.6.0',
 		value: '@absolutejs/absolute'
+	},
+	{
+		imports: [
+			{
+				config: { assets: './build', prefix: '' },
+				isPlugin: true,
+				packageName: 'staticPlugin'
+			}
+		],
+		latestVersion: '1.3.0',
+		value: '@elysiajs/static'
 	}
 ];

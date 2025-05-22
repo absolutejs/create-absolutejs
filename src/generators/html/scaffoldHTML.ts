@@ -1,6 +1,7 @@
-import { copyFileSync, cpSync, mkdirSync } from 'fs';
+import { cpSync, mkdirSync, writeFileSync } from 'fs';
 import { join } from 'path';
-import type { HTMLScriptOption } from '../../types';
+import type { HTMLScriptOption, Language } from '../../types';
+import { getSSRScript } from './getSSRScript';
 
 type ScaffoldHTMLProps = {
 	templatesDirectory: string;
@@ -8,6 +9,7 @@ type ScaffoldHTMLProps = {
 	targetDirectory: string;
 	stylesDirectory: string;
 	htmlScriptOption: HTMLScriptOption;
+	language: Language;
 };
 
 export const scaffoldHTML = ({
@@ -15,7 +17,8 @@ export const scaffoldHTML = ({
 	isSingle,
 	targetDirectory,
 	stylesDirectory,
-	htmlScriptOption
+	htmlScriptOption,
+	language
 }: ScaffoldHTMLProps) => {
 	const htmlTemplates = join(templatesDirectory, 'html');
 	cpSync(join(htmlTemplates, 'pages'), join(targetDirectory, 'pages'), {
@@ -24,31 +27,13 @@ export const scaffoldHTML = ({
 
 	const scriptsDir = join(targetDirectory, 'scripts');
 	mkdirSync(scriptsDir);
-	switch (htmlScriptOption) {
-		case 'js':
-			copyFileSync(
-				join(htmlTemplates, 'scripts', 'javascriptExample.js'),
-				join(scriptsDir, 'javascriptExample.js')
-			);
-			break;
-		case 'ts':
-			copyFileSync(
-				join(htmlTemplates, 'scripts', 'typescriptExample.ts'),
-				join(scriptsDir, 'typescriptExample.ts')
-			);
-			break;
-		case 'js+ssr':
-			copyFileSync(
-				join(htmlTemplates, 'scripts', 'javascriptSSRExample.js'),
-				join(scriptsDir, 'javascriptSSRExample.js')
-			);
-			break;
-		case 'ts+ssr':
-			copyFileSync(
-				join(htmlTemplates, 'scripts', 'typescriptSSRExample.ts'),
-				join(scriptsDir, 'typescriptSSRExample.ts')
-			);
-			break;
+	if (htmlScriptOption?.includes('ssr')) {
+		const ssrScript = getSSRScript(language, isSingle);
+		const ssrFileName =
+			language === 'ts'
+				? 'typescriptSSRExample.ts'
+				: 'javascriptSSRExample.js';
+		writeFileSync(join(scriptsDir, ssrFileName), ssrScript);
 	}
 
 	const htmlStylesSrc = join(htmlTemplates, 'styles');

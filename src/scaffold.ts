@@ -99,6 +99,7 @@ export const scaffold = ({
 		frontendConfigurations,
 		frontendDirectory,
 		htmlScriptOption,
+		language,
 		tailwind,
 		templatesDirectory
 	});

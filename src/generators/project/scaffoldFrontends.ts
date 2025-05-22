@@ -3,6 +3,7 @@ import { join } from 'node:path';
 import type {
 	FrontendConfiguration,
 	HTMLScriptOption,
+	Language,
 	TailwindConfig
 } from '../../types';
 import { scaffoldHTML } from '../html/scaffoldHTML';
@@ -14,10 +15,12 @@ type ScaffoldFrontendsProps = {
 	frontendConfigurations: FrontendConfiguration[];
 	htmlScriptOption: HTMLScriptOption;
 	tailwind: TailwindConfig;
+	language: Language;
 };
 
 export const scaffoldFrontends = ({
 	frontendDirectory,
+	language,
 	templatesDirectory,
 	frontendConfigurations,
 	tailwind,
@@ -61,11 +64,12 @@ export const scaffoldFrontends = ({
 
 		if (name === 'html') {
 			scaffoldHTML({
+				htmlScriptOption,
 				isSingle,
+				language,
 				stylesDirectory,
 				targetDirectory,
-				templatesDirectory,
-				htmlScriptOption
+				templatesDirectory
 			});
 		}
 	});

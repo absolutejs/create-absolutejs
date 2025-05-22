@@ -217,7 +217,7 @@ export default defineConfig([
 		}
 	},
 	{
-		files: ['example/db/migrate.ts','example/utils/absoluteAuthConfig.ts'],
+		files: ['example/db/migrate.ts', 'example/utils/absoluteAuthConfig.ts'],
 		rules: {
 			'no-console': 'off'
 		}
