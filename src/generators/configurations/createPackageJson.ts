@@ -1,6 +1,7 @@
 import { writeFileSync } from 'fs';
 import { join } from 'path';
 import { spinner } from '@clack/prompts';
+import { green } from 'picocolors';
 import {
 	absoluteAuthPlugin,
 	availablePlugins,
@@ -31,7 +32,7 @@ export const createPackageJson = ({
 	frontendConfigurations
 }: CreatePackageJsonProps) => {
 	const s = spinner();
-	latest && s.start('Resolving package versions…');
+	void (latest && s.start('Resolving package versions…'));
 
 	const resolveVersion = (name: string, listed: string) =>
 		latest ? (getPackageVersion(name) ?? listed) : listed;
@@ -85,7 +86,7 @@ export const createPackageJson = ({
 		);
 	}
 
-	latest && s.stop('Package versions resolved');
+	void (latest && s.stop(green('Package versions resolved')));
 
 	const scripts: PackageJson['scripts'] = {
 		dev: 'bun run src/backend/server.ts',
@@ -106,6 +107,6 @@ export const createPackageJson = ({
 
 	writeFileSync(
 		join(projectName, 'package.json'),
-		JSON.stringify(packageJson, null, 2)
+		JSON.stringify(packageJson)
 	);
 };

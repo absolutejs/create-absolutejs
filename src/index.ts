@@ -28,7 +28,7 @@ if (values.help === true) {
 
 const response = await prompt();
 
-scaffold({ response, packageManager, latest: values.latest === true });
+scaffold({ latest: values.latest === true, packageManager, response });
 
 const debugMessage =
 	values.debug !== false

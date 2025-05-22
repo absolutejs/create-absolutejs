@@ -66,10 +66,10 @@ export const scaffold = ({
 	createPackageJson({
 		authProvider,
 		frontendConfigurations,
+		latest,
 		plugins,
 		projectName,
-		useTailwind,
-		latest
+		useTailwind
 	});
 
 	const serverFilePath = join(backendDirectory, 'server.ts');

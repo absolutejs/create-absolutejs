@@ -1,6 +1,7 @@
 import { execSync } from 'child_process';
 import { exit } from 'process';
 import { spinner } from '@clack/prompts';
+import { green, red } from 'picocolors';
 import { formatCommands } from '../utils/commandMaps';
 
 type FormatProjectProps = {
@@ -18,9 +19,9 @@ export const formatProject = ({
 		const fmt = formatCommands[packageManager] ?? 'bun run format';
 		spin.start('Formatting files…');
 		execSync(fmt, { cwd: projectName, stdio: 'pipe' });
-		spin.stop('Files formatted');
+		spin.stop(green('Files formatted'));
 	} catch (err) {
-		spin.stop('Failed to format files');
+		spin.stop(red('Failed to format files'), 1);
 		console.error('Error formatting:', err);
 		exit(1);
 	}
