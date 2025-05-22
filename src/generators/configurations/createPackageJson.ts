@@ -90,7 +90,7 @@ export const createPackageJson = ({
 
 	const scripts: PackageJson['scripts'] = {
 		dev: 'bun run src/backend/server.ts',
-		format: 'prettier --write "./**/*.{js,jsx,ts,tsx,css,json}"',
+		format: 'prettier --write "./**/*.{js,jsx,ts,tsx,css,json,mjs,md}"',
 		lint: 'eslint ./src',
 		test: 'echo "Error: no test specified" && exit 1',
 		typecheck: 'bun run tsc --noEmit'
