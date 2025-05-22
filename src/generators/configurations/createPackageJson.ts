@@ -18,6 +18,7 @@ type CreatePackageJsonProps = {
 	authProvider: AuthProvier;
 	useTailwind: boolean;
 	plugins: string[];
+	latest: boolean;
 	frontendConfigurations: FrontendConfiguration[];
 };
 
@@ -26,50 +27,65 @@ export const createPackageJson = ({
 	authProvider,
 	plugins,
 	useTailwind,
+	latest,
 	frontendConfigurations
 }: CreatePackageJsonProps) => {
 	const s = spinner();
+	latest && s.start('Resolving package versions…');
 
-	s.start('Getting latest package versions…');
+	const resolveVersion = (name: string, listed: string) =>
+		latest ? (getPackageVersion(name) ?? listed) : listed;
 
 	const dependencies: PackageJson['dependencies'] = {};
 	const devDependencies: PackageJson['devDependencies'] = {};
 
-	const authPlugin =
-		authProvider === 'absoluteAuth' ? absoluteAuthPlugin : [];
+	for (const p of defaultPlugins) {
+		dependencies[p.value] = resolveVersion(p.value, p.latestVersion);
+	}
 
-	for (const p of defaultPlugins.concat(authPlugin)) {
-		const version = getPackageVersion(p.value);
-		dependencies[p.value] = version ?? p.latestVersion;
+	if (authProvider === 'absoluteAuth') {
+		dependencies[absoluteAuthPlugin.value] = resolveVersion(
+			absoluteAuthPlugin.value,
+			absoluteAuthPlugin.latestVersion
+		);
 	}
 
 	for (const pluginValue of plugins) {
 		const meta = availablePlugins.find((p) => p.value === pluginValue);
 		if (!meta) continue;
-		dependencies[meta.value] =
-			getPackageVersion(meta.value) ?? meta.latestVersion;
+		dependencies[meta.value] = resolveVersion(
+			meta.value,
+			meta.latestVersion
+		);
 	}
 
 	if (useTailwind) {
-		devDependencies['autoprefixer'] =
-			getPackageVersion('autoprefixer') ?? '10.4.21';
-		devDependencies['postcss'] = getPackageVersion('postcss') ?? '8.5.3';
-		devDependencies['tailwindcss'] =
-			getPackageVersion('tailwindcss') ?? '4.1.7';
-		devDependencies['@tailwindcss/cli'] =
-			getPackageVersion('@tailwindcss/cli') ?? '4.1.7';
+		devDependencies['autoprefixer'] = resolveVersion(
+			'autoprefixer',
+			'10.4.21'
+		);
+		devDependencies['postcss'] = resolveVersion('postcss', '8.5.3');
+		devDependencies['tailwindcss'] = resolveVersion('tailwindcss', '4.1.7');
+		devDependencies['@tailwindcss/cli'] = resolveVersion(
+			'@tailwindcss/cli',
+			'4.1.7'
+		);
 	}
 
-	if (frontendConfigurations.find((f) => f.name === 'react')) {
-		dependencies['react'] = getPackageVersion('react') ?? '19.1.0';
-		dependencies['react-dom'] = getPackageVersion('react-dom') ?? '19.1.0';
-		devDependencies['@types/react'] =
-			getPackageVersion('@types/react') ?? '19.1.5';
-		devDependencies['@types/react-dom'] =
-			getPackageVersion('@types/react-dom') ?? '19.1.5';
+	if (frontendConfigurations.some((f) => f.name === 'react')) {
+		dependencies['react'] = resolveVersion('react', '19.1.0');
+		dependencies['react-dom'] = resolveVersion('react-dom', '19.1.0');
+		devDependencies['@types/react'] = resolveVersion(
+			'@types/react',
+			'19.1.5'
+		);
+		devDependencies['@types/react-dom'] = resolveVersion(
+			'@types/react-dom',
+			'19.1.5'
+		);
 	}
 
-	s.stop('Package versions fetched');
+	latest && s.stop('Package versions resolved');
 
 	const scripts: PackageJson['scripts'] = {
 		dev: 'bun run src/backend/server.ts',
@@ -90,6 +106,6 @@ export const createPackageJson = ({
 
 	writeFileSync(
 		join(projectName, 'package.json'),
-		JSON.stringify(packageJson)
+		JSON.stringify(packageJson, null, 2)
 	);
 };

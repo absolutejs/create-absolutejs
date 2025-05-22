@@ -15,6 +15,7 @@ Arguments:
 Options:
     -h, --help      Show this help message and exit
     -d, --debug     Show a summary of the project configuration after creation
+	-l, --latest    Fetch and use the latest version of required packages
 `;
 
 type OutroMessageProps = {

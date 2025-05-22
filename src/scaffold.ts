@@ -12,8 +12,14 @@ import { createServerFile } from './generators/project/createServer';
 import { scaffoldFrontends } from './generators/project/scaffoldFrontends';
 import type { PackageManager, PromptResponse } from './types';
 
-export const scaffold = (
-	{
+type ScaffoldProps = {
+	response: PromptResponse;
+	packageManager: PackageManager;
+	latest: boolean;
+};
+
+export const scaffold = ({
+	response: {
 		projectName,
 		language,
 		codeQualityTool,
@@ -31,9 +37,10 @@ export const scaffold = (
 		tailwind,
 		installDependenciesNow,
 		frontendConfigurations
-	}: PromptResponse,
-	packageManager: PackageManager
-) => {
+	},
+	latest,
+	packageManager
+}: ScaffoldProps) => {
 	const __dirname = dirname(fileURLToPath(import.meta.url));
 	const templatesDirectory = join(__dirname, '/templates');
 
@@ -61,7 +68,8 @@ export const scaffold = (
 		frontendConfigurations,
 		plugins,
 		projectName,
-		useTailwind
+		useTailwind,
+		latest
 	});
 
 	const serverFilePath = join(backendDirectory, 'server.ts');

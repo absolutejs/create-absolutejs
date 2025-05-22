@@ -13,21 +13,22 @@ const { values } = parseArgs({
 	args: argv.slice(DEFAULT_ARG_LENGTH),
 	options: {
 		debug: { default: false, short: 'd', type: 'boolean' },
-		help: { default: false, short: 'h', type: 'boolean' }
+		help: { default: false, short: 'h', type: 'boolean' },
+		latest: { default: false, short: 'l', type: 'boolean' }
 	},
 	strict: false
 });
 
 const packageManager = getUserPackageManager();
 
-if (values.help) {
+if (values.help === true) {
 	console.log(helpMessage);
 	exit(0);
 }
 
 const response = await prompt();
 
-scaffold(response, packageManager);
+scaffold({ response, packageManager, latest: values.latest === true });
 
 const debugMessage =
 	values.debug !== false
