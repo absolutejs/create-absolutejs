@@ -67,7 +67,6 @@ export const scaffoldFrontends = ({
 				htmlScriptOption,
 				isSingle,
 				language,
-				stylesDirectory,
 				targetDirectory,
 				templatesDirectory
 			});
