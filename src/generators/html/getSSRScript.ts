@@ -3,7 +3,7 @@ import type { Language } from '../../types';
 export const getSSRScript = (
 	language: Language,
 	isSingle: boolean
-) => `import { HOURS_IN_DAY, TWO_THIRDS } from '${!isSingle && '../'}../../constants';
+) => `import { HOURS_IN_DAY, TWO_THIRDS } from '${!isSingle ? '../' : ''}../../constants';
 
 document.addEventListener('DOMContentLoaded', () => {
     const greeting = document.getElementById('greeting');

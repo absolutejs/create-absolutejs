@@ -91,7 +91,7 @@ export const createServerFile = ({
 		manifestOptionList.push(`tailwind: ${JSON.stringify(tailwind)}`);
 	}
 
-	const buildStep = `const manifest = build({\n  ${manifestOptionList.join(
+	const buildStep = `const manifest = await build({\n  ${manifestOptionList.join(
 		',\n  '
 	)}\n});`;
 
