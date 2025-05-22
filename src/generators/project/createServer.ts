@@ -79,16 +79,10 @@ export const createServerFile = ({
 		`assetsDirectory: '${assetsDirectory}'`
 	];
 
-	frontendConfigurations.forEach((cfg) => {
-		if (cfg.name === 'html' && cfg.directory !== undefined) {
+	frontendConfigurations.forEach(({ name, directory }) => {
+		if (directory !== undefined) {
 			manifestOptionList.push(
-				`html: { directory: './src/frontend/${cfg.directory}', scriptingOption: ${JSON.stringify(
-					htmlScriptOption
-				)} }`
-			);
-		} else if (cfg.name !== 'html' && cfg.directory !== undefined) {
-			manifestOptionList.push(
-				`${cfg.name}Directory: './src/frontend/${cfg.directory}'`
+				`${name}Directory: './src/frontend/${directory}'`
 			);
 		}
 	});

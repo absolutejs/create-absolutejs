@@ -68,7 +68,7 @@ export const defaultPlugins: AvailableDependency[] = [
 			{ isPlugin: false, packageName: 'build' },
 			{ isPlugin: true, packageName: 'networkingPlugin' }
 		],
-		latestVersion: '0.3.2',
+		latestVersion: '0.6.0',
 		value: '@absolutejs/absolute'
 	}
 ];
