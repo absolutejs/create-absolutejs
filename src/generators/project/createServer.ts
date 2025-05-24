@@ -71,6 +71,7 @@ export const createServerFile = ({
 
 	const importLines = uniqueDependencies.flatMap((dependency) => {
 		const importsArray = dependency.imports ?? [];
+
 		return importsArray.length > 0
 			? [
 					`import { ${importsArray
@@ -141,7 +142,7 @@ export const createServerFile = ({
 			.map((configuration) =>
 				configuration.directory
 					? `${configuration.name}Directory: './src/frontend/${configuration.directory}'`
-					: ''
+					: `${configuration.name}Directory: './src/frontend/'`
 			)
 			.filter((option) => option !== ''),
 		tailwind ? `tailwind: ${JSON.stringify(tailwind)}` : ''

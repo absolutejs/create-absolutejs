@@ -1,7 +1,7 @@
 {
 	"name": "create-absolutejs",
 	"description": "A CLI tool to create a new AbsoluteJS project",
-	"version": "0.1.9",
+	"version": "0.1.10",
 	"license": "CC BY-NC 4.0",
 	"author": "Alex Kahn",
 	"type": "module",
