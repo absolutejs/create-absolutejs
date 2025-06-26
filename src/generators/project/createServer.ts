@@ -30,167 +30,123 @@ export const createServerFile = ({
 	assetsDirectory,
 	plugins
 }: CreateServerFileProps) => {
-	const requiresHtml = frontendConfigurations.some(
-		(configuration) => configuration.name === 'html'
+	const htmlConfig = frontendConfigurations.find(
+		({ name }) => name === 'html'
 	);
-	const requiresReact = frontendConfigurations.some(
-		(configuration) => configuration.name === 'react'
+	const reactConfig = frontendConfigurations.find(
+		({ name }) => name === 'react'
 	);
+
+	const requiresHtml = htmlConfig !== undefined;
+	const requiresReact = reactConfig !== undefined;
 	const isSingleFrontend = frontendConfigurations.length === 1;
 
 	const selectedCustomPlugins = availablePlugins.filter(
-		(plugin) => plugins.indexOf(plugin.value) !== UNFOUND_INDEX
+		({ value }) => plugins.indexOf(value) !== UNFOUND_INDEX
 	);
+	const authenticationPlugins =
+		authProvider === 'absoluteAuth' ? [absoluteAuthPlugin] : [];
 
-	const authenticationPlugins: AvailableDependency[] = [];
-	if (authProvider === 'absoluteAuth') {
-		authenticationPlugins.push(absoluteAuthPlugin);
-	}
-
-	const combinedDependencies = [
+	const allDependencies = [
 		...defaultDependencies,
 		...defaultPlugins,
 		...selectedCustomPlugins,
 		...authenticationPlugins
 	];
 
-	const uniqueDependencies: AvailableDependency[] = [];
-	combinedDependencies.forEach((dependency) => {
-		if (
-			!uniqueDependencies.some(
-				(existingDependency) =>
-					existingDependency.value === dependency.value
-			)
-		) {
-			uniqueDependencies.push(dependency);
-		}
-	});
-	uniqueDependencies.sort((firstDependency, secondDependency) =>
-		firstDependency.value.localeCompare(secondDependency.value)
-	);
+	const uniqueDependencies = Array.from(
+		new Map(
+			allDependencies.map((dependency) => [dependency.value, dependency])
+		).values()
+	).sort((a, b) => a.value.localeCompare(b.value));
 
-	const importLines = uniqueDependencies.flatMap((dependency) => {
-		const importsArray = dependency.imports ?? [];
-
-		return importsArray.length > 0
+	const importLines = uniqueDependencies.flatMap(({ value, imports }) =>
+		imports && imports.length > 0
 			? [
-					`import { ${importsArray
-						.map((importEntry) => importEntry.packageName)
-						.join(', ')} } from '${dependency.value}';`
+					`import { ${imports.map(({ packageName }) => packageName).join(', ')} } from '${value}';`
 				]
-			: [];
-	});
-
-	const absoluteImportLineIndex = importLines.findIndex((importLine) =>
-		importLine.includes("from '@absolutejs/absolute'")
+			: []
 	);
-	if (absoluteImportLineIndex >= 0) {
-		const originalImportLine = importLines[absoluteImportLineIndex]!;
-		importLines[absoluteImportLineIndex] = originalImportLine.replace(
-			/import\s*\{([\s\S]*?)\}\s*from '@absolutejs\/absolute';/,
-			(_fullMatch, importList) => {
-				const importedItems = importList
-					.split(',')
-					.map((item: string) => item.trim())
-					.filter(Boolean);
 
-				if (
-					requiresHtml &&
-					!importedItems.includes('handleHTMLPageRequest')
-				) {
-					importedItems.push('handleHTMLPageRequest');
-				}
-				if (
-					requiresReact &&
-					!importedItems.includes('handleReactPageRequest')
-				) {
-					importedItems.push('handleReactPageRequest');
-				}
+	const absoluteImportIdx = importLines.findIndex((line) =>
+		line.includes("from '@absolutejs/absolute'")
+	);
+	if (absoluteImportIdx !== UNFOUND_INDEX && importLines[absoluteImportIdx]) {
+		const existingItems = importLines[absoluteImportIdx]
+			.replace(/import\s*\{\s*|\}\s*from.*$/g, '')
+			.split(',')
+			.map((item) => item.trim())
+			.filter((value): value is string => value.length > 0);
 
-				return `import { ${importedItems.join(', ')} } from '@absolutejs/absolute';`;
-			}
-		);
+		const additionalItems = [
+			requiresHtml &&
+				!existingItems.includes('handleHTMLPageRequest') &&
+				'handleHTMLPageRequest',
+			requiresReact &&
+				!existingItems.includes('handleReactPageRequest') &&
+				'handleReactPageRequest'
+		].filter((value): value is string => typeof value === 'string');
+
+		importLines[absoluteImportIdx] =
+			`import { ${[...existingItems, ...additionalItems].join(', ')} } from '@absolutejs/absolute';`;
 	}
 
-	if (requiresReact) {
+	if (reactConfig) {
 		const reactImportSource = isSingleFrontend
 			? '../frontend/pages/ReactExample'
-			: '../frontend/react/pages/ReactExample';
+			: `../frontend/${reactConfig.directory}/pages/ReactExample`;
 		importLines.push(
 			`import { ReactExample } from '${reactImportSource}';`
 		);
 	}
 
 	const useStatements = uniqueDependencies
-		.flatMap((dependency) => dependency.imports)
-		.filter((importEntry) => importEntry?.isPlugin)
-		.map((importEntry) => {
-			if (importEntry?.config === undefined) {
-				return `.use(${importEntry?.packageName})`;
-			}
-			if (importEntry.config === null) {
-				return `.use(${importEntry.packageName}())`;
-			}
+		.flatMap(({ imports }) => imports ?? [])
+		.filter((entry) => entry.isPlugin)
+		.map((entry) => {
+			if (entry.config === undefined) return `.use(${entry.packageName})`;
+			if (entry.config === null) return `.use(${entry.packageName}())`;
 
-			return `.use(${importEntry.packageName}(${JSON.stringify(importEntry.config)}))`;
+			return `.use(${entry.packageName}(${JSON.stringify(entry.config)}))`;
 		});
 
 	const manifestOptions = [
 		`buildDirectory: '${buildDirectory}'`,
 		`assetsDirectory: '${assetsDirectory}'`,
-		...frontendConfigurations
-			.map((configuration) =>
-				configuration.directory
-					? `${configuration.name}Directory: './src/frontend/${configuration.directory}'`
-					: `${configuration.name}Directory: './src/frontend/'`
-			)
-			.filter((option) => option !== ''),
+		...frontendConfigurations.map(
+			({ name, directory }) =>
+				`${name}Directory: './src/frontend/${directory}'`
+		),
 		tailwind ? `tailwind: ${JSON.stringify(tailwind)}` : ''
-	];
+	].filter(Boolean);
 
-	const buildStatement = `const manifest = await build({\n  ${manifestOptions.join(
-		',\n  '
-	)}\n});`;
+	const manifestDeclaration = `const manifest = await build({\n  ${manifestOptions.join(',\n  ')}\n});`;
 
-	let guardStatements = `if (manifest === null) throw new Error('Manifest was not generated');`;
-	if (requiresReact) {
-		guardStatements += `
-const { ReactExampleIndex } = manifest;
-if (ReactExampleIndex === undefined) throw new Error('ReactExampleIndex was not generated');`;
-	}
+	const guardStatements = [
+		`if (manifest === null) throw new Error('Manifest was not generated');`,
+		requiresReact
+			? `const { ReactExampleIndex } = manifest;\nif (ReactExampleIndex === undefined) throw new Error('ReactExampleIndex was not generated');`
+			: ''
+	]
+		.filter(Boolean)
+		.join('\n');
 
-	let routeDefinitions = '';
-	frontendConfigurations.forEach((configuration, index) => {
-		const routePath = index === 0 ? '/' : `/${configuration.name}`;
-		if (configuration.name === 'html') {
-			routeDefinitions += `
-  .get('${routePath}', () =>
-    handleHTMLPageRequest(\`${buildDirectory}/html/pages/HtmlExample.html\`)
-  )`;
-		} else if (configuration.name === 'react') {
-			routeDefinitions += `
-  .get('${routePath}', () =>
-    handleReactPageRequest(ReactExample, ReactExampleIndex)
-  )`;
-		}
-	});
+	const routes = frontendConfigurations
+		.map(({ name, directory }, index) => {
+			const routePath = index === 0 ? '/' : `/${name}`;
+			if (name === 'html') {
+				return `.get('${routePath}', () => handleHTMLPageRequest(\`${buildDirectory}/${directory}/pages/HtmlExample.html\`))`;
+			}
+			if (name === 'react') {
+				return `.get('${routePath}', () => handleReactPageRequest(ReactExample, ReactExampleIndex))`;
+			}
 
-	let serverFileContent = `${importLines.join('\n')}
+			return '';
+		})
+		.filter(Boolean)
+		.join('\n  ');
 
-${buildStatement}
-
-${guardStatements}
-
-new Elysia()${routeDefinitions}`;
-	useStatements.forEach((statement) => {
-		serverFileContent += `\n  ${statement}`;
-	});
-	serverFileContent += `
-  .on('error', (error) => {
-    const { request } = error;
-    console.error(\`Server error on \${request.method} \${request.url}: \${error.message}\`);
-  });
-`;
+	const serverFileContent = `${importLines.join('\n')}\n\n${manifestDeclaration}\n\n${guardStatements}\n\nnew Elysia()${routes}\n${useStatements.map((s) => `  ${s}`).join('\n')}\n  .on('error', (err) => {\n    const { request } = err;\n    console.error(\`Server error on \${request.method} \${request.url}: \${err.message}\`);\n  });\n`;
 
 	writeFileSync(serverFilePath, serverFileContent);
 };
