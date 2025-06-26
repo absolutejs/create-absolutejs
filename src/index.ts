@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 import { argv, exit } from 'node:process';
 import { parseArgs } from 'node:util';
 import { outro } from '@clack/prompts';
