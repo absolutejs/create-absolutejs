@@ -1,12 +1,12 @@
 export const generateReactPage = (
-	isSingle: boolean
+	isSingleFrontend: boolean
 ) => `import { useState } from 'react';
 import { Head } from '../components/utils/Head';
 import {
   bodyDefault,
   htmlDefault,
   mainDefault
-} from '${isSingle ? '../styles' : '../../styles/react'}/defaultStyles';
+} from '${isSingleFrontend ? '../styles' : '../../styles/react'}/defaultStyles';
 
 export const ReactExample = () => {
   const [count, setCount] = useState(0);
@@ -87,7 +87,7 @@ export const ReactExample = () => {
                   fontFamily: 'monospace'
                 }}
               >
-                src/frontend/${isSingle ? '' : 'react'}/pages/ReactExample.tsx
+                src/frontend/${isSingleFrontend ? '' : 'react'}/pages/ReactExample.tsx
               </code>{' '}
               to edit this page
             </p>

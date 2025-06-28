@@ -6,6 +6,7 @@ export const getProjectName = async () => {
 		message: 'Project name:',
 		placeholder: 'absolutejs-project'
 	});
+
 	if (isCancel(projectName)) abort();
 
 	return projectName;

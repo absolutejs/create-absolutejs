@@ -1,19 +1,21 @@
 import { text, isCancel } from '@clack/prompts';
-import type { DatabaseEngine } from '../types';
+import type { ArgumentConfiguration, CreateConfiguration } from '../types';
 import { abort } from '../utils/abort';
 
-type GetDirectoryConfigurationProps = {
-	configType: 'custom' | 'default';
-	useTailwind: boolean;
-	databaseEngine: DatabaseEngine;
+type GetDirectoryConfigurationProps = Pick<
+	CreateConfiguration,
+	'directoryConfig' | 'useTailwind' | 'databaseEngine'
+> & {
+	argumentConfiguration: ArgumentConfiguration;
 };
 
 export const getDirectoryConfiguration = async ({
-	configType,
+	directoryConfig,
 	useTailwind,
-	databaseEngine
+	databaseEngine,
+	argumentConfiguration
 }: GetDirectoryConfigurationProps) => {
-	if (configType === 'default') {
+	if (directoryConfig === 'default') {
 		return {
 			assetsDirectory: 'src/backend/assets',
 			buildDirectory: 'build',
@@ -28,32 +30,40 @@ export const getDirectoryConfiguration = async ({
 	}
 
 	// Build directory
-	const buildDirectory = await text({
-		message: 'Build directory:',
-		placeholder: 'build'
-	});
+	const buildDirectory =
+		argumentConfiguration.buildDirectory ??
+		(await text({
+			message: 'Build directory:',
+			placeholder: 'build'
+		}));
 	if (isCancel(buildDirectory)) abort();
 
 	// Assets directory
-	const assetsDirectory = await text({
-		message: 'Assets directory:',
-		placeholder: 'src/backend/assets'
-	});
+	const assetsDirectory =
+		argumentConfiguration.assetsDirectory ??
+		(await text({
+			message: 'Assets directory:',
+			placeholder: 'src/backend/assets'
+		}));
 	if (isCancel(assetsDirectory)) abort();
 
 	// Tailwind directory
 	let tailwind;
 	if (useTailwind) {
-		const input = await text({
-			message: 'Tailwind input CSS file:',
-			placeholder: './src/frontend/styles/tailwind.css'
-		});
+		const input =
+			argumentConfiguration.tailwind?.input ??
+			(await text({
+				message: 'Tailwind input CSS file:',
+				placeholder: './src/frontend/styles/tailwind.css'
+			}));
 		if (isCancel(input)) abort();
 
-		const output = await text({
-			message: 'Tailwind output CSS file:',
-			placeholder: '/assets/css/tailwind.generated.css'
-		});
+		const output =
+			argumentConfiguration.tailwind?.output ??
+			(await text({
+				message: 'Tailwind output CSS file:',
+				placeholder: '/assets/css/tailwind.generated.css'
+			}));
 		if (isCancel(output)) abort();
 
 		tailwind = { input, output };
@@ -64,10 +74,12 @@ export const getDirectoryConfiguration = async ({
 	// Database
 	let databaseDirectory;
 	if (databaseEngine !== undefined) {
-		databaseDirectory = await text({
-			message: 'Database directory:',
-			placeholder: 'db'
-		});
+		databaseDirectory =
+			argumentConfiguration.databaseDirectory ??
+			(await text({
+				message: 'Database directory:',
+				placeholder: 'db'
+			}));
 		if (isCancel(databaseDirectory)) abort();
 	}
 

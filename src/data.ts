@@ -1,15 +1,55 @@
-import { cyan, red, green, magenta, blueBright } from 'picocolors';
-import type { FrontendFramework, AvailableDependency } from './types';
+import { cyan, green, magenta } from 'picocolors';
+import type { FrontendLabels, AvailableDependency } from './types';
+
+export const availableFrontends = [
+	'react',
+	'html',
+	'svelte',
+	// 'angular',
+	// 'vue',
+	'htmx'
+] as const;
+export const availableAuthProviders = ['absoluteAuth', 'none'] as const;
+export const availableLanguages = ['ts', 'js'] as const;
+export const availableHTMLScriptOptions = [
+	'js',
+	'js+ssr',
+	'ts',
+	'ts+ssr'
+] as const;
+export const availableDatabaseEngines = [
+	'postgresql',
+	'mysql',
+	'sqlite',
+	'mongodb',
+	'redis',
+	'singlestore',
+	'cockroachdb',
+	'mssql',
+	'none'
+] as const;
+export const availableDirectoryConfigurations = ['default', 'custom'] as const;
+export const availableORMs = ['drizzle', 'prisma', 'none'] as const;
+export const availableDatabaseHosts = [
+	'neon',
+	'planetscale',
+	'supabase',
+	'turso',
+	'vercel',
+	'upstash',
+	'atlas',
+	'none'
+] as const;
+export const availableCodeQualityTools = ['eslint+prettier', 'biome'] as const;
 
 /* eslint-disable absolute/sort-keys-fixable */
-export const availableFrontends: Record<string, FrontendFramework> = {
-	react: { label: cyan('React'), name: 'React' },
-	html: { label: 'HTML', name: 'HTML' },
-	angular: { label: red('Angular'), name: 'Angular' },
-	vue: { label: green('Vue'), name: 'Vue' },
-	svelte: { label: magenta('Svelte'), name: 'Svelte' },
-	htmx: { label: 'HTMX', name: 'HTMX' },
-	solid: { label: blueBright('Solid'), name: 'Solid' }
+export const frontendLabels: FrontendLabels = {
+	react: cyan('React'),
+	html: 'HTML',
+	svelte: magenta('Svelte'),
+	// angular: red('Angular'),
+	// vue: green('Vue'),
+	htmx: 'HTMX'
 };
 /* eslint-enable absolute/sort-keys-fixable */
 

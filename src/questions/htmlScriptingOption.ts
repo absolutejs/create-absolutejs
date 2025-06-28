@@ -1,8 +1,9 @@
 import { select, isCancel } from '@clack/prompts';
 import { blueBright, yellow } from 'picocolors';
+import type { Language } from '../types';
 import { abort } from '../utils/abort';
 
-export const getHtmlScriptingOption = async (language: string) => {
+export const getHtmlScriptingOption = async (language: Language) => {
 	const langLabel =
 		language === 'ts' ? blueBright('TypeScript') : yellow('JavaScript');
 	const htmlScriptOption = await select({

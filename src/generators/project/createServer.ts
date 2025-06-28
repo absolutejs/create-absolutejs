@@ -5,16 +5,16 @@ import {
 	defaultDependencies,
 	defaultPlugins
 } from '../../data';
-import type { AvailableDependency, PromptResponse } from '../../types';
+import type { AvailableDependency, CreateConfiguration } from '../../types';
 
 type CreateServerFileProps = Pick<
-	PromptResponse,
+	CreateConfiguration,
 	| 'tailwind'
 	| 'authProvider'
 	| 'plugins'
 	| 'buildDirectory'
 	| 'assetsDirectory'
-	| 'frontendConfigurations'
+	| 'frontendDirectories'
 > & {
 	availablePlugins: AvailableDependency[];
 	serverFilePath: string;
@@ -22,7 +22,7 @@ type CreateServerFileProps = Pick<
 
 export const createServerFile = ({
 	tailwind,
-	frontendConfigurations,
+	frontendDirectories,
 	serverFilePath,
 	authProvider,
 	availablePlugins,
@@ -30,16 +30,11 @@ export const createServerFile = ({
 	assetsDirectory,
 	plugins
 }: CreateServerFileProps) => {
-	const htmlConfig = frontendConfigurations.find(
-		({ name }) => name === 'html'
-	);
-	const reactConfig = frontendConfigurations.find(
-		({ name }) => name === 'react'
-	);
+	const htmlDirectory = frontendDirectories['html'];
+	const reactDirectory = frontendDirectories['react'];
 
-	const requiresHtml = htmlConfig !== undefined;
-	const requiresReact = reactConfig !== undefined;
-	const isSingleFrontend = frontendConfigurations.length === 1;
+	const requiresHtml = htmlDirectory !== undefined;
+	const requiresReact = reactDirectory !== undefined;
 
 	const selectedCustomPlugins = availablePlugins.filter(
 		({ value }) => plugins.indexOf(value) !== UNFOUND_INDEX
@@ -91,10 +86,11 @@ export const createServerFile = ({
 			`import { ${[...existingItems, ...additionalItems].join(', ')} } from '@absolutejs/absolute';`;
 	}
 
-	if (reactConfig) {
-		const reactImportSource = isSingleFrontend
-			? '../frontend/pages/ReactExample'
-			: `../frontend/${reactConfig.directory}/pages/ReactExample`;
+	if (reactDirectory !== undefined) {
+		const reactImportSource =
+			reactDirectory === ''
+				? '../frontend/pages/ReactExample'
+				: `../frontend/${reactDirectory}/pages/ReactExample`;
 		importLines.push(
 			`import { ReactExample } from '${reactImportSource}';`
 		);
@@ -113,9 +109,9 @@ export const createServerFile = ({
 	const manifestOptions = [
 		`buildDirectory: '${buildDirectory}'`,
 		`assetsDirectory: '${assetsDirectory}'`,
-		...frontendConfigurations.map(
-			({ name, directory }) =>
-				`${name}Directory: './src/frontend/${directory}'`
+		...Object.entries(frontendDirectories).map(
+			([frameworkName, directory]) =>
+				`${frameworkName}Directory: './src/frontend/${directory}'`
 		),
 		tailwind ? `tailwind: ${JSON.stringify(tailwind)}` : ''
 	].filter(Boolean);
@@ -131,13 +127,15 @@ export const createServerFile = ({
 		.filter(Boolean)
 		.join('\n');
 
-	const routes = frontendConfigurations
-		.map(({ name, directory }, index) => {
-			const routePath = index === 0 ? '/' : `/${name}`;
-			if (name === 'html') {
+	const routes = Object.entries(frontendDirectories)
+		.map(([frameworkName, directory], index) => {
+			const routePath = index === 0 ? '/' : `/${frameworkName}`;
+
+			if (frameworkName === 'html') {
 				return `.get('${routePath}', () => handleHTMLPageRequest(\`${buildDirectory}/${directory}/pages/HtmlExample.html\`))`;
 			}
-			if (name === 'react') {
+
+			if (frameworkName === 'react') {
 				return `.get('${routePath}', () => handleReactPageRequest(ReactExample, ReactExampleIndex))`;
 			}
 

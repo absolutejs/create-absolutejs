@@ -2,8 +2,8 @@ import type { Language } from '../../types';
 
 export const getSSRScript = (
 	language: Language,
-	isSingle: boolean
-) => `import { HOURS_IN_DAY, TWO_THIRDS } from '${!isSingle ? '../' : ''}../../constants';
+	isSingleFrontend: boolean
+) => `import { HOURS_IN_DAY, TWO_THIRDS } from '${!isSingleFrontend ? '../' : ''}../../constants';
 
 document.addEventListener('DOMContentLoaded', () => {
     const greeting = document.getElementById('greeting');

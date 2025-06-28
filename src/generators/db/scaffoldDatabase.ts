@@ -19,7 +19,7 @@ export const scaffoldDatabase = ({
 }: ScaffoldDatabaseProps) => {
 	mkdirSync(join(projectName, databaseDirectory), { recursive: true });
 
-	if (databaseEngine !== 'postgresql') {
+	if (databaseEngine !== 'postgresql' && databaseEngine !== 'none') {
 		console.warn(
 			`${dim('│')}\n${yellow('▲')}  Only PostgreSQL support is implemented so far`
 		);
@@ -27,5 +27,11 @@ export const scaffoldDatabase = ({
 
 	if (orm === 'drizzle') {
 		createDrizzleConfig({ databaseEngine, projectName });
+	}
+
+	if (orm === 'prisma') {
+		console.warn(
+			`${dim('│')}\n${yellow('▲')}  Prisma support is not implemented yet`
+		);
 	}
 };

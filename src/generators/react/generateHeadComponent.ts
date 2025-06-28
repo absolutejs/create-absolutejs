@@ -1,6 +1,6 @@
 export const generateHeadComponent = (
-	isSingle: boolean
-) => `import { styleReset } from '${isSingle ? '../../styles' : '../../../styles/react'}/defaultStyles';
+	isSingleFrontend: boolean
+) => `import { styleReset } from '${isSingleFrontend ? '../../styles' : '../../../styles/react'}/defaultStyles';
 
 type HeadProps = {
     title?: string;

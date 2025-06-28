@@ -1,32 +1,26 @@
 import { copyFileSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
-import type {
-	FrontendConfiguration,
-	HTMLScriptOption,
-	Language,
-	TailwindConfig
-} from '../../types';
+import type { CreateConfiguration } from '../../types';
 import { scaffoldHTML } from '../html/scaffoldHTML';
 import { scaffoldReact } from '../react/scaffoldReact';
 
-type ScaffoldFrontendsProps = {
+type ScaffoldFrontendsProps = Pick<
+	CreateConfiguration,
+	'frontendDirectories' | 'htmlScriptOption' | 'language' | 'tailwind'
+> & {
 	frontendDirectory: string;
 	templatesDirectory: string;
-	frontendConfigurations: FrontendConfiguration[];
-	htmlScriptOption: HTMLScriptOption;
-	tailwind: TailwindConfig;
-	language: Language;
 };
 
 export const scaffoldFrontends = ({
 	frontendDirectory,
 	language,
 	templatesDirectory,
-	frontendConfigurations,
+	frontendDirectories,
 	tailwind,
 	htmlScriptOption
 }: ScaffoldFrontendsProps) => {
-	const isSingle = frontendConfigurations.length === 1;
+	const isSingleFrontend = Object.keys(frontendDirectories).length === 1;
 	const stylesDirectory = join(frontendDirectory, 'styles');
 	mkdirSync(stylesDirectory);
 
@@ -38,8 +32,9 @@ export const scaffoldFrontends = ({
 	}
 
 	const dirMap = new Map<string, string>();
-	frontendConfigurations.forEach(({ name, directory }) => {
-		const dir = directory?.trim() ?? (isSingle ? '' : name);
+
+	Object.entries(frontendDirectories).forEach(([name, directory]) => {
+		const dir = directory?.trim() ?? (isSingleFrontend ? '' : name);
 
 		if (dirMap.has(dir)) {
 			throw new Error(
@@ -51,11 +46,11 @@ export const scaffoldFrontends = ({
 		dirMap.set(dir, name);
 
 		const targetDirectory = join(frontendDirectory, dir);
-		void (!isSingle && mkdirSync(targetDirectory));
+		if (!isSingleFrontend) mkdirSync(targetDirectory);
 
 		if (name === 'react') {
 			scaffoldReact({
-				isSingle,
+				isSingleFrontend,
 				stylesDirectory,
 				targetDirectory,
 				templatesDirectory
@@ -65,7 +60,7 @@ export const scaffoldFrontends = ({
 		if (name === 'html') {
 			scaffoldHTML({
 				htmlScriptOption,
-				isSingle,
+				isSingleFrontend,
 				language,
 				targetDirectory,
 				templatesDirectory

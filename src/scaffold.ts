@@ -10,10 +10,10 @@ import { initalizeRoot } from './generators/configurations/initializeRoot';
 import { scaffoldDatabase } from './generators/db/scaffoldDatabase';
 import { createServerFile } from './generators/project/createServer';
 import { scaffoldFrontends } from './generators/project/scaffoldFrontends';
-import type { PackageManager, PromptResponse } from './types';
+import type { PackageManager, CreateConfiguration } from './types';
 
 type ScaffoldProps = {
-	response: PromptResponse;
+	response: CreateConfiguration;
 	packageManager: PackageManager;
 	latest: boolean;
 };
@@ -36,7 +36,7 @@ export const scaffold = ({
 		assetsDirectory,
 		tailwind,
 		installDependenciesNow,
-		frontendConfigurations
+		frontendDirectories
 	},
 	latest,
 	packageManager
@@ -66,7 +66,7 @@ export const scaffold = ({
 	createPackageJson({
 		authProvider,
 		codeQualityTool,
-		frontendConfigurations,
+		frontendDirectories,
 		latest,
 		plugins,
 		projectName,
@@ -79,7 +79,7 @@ export const scaffold = ({
 		authProvider,
 		availablePlugins,
 		buildDirectory,
-		frontendConfigurations,
+		frontendDirectories,
 		plugins,
 		serverFilePath,
 		tailwind
@@ -96,7 +96,7 @@ export const scaffold = ({
 	);
 
 	scaffoldFrontends({
-		frontendConfigurations,
+		frontendDirectories,
 		frontendDirectory,
 		htmlScriptOption,
 		language,

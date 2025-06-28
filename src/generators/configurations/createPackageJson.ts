@@ -8,22 +8,19 @@ import {
 	defaultPlugins,
 	eslintAndPrettierDependencies
 } from '../../data';
-import type {
-	AuthProvier,
-	CodeQualityTool,
-	FrontendConfiguration,
-	PackageJson
-} from '../../types';
+import type { CreateConfiguration, PackageJson } from '../../types';
 import { getPackageVersion } from '../../utils/getPackageVersion';
 
-type CreatePackageJsonProps = {
+type CreatePackageJsonProps = Pick<
+	CreateConfiguration,
+	| 'authProvider'
+	| 'useTailwind'
+	| 'plugins'
+	| 'frontendDirectories'
+	| 'codeQualityTool'
+> & {
 	projectName: string;
-	authProvider: AuthProvier;
-	useTailwind: boolean;
-	plugins: string[];
 	latest: boolean;
-	frontendConfigurations: FrontendConfiguration[];
-	codeQualityTool: CodeQualityTool;
 };
 
 export const createPackageJson = ({
@@ -32,7 +29,7 @@ export const createPackageJson = ({
 	plugins,
 	useTailwind,
 	latest,
-	frontendConfigurations,
+	frontendDirectories,
 	codeQualityTool
 }: CreatePackageJsonProps) => {
 	const s = spinner();
@@ -86,7 +83,7 @@ export const createPackageJson = ({
 		);
 	}
 
-	if (frontendConfigurations.some((f) => f.name === 'react')) {
+	if (frontendDirectories['react'] !== undefined) {
 		dependencies['react'] = resolveVersion('react', '19.1.0');
 		dependencies['react-dom'] = resolveVersion('react-dom', '19.1.0');
 		devDependencies['@types/react'] = resolveVersion(

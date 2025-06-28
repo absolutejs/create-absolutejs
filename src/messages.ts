@@ -1,21 +1,43 @@
 import { blueBright, cyan, dim, green, magenta, red, yellow } from 'picocolors';
-import type {
-	FrontendFramework,
-	HTMLScriptOption,
-	PromptResponse
-} from './types';
+import { frontendLabels } from './data';
+import type { HTMLScriptOption, CreateConfiguration } from './types';
 
 export const helpMessage = `
-Usage: create-absolute [options] [dir]
+Usage: create-absolute [options] [${magenta('project-name')}]
 
 Arguments:
-    dir             The name of the created application. 
-                    If not specified, the user will be prompted during creation.
+  ${magenta('project-name')}                    Name of the application to create.
+                                  If omitted, you'll be prompted to enter one.
 
 Options:
-    -h, --help      Show this help message and exit
-    -d, --debug     Show a summary of the project configuration after creation
-	-l, --latest    Fetch and use the latest version of required packages
+  ${cyan('--help, -h')}                      Show this help message and exit
+  ${cyan('--debug, -d')}                     Display a summary of the project configuration after creation
+
+  ${cyan('--angular')} ${dim(cyan('<dir>'))}                 Directory name for an Angular frontend
+  ${cyan('--assets')} ${dim(cyan('<dir>'))}                  Directory name for your static assets
+  ${cyan('--auth')} ${dim(cyan('<plugin>'))}                 Preconfigured auth plugin (currently only "absolute-auth")
+  ${cyan('--build')} ${dim(cyan('<dir>'))}                   Output directory for build artifacts
+  ${cyan('--database')} ${dim(cyan('<dir>'))}                Directory name for your database files
+  ${cyan('--directory')} ${dim(cyan('<mode>'))}              Directory-naming strategy: "default" or "custom"
+  ${cyan('--engine')} ${dim(cyan('<engine>'))}               Database engine (postgresql | mysql | sqlite | mongodb | redis | singlestore | cockroachdb | mssql)
+  ${cyan('--frontend')} ${dim(cyan('<name>'))}               Frontend framework(s) to include: one or more of "react", "svelte", "html", "htmx", "vue", "angular"
+  ${cyan('--git')}                           Initialize a Git repository
+  ${cyan('--host')} ${dim(cyan('<host>'))}                   Database host provider (neon | planetscale | supabase | turso | vercel | upstash | atlas)
+  ${cyan('--html')} ${dim(cyan('<dir>'))}                    Directory name for an HTML frontend
+  ${cyan('--htmx')} ${dim(cyan('<dir>'))}                    Directory name for an HTMX frontend
+  ${cyan('--lang')} ${dim(cyan('<lang>'))}                   Language: "ts" or "js"
+  ${cyan('--lts')}                           Use LTS versions of required packages
+  ${cyan('--npm')}                           Use the package manager that invoked this command to install dependencies
+  ${cyan('--orm')} ${dim(cyan('<orm>'))}                     ORM to configure: "drizzle" or "prisma"
+  ${cyan('--plugin')} ${dim(cyan('<plugin>'))}               Elysia plugin(s) to include (can be specified multiple times)
+  ${cyan('--quality')} ${dim(cyan('<tool>'))}                Code quality tool: "eslint+prettier" or "biome"
+  ${cyan('--react')} ${dim(cyan('<dir>'))}                   Directory name for a React frontend
+  ${cyan('--script')} ${dim(cyan('<option>'))}               HTML scripting option: "ts" | "js" | "ts+ssr" | "js+ssr"
+  ${cyan('--svelte')} ${dim(cyan('<dir>'))}                  Directory name for a Svelte frontend
+  ${cyan('--tailwind')}                      Include Tailwind CSS setup
+  ${cyan('--tailwind-input')} ${dim(cyan('<file>'))}         Path to your Tailwind CSS entry file
+  ${cyan('--tailwind-output')} ${dim(cyan('<file>'))}        Path for the generated Tailwind CSS bundle
+  ${cyan('--vue')} ${dim(cyan('<dir>'))}                     Directory name for a Vue frontend
 `;
 
 type OutroMessageProps = {
@@ -36,9 +58,8 @@ export const getOutroMessage = ({
 	}`;
 
 type DebugMessageProps = {
-	response: PromptResponse;
+	response: CreateConfiguration;
 	packageManager: string;
-	availableFrontends: Record<string, FrontendFramework>;
 };
 
 export const getDebugMessage = ({
@@ -46,12 +67,12 @@ export const getDebugMessage = ({
 		projectName,
 		language,
 		codeQualityTool,
-		configType,
+		directoryConfig,
 		useTailwind,
 		tailwind,
 		frontends,
 		htmlScriptOption,
-		frontendConfigurations,
+		frontendDirectories,
 		buildDirectory,
 		assetsDirectory,
 		databaseEngine,
@@ -63,8 +84,7 @@ export const getDebugMessage = ({
 		initializeGitNow,
 		installDependenciesNow
 	},
-	packageManager,
-	availableFrontends
+	packageManager
 }: DebugMessageProps) => {
 	const htmlLabels: Record<Exclude<HTMLScriptOption, undefined>, string> = {
 		js: yellow('JavaScript'),
@@ -72,57 +92,56 @@ export const getDebugMessage = ({
 		ts: blueBright('TypeScript'),
 		'ts+ssr': blueBright('TypeScript + SSR')
 	};
+	const htmlScriptingValue = htmlScriptOption
+		? htmlLabels[htmlScriptOption]
+		: dim('None');
 
-	const htmlScriptingValue =
-		htmlScriptOption !== undefined
-			? htmlLabels[htmlScriptOption]
-			: dim('None');
-
-	const htmlScriptingLine = frontends.includes('html')
-		? `\n${magenta('HTML Scripting')}:   	${htmlScriptingValue}`
-		: '';
-
-	const frontendLabels = frontends.map(
-		(name) => availableFrontends[name]?.label ?? name
-	);
-	const frontendHeading =
-		frontends.length === 1 ? magenta('Frontend') : magenta('Frontends');
-
-	const configString = frontendConfigurations.reduce(
-		(acc, { name, directory }, idx, arr) => {
-			const label = availableFrontends[name]?.label ?? name;
-			const segment = `${label}:		src/frontend/${directory}${
-				idx < arr.length - 1 ? '\n    ' : ''
-			}`;
-
-			return acc + segment;
-		},
-		''
-	);
+	const frameworkConfig = frontends
+		.map(
+			(name) =>
+				`${frontendLabels[name]}: src/frontend/${frontendDirectories[name]}`
+		)
+		.join('\n    ');
 
 	const tailwindSection =
-		tailwind && useTailwind
-			? `\n    ${cyan('Input')}:          	${tailwind.input}\n    ${cyan('Output')}:         	${tailwind.output}`
+		useTailwind && tailwind
+			? `Input:  ${tailwind.input}\nOutput: ${tailwind.output}`
 			: dim('None');
 
-	return `
-${magenta('Project Name')}:       	${projectName}
-${magenta('Package Manager')}:    	${packageManager}
-${magenta('Config Type')}:        	${configType === 'custom' ? green('Custom') : dim('Default')}
-${magenta('Language')}:           	${language === 'ts' ? blueBright('TypeScript') : yellow('JavaScript')}
-${magenta('Linting')}:            	${codeQualityTool === 'eslint+prettier' ? 'ESLint + Prettier' : 'Biome'}
-${magenta('Tailwind Configuration')}:    	${tailwindSection}
-${frontendHeading}:           	${frontendLabels.join(', ')}${htmlScriptingLine}
-${magenta('Build Directory')}:    	${buildDirectory}
-${magenta('Assets Directory')}:   	${assetsDirectory}
-${magenta('Database Engine')}:    	${databaseEngine ?? dim('None')}
-${magenta('Database Host')}:      	${databaseHost ?? dim('None')}
-${magenta('Database Directory')}:       	${databaseDirectory ?? dim('None')}
-${magenta('ORM')}:                	${orm ?? dim('None')}
-${magenta('Authorization Provider')}:               	${authProvider ?? dim('None')}
-${magenta('Plugins')}:            	${plugins.length ? plugins.join(', ') : dim('None')}
-${magenta('Initialize Git')}:     	${initializeGitNow ? green('Yes') : dim('No')}
-${magenta('Install Dependencies')}:	${installDependenciesNow ? green('Yes') : red('No')}
-${magenta('Framework Config')}:
-    ${configString}\n\n`;
+	const isCustomConfig = directoryConfig === 'custom';
+
+	/* prettier-ignore */
+	const lines: [string, string][] = [
+		['Project Name',         projectName],
+		['Package Manager',      packageManager],
+		['Config Type',          isCustomConfig ? green('Custom') : dim('Default')],
+		['Language',             language === 'ts' ? blueBright('TypeScript') : yellow('JavaScript')],
+		['Linting',              codeQualityTool === 'eslint+prettier' ? 'ESLint + Prettier' : 'Biome'],
+		['Tailwind Configuration', tailwindSection],
+		[frontends.length === 1 ? 'Frontend' : 'Frontends', frontends.map((name) => frontendLabels[name]).join(', ')],
+		['HTML Scripting',       frontends.includes('html') ? htmlScriptingValue : dim('None')],
+		['Build Directory',      buildDirectory],
+		['Assets Directory',     assetsDirectory],
+		['Database Engine',      databaseEngine && databaseEngine !== 'none' ? databaseEngine : dim('None')],
+		['Database Host',        databaseHost && databaseHost !== 'none' ? databaseHost : dim('None')],
+		['Database Directory',   databaseDirectory ?? dim('None')],
+		['ORM',                  orm ?? dim('None')],
+		['Auth Provider',        authProvider && authProvider !== 'none' ? authProvider : dim('None')],
+		['Plugins',              plugins.length && !plugins.includes('none') ? plugins.join(', ') : dim('None')],
+		['Initialize Git',       initializeGitNow ? green('Yes') : red('No')],
+		['Install Dependencies', installDependenciesNow ? green('Yes') : red('No')],
+		['Framework Config',     frameworkConfig]
+	];
+
+	const maxLabelLength = Math.max(...lines.map(([label]) => label.length));
+
+	const body = `\n\n${lines
+		.map(([label, value]) => {
+			const gap = ' '.repeat(maxLabelLength - label.length);
+
+			return `${magenta(label)}:${gap} ${value}`;
+		})
+		.join('\n')}`;
+
+	return body;
 };

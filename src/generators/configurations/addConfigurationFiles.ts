@@ -1,10 +1,10 @@
 import { copyFileSync } from 'fs';
 import { join } from 'path';
 import { dim, yellow } from 'picocolors';
-import type { PromptResponse } from '../../types';
+import type { CreateConfiguration } from '../../types';
 
 type AddConfigurationProps = Pick<
-	PromptResponse,
+	CreateConfiguration,
 	'tailwind' | 'language' | 'initializeGitNow' | 'codeQualityTool'
 > & {
 	templatesDirectory: string;

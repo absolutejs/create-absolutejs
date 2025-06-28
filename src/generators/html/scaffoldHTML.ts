@@ -5,7 +5,7 @@ import { getSSRScript } from './getSSRScript';
 
 type ScaffoldHTMLProps = {
 	templatesDirectory: string;
-	isSingle: boolean;
+	isSingleFrontend: boolean;
 	targetDirectory: string;
 	htmlScriptOption: HTMLScriptOption;
 	language: Language;
@@ -13,7 +13,7 @@ type ScaffoldHTMLProps = {
 
 export const scaffoldHTML = ({
 	templatesDirectory,
-	isSingle,
+	isSingleFrontend,
 	targetDirectory,
 	htmlScriptOption,
 	language
@@ -24,9 +24,9 @@ export const scaffoldHTML = ({
 	});
 
 	const scriptsDir = join(targetDirectory, 'scripts');
-	mkdirSync(scriptsDir);
+	mkdirSync(scriptsDir, { recursive: true });
 	if (htmlScriptOption?.includes('ssr')) {
-		const ssrScript = getSSRScript(language, isSingle);
+		const ssrScript = getSSRScript(language, isSingleFrontend);
 		const ssrFileName =
 			language === 'ts'
 				? 'typescriptSSRExample.ts'

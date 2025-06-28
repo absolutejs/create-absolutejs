@@ -6,14 +6,14 @@ import { generateReactPage } from './generateReactPage';
 type ScaffoldReactProps = {
 	stylesDirectory: string;
 	templatesDirectory: string;
-	isSingle: boolean;
+	isSingleFrontend: boolean;
 	targetDirectory: string;
 };
 
 export const scaffoldReact = ({
 	stylesDirectory,
 	templatesDirectory,
-	isSingle,
+	isSingleFrontend,
 	targetDirectory
 }: ScaffoldReactProps) => {
 	const reactStylesSrc = join(templatesDirectory, 'react', 'styles');
@@ -21,10 +21,10 @@ export const scaffoldReact = ({
 	const pagesDirectory = join(targetDirectory, 'pages');
 	const componentsDirectory = join(targetDirectory, 'components');
 
-	const pageExample = generateReactPage(isSingle);
-	const headComponent = generateHeadComponent(isSingle);
+	const pageExample = generateReactPage(isSingleFrontend);
+	const headComponent = generateHeadComponent(isSingleFrontend);
 
-	mkdirSync(pagesDirectory);
+	mkdirSync(pagesDirectory, { recursive: true });
 	writeFileSync(join(pagesDirectory, 'ReactExample.tsx'), pageExample);
 
 	mkdirSync(join(componentsDirectory, 'utils'), { recursive: true });
@@ -37,13 +37,13 @@ export const scaffoldReact = ({
 		recursive: true
 	});
 
-	if (isSingle) {
+	if (isSingleFrontend) {
 		cpSync(reactStylesSrc, stylesDirectory, {
 			recursive: true
 		});
 	} else {
 		const dest = join(stylesDirectory, 'react');
-		mkdirSync(dest);
+		mkdirSync(dest, { recursive: true });
 		cpSync(reactStylesSrc, dest, {
 			recursive: true
 		});

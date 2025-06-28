@@ -1,12 +1,18 @@
-export type FrontendFramework = {
-	name: string;
-	label: string;
-};
+import {
+	availableAuthProviders,
+	availableCodeQualityTools,
+	availableDatabaseEngines,
+	availableDatabaseHosts,
+	availableDirectoryConfigurations,
+	availableFrontends,
+	availableHTMLScriptOptions,
+	availableLanguages,
+	availableORMs
+} from './data';
 
-export type FrontendConfiguration = {
-	name: string;
-	directory: string;
-};
+export type Frontend = (typeof availableFrontends)[number];
+export type FrontendLabels = Record<Frontend, string>;
+export type FrontendDirectories = Partial<Record<Frontend, string>>;
 
 export type ImportEntry = {
 	packageName: string;
@@ -23,32 +29,22 @@ export type AvailableDependency = {
 
 export type PackageManager = 'npm' | 'pnpm' | 'yarn' | 'bun';
 
-export type AuthProvier = 'absoluteAuth' | undefined;
+export type AuthProvier = (typeof availableAuthProviders)[number] | undefined;
+
 export type DatabaseEngine =
-	| 'postgresql'
-	| 'mysql'
-	| 'sqlite'
-	| 'mongodb'
-	| 'redis'
-	| 'singlestore'
-	| 'cockroachdb'
-	| 'mssql'
-	| undefined;
-export type DatabaseHost =
-	| 'neon'
-	| 'planetscale'
-	| 'supabase'
-	| 'turso'
-	| 'vercel'
-	| 'upstash'
-	| 'atlas'
+	| (typeof availableDatabaseEngines)[number]
 	| undefined;
 
-export type HTMLScriptOption = 'ts' | 'js' | 'ts+ssr' | 'js+ssr' | undefined;
-export type ConfigType = 'default' | 'custom';
-export type ORM = 'drizzle' | 'prisma' | undefined;
-export type CodeQualityTool = 'eslint+prettier' | 'biome';
-export type Language = 'ts' | 'js';
+export type DatabaseHost = (typeof availableDatabaseHosts)[number] | undefined;
+
+export type HTMLScriptOption =
+	| (typeof availableHTMLScriptOptions)[number]
+	| undefined;
+export type DirectoryConfiguration =
+	(typeof availableDirectoryConfigurations)[number];
+export type ORM = (typeof availableORMs)[number] | undefined;
+export type CodeQualityTool = (typeof availableCodeQualityTools)[number];
+export type Language = (typeof availableLanguages)[number];
 export type TailwindConfig =
 	| {
 			input: string;
@@ -56,14 +52,14 @@ export type TailwindConfig =
 	  }
 	| undefined;
 
-export type PromptResponse = {
+export type CreateConfiguration = {
 	assetsDirectory: string;
 	authProvider: AuthProvier;
 	buildDirectory: string;
-	configType: ConfigType;
+	directoryConfig: DirectoryConfiguration;
 	databaseEngine: DatabaseEngine;
-	frontendConfigurations: FrontendConfiguration[];
-	frontends: string[];
+	frontendDirectories: FrontendDirectories;
+	frontends: Frontend[];
 	htmlScriptOption: HTMLScriptOption;
 	initializeGitNow: boolean;
 	installDependenciesNow: boolean;
@@ -76,6 +72,10 @@ export type PromptResponse = {
 	useTailwind: boolean;
 	databaseDirectory: string | undefined;
 	databaseHost: DatabaseHost;
+};
+
+export type ArgumentConfiguration = {
+	[K in keyof CreateConfiguration]: CreateConfiguration[K] | undefined;
 };
 
 export type PackageJson = {

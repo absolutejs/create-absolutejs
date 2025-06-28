@@ -38,12 +38,23 @@ export default defineConfig([
 
 	{
 		files: ['**/*.{ts,tsx}'],
+		languageOptions: {
+			globals: globals.browser,
+			parser: tsParser,
+			parserOptions: {
+				createDefaultProgram: true,
+				project: './tsconfig.json',
+				tsconfigRootDir: __dirname
+			}
+		},
 		plugins: { '@stylistic/ts': stylisticTs },
 		rules: {
 			'@stylistic/ts/padding-line-between-statements': [
 				'error',
 				{ blankLine: 'always', next: 'return', prev: '*' }
-			]
+			],
+
+			'@typescript-eslint/no-unnecessary-type-assertion': 'error'
 		}
 	},
 
@@ -66,7 +77,6 @@ export default defineConfig([
 				{ allowedVars: ['_', 'id', 'db', 'OK'], minLength: 3 }
 			],
 			'absolute/no-explicit-return-type': 'error',
-			'absolute/no-type-cast': 'error',
 			'absolute/no-useless-function': 'error',
 			'absolute/sort-exports': [
 				'error',

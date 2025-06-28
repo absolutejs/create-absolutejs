@@ -3,14 +3,14 @@ import { blueBright, yellow } from 'picocolors';
 import { abort } from '../utils/abort';
 
 export const getConfigurationType = async () => {
-	const configType = await select({
+	const directoryConfig = await select({
 		message: 'Choose folder naming configuration:',
 		options: [
 			{ label: blueBright('Default'), value: 'default' },
 			{ label: yellow('Custom'), value: 'custom' }
 		]
 	});
-	if (isCancel(configType)) abort();
+	if (isCancel(directoryConfig)) abort();
 
-	return configType;
+	return directoryConfig;
 };

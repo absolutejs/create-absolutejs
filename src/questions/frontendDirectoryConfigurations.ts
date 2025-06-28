@@ -1,42 +1,58 @@
 import { text, isCancel } from '@clack/prompts';
-import { availableFrontends } from '../data';
-import type { FrontendConfiguration } from '../types';
+import { frontendLabels } from '../data';
+import type {
+	DirectoryConfiguration,
+	Frontend,
+	FrontendDirectories
+} from '../types';
 import { abort } from '../utils/abort';
 
-export const getFrontendDirectoryConfigurations = async (
-	configType: 'custom' | 'default',
-	frontends: string[]
+const getDirectoryForFrontend = async (
+	directoryConfiguration: DirectoryConfiguration,
+	frontend: Frontend,
+	isSingleFrontend: boolean
 ) => {
-	let frontendConfigurations: FrontendConfiguration[];
-	const single = frontends.length === 1;
+	if (directoryConfiguration !== 'custom')
+		return isSingleFrontend ? '' : frontend;
 
-	if (configType === 'custom') {
-		frontendConfigurations = await frontends.reduce<
-			Promise<FrontendConfiguration[]>
-		>(async (prevP, frontend) => {
-			const prev = await prevP;
-			const pretty = availableFrontends[frontend]?.name ?? frontend;
-			const base = single ? '' : `${frontend}`;
-			const defDir = base;
+	const response = await text({
+		message: `${frontendLabels[frontend]} directory:`,
+		placeholder: isSingleFrontend ? '' : frontend
+	});
+	if (isCancel(response)) abort();
 
-			const frontendDirectory = await text({
-				message: `${pretty} directory:`,
-				placeholder: defDir
-			});
-			if (isCancel(frontendDirectory)) abort();
+	return response;
+};
 
-			return [
-				...prev,
-				{ directory: frontendDirectory, frontend, name: frontend }
-			];
-		}, Promise.resolve([]));
-	} else {
-		frontendConfigurations = frontends.map((frontend) => ({
-			directory: single ? '' : frontend,
-			frontend,
-			name: frontend
-		}));
+export const getFrontendDirectoryConfigurations = async (
+	directoryConfiguration: DirectoryConfiguration,
+	frontends: Frontend[],
+	passedFrontendDirectories: Partial<Record<Frontend, string>> | undefined
+) => {
+	const isSingleFrontend = frontends.length === 1;
+	const frontendDirectories: FrontendDirectories = {};
+	const frontendsToPrompt: Frontend[] = [];
+
+	for (const frontend of frontends) {
+		const prefilled = passedFrontendDirectories?.[frontend];
+		if (prefilled === undefined) frontendsToPrompt.push(frontend);
+		else frontendDirectories[frontend] = prefilled;
 	}
 
-	return frontendConfigurations;
+	const promptedDirectories = await Promise.all(
+		frontendsToPrompt.map((name) =>
+			getDirectoryForFrontend(
+				directoryConfiguration,
+				name,
+				isSingleFrontend
+			)
+		)
+	);
+
+	frontendsToPrompt.forEach(
+		(name, index) =>
+			(frontendDirectories[name] = promptedDirectories[index])
+	);
+
+	return frontendDirectories;
 };

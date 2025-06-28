@@ -14,78 +14,99 @@ import { getORM } from './questions/orm';
 import { getPlugins } from './questions/plugins';
 import { getProjectName } from './questions/projectName';
 import { getUseTailwind } from './questions/useTailwind';
-import type { PromptResponse } from './types';
+import type { ArgumentConfiguration, CreateConfiguration } from './types';
 
-export const prompt = async () => {
+export const prompt = async (argumentConfiguration: ArgumentConfiguration) => {
 	// 1. Project name
-	const projectName = await getProjectName();
+	const projectName =
+		argumentConfiguration.projectName ?? (await getProjectName());
 
 	// 2. Language
-	const language = await getLanguage();
+	const language = argumentConfiguration.language ?? (await getLanguage());
 
 	// 3. Linting/formatting tool
-	const codeQualityTool = await getCodeQualityTool();
+	const codeQualityTool =
+		argumentConfiguration.codeQualityTool ?? (await getCodeQualityTool());
 
 	// 4. Tailwind support?
-	const useTailwind = await getUseTailwind();
+	const useTailwind =
+		argumentConfiguration.useTailwind ?? (await getUseTailwind());
 
 	// 5. Frontend(s)
-	const frontends = await getFrontends();
+	const frontends = argumentConfiguration.frontends ?? (await getFrontends());
 
 	// 6. HTML scripting option (if HTML was selected)
 	const htmlScriptOption = frontends.includes('html')
-		? await getHtmlScriptingOption(language)
+		? (argumentConfiguration.htmlScriptOption ??
+			(await getHtmlScriptingOption(language)))
 		: undefined;
 
 	// 7. Database engine
-	const databaseEngine = await getDatabaseEngine();
+	const databaseEngine =
+		argumentConfiguration.databaseEngine ?? (await getDatabaseEngine());
 
 	// 8. Database host
-	const databaseHost = await getDatabaseHost(databaseEngine);
+	const databaseHost =
+		argumentConfiguration.databaseHost ??
+		(await getDatabaseHost(databaseEngine));
 
 	// 9. ORM choice
-	const orm = databaseEngine !== undefined ? await getORM() : undefined;
+	const orm =
+		databaseEngine !== undefined && databaseEngine !== 'none'
+			? (argumentConfiguration.orm ?? (await getORM()))
+			: undefined;
 
 	// 10. Configuration type
-	const configType = await getConfigurationType();
+	let directoryConfig =
+		argumentConfiguration.directoryConfig ?? (await getConfigurationType());
 
 	// 11. Directory configurations
 	const { buildDirectory, assetsDirectory, tailwind, databaseDirectory } =
 		await getDirectoryConfiguration({
-			configType,
+			argumentConfiguration,
 			databaseEngine,
+			directoryConfig,
 			useTailwind
 		});
 
+	// If the user specified a custom directory configuration, we need to update the configuration type
+	if (argumentConfiguration.frontendDirectories !== undefined)
+		directoryConfig = 'custom';
+
 	// 12. Framework-specific directories
-	const frontendConfigurations = await getFrontendDirectoryConfigurations(
-		configType,
-		frontends
+	const frontendDirectories = await getFrontendDirectoryConfigurations(
+		directoryConfig,
+		frontends,
+		argumentConfiguration.frontendDirectories
 	);
 
 	// 13. Auth provider
-	const authProvider = await getAuthProvider();
+	const authProvider =
+		argumentConfiguration.authProvider ?? (await getAuthProvider());
 
 	// 14. Additional plugins
-	const plugins = await getPlugins();
+	const plugins = argumentConfiguration.plugins ?? (await getPlugins());
 
 	// 15. Initialize Git repository
-	const initializeGitNow = await getInitializeGit();
+	const initializeGitNow =
+		argumentConfiguration.initializeGitNow ?? (await getInitializeGit());
 
 	// 16. Install dependencies
-	const installDependenciesNow = await getInstallDependencies();
+	const installDependenciesNow =
+		argumentConfiguration.installDependenciesNow ??
+		(await getInstallDependencies());
 
-	const values: PromptResponse = {
+	const values: CreateConfiguration = {
 		assetsDirectory,
 		authProvider,
 		buildDirectory,
 		codeQualityTool,
-		configType,
 		databaseDirectory,
 		databaseEngine,
 		databaseHost,
-		frontendConfigurations,
-		frontends, // @ts-expect-error //TODO: The script comes back as a string and needs to be verified as a specific string beforehand in the function
+		directoryConfig,
+		frontendDirectories,
+		frontends,
 		htmlScriptOption,
 		initializeGitNow,
 		installDependenciesNow,
