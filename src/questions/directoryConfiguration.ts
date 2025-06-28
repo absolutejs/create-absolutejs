@@ -17,13 +17,20 @@ export const getDirectoryConfiguration = async ({
 }: GetDirectoryConfigurationProps) => {
 	if (directoryConfig === 'default') {
 		return {
-			assetsDirectory: 'src/backend/assets',
-			buildDirectory: 'build',
-			databaseDirectory: databaseEngine && 'db',
+			assetsDirectory:
+				argumentConfiguration.assetsDirectory ?? 'src/backend/assets',
+			buildDirectory: argumentConfiguration.buildDirectory ?? 'build',
+			databaseDirectory: databaseEngine
+				? (argumentConfiguration.databaseDirectory ?? 'db')
+				: undefined,
 			tailwind: useTailwind
 				? {
-						input: './src/frontend/styles/tailwind.css',
-						output: '/assets/css/tailwind.generated.css'
+						input:
+							argumentConfiguration.tailwind?.input ??
+							'./src/frontend/styles/tailwind.css',
+						output:
+							argumentConfiguration.tailwind?.output ??
+							'/assets/css/tailwind.generated.css'
 					}
 				: undefined
 		};

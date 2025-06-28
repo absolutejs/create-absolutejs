@@ -169,6 +169,26 @@ export const parseCommandLineOptions = () => {
 		exit(1);
 	}
 
+	if (databaseEngine === 'none' && databaseHost !== 'none') {
+		console.warn(
+			'Warning: Setting the database host without a database engine has no effect.'
+		);
+	}
+
+	if (databaseEngine === 'none' && orm !== 'none') {
+		console.warn(
+			'Warning: Setting an ORM without a database engine has no effect.'
+		);
+	}
+
+	let databaseDirectory = values.database;
+	if (databaseEngine === 'none' && databaseDirectory !== undefined) {
+		console.warn(
+			'Warning: Setting a database directory without a database engine has no effect.'
+		);
+		databaseDirectory = undefined;
+	}
+
 	const frontendsWithDirectory = availableFrontends.filter(
 		(f) => values[f] !== undefined
 	);
@@ -193,12 +213,33 @@ export const parseCommandLineOptions = () => {
 	const plugins =
 		values.plugin && values.plugin[0] === 'none' ? [] : values.plugin;
 
+	const hasTailwindFiles =
+		values['tailwind-input'] !== undefined ||
+		values['tailwind-output'] !== undefined;
+
+	let tailwind = hasTailwindFiles
+		? {
+				input: values['tailwind-input'],
+				output: values['tailwind-output']
+			}
+		: undefined;
+
+	const useTailwind =
+		values.tailwind ?? (hasTailwindFiles ? true : undefined);
+
+	if (useTailwind === false && hasTailwindFiles) {
+		console.warn(
+			'Warning: Tailwind CSS input/output files are specified but Tailwind is disabled.'
+		);
+		tailwind = undefined;
+	}
+
 	const argumentConfiguration: ArgumentConfiguration = {
 		assetsDirectory: values.assets,
 		authProvider,
 		buildDirectory: values.build,
 		codeQualityTool,
-		databaseDirectory: values.database,
+		databaseDirectory,
 		databaseEngine,
 		databaseHost,
 		directoryConfig,
@@ -211,17 +252,8 @@ export const parseCommandLineOptions = () => {
 		orm,
 		plugins,
 		projectName: positionals[0],
-		tailwind:
-			values['tailwind-input'] && values['tailwind-output']
-				? {
-						input: values['tailwind-input'],
-						output: values['tailwind-output']
-					}
-				: undefined,
-		useTailwind:
-			values.tailwind ??
-			(values['tailwind-input'] !== undefined &&
-				values['tailwind-output'] !== undefined)
+		tailwind,
+		useTailwind
 	};
 
 	return {

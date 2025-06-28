@@ -74,8 +74,14 @@ export type CreateConfiguration = {
 	databaseHost: DatabaseHost;
 };
 
+type DeepUndefined<T> = T extends object
+	? { [P in keyof T]: DeepUndefined<T[P]> | undefined }
+	: T | undefined;
+
 export type ArgumentConfiguration = {
-	[K in keyof CreateConfiguration]: CreateConfiguration[K] | undefined;
+	[K in keyof CreateConfiguration]:
+		| DeepUndefined<CreateConfiguration[K]>
+		| undefined;
 };
 
 export type PackageJson = {

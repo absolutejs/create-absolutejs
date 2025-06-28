@@ -33,7 +33,10 @@ export const prompt = async (argumentConfiguration: ArgumentConfiguration) => {
 		argumentConfiguration.useTailwind ?? (await getUseTailwind());
 
 	// 5. Frontend(s)
-	const frontends = argumentConfiguration.frontends ?? (await getFrontends());
+	const frontends =
+		argumentConfiguration.frontends?.filter(
+			(frontend) => frontend !== undefined
+		) ?? (await getFrontends());
 
 	// 6. HTML scripting option (if HTML was selected)
 	const htmlScriptOption =
@@ -87,7 +90,10 @@ export const prompt = async (argumentConfiguration: ArgumentConfiguration) => {
 		argumentConfiguration.authProvider ?? (await getAuthProvider());
 
 	// 14. Additional plugins
-	const plugins = argumentConfiguration.plugins ?? (await getPlugins());
+	const plugins =
+		argumentConfiguration.plugins?.filter(
+			(plugin) => plugin !== undefined
+		) ?? (await getPlugins());
 
 	// 15. Initialize Git repository
 	const initializeGitNow =

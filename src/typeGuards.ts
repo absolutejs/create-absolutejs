@@ -66,5 +66,5 @@ export const isHTMLScriptOption = (
 	value === 'none' ||
 	value === undefined;
 
-export const isFrontend = (value: string): value is Frontend =>
-	Object.keys(frontendLabels).includes(value);
+export const isFrontend = (value: string | undefined): value is Frontend =>
+	value !== undefined && Object.keys(frontendLabels).includes(value);
