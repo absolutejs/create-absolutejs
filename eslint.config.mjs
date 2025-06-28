@@ -59,7 +59,7 @@ export default defineConfig([
 	},
 
 	{
-		files: ['**/*.{js,mjs,cjs,ts,tsx,jsx}'],
+		files: ['**/*.{js,mjs,cjs,ts,tsx,jsx,json}'],
 		ignores: ['example/build/**'],
 		plugins: {
 			absolute: absolutePlugin,
@@ -189,9 +189,28 @@ export default defineConfig([
 		}
 	},
 	{
-		files: ['src/index.ts'],
+		files: [
+			'src/index.ts',
+			'tsconfig.json',
+			'src/templates/configurations/tsconfig.example.json',
+			'src/templates/configurations/.prettierrc.json',
+			'package.json',
+			'.prettierrc.json'
+		],
 		rules: {
 			'import/no-unused-modules': 'off'
+		}
+	},
+	{
+		files: [
+			'tsconfig.json',
+			'src/templates/configurations/tsconfig.example.json',
+			'src/templates/configurations/.prettierrc.json',
+			'package.json',
+			'.prettierrc.json'
+		],
+		rules: {
+			'@typescript-eslint/no-unused-expressions': 'off'
 		}
 	},
 	{
