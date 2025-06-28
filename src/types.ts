@@ -29,7 +29,7 @@ export type AvailableDependency = {
 
 export type PackageManager = 'npm' | 'pnpm' | 'yarn' | 'bun';
 
-export type AuthProvier = (typeof availableAuthProviders)[number] | undefined;
+export type AuthProvider = (typeof availableAuthProviders)[number] | undefined;
 
 export type DatabaseEngine =
 	| (typeof availableDatabaseEngines)[number]
@@ -54,7 +54,7 @@ export type TailwindConfig =
 
 export type CreateConfiguration = {
 	assetsDirectory: string;
-	authProvider: AuthProvier;
+	authProvider: AuthProvider;
 	buildDirectory: string;
 	directoryConfig: DirectoryConfiguration;
 	databaseEngine: DatabaseEngine;

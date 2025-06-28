@@ -23,7 +23,15 @@ import {
 	isLanguage,
 	isORM
 } from '../typeGuards';
-import type { ArgumentConfiguration, FrontendDirectories } from '../types';
+import type {
+	ArgumentConfiguration,
+	AuthProvider,
+	DatabaseEngine,
+	DatabaseHost,
+	FrontendDirectories,
+	HTMLScriptOption,
+	ORM
+} from '../types';
 
 export const parseCommandLineOptions = () => {
 	const { values, positionals } = parseArgs({
@@ -53,6 +61,7 @@ export const parseCommandLineOptions = () => {
 			quality: { type: 'string' },
 			react: { type: 'string' },
 			script: { type: 'string' },
+			skip: { type: 'boolean' },
 			svelte: { type: 'string' },
 			tailwind: { type: 'boolean' },
 			'tailwind-input': { type: 'string' },
@@ -63,34 +72,49 @@ export const parseCommandLineOptions = () => {
 
 	const errors: string[] = [];
 
-	const authProvider = isAuthProvider(values.auth) ? values.auth : undefined;
-	if (values.auth !== undefined && authProvider === undefined) {
+	let authProvider: AuthProvider;
+	if (values.auth !== undefined && !isAuthProvider(values.auth)) {
 		errors.push(
 			`Invalid auth provider: "${values.auth}". Expected: [ ${availableAuthProviders.join(', ')} ]`
 		);
+	} else if (values.auth !== undefined) {
+		authProvider = values.auth;
+	} else if (values.skip) {
+		authProvider = 'none';
 	}
 
-	const databaseEngine = isDatabaseEngine(values.engine)
-		? values.engine
-		: undefined;
-	if (values.engine !== undefined && databaseEngine === undefined) {
+	let databaseEngine: DatabaseEngine;
+	if (values.engine !== undefined && !isDatabaseEngine(values.engine)) {
 		errors.push(
 			`Invalid database engine: "${values.engine}". Expected: [ ${availableDatabaseEngines.join(', ')} ]`
 		);
+	} else if (values.engine !== undefined) {
+		databaseEngine = values.engine;
+	} else if (values.skip) {
+		databaseEngine = 'none';
 	}
 
-	const databaseHost = isDatabaseHost(values.host) ? values.host : undefined;
-	if (values.host !== undefined && databaseHost === undefined) {
+	let databaseHost: DatabaseHost;
+	if (values.host !== undefined && !isDatabaseHost(values.host)) {
 		errors.push(
 			`Invalid database host: "${values.host}". Expected: [ ${availableDatabaseHosts.join(', ')} ]`
 		);
+	} else if (values.host !== undefined) {
+		databaseHost = values.host;
+	} else if (values.skip) {
+		databaseHost = 'none';
 	}
 
-	const orm = isORM(values.orm) ? values.orm : undefined;
-	if (values.orm !== undefined && orm === undefined) {
+	const { orm: ormValue } = values;
+	let orm: ORM;
+	if (ormValue !== undefined && !isORM(ormValue)) {
 		errors.push(
 			`Invalid ORM: "${values.orm}". Expected: [ ${availableORMs.join(', ')} ]`
 		);
+	} else if (ormValue !== undefined) {
+		orm = ormValue;
+	} else if (values.skip) {
+		orm = 'none';
 	}
 
 	const codeQualityTool = isCodeQualityTool(values.quality)
@@ -102,13 +126,15 @@ export const parseCommandLineOptions = () => {
 		);
 	}
 
-	const htmlScriptOption = isHTMLScriptOption(values.script)
-		? values.script
-		: undefined;
-	if (values.script !== undefined && htmlScriptOption === undefined) {
+	let htmlScriptOption: HTMLScriptOption;
+	if (values.script !== undefined && !isHTMLScriptOption(values.script)) {
 		errors.push(
 			`Invalid HTML script option: "${values.script}". Expected: [ ${availableHTMLScriptOptions.join(', ')} ]`
 		);
+	} else if (values.script !== undefined) {
+		htmlScriptOption = values.script;
+	} else if (values.skip) {
+		htmlScriptOption = 'none';
 	}
 
 	const language =
@@ -131,13 +157,12 @@ export const parseCommandLineOptions = () => {
 		);
 	}
 
-	const invalidFrontends =
-		values.frontend?.filter((f) => !isFrontend(f)) ?? [];
-	invalidFrontends.forEach((f) => {
+	for (const f of values.frontend || []) {
+		if (isFrontend(f)) continue;
 		errors.push(
 			`Invalid frontend: "${f}". Expected: [ ${availableFrontends.join(', ')} ]`
 		);
-	});
+	}
 
 	if (errors.length > 0) {
 		console.error(errors.join('\n'));
@@ -162,6 +187,9 @@ export const parseCommandLineOptions = () => {
 
 	values.frontend = collector.size > 0 ? Array.from(collector) : undefined;
 
+	if (values.plugin === undefined && values.skip) {
+		values.plugin = ['none'];
+	}
 	const plugins =
 		values.plugin && values.plugin[0] === 'none' ? [] : values.plugin;
 

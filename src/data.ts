@@ -15,7 +15,8 @@ export const availableHTMLScriptOptions = [
 	'js',
 	'js+ssr',
 	'ts',
-	'ts+ssr'
+	'ts+ssr',
+	'none'
 ] as const;
 export const availableDatabaseEngines = [
 	'postgresql',
@@ -111,7 +112,7 @@ export const defaultPlugins: AvailableDependency[] = [
 			{ isPlugin: false, packageName: 'build' },
 			{ isPlugin: true, packageName: 'networkingPlugin' }
 		],
-		latestVersion: '0.6.0',
+		latestVersion: '0.8.8',
 		value: '@absolutejs/absolute'
 	},
 	{

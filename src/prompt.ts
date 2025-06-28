@@ -36,10 +36,12 @@ export const prompt = async (argumentConfiguration: ArgumentConfiguration) => {
 	const frontends = argumentConfiguration.frontends ?? (await getFrontends());
 
 	// 6. HTML scripting option (if HTML was selected)
-	const htmlScriptOption = frontends.includes('html')
-		? (argumentConfiguration.htmlScriptOption ??
-			(await getHtmlScriptingOption(language)))
-		: undefined;
+	const htmlScriptOption =
+		!frontends.includes('html') ||
+		argumentConfiguration.htmlScriptOption === 'none'
+			? undefined
+			: (argumentConfiguration.htmlScriptOption ??
+				(await getHtmlScriptingOption(language)));
 
 	// 7. Database engine
 	const databaseEngine =
@@ -69,16 +71,16 @@ export const prompt = async (argumentConfiguration: ArgumentConfiguration) => {
 			useTailwind
 		});
 
-	// If the user specified a custom directory configuration, we need to update the configuration type
-	if (argumentConfiguration.frontendDirectories !== undefined)
-		directoryConfig = 'custom';
-
 	// 12. Framework-specific directories
 	const frontendDirectories = await getFrontendDirectoryConfigurations(
 		directoryConfig,
 		frontends,
 		argumentConfiguration.frontendDirectories
 	);
+
+	// If the user specified a custom directory configuration, we need to update the configuration type
+	if (argumentConfiguration.frontendDirectories !== undefined)
+		directoryConfig = 'custom';
 
 	// 13. Auth provider
 	const authProvider =

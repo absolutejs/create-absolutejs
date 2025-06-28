@@ -1,6 +1,6 @@
 import { frontendLabels } from './data';
 import type {
-	AuthProvier,
+	AuthProvider,
 	CodeQualityTool,
 	DatabaseEngine,
 	DatabaseHost,
@@ -15,7 +15,7 @@ export const isLanguage = (value: string): value is Language =>
 
 export const isAuthProvider = (
 	value: string | undefined
-): value is AuthProvier =>
+): value is AuthProvider =>
 	value === 'absoluteAuth' || value === 'none' || value === undefined;
 
 export const isDirectoryConfig = (
@@ -63,6 +63,7 @@ export const isHTMLScriptOption = (
 	value === 'js' ||
 	value === 'ts+ssr' ||
 	value === 'js+ssr' ||
+	value === 'none' ||
 	value === undefined;
 
 export const isFrontend = (value: string): value is Frontend =>

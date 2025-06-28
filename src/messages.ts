@@ -15,24 +15,25 @@ Options:
 
   ${cyan('--angular')} ${dim(cyan('<dir>'))}                 Directory name for an Angular frontend
   ${cyan('--assets')} ${dim(cyan('<dir>'))}                  Directory name for your static assets
-  ${cyan('--auth')} ${dim(cyan('<plugin>'))}                 Preconfigured auth plugin (currently only "absolute-auth")
+  ${cyan('--auth')} ${dim(cyan('<plugin>'))}                 Preconfigured auth plugin (currently only "absolute-auth") or 'none' to skip auth setup
   ${cyan('--build')} ${dim(cyan('<dir>'))}                   Output directory for build artifacts
   ${cyan('--database')} ${dim(cyan('<dir>'))}                Directory name for your database files
   ${cyan('--directory')} ${dim(cyan('<mode>'))}              Directory-naming strategy: "default" or "custom"
-  ${cyan('--engine')} ${dim(cyan('<engine>'))}               Database engine (postgresql | mysql | sqlite | mongodb | redis | singlestore | cockroachdb | mssql)
+  ${cyan('--engine')} ${dim(cyan('<engine>'))}               Database engine (postgresql | mysql | sqlite | mongodb | redis | singlestore | cockroachdb | mssql) or 'none' to skip database setup
   ${cyan('--frontend')} ${dim(cyan('<name>'))}               Frontend framework(s) to include: one or more of "react", "svelte", "html", "htmx", "vue", "angular"
   ${cyan('--git')}                           Initialize a Git repository
-  ${cyan('--host')} ${dim(cyan('<host>'))}                   Database host provider (neon | planetscale | supabase | turso | vercel | upstash | atlas)
+  ${cyan('--host')} ${dim(cyan('<host>'))}                   Database host provider (neon | planetscale | supabase | turso | vercel | upstash | atlas) or 'none' to skip database host setup
   ${cyan('--html')} ${dim(cyan('<dir>'))}                    Directory name for an HTML frontend
   ${cyan('--htmx')} ${dim(cyan('<dir>'))}                    Directory name for an HTMX frontend
   ${cyan('--lang')} ${dim(cyan('<lang>'))}                   Language: "ts" or "js"
   ${cyan('--lts')}                           Use LTS versions of required packages
   ${cyan('--npm')}                           Use the package manager that invoked this command to install dependencies
-  ${cyan('--orm')} ${dim(cyan('<orm>'))}                     ORM to configure: "drizzle" or "prisma"
-  ${cyan('--plugin')} ${dim(cyan('<plugin>'))}               Elysia plugin(s) to include (can be specified multiple times)
+  ${cyan('--orm')} ${dim(cyan('<orm>'))}                     ORM to configure: "drizzle" or "prisma" or 'none' to skip ORM setup
+  ${cyan('--plugin')} ${dim(cyan('<plugin>'))}               Elysia plugin(s) to include (can be specified multiple times), passing 'none' will skip plugin setup and ignore any other plugin options
   ${cyan('--quality')} ${dim(cyan('<tool>'))}                Code quality tool: "eslint+prettier" or "biome"
   ${cyan('--react')} ${dim(cyan('<dir>'))}                   Directory name for a React frontend
   ${cyan('--script')} ${dim(cyan('<option>'))}               HTML scripting option: "ts" | "js" | "ts+ssr" | "js+ssr"
+  ${cyan('--skip')}                          Skips non required prompts and uses 'none' for all optional configurations
   ${cyan('--svelte')} ${dim(cyan('<dir>'))}                  Directory name for a Svelte frontend
   ${cyan('--tailwind')}                      Include Tailwind CSS setup
   ${cyan('--tailwind-input')} ${dim(cyan('<file>'))}         Path to your Tailwind CSS entry file
@@ -53,9 +54,8 @@ export const getOutroMessage = ({
 }: OutroMessageProps) =>
 	`${green('Created successfully')}, you can now run:\n\n` +
 	`${cyan('cd')} ${projectName}\n` +
-	`${cyan(`${packageManager} dev`)}${
-		installDependenciesNow ? '' : `\n${cyan(`${packageManager} install`)}`
-	}`;
+	`${installDependenciesNow ? '' : `${cyan(`${packageManager} install`)}\n`}` +
+	`${cyan(`${packageManager} dev`)}`; // TODO: Some package managers need run
 
 type DebugMessageProps = {
 	response: CreateConfiguration;
@@ -89,6 +89,7 @@ export const getDebugMessage = ({
 	const htmlLabels: Record<Exclude<HTMLScriptOption, undefined>, string> = {
 		js: yellow('JavaScript'),
 		'js+ssr': yellow('JavaScript + SSR'),
+		none: dim('None'),
 		ts: blueBright('TypeScript'),
 		'ts+ssr': blueBright('TypeScript + SSR')
 	};
