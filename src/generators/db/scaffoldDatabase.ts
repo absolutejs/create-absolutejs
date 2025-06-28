@@ -2,7 +2,7 @@ import { mkdirSync } from 'fs';
 import { join } from 'path';
 import { dim, yellow } from 'picocolors';
 import type { DatabaseEngine, ORM } from '../../types';
-import { createDrizzleConfig } from '../configurations/createDrizzleConfig';
+import { createDrizzleConfig } from '../configurations/generateDrizzleConfig';
 
 type ScaffoldDatabaseProps = {
 	projectName: string;

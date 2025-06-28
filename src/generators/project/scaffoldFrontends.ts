@@ -6,7 +6,7 @@ import { scaffoldReact } from '../react/scaffoldReact';
 
 type ScaffoldFrontendsProps = Pick<
 	CreateConfiguration,
-	'frontendDirectories' | 'htmlScriptOption' | 'language' | 'tailwind'
+	'frontendDirectories' | 'htmlScriptOption' | 'tailwind'
 > & {
 	frontendDirectory: string;
 	templatesDirectory: string;
@@ -14,7 +14,6 @@ type ScaffoldFrontendsProps = Pick<
 
 export const scaffoldFrontends = ({
 	frontendDirectory,
-	language,
 	templatesDirectory,
 	frontendDirectories,
 	tailwind,
@@ -61,9 +60,7 @@ export const scaffoldFrontends = ({
 			scaffoldHTML({
 				htmlScriptOption,
 				isSingleFrontend,
-				language,
-				targetDirectory,
-				templatesDirectory
+				targetDirectory
 			});
 		}
 	});

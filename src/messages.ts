@@ -32,7 +32,7 @@ Options:
   ${cyan('--plugin')} ${dim(cyan('<plugin>'))}               Elysia plugin(s) to include (can be specified multiple times), passing 'none' will skip plugin setup and ignore any other plugin options
   ${cyan('--quality')} ${dim(cyan('<tool>'))}                Code quality tool: "eslint+prettier" or "biome"
   ${cyan('--react')} ${dim(cyan('<dir>'))}                   Directory name for a React frontend
-  ${cyan('--script')} ${dim(cyan('<option>'))}               HTML scripting option: "ts" | "js" | "ts+ssr" | "js+ssr"
+  ${cyan('--script')} ${dim(cyan('<option>'))}               HTML scripting option: "ts" or "js" or 'none' to skip HTML scripting setup 
   ${cyan('--skip')}                          Skips non required prompts and uses 'none' for all optional configurations
   ${cyan('--svelte')} ${dim(cyan('<dir>'))}                  Directory name for a Svelte frontend
   ${cyan('--tailwind')}                      Include Tailwind CSS setup
@@ -88,10 +88,8 @@ export const getDebugMessage = ({
 }: DebugMessageProps) => {
 	const htmlLabels: Record<Exclude<HTMLScriptOption, undefined>, string> = {
 		js: yellow('JavaScript'),
-		'js+ssr': yellow('JavaScript + SSR'),
 		none: dim('None'),
-		ts: blueBright('TypeScript'),
-		'ts+ssr': blueBright('TypeScript + SSR')
+		ts: blueBright('TypeScript')
 	};
 	const htmlScriptingValue = htmlScriptOption
 		? htmlLabels[htmlScriptOption]

@@ -132,7 +132,7 @@ export const createServerFile = ({
 			const routePath = index === 0 ? '/' : `/${frameworkName}`;
 
 			if (frameworkName === 'html') {
-				return `.get('${routePath}', () => handleHTMLPageRequest(\`${buildDirectory}/${directory}/pages/HtmlExample.html\`))`;
+				return `.get('${routePath}', () => handleHTMLPageRequest(\`${buildDirectory}/${directory}/pages/HTMLExample.html\`))`;
 			}
 
 			if (frameworkName === 'react') {

@@ -1,36 +1,34 @@
-import { cpSync, mkdirSync, writeFileSync } from 'fs';
+import { mkdirSync, writeFileSync } from 'fs';
 import { join } from 'path';
-import type { HTMLScriptOption, Language } from '../../types';
-import { getSSRScript } from './getSSRScript';
+import type { HTMLScriptOption } from '../../types';
+import { generateHTMLPage } from './generateHTMLPage';
+import { getHTMLScript } from './generateHTMLScript';
 
 type ScaffoldHTMLProps = {
-	templatesDirectory: string;
 	isSingleFrontend: boolean;
 	targetDirectory: string;
 	htmlScriptOption: HTMLScriptOption;
-	language: Language;
 };
 
 export const scaffoldHTML = ({
-	templatesDirectory,
 	isSingleFrontend,
 	targetDirectory,
-	htmlScriptOption,
-	language
+	htmlScriptOption
 }: ScaffoldHTMLProps) => {
-	const htmlTemplates = join(templatesDirectory, 'html');
-	cpSync(join(htmlTemplates, 'pages'), join(targetDirectory, 'pages'), {
-		recursive: true
-	});
+	const htmlPage = generateHTMLPage(htmlScriptOption);
+	const htmlPagesDirectory = join(targetDirectory, 'pages');
 
-	const scriptsDir = join(targetDirectory, 'scripts');
-	mkdirSync(scriptsDir, { recursive: true });
-	if (htmlScriptOption?.includes('ssr')) {
-		const ssrScript = getSSRScript(language, isSingleFrontend);
-		const ssrFileName =
-			language === 'ts'
-				? 'typescriptSSRExample.ts'
-				: 'javascriptSSRExample.js';
-		writeFileSync(join(scriptsDir, ssrFileName), ssrScript);
+	mkdirSync(htmlPagesDirectory, { recursive: true });
+	writeFileSync(join(htmlPagesDirectory, 'HTMLExample.html'), htmlPage);
+
+	if (htmlScriptOption !== undefined && htmlScriptOption !== 'none') {
+		const scriptsDir = join(targetDirectory, 'scripts');
+		mkdirSync(scriptsDir, { recursive: true });
+		const script = getHTMLScript(htmlScriptOption, isSingleFrontend);
+		const scriptFileName =
+			htmlScriptOption === 'ts'
+				? 'typescriptExample.ts'
+				: 'javascriptExample.js';
+		writeFileSync(join(scriptsDir, scriptFileName), script);
 	}
 };

@@ -5,10 +5,10 @@ import { formatProject } from './commands/formatProject';
 import { installDependencies } from './commands/installDependencies';
 import { availablePlugins } from './data';
 import { addConfigurationFiles } from './generators/configurations/addConfigurationFiles';
-import { createPackageJson } from './generators/configurations/createPackageJson';
+import { createPackageJson } from './generators/configurations/generatePackageJson';
 import { initalizeRoot } from './generators/configurations/initializeRoot';
 import { scaffoldDatabase } from './generators/db/scaffoldDatabase';
-import { createServerFile } from './generators/project/createServer';
+import { createServerFile } from './generators/project/generateServer';
 import { scaffoldFrontends } from './generators/project/scaffoldFrontends';
 import type { PackageManager, CreateConfiguration } from './types';
 
@@ -99,7 +99,6 @@ export const scaffold = ({
 		frontendDirectories,
 		frontendDirectory,
 		htmlScriptOption,
-		language,
 		tailwind,
 		templatesDirectory
 	});

@@ -11,13 +11,7 @@ export const availableFrontends = [
 ] as const;
 export const availableAuthProviders = ['absoluteAuth', 'none'] as const;
 export const availableLanguages = ['ts', 'js'] as const;
-export const availableHTMLScriptOptions = [
-	'js',
-	'js+ssr',
-	'ts',
-	'ts+ssr',
-	'none'
-] as const;
+export const availableHTMLScriptOptions = ['js', 'ts', 'none'] as const;
 export const availableDatabaseEngines = [
 	'postgresql',
 	'mysql',

@@ -1,20 +1,12 @@
-import { select, isCancel } from '@clack/prompts';
-import { blueBright, yellow } from 'picocolors';
+import { confirm, isCancel } from '@clack/prompts';
 import type { Language } from '../types';
 import { abort } from '../utils/abort';
 
 export const getHtmlScriptingOption = async (language: Language) => {
-	const langLabel =
-		language === 'ts' ? blueBright('TypeScript') : yellow('JavaScript');
-	const htmlScriptOption = await select({
-		message: `Add HTML scripting option (${langLabel}):`,
-		options: [
-			{ label: `${langLabel} + SSR`, value: `${language}+ssr` },
-			{ label: langLabel, value: language },
-			{ label: 'None', value: 'none' }
-		]
+	const useScripts = await confirm({
+		message: 'Would you like to use scripts for your HTML pages?'
 	});
-	if (isCancel(htmlScriptOption)) abort();
+	if (isCancel(useScripts)) abort();
 
-	return htmlScriptOption === 'none' ? undefined : htmlScriptOption;
+	return useScripts ? language : undefined;
 };
