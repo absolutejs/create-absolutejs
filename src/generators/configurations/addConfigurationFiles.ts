@@ -1,11 +1,16 @@
-import { copyFileSync } from 'fs';
+import { copyFileSync, writeFileSync } from 'fs';
 import { join } from 'path';
 import { dim, yellow } from 'picocolors';
 import type { CreateConfiguration } from '../../types';
+import { generatePrettierrc } from './generatePrettierrc';
 
 type AddConfigurationProps = Pick<
 	CreateConfiguration,
-	'tailwind' | 'language' | 'initializeGitNow' | 'codeQualityTool'
+	| 'tailwind'
+	| 'language'
+	| 'initializeGitNow'
+	| 'codeQualityTool'
+	| 'frontends'
 > & {
 	templatesDirectory: string;
 	projectName: string;
@@ -16,6 +21,7 @@ export const addConfigurationFiles = ({
 	templatesDirectory,
 	language,
 	codeQualityTool,
+	frontends,
 	initializeGitNow,
 	projectName
 }: AddConfigurationProps) => {
@@ -48,10 +54,9 @@ export const addConfigurationFiles = ({
 			join(templatesDirectory, 'configurations', '.prettierignore'),
 			join(projectName, '.prettierignore')
 		);
-		copyFileSync(
-			join(templatesDirectory, 'configurations', '.prettierrc.json'),
-			join(projectName, '.prettierrc.json')
-		);
+		const prettierrc = generatePrettierrc(frontends);
+
+		writeFileSync(join(projectName, '.prettierrc.json'), prettierrc);
 	} else
 		console.warn(
 			`${dim('│')}\n${yellow('▲')}  Biome support not implemented yet`

@@ -25,11 +25,12 @@ export const scaffold = ({
 		codeQualityTool,
 		initializeGitNow,
 		databaseEngine,
-		databaseHost,
+		// databaseHost,
 		htmlScriptOption,
 		useTailwind,
 		databaseDirectory,
 		orm,
+		frontends,
 		plugins,
 		authProvider,
 		buildDirectory,
@@ -56,6 +57,7 @@ export const scaffold = ({
 
 	addConfigurationFiles({
 		codeQualityTool,
+		frontends,
 		initializeGitNow,
 		language,
 		projectName,
@@ -99,6 +101,7 @@ export const scaffold = ({
 		frontendDirectories,
 		frontendDirectory,
 		htmlScriptOption,
+		language,
 		tailwind,
 		templatesDirectory
 	});

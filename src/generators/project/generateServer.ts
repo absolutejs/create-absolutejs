@@ -32,9 +32,11 @@ export const createServerFile = ({
 }: CreateServerFileProps) => {
 	const htmlDirectory = frontendDirectories['html'];
 	const reactDirectory = frontendDirectories['react'];
+	const svelteDirectory = frontendDirectories['svelte'];
 
 	const requiresHtml = htmlDirectory !== undefined;
 	const requiresReact = reactDirectory !== undefined;
+	const requiresSvelte = svelteDirectory !== undefined;
 
 	const selectedCustomPlugins = availablePlugins.filter(
 		({ value }) => plugins.indexOf(value) !== UNFOUND_INDEX
@@ -79,7 +81,10 @@ export const createServerFile = ({
 				'handleHTMLPageRequest',
 			requiresReact &&
 				!existingItems.includes('handleReactPageRequest') &&
-				'handleReactPageRequest'
+				'handleReactPageRequest',
+			requiresSvelte &&
+				!existingItems.includes('handleSveltePageRequest') &&
+				'handleSveltePageRequest'
 		].filter((value): value is string => typeof value === 'string');
 
 		importLines[absoluteImportIdx] =
@@ -96,6 +101,16 @@ export const createServerFile = ({
 		);
 	}
 
+	if (requiresSvelte) {
+		const svelteImportSource =
+			svelteDirectory === ''
+				? '../frontend/pages/SvelteExample'
+				: `../frontend/${svelteDirectory}/pages/SvelteExample`;
+		importLines.push(
+			`import SvelteExample from '${svelteImportSource}.svelte';`
+		);
+	}
+
 	const useStatements = uniqueDependencies
 		.flatMap(({ imports }) => imports ?? [])
 		.filter((entry) => entry.isPlugin)
@@ -107,8 +122,8 @@ export const createServerFile = ({
 		});
 
 	const manifestOptions = [
-		`buildDirectory: '${buildDirectory}'`,
 		`assetsDirectory: '${assetsDirectory}'`,
+		`buildDirectory: '${buildDirectory}'`,
 		...Object.entries(frontendDirectories).map(
 			([frameworkName, directory]) =>
 				`${frameworkName}Directory: './src/frontend/${directory}'`
@@ -137,6 +152,10 @@ export const createServerFile = ({
 
 			if (frameworkName === 'react') {
 				return `.get('${routePath}', () => handleReactPageRequest(ReactExample, ReactExampleIndex))`;
+			}
+
+			if (frameworkName === 'svelte') {
+				return `.get('${routePath}', () => handleSveltePageRequest(SvelteExample, manifest))`;
 			}
 
 			return '';
