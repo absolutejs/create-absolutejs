@@ -18,6 +18,17 @@ yarn create absolutejs my-app
 pnpm create absolutejs my-app
 ```
 
+By default, the CLI will interactively prompt you for any missing configuration values. You can also supply flags to skip those prompts:
+
+- To skip **all** optional prompts and use `none` for every optional configuration:
+    ```bash
+    bun create absolutejs my-app --skip
+    ```
+- To skip **one** optional prompt without providing a real value, pass `none` to that flag:
+    ```bash
+    bun create absolutejs my-app --auth none --engine none
+    ```
+
 ## Options
 
 ```text
@@ -46,7 +57,7 @@ Usage: create-absolute [options] [project-name]
 - `--database <name>`  
   Directory name for your database files.
 - `--directory <default|custom>`  
-  Directory-naming strategy: `"default"` or `"custom"`.
+  Directory-naming strategy: `default` or `custom`.
 - `--engine <engine|none>`  
   Database engine (`postgresql` | `mysql` | `sqlite` | `mongodb` | `redis` | `singlestore` | `cockroachdb` | `mssql`) or `none`.
 - `--frontend <framework>`  
@@ -66,7 +77,7 @@ Usage: create-absolute [options] [project-name]
 - `--npm`  
   Use the package manager that invoked this command to install dependencies.
 - `--orm <drizzle|prisma|none>`  
-  ORM to configure: `drizzle` or `prisma` or `none`.
+  ORM to configure: `drizzle`, `prisma`, or `none`.
 - `--plugin <plugin>`  
   Elysia plugin(s) to include (can be specified multiple times), or `none` to skip plugins.
 - `--quality <eslint+prettier|biome>`  
@@ -76,7 +87,7 @@ Usage: create-absolute [options] [project-name]
 - `--script <ts|js|none>`  
   HTML scripting option: `ts`, `js`, or `none`.
 - `--skip`  
-  Skip non-required prompts and use `none` for all optional configurations.
+  Skip **all** non-required prompts and use `none` for every optional configuration.
 - `--svelte <name>`  
   Directory name for a Svelte frontend.
 - `--tailwind`  
@@ -90,10 +101,10 @@ Usage: create-absolute [options] [project-name]
 
 ## Directory Configuration
 
-Choose between the **default** layout (pre-configured folder names) or **custom**, which prompts you to specify each directory name yourself.
+Choose between the **default** layout (pre-configured folder names) or **custom**, which prompts you to specify each directory name yourself:
 
 ```bash
-create-absolute --directory custom
+bun create absolutejs my-app --directory custom
 ```
 
 ## Debug & LTS Flags
