@@ -1,7 +1,5 @@
 # create-absolutejs
 
-# create-absolutejs
-
 A CLI tool to scaffold new AbsoluteJS projects quickly and effortlessly.
 
 ## Usage
