@@ -1,3 +1,4 @@
+#!/usr/bin/env bun
 import { exit } from 'node:process';
 import { outro } from '@clack/prompts';
 import { getDebugMessage, getOutroMessage, helpMessage } from './messages';
