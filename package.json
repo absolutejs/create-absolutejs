@@ -4,12 +4,11 @@
 		"create-absolutejs": "dist/index.js"
 	},
 	"dependencies": {
-		"@clack/prompts": "0.10.1",
+		"@clack/prompts": "0.11.0",
 		"picocolors": "1.1.1"
 	},
 	"description": "A CLI tool to create a new AbsoluteJS project",
 	"devDependencies": {
-		"@absolutejs/auth": "0.8.0",
 		"@stylistic/eslint-plugin-ts": "4.2.0",
 		"@types/bun": "latest",
 		"@types/react": "19.1.4",
@@ -22,7 +21,6 @@
 		"eslint-plugin-promise": "7.2.1",
 		"eslint-plugin-security": "3.0.1",
 		"prettier": "3.5.3",
-		"svelte": "5.34.7",
 		"tailwindcss": "4.1.7",
 		"typescript-eslint": "8.32.0"
 	},
@@ -46,5 +44,5 @@
 		"typecheck": "bun run tsc --noEmit"
 	},
 	"type": "module",
-	"version": "0.2.1"
+	"version": "0.2.2"
 }
