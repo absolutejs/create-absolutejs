@@ -94,7 +94,11 @@ export const scaffold = ({
 	);
 
 	scaffoldFrontends({
-		frontendDirectories, frontendDirectory, projectAssetsDirectory, templatesDirectory, useHTMLScripts
+		frontendDirectories,
+		frontendDirectory,
+		projectAssetsDirectory,
+		templatesDirectory,
+		useHTMLScripts
 	});
 
 	if (installDependenciesNow) {

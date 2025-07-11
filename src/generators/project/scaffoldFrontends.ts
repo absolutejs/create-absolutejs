@@ -2,6 +2,7 @@ import { copyFileSync, cpSync, mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { CreateConfiguration } from '../../types';
 import { scaffoldHTML } from '../html/scaffoldHTML';
+import { generateReactCSS } from '../react/generateReactCSS';
 
 type ScaffoldFrontendsProps = Pick<
 	CreateConfiguration,
@@ -47,6 +48,13 @@ export const scaffoldFrontends = ({
 
 		switch (frontendName) {
 			case 'react':
+				const reactCSS = generateReactCSS(isSingleFrontend);
+				const reactCSSOutputFile = join(
+					targetDirectory,
+					'styles',
+					'react-example.css'
+				);
+				writeFileSync(reactCSSOutputFile, reactCSS, 'utf-8');
 				copyFileSync(
 					join(templatesDirectory, 'assets', 'svg', 'react.svg'),
 					join(projectAssetsDirectory, 'svg', 'react.svg')

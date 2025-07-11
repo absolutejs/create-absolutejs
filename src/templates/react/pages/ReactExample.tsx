@@ -1,4 +1,5 @@
 import { App } from '../components/App';
+import { Dropdown } from '../components/Dropdown';
 import { Head } from '../components/Head';
 
 type ReactExampleProps = { initialCount: number; cssPath: string };
@@ -8,15 +9,8 @@ export const ReactExample = ({ initialCount, cssPath }: ReactExampleProps) => (
 		<Head cssPath={cssPath} />
 		<body>
 			<header>
-				<p>AbsoluteJS</p>
-				<nav>
-					<a href="/">HTML</a>
-					<a href="/react">React</a>
-					<a href="/svelte">Svelte</a>
-					<a href="/vue">Vue</a>
-					<a href="/angular">Angular</a>
-					<a href="/htmx">HTMX</a>
-				</nav>
+				<a href="/">AbsoluteJS</a>
+				<Dropdown />
 			</header>
 			<App initialCount={initialCount} />
 		</body>

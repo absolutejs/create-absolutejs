@@ -153,7 +153,7 @@ export const createServerFile = ({
 
 				switch (frameworkName) {
 					case 'html':
-						handler = `handleHTMLPageRequest(\`${buildDirectory}${directory ? `/${  directory}` : ''}/pages/HTMLExample.html\`)`;
+						handler = `handleHTMLPageRequest(\`${buildDirectory}${directory ? `/${directory}` : ''}/pages/HTMLExample.html\`)`;
 						break;
 
 					case 'react':
