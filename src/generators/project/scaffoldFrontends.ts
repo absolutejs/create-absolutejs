@@ -4,6 +4,7 @@ import type { CreateConfiguration } from '../../types';
 import { scaffoldHTML } from '../html/scaffoldHTML';
 import { generateReactCSS } from '../react/generateReactCSS';
 import { scaffoldReact } from '../react/scaffoldReact';
+import { scaffoldSvelte } from '../svelte/scaffoldSvelte';
 
 type ScaffoldFrontendsProps = Pick<
 	CreateConfiguration,
@@ -57,25 +58,12 @@ export const scaffoldFrontends = ({
 				});
 				break;
 			case 'svelte':
-				copyFileSync(
-					join(
-						templatesDirectory,
-						'assets',
-						'svg',
-						'svelte-logo.svg'
-					),
-					join(projectAssetsDirectory, 'svg', 'svelte-logo.svg')
-				);
-				cpSync(join(templatesDirectory, 'svelte'), targetDirectory, {
-					recursive: true
-				});
-				const cssOutputFile = join(
+				scaffoldSvelte({
+					isSingleFrontend,
 					targetDirectory,
-					'styles',
-					'svelte-example.css'
-				);
-				const svelteCSS = `@import url('${isSingleFrontend ? '../' : '../../'}styles/reset.css');`;
-				writeFileSync(cssOutputFile, svelteCSS, 'utf-8');
+					templatesDirectory,
+					projectAssetsDirectory
+				});
 				break;
 			case 'vue':
 				copyFileSync(
