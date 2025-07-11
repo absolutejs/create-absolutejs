@@ -38,6 +38,8 @@ export const createServerFile = ({
 	const requiresReact = reactDirectory !== undefined;
 	const requiresSvelte = svelteDirectory !== undefined;
 
+	const htmlOnly = requiresHtml && !requiresReact && !requiresSvelte;
+
 	const selectedCustomPlugins = availablePlugins.filter(
 		({ value }) => plugins.indexOf(value) !== UNFOUND_INDEX
 	);
@@ -57,13 +59,19 @@ export const createServerFile = ({
 		).values()
 	).sort((a, b) => a.value.localeCompare(b.value));
 
-	const importLines = uniqueDependencies.flatMap(({ value, imports }) =>
-		imports && imports.length > 0
+	const importLines = uniqueDependencies.flatMap(({ value, imports }) => {
+		const filteredImports =
+			htmlOnly && imports
+				? imports.filter(({ packageName }) => packageName !== 'asset')
+				: imports;
+		return filteredImports && filteredImports.length > 0
 			? [
-					`import { ${imports.map(({ packageName }) => packageName).join(', ')} } from '${value}';`
+					`import { ${filteredImports
+						.map(({ packageName }) => packageName)
+						.join(', ')} } from '${value}';`
 				]
-			: []
-	);
+			: [];
+	});
 
 	const absoluteImportIdx = importLines.findIndex((line) =>
 		line.includes("from '@absolutejs/absolute'")
@@ -87,8 +95,10 @@ export const createServerFile = ({
 				'handleSveltePageRequest'
 		].filter((value): value is string => typeof value === 'string');
 
-		importLines[absoluteImportIdx] =
-			`import { ${[...existingItems, ...additionalItems].join(', ')} } from '@absolutejs/absolute';`;
+		importLines[absoluteImportIdx] = `import { ${[
+			...existingItems,
+			...additionalItems
+		].join(', ')} } from '@absolutejs/absolute';`;
 	}
 
 	if (reactDirectory !== undefined) {
@@ -117,7 +127,6 @@ export const createServerFile = ({
 		.map((entry) => {
 			if (entry.config === undefined) return `.use(${entry.packageName})`;
 			if (entry.config === null) return `.use(${entry.packageName}())`;
-
 			return `.use(${entry.packageName}(${JSON.stringify(entry.config)}))`;
 		});
 
@@ -131,39 +140,63 @@ export const createServerFile = ({
 		tailwind ? `tailwind: ${JSON.stringify(tailwind)}` : ''
 	].filter(Boolean);
 
-	const manifestDeclaration = `const manifest = await build({\n  ${manifestOptions.join(',\n  ')}\n});`;
-
-	const guardStatements = [
-		`if (manifest === null) throw new Error('Manifest was not generated');`,
-		requiresReact
-			? `const { ReactExampleIndex } = manifest;\nif (ReactExampleIndex === undefined) throw new Error('ReactExampleIndex was not generated');`
-			: ''
-	]
-		.filter(Boolean)
-		.join('\n');
+	const manifestDeclaration = `${htmlOnly ? '' : 'const manifest = '}await build({
+  ${manifestOptions.join(',\n  ')}
+});`;
 
 	const routes = Object.entries(frontendDirectories)
-		.map(([frameworkName, directory], index) => {
-			const routePath = index === 0 ? '/' : `/${frameworkName}`;
+		.reduce<string[]>(
+			(routesAccumulator, [frameworkName, directory], index) => {
+				let handler = '';
 
-			if (frameworkName === 'html') {
-				return `.get('${routePath}', () => handleHTMLPageRequest(\`${buildDirectory}/${directory}/pages/HTMLExample.html\`))`;
-			}
+				switch (frameworkName) {
+					case 'html':
+						handler = `handleHTMLPageRequest(\`${buildDirectory}${directory ? '/' + directory : ''}/pages/HTMLExample.html\`)`;
+						break;
 
-			if (frameworkName === 'react') {
-				return `.get('${routePath}', () => handleReactPageRequest(ReactExample, ReactExampleIndex))`;
-			}
+					case 'react':
+						handler = `handleReactPageRequest(ReactExample, asset(manifest, 'ReactExampleIndex'), {
+				initialCount: 0,
+				cssPath: asset(manifest, 'ReactExampleCSS')
+			})`;
+						break;
 
-			if (frameworkName === 'svelte') {
-				return `.get('${routePath}', () => handleSveltePageRequest(SvelteExample, manifest))`;
-			}
+					case 'svelte':
+						handler = `handleSveltePageRequest(SvelteExample, asset(manifest, 'SvelteExample'), asset(manifest, 'SvelteExampleIndex'), {
+						initialCount: 0,
+						cssPath: asset(manifest, 'SvelteExampleCSS')
+					})`;
+						break;
 
-			return '';
-		})
-		.filter(Boolean)
+					default:
+						return routesAccumulator;
+				}
+
+				if (index === 0) {
+					routesAccumulator.push(`.get('/', () => ${handler})`);
+				}
+
+				routesAccumulator.push(
+					`.get('${frameworkName}', () => ${handler})`
+				);
+
+				return routesAccumulator;
+			},
+			[]
+		)
 		.join('\n  ');
 
-	const serverFileContent = `${importLines.join('\n')}\n\n${manifestDeclaration}\n\n${guardStatements}\n\nnew Elysia()${routes}\n${useStatements.map((s) => `  ${s}`).join('\n')}\n  .on('error', (err) => {\n    const { request } = err;\n    console.error(\`Server error on \${request.method} \${request.url}: \${err.message}\`);\n  });\n`;
+	const serverFileContent = `${importLines.join('\n')}
+
+${manifestDeclaration}
+
+new Elysia()${routes}
+${useStatements.map((s) => `  ${s}`).join('\n')}
+  .on('error', (err) => {
+    const { request } = err;
+    console.error(\`Server error on \${request.method} \${request.url}: \${err.message}\`);
+  });
+`;
 
 	writeFileSync(serverFilePath, serverFileContent);
 };

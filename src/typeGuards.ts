@@ -5,13 +5,8 @@ import type {
 	DatabaseEngine,
 	DatabaseHost,
 	Frontend,
-	HTMLScriptOption,
-	Language,
 	ORM
 } from './types';
-
-export const isLanguage = (value: string): value is Language =>
-	value === 'ts' || value === 'js';
 
 export const isAuthProvider = (
 	value: string | undefined
@@ -55,16 +50,6 @@ export const isCodeQualityTool = (
 	value: string | undefined
 ): value is CodeQualityTool =>
 	value === 'eslint+prettier' || value === 'biome' || value === undefined;
-
-export const isHTMLScriptOption = (
-	value: string | undefined
-): value is HTMLScriptOption =>
-	value === 'ts' ||
-	value === 'js' ||
-	value === 'ts+ssr' ||
-	value === 'js+ssr' ||
-	value === 'none' ||
-	value === undefined;
 
 export const isFrontend = (value: string | undefined): value is Frontend =>
 	value !== undefined && Object.keys(frontendLabels).includes(value);

@@ -7,8 +7,6 @@ import {
 	availableDatabaseEngines,
 	availableDatabaseHosts,
 	availableDirectoryConfigurations,
-	availableHTMLScriptOptions,
-	availableLanguages,
 	availableORMs,
 	availableFrontends
 } from '../data';
@@ -19,8 +17,6 @@ import {
 	isDatabaseHost,
 	isDirectoryConfig,
 	isFrontend,
-	isHTMLScriptOption,
-	isLanguage,
 	isORM
 } from '../typeGuards';
 import type {
@@ -29,7 +25,6 @@ import type {
 	DatabaseEngine,
 	DatabaseHost,
 	FrontendDirectories,
-	HTMLScriptOption,
 	ORM
 } from '../types';
 
@@ -52,15 +47,14 @@ export const parseCommandLineOptions = () => {
 			help: { default: false, short: 'h', type: 'boolean' },
 			host: { type: 'string' },
 			html: { type: 'string' },
+			'html-script': { type: 'boolean' },
 			htmx: { type: 'string' },
-			lang: { type: 'string' },
 			lts: { default: false, type: 'boolean' },
 			npm: { type: 'boolean' },
 			orm: { type: 'string' },
 			plugin: { multiple: true, type: 'string' },
 			quality: { type: 'string' },
 			react: { type: 'string' },
-			script: { type: 'string' },
 			skip: { type: 'boolean' },
 			svelte: { type: 'string' },
 			tailwind: { type: 'boolean' },
@@ -71,6 +65,9 @@ export const parseCommandLineOptions = () => {
 	});
 
 	const errors: string[] = [];
+
+	const projectName =
+		(positionals[0] ?? values.skip) ? 'absolutejs-project' : undefined;
 
 	let authProvider: AuthProvider;
 	if (values.auth !== undefined && !isAuthProvider(values.auth)) {
@@ -123,27 +120,6 @@ export const parseCommandLineOptions = () => {
 	if (values.quality !== undefined && codeQualityTool === undefined) {
 		errors.push(
 			`Invalid code quality tool: "${values.quality}". Expected: [ ${availableCodeQualityTools.join(', ')} ]`
-		);
-	}
-
-	let htmlScriptOption: HTMLScriptOption;
-	if (values.script !== undefined && !isHTMLScriptOption(values.script)) {
-		errors.push(
-			`Invalid HTML script option: "${values.script}". Expected: [ ${availableHTMLScriptOptions.join(', ')} ]`
-		);
-	} else if (values.script !== undefined) {
-		htmlScriptOption = values.script;
-	} else if (values.skip) {
-		htmlScriptOption = 'none';
-	}
-
-	const language =
-		values.lang !== undefined && isLanguage(values.lang)
-			? values.lang
-			: undefined;
-	if (values.lang !== undefined && language === undefined) {
-		errors.push(
-			`Invalid language: "${values.lang}". Expected: [ ${availableLanguages.join(', ')} ]`
 		);
 	}
 
@@ -245,14 +221,13 @@ export const parseCommandLineOptions = () => {
 		directoryConfig,
 		frontendDirectories,
 		frontends: values.frontend?.filter(isFrontend),
-		htmlScriptOption,
 		initializeGitNow: values.git,
 		installDependenciesNow: values.npm,
-		language,
 		orm,
 		plugins,
-		projectName: positionals[0],
+		projectName,
 		tailwind,
+		useHTMLScripts: values['html-script'],
 		useTailwind
 	};
 

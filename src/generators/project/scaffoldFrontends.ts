@@ -1,41 +1,31 @@
-import { copyFileSync, mkdirSync } from 'node:fs';
+import { copyFileSync, cpSync, mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { CreateConfiguration } from '../../types';
 import { scaffoldHTML } from '../html/scaffoldHTML';
-import { scaffoldReact } from '../react/scaffoldReact';
-import { scaffoldSvelte } from '../svelte/scaffoldSvelte';
 
 type ScaffoldFrontendsProps = Pick<
 	CreateConfiguration,
-	'frontendDirectories' | 'htmlScriptOption' | 'tailwind' | 'language'
+	'useHTMLScripts' | 'frontendDirectories'
 > & {
 	frontendDirectory: string;
 	templatesDirectory: string;
+	projectAssetsDirectory: string;
 };
 
 export const scaffoldFrontends = ({
 	frontendDirectory,
 	templatesDirectory,
-	frontendDirectories,
-	language,
-	tailwind,
-	htmlScriptOption
+	projectAssetsDirectory,
+	useHTMLScripts,
+	frontendDirectories
 }: ScaffoldFrontendsProps) => {
+	const stylesTargetDirectory = join(frontendDirectory, 'styles');
+	cpSync(join(templatesDirectory, 'styles'), stylesTargetDirectory, {
+		recursive: true
+	});
+
 	const frontendEntries = Object.entries(frontendDirectories);
 	const isSingleFrontend = frontendEntries.length === 1;
-
-	const stylesDirectory = join(frontendDirectory, 'styles');
-	const needsStylesDir = !(
-		isSingleFrontend && frontendEntries[0]?.[0] === 'svelte'
-	);
-
-	if (needsStylesDir) mkdirSync(stylesDirectory);
-	if (needsStylesDir && tailwind !== undefined) {
-		copyFileSync(
-			join(templatesDirectory, 'tailwind', 'tailwind.css'),
-			join(stylesDirectory, 'tailwind.css')
-		);
-	}
 
 	const directoryMap = new Map<string, string>();
 
@@ -57,22 +47,74 @@ export const scaffoldFrontends = ({
 
 		switch (frontendName) {
 			case 'react':
-				scaffoldReact({
-					isSingleFrontend,
-					stylesDirectory,
-					targetDirectory,
-					templatesDirectory
+				copyFileSync(
+					join(templatesDirectory, 'assets', 'svg', 'react.svg'),
+					join(projectAssetsDirectory, 'svg', 'react.svg')
+				);
+				cpSync(join(templatesDirectory, 'react'), targetDirectory, {
+					recursive: true
 				});
 				break;
 			case 'svelte':
-				scaffoldSvelte({ language, targetDirectory });
+				copyFileSync(
+					join(
+						templatesDirectory,
+						'assets',
+						'svg',
+						'svelte-logo.svg'
+					),
+					join(projectAssetsDirectory, 'svg', 'svelte-logo.svg')
+				);
+				cpSync(join(templatesDirectory, 'svelte'), targetDirectory, {
+					recursive: true
+				});
+				const cssOutputFile = join(
+					targetDirectory,
+					'styles',
+					'svelte-example.css'
+				);
+				const svelteCSS = `@import url('${isSingleFrontend ? '../' : '../../'}styles/reset.css');`;
+				writeFileSync(cssOutputFile, svelteCSS, 'utf-8');
+				break;
+			case 'vue':
+				copyFileSync(
+					join(templatesDirectory, 'assets', 'svg', 'vue-logo.svg'),
+					join(projectAssetsDirectory, 'svg', 'vue-logo.svg')
+				);
+				break;
+			case 'angular':
+				console.warn(
+					'Angular is not yet supported. Refer to the documentation for more information.'
+				);
 				break;
 			case 'html':
 				scaffoldHTML({
-					htmlScriptOption,
 					isSingleFrontend,
-					targetDirectory
+					projectAssetsDirectory,
+					targetDirectory,
+					templatesDirectory,
+					useHTMLScripts
 				});
+				break;
+			case 'htmx':
+				copyFileSync(
+					join(
+						templatesDirectory,
+						'assets',
+						'svg',
+						'htmx-logo-black.svg'
+					),
+					join(projectAssetsDirectory, 'svg', 'htmx-logo-black.svg')
+				);
+				copyFileSync(
+					join(
+						templatesDirectory,
+						'assets',
+						'svg',
+						'htmx-logo-white.svg'
+					),
+					join(projectAssetsDirectory, 'svg', 'htmx-logo-white.svg')
+				);
 				break;
 		}
 	}

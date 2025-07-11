@@ -1,34 +1,34 @@
-import { mkdirSync, writeFileSync } from 'fs';
-import { join } from 'path';
-import type { HTMLScriptOption } from '../../types';
-import { generateHTMLPage } from './generateHTMLPage';
-import { getHTMLScript } from './generateHTMLScript';
+import { copyFileSync, cpSync, mkdirSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { generateHTMLCSS } from './generateHTMLCSS';
 
 type ScaffoldHTMLProps = {
 	isSingleFrontend: boolean;
 	targetDirectory: string;
-	htmlScriptOption: HTMLScriptOption;
+	useHTMLScripts: boolean;
+	templatesDirectory: string;
+	projectAssetsDirectory: string;
 };
 
 export const scaffoldHTML = ({
 	isSingleFrontend,
 	targetDirectory,
-	htmlScriptOption
+	useHTMLScripts,
+	templatesDirectory,
+	projectAssetsDirectory
 }: ScaffoldHTMLProps) => {
-	const htmlPage = generateHTMLPage(htmlScriptOption);
-	const htmlPagesDirectory = join(targetDirectory, 'pages');
+	copyFileSync(
+		join(templatesDirectory, 'assets', 'svg', 'HTML5_Badge.svg'),
+		join(projectAssetsDirectory, 'svg', 'HTML5_Badge.svg')
+	);
+	cpSync(join(templatesDirectory, 'html'), targetDirectory, {
+		recursive: true
+	});
 
-	mkdirSync(htmlPagesDirectory, { recursive: true });
-	writeFileSync(join(htmlPagesDirectory, 'HTMLExample.html'), htmlPage);
+	const cssOutputDir = join(targetDirectory, 'styles');
+	mkdirSync(cssOutputDir, { recursive: true });
 
-	if (htmlScriptOption !== undefined && htmlScriptOption !== 'none') {
-		const scriptsDir = join(targetDirectory, 'scripts');
-		mkdirSync(scriptsDir, { recursive: true });
-		const script = getHTMLScript(htmlScriptOption, isSingleFrontend);
-		const scriptFileName =
-			htmlScriptOption === 'ts'
-				? 'typescriptExample.ts'
-				: 'javascriptExample.js';
-		writeFileSync(join(scriptsDir, scriptFileName), script);
-	}
+	const cssOutputFile = join(cssOutputDir, 'html-example.css');
+	const htmlCSS = generateHTMLCSS(isSingleFrontend);
+	writeFileSync(cssOutputFile, htmlCSS, 'utf-8');
 };

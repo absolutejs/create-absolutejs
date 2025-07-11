@@ -195,7 +195,8 @@ export default defineConfig([
 			'src/templates/configurations/tsconfig.example.json',
 			'src/templates/configurations/.prettierrc.json',
 			'package.json',
-			'.prettierrc.json'
+			'.prettierrc.json',
+			'src/templates/html/scripts/*'
 		],
 		rules: {
 			'import/no-unused-modules': 'off'
@@ -233,6 +234,18 @@ export default defineConfig([
 		],
 		rules: {
 			'absolute/explicit-object-types': 'off'
+		}
+	},
+	{
+		//TODO: Add official eslint support for Svelte.
+		files: ['**/*.svelte.ts'],
+		languageOptions: {
+			globals: {
+				$derived: 'readonly',
+				$effect: 'readonly',
+				$props: 'readonly',
+				$state: 'readonly'
+			}
 		}
 	}
 ]);

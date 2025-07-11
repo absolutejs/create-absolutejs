@@ -113,7 +113,7 @@ export const createPackageJson = ({
 	void (latest && s.stop(green('Package versions resolved')));
 
 	const scripts: PackageJson['scripts'] = {
-		dev: 'bun run src/backend/server.ts',
+		dev: 'bun run --watch src/backend/server.ts',
 		format: `prettier --write "./**/*.{js,ts,css,json,mjs,md${usesReact ? ',jsx,tsx' : ''}${usesSvelte ? ',svelte' : ''}}"`,
 		lint: 'eslint ./src',
 		test: 'echo "Error: no test specified" && exit 1',
@@ -126,7 +126,7 @@ export const createPackageJson = ({
 		name: projectName,
 		scripts,
 		type: 'module',
-		version: '0.1.0'
+		version: '0.0.0'
 	};
 
 	writeFileSync(

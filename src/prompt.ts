@@ -9,7 +9,6 @@ import { getFrontends } from './questions/frontends';
 import { getHtmlScriptingOption } from './questions/htmlScriptingOption';
 import { getInitializeGit } from './questions/initializeGitNow';
 import { getInstallDependencies } from './questions/installDependenciesNow';
-import { getLanguage } from './questions/language';
 import { getORM } from './questions/orm';
 import { getPlugins } from './questions/plugins';
 import { getProjectName } from './questions/projectName';
@@ -21,51 +20,48 @@ export const prompt = async (argumentConfiguration: ArgumentConfiguration) => {
 	const projectName =
 		argumentConfiguration.projectName ?? (await getProjectName());
 
-	// 2. Language
-	const language = argumentConfiguration.language ?? (await getLanguage());
-
-	// 3. Linting/formatting tool
+	// 2. Linting/formatting tool
 	const codeQualityTool =
 		argumentConfiguration.codeQualityTool ?? (await getCodeQualityTool());
 
-	// 4. Tailwind support?
+	// 3. Tailwind support?
 	const useTailwind =
 		argumentConfiguration.useTailwind ?? (await getUseTailwind());
 
-	// 5. Frontend(s)
+	// 4. Frontend(s)
 	const frontends =
 		argumentConfiguration.frontends?.filter(
 			(frontend) => frontend !== undefined
 		) ?? (await getFrontends());
 
-	// 6. HTML scripting option (if HTML was selected)
-	const htmlScriptOption =
+	// 5. HTML scripting option (if HTML was selected)
+	const useHTMLScripts =
 		!frontends.includes('html') ||
-		argumentConfiguration.htmlScriptOption === 'none'
-			? undefined
-			: (argumentConfiguration.htmlScriptOption ??
-				(await getHtmlScriptingOption(language)));
+		argumentConfiguration.useHTMLScripts === undefined
+			? false
+			: (argumentConfiguration.useHTMLScripts ??
+				(await getHtmlScriptingOption()));
 
-	// 7. Database engine
+	// 6. Database engine
 	const databaseEngine =
 		argumentConfiguration.databaseEngine ?? (await getDatabaseEngine());
 
-	// 8. Database host
+	// 7. Database host
 	const databaseHost =
 		argumentConfiguration.databaseHost ??
 		(await getDatabaseHost(databaseEngine));
 
-	// 9. ORM choice
+	// 8. ORM choice
 	const orm =
 		databaseEngine !== undefined && databaseEngine !== 'none'
 			? (argumentConfiguration.orm ?? (await getORM()))
 			: undefined;
 
-	// 10. Configuration type
+	// 9. Configuration type
 	let directoryConfig =
 		argumentConfiguration.directoryConfig ?? (await getConfigurationType());
 
-	// 11. Directory configurations
+	// 10. Directory configurations
 	const { buildDirectory, assetsDirectory, tailwind, databaseDirectory } =
 		await getDirectoryConfiguration({
 			argumentConfiguration,
@@ -74,7 +70,7 @@ export const prompt = async (argumentConfiguration: ArgumentConfiguration) => {
 			useTailwind
 		});
 
-	// 12. Framework-specific directories
+	// 11. Framework-specific directories
 	const frontendDirectories = await getFrontendDirectoryConfigurations(
 		directoryConfig,
 		frontends,
@@ -85,21 +81,21 @@ export const prompt = async (argumentConfiguration: ArgumentConfiguration) => {
 	if (argumentConfiguration.frontendDirectories !== undefined)
 		directoryConfig = 'custom';
 
-	// 13. Auth provider
+	// 12. Auth provider
 	const authProvider =
 		argumentConfiguration.authProvider ?? (await getAuthProvider());
 
-	// 14. Additional plugins
+	// 13. Additional plugins
 	const plugins =
 		argumentConfiguration.plugins?.filter(
 			(plugin) => plugin !== undefined
 		) ?? (await getPlugins());
 
-	// 15. Initialize Git repository
+	// 14. Initialize Git repository
 	const initializeGitNow =
 		argumentConfiguration.initializeGitNow ?? (await getInitializeGit());
 
-	// 16. Install dependencies
+	// 15. Install dependencies
 	const installDependenciesNow =
 		argumentConfiguration.installDependenciesNow ??
 		(await getInstallDependencies());
@@ -115,14 +111,13 @@ export const prompt = async (argumentConfiguration: ArgumentConfiguration) => {
 		directoryConfig,
 		frontendDirectories,
 		frontends,
-		htmlScriptOption,
 		initializeGitNow,
 		installDependenciesNow,
-		language,
 		orm,
 		plugins,
 		projectName,
 		tailwind,
+		useHTMLScripts,
 		useTailwind
 	};
 

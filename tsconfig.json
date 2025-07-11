@@ -1,23 +1,30 @@
 {
+	"angularCompilerOptions": {
+		"enableI18nLegacyMessageIdFormat": false,
+		"fullTemplateTypeCheck": true,
+		"strictInjectionParameters": true,
+		"strictTemplates": true
+	},
 	"compilerOptions": {
-		// Environment setup & latest features
-		"allowImportingTsExtensions": true,
 		"allowJs": true,
+		"allowSyntheticDefaultImports": true,
 		"declaration": true,
-		"jsx": "react-jsx", // Environment setup & latest features
-		"lib": ["ESNext", "DOM"],
+		"emitDecoratorMetadata": true,
+		"esModuleInterop": true,
+		"experimentalDecorators": true,
+		"forceConsistentCasingInFileNames": true,
+		"jsx": "react-jsx",
+		"lib": ["DOM", "DOM.Iterable", "ESNext"],
 		"module": "ESNext",
-		"moduleDetection": "force", // Bundler mode
 		"moduleResolution": "bundler",
-		"noEmit": true,
-		"noFallthroughCasesInSwitch": true,
-		"noPropertyAccessFromIndexSignature": false,
-		"noUncheckedIndexedAccess": true, // Some stricter flags (disabled by default)
-		"noUnusedLocals": false,
-		"noUnusedParameters": false,
-		"skipLibCheck": true, // Best practices
+		"noImplicitAny": true,
+		"noUncheckedIndexedAccess": true,
+		"outDir": "dist",
+		"skipLibCheck": true,
 		"strict": true,
 		"target": "ESNext",
-		"verbatimModuleSyntax": true
-	}
+		"useDefineForClassFields": false
+	},
+	"exclude": ["node_modules", "dist"],
+	"include": ["src/**/*"]
 }

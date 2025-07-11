@@ -21,12 +21,11 @@ type ScaffoldProps = {
 export const scaffold = ({
 	response: {
 		projectName,
-		language,
 		codeQualityTool,
 		initializeGitNow,
 		databaseEngine,
 		// databaseHost,
-		htmlScriptOption,
+		useHTMLScripts,
 		useTailwind,
 		databaseDirectory,
 		orm,
@@ -45,10 +44,8 @@ export const scaffold = ({
 	const __dirname = dirname(fileURLToPath(import.meta.url));
 	const templatesDirectory = join(__dirname, '/templates');
 
-	const { frontendDirectory, backendDirectory } = initalizeRoot(
-		projectName,
-		templatesDirectory
-	);
+	const { frontendDirectory, backendDirectory, projectAssetsDirectory } =
+		initalizeRoot(projectName, templatesDirectory);
 
 	copyFileSync(
 		join(templatesDirectory, 'README.md'),
@@ -59,7 +56,6 @@ export const scaffold = ({
 		codeQualityTool,
 		frontends,
 		initializeGitNow,
-		language,
 		projectName,
 		tailwind,
 		templatesDirectory
@@ -98,12 +94,11 @@ export const scaffold = ({
 	);
 
 	scaffoldFrontends({
-		frontendDirectories,
 		frontendDirectory,
-		htmlScriptOption,
-		language,
-		tailwind,
-		templatesDirectory
+		templatesDirectory,
+		useHTMLScripts,
+		projectAssetsDirectory,
+		frontendDirectories
 	});
 
 	if (installDependenciesNow) {

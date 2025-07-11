@@ -5,8 +5,6 @@ import {
 	availableDatabaseHosts,
 	availableDirectoryConfigurations,
 	availableFrontends,
-	availableHTMLScriptOptions,
-	availableLanguages,
 	availableORMs
 } from './data';
 
@@ -36,15 +34,10 @@ export type DatabaseEngine =
 	| undefined;
 
 export type DatabaseHost = (typeof availableDatabaseHosts)[number] | undefined;
-
-export type HTMLScriptOption =
-	| (typeof availableHTMLScriptOptions)[number]
-	| undefined;
 export type DirectoryConfiguration =
 	(typeof availableDirectoryConfigurations)[number];
 export type ORM = (typeof availableORMs)[number] | undefined;
 export type CodeQualityTool = (typeof availableCodeQualityTools)[number];
-export type Language = (typeof availableLanguages)[number];
 export type TailwindConfig =
 	| {
 			input: string;
@@ -60,10 +53,9 @@ export type CreateConfiguration = {
 	databaseEngine: DatabaseEngine;
 	frontendDirectories: FrontendDirectories;
 	frontends: Frontend[];
-	htmlScriptOption: HTMLScriptOption;
+	useHTMLScripts: boolean;
 	initializeGitNow: boolean;
 	installDependenciesNow: boolean;
-	language: Language;
 	codeQualityTool: CodeQualityTool;
 	orm: ORM;
 	plugins: string[];

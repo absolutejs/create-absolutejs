@@ -9,5 +9,5 @@ export const getProjectName = async () => {
 
 	if (isCancel(projectName)) abort();
 
-	return projectName;
+	return projectName ?? 'absolutejs-project';
 };

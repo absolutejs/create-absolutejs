@@ -6,11 +6,7 @@ import { generatePrettierrc } from './generatePrettierrc';
 
 type AddConfigurationProps = Pick<
 	CreateConfiguration,
-	| 'tailwind'
-	| 'language'
-	| 'initializeGitNow'
-	| 'codeQualityTool'
-	| 'frontends'
+	'tailwind' | 'initializeGitNow' | 'codeQualityTool' | 'frontends'
 > & {
 	templatesDirectory: string;
 	projectName: string;
@@ -19,12 +15,16 @@ type AddConfigurationProps = Pick<
 export const addConfigurationFiles = ({
 	tailwind,
 	templatesDirectory,
-	language,
 	codeQualityTool,
 	frontends,
 	initializeGitNow,
 	projectName
 }: AddConfigurationProps) => {
+	copyFileSync(
+		join(templatesDirectory, 'configurations', 'tsconfig.example.json'),
+		join(projectName, 'tsconfig.json')
+	);
+
 	if (tailwind) {
 		copyFileSync(
 			join(templatesDirectory, 'tailwind', 'postcss.config.ts'),
@@ -40,11 +40,7 @@ export const addConfigurationFiles = ({
 			join(templatesDirectory, 'git', 'gitignore'),
 			join(projectName, '.gitignore')
 		);
-	if (language === 'ts')
-		copyFileSync(
-			join(templatesDirectory, 'configurations', 'tsconfig.example.json'),
-			join(projectName, 'tsconfig.json')
-		);
+
 	if (codeQualityTool === 'eslint+prettier') {
 		copyFileSync(
 			join(templatesDirectory, 'configurations', 'eslint.config.mjs'),

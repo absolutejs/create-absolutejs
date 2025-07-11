@@ -1,6 +1,6 @@
-import { blueBright, cyan, dim, green, magenta, red, yellow } from 'picocolors';
+import { blueBright, cyan, dim, green, magenta, red } from 'picocolors';
 import { frontendLabels } from './data';
-import type { HTMLScriptOption, CreateConfiguration } from './types';
+import type { CreateConfiguration } from './types';
 
 export const helpMessage = `
 Usage: create-absolute [options] [${magenta('project-name')}]
@@ -25,14 +25,13 @@ Options:
   ${cyan('--host')} ${dim(cyan('<host>'))}                   Database host provider (neon | planetscale | supabase | turso | vercel | upstash | atlas) or 'none' to skip database host setup
   ${cyan('--html')} ${dim(cyan('<dir>'))}                    Directory name for an HTML frontend
   ${cyan('--htmx')} ${dim(cyan('<dir>'))}                    Directory name for an HTMX frontend
-  ${cyan('--lang')} ${dim(cyan('<lang>'))}                   Language: "ts" or "js"
   ${cyan('--lts')}                           Use LTS versions of required packages
   ${cyan('--npm')}                           Use the package manager that invoked this command to install dependencies
   ${cyan('--orm')} ${dim(cyan('<orm>'))}                     ORM to configure: "drizzle" or "prisma" or 'none' to skip ORM setup
   ${cyan('--plugin')} ${dim(cyan('<plugin>'))}               Elysia plugin(s) to include (can be specified multiple times), passing 'none' will skip plugin setup and ignore any other plugin options
   ${cyan('--quality')} ${dim(cyan('<tool>'))}                Code quality tool: "eslint+prettier" or "biome"
   ${cyan('--react')} ${dim(cyan('<dir>'))}                   Directory name for a React frontend
-  ${cyan('--script')} ${dim(cyan('<option>'))}               HTML scripting option: "ts" or "js" or 'none' to skip HTML scripting setup 
+  ${cyan('--html-script')} ${dim(cyan('<option>'))}          Enable HTML scripting with TypeScript
   ${cyan('--skip')}                          Skips non required prompts and uses 'none' for all optional configurations
   ${cyan('--svelte')} ${dim(cyan('<dir>'))}                  Directory name for a Svelte frontend
   ${cyan('--tailwind')}                      Include Tailwind CSS setup
@@ -65,13 +64,12 @@ type DebugMessageProps = {
 export const getDebugMessage = ({
 	response: {
 		projectName,
-		language,
 		codeQualityTool,
 		directoryConfig,
 		useTailwind,
 		tailwind,
 		frontends,
-		htmlScriptOption,
+		useHTMLScripts,
 		frontendDirectories,
 		buildDirectory,
 		assetsDirectory,
@@ -86,13 +84,8 @@ export const getDebugMessage = ({
 	},
 	packageManager
 }: DebugMessageProps) => {
-	const htmlLabels: Record<Exclude<HTMLScriptOption, undefined>, string> = {
-		js: yellow('JavaScript'),
-		none: dim('None'),
-		ts: blueBright('TypeScript')
-	};
-	const htmlScriptingValue = htmlScriptOption
-		? htmlLabels[htmlScriptOption]
+	const htmlScriptingValue = useHTMLScripts
+		? blueBright('TypeScript')
 		: dim('None');
 
 	const frameworkConfig = frontends
@@ -114,7 +107,6 @@ export const getDebugMessage = ({
 		['Project Name',         projectName],
 		['Package Manager',      packageManager],
 		['Config Type',          isCustomConfig ? green('Custom') : dim('Default')],
-		['Language',             language === 'ts' ? blueBright('TypeScript') : yellow('JavaScript')],
 		['Linting',              codeQualityTool === 'eslint+prettier' ? 'ESLint + Prettier' : 'Biome'],
 		['Tailwind Configuration', tailwindSection],
 		[frontends.length === 1 ? 'Frontend' : 'Frontends', frontends.map((name) => frontendLabels[name]).join(', ')],

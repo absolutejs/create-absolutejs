@@ -21,6 +21,8 @@
 		"eslint-plugin-promise": "7.2.1",
 		"eslint-plugin-security": "3.0.1",
 		"prettier": "3.5.3",
+		"prettier-plugin-svelte": "3.4.0",
+		"svelte": "5.35.2",
 		"tailwindcss": "4.1.7",
 		"typescript-eslint": "8.32.0"
 	},
@@ -37,7 +39,7 @@
 	"scripts": {
 		"build": "rm -rf dist && bun build src/index.ts --target node --outdir dist && cp -R src/templates dist/templates && tsc --emitDeclarationOnly --project tsconfig.json",
 		"dev": "rm -rf absolutejs-project && bun run src/index.ts",
-		"format": "prettier --write \"./**/*.{js,jsx,ts,tsx,css,json,mjs,md}\"",
+		"format": "prettier --write \"./**/*.{js,jsx,ts,tsx,css,json,mjs,md,svelte,html,vue}\"",
 		"lint": "eslint ./",
 		"release": "bun run format && bun run build && bun publish",
 		"test": "cd absolutejs-project && bun dev",

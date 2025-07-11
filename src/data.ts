@@ -10,8 +10,6 @@ export const availableFrontends = [
 	'htmx'
 ] as const;
 export const availableAuthProviders = ['absoluteAuth', 'none'] as const;
-export const availableLanguages = ['ts', 'js'] as const;
-export const availableHTMLScriptOptions = ['js', 'ts', 'none'] as const;
 export const availableDatabaseEngines = [
 	'postgresql',
 	'mysql',
@@ -103,10 +101,11 @@ export const defaultDependencies: AvailableDependency[] = [
 export const defaultPlugins: AvailableDependency[] = [
 	{
 		imports: [
+			{ isPlugin: false, packageName: 'asset' },
 			{ isPlugin: false, packageName: 'build' },
-			{ isPlugin: true, packageName: 'networkingPlugin' }
+			{ isPlugin: true, packageName: 'networking' }
 		],
-		latestVersion: '0.8.14',
+		latestVersion: '0.10.3',
 		value: '@absolutejs/absolute'
 	},
 	{
