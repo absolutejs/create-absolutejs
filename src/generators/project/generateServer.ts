@@ -64,6 +64,7 @@ export const createServerFile = ({
 			htmlOnly && imports
 				? imports.filter(({ packageName }) => packageName !== 'asset')
 				: imports;
+
 		return filteredImports && filteredImports.length > 0
 			? [
 					`import { ${filteredImports
@@ -127,6 +128,7 @@ export const createServerFile = ({
 		.map((entry) => {
 			if (entry.config === undefined) return `.use(${entry.packageName})`;
 			if (entry.config === null) return `.use(${entry.packageName}())`;
+
 			return `.use(${entry.packageName}(${JSON.stringify(entry.config)}))`;
 		});
 
@@ -151,7 +153,7 @@ export const createServerFile = ({
 
 				switch (frameworkName) {
 					case 'html':
-						handler = `handleHTMLPageRequest(\`${buildDirectory}${directory ? '/' + directory : ''}/pages/HTMLExample.html\`)`;
+						handler = `handleHTMLPageRequest(\`${buildDirectory}${directory ? `/${  directory}` : ''}/pages/HTMLExample.html\`)`;
 						break;
 
 					case 'react':
