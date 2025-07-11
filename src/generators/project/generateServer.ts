@@ -33,10 +33,14 @@ export const createServerFile = ({
 	const htmlDirectory = frontendDirectories['html'];
 	const reactDirectory = frontendDirectories['react'];
 	const svelteDirectory = frontendDirectories['svelte'];
+	const vueDirectory = frontendDirectories['vue'];
+	const htmxDirectory = frontendDirectories['htmx'];
 
 	const requiresHtml = htmlDirectory !== undefined;
 	const requiresReact = reactDirectory !== undefined;
 	const requiresSvelte = svelteDirectory !== undefined;
+	const requiresVue = vueDirectory !== undefined;
+	const requiresHtmx = htmxDirectory !== undefined;
 
 	const htmlOnly = requiresHtml && !requiresReact && !requiresSvelte;
 
@@ -93,7 +97,16 @@ export const createServerFile = ({
 				'handleReactPageRequest',
 			requiresSvelte &&
 				!existingItems.includes('handleSveltePageRequest') &&
-				'handleSveltePageRequest'
+				'handleSveltePageRequest',
+			requiresVue &&
+				!existingItems.includes('handleVuePageRequest') &&
+				'handleVuePageRequest',
+			requiresVue &&
+				!existingItems.includes('generateHeadElement') &&
+				'generateHeadElement',
+			requiresHtmx &&
+				!existingItems.includes('handleHtmxPageRequest') &&
+				'handleHtmxPageRequest'
 		].filter((value): value is string => typeof value === 'string');
 
 		importLines[absoluteImportIdx] = `import { ${[
@@ -119,6 +132,16 @@ export const createServerFile = ({
 				: `../frontend/${svelteDirectory}/pages/SvelteExample`;
 		importLines.push(
 			`import SvelteExample from '${svelteImportSource}.svelte';`
+		);
+	}
+
+	if (requiresVue) {
+		const vueImportSource =
+			vueDirectory === ''
+				? '../frontend/pages/VueExample'
+				: `../frontend/${vueDirectory}/pages/VueExample`;
+		importLines.push(
+			`import VueExample from '${vueImportSource}.vue';`
 		);
 	}
 
@@ -157,10 +180,14 @@ export const createServerFile = ({
 						break;
 
 					case 'react':
-						handler = `handleReactPageRequest(ReactExample, asset(manifest, 'ReactExampleIndex'), {
-				initialCount: 0,
-				cssPath: asset(manifest, 'ReactExampleCSS')
-			})`;
+						handler = `handleReactPageRequest(
+						ReactExample,
+						asset(manifest, 'ReactExampleIndex'),
+						{
+							initialCount: 0,
+							cssPath: asset(manifest, 'ReactExampleCSS')
+						}
+					)`;
 						break;
 
 					case 'svelte':
@@ -168,6 +195,19 @@ export const createServerFile = ({
 						initialCount: 0,
 						cssPath: asset(manifest, 'SvelteExampleCSS')
 					})`;
+						break;
+
+					case 'vue':
+						handler = `handleVuePageRequest(
+						VueExample,
+						asset(manifest, 'VueExample'),
+						asset(manifest, 'VueExampleIndex'),
+						generateHeadElement({
+							cssPath: asset(manifest, 'VueExampleCSS'),
+							title: 'AbsoluteJS + Vue'
+						}),
+						{ initialCount: 0 }
+					)`;
 						break;
 
 					default:

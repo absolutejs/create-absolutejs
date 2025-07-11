@@ -1,20 +1,14 @@
 import { generateReactCSS } from './generateReactCSS';
 import { join } from 'path';
 import { copyFileSync, cpSync, mkdirSync, writeFileSync } from 'fs';
-
-type ScaffoldReactProps = {
-	isSingleFrontend: boolean;
-	targetDirectory: string;
-	templatesDirectory: string;
-	projectAssetsDirectory: string;
-};
+import { ScaffoldFrontendProps } from '../../types';
 
 export const scaffoldReact = ({
 	isSingleFrontend,
 	targetDirectory,
 	templatesDirectory,
 	projectAssetsDirectory
-}: ScaffoldReactProps) => {
+}: ScaffoldFrontendProps) => {
 	copyFileSync(
 		join(templatesDirectory, 'assets', 'svg', 'react.svg'),
 		join(projectAssetsDirectory, 'svg', 'react.svg')

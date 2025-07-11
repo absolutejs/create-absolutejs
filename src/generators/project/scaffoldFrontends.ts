@@ -5,6 +5,7 @@ import { scaffoldHTML } from '../html/scaffoldHTML';
 import { generateReactCSS } from '../react/generateReactCSS';
 import { scaffoldReact } from '../react/scaffoldReact';
 import { scaffoldSvelte } from '../svelte/scaffoldSvelte';
+import { scaffoldVue } from '../vue/scaffoldVue';
 
 type ScaffoldFrontendsProps = Pick<
 	CreateConfiguration,
@@ -66,10 +67,11 @@ export const scaffoldFrontends = ({
 				});
 				break;
 			case 'vue':
-				copyFileSync(
-					join(templatesDirectory, 'assets', 'svg', 'vue-logo.svg'),
-					join(projectAssetsDirectory, 'svg', 'vue-logo.svg')
-				);
+				scaffoldVue({
+					targetDirectory,
+					templatesDirectory,
+					projectAssetsDirectory
+				});
 				break;
 			case 'angular':
 				console.warn(

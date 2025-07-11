@@ -1,19 +1,13 @@
 import { copyFileSync, cpSync, mkdirSync, writeFileSync } from 'fs';
 import { join } from 'path';
-
-type ScaffoldSvelteProps = {
-	isSingleFrontend: boolean;
-	targetDirectory: string;
-	templatesDirectory: string;
-	projectAssetsDirectory: string;
-};
+import { ScaffoldFrontendProps } from '../../types';
 
 export const scaffoldSvelte = ({
 	isSingleFrontend,
 	targetDirectory,
 	templatesDirectory,
 	projectAssetsDirectory
-}: ScaffoldSvelteProps) => {
+}: ScaffoldFrontendProps) => {
 	copyFileSync(
 		join(templatesDirectory, 'assets', 'svg', 'svelte-logo.svg'),
 		join(projectAssetsDirectory, 'svg', 'svelte-logo.svg')

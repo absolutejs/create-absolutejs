@@ -1,13 +1,10 @@
 import { copyFileSync, cpSync, mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { generateHTMLCSS } from './generateHTMLCSS';
+import { ScaffoldFrontendProps } from '../../types';
 
-type ScaffoldHTMLProps = {
-	isSingleFrontend: boolean;
-	targetDirectory: string;
+type ScaffoldHTMLProps = ScaffoldFrontendProps & {
 	useHTMLScripts: boolean;
-	templatesDirectory: string;
-	projectAssetsDirectory: string;
 };
 
 export const scaffoldHTML = ({

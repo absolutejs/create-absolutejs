@@ -6,7 +6,7 @@ export const availableFrontends = [
 	'html',
 	'svelte',
 	// 'angular',
-	// 'vue',
+	'vue',
 	'htmx'
 ] as const;
 export const availableAuthProviders = ['absoluteAuth', 'none'] as const;
@@ -41,7 +41,7 @@ export const frontendLabels: FrontendLabels = {
 	html: 'HTML',
 	svelte: magenta('Svelte'),
 	// angular: red('Angular'),
-	// vue: green('Vue'),
+	vue: green('Vue'),
 	htmx: 'HTMX'
 };
 /* eslint-enable absolute/sort-keys-fixable */

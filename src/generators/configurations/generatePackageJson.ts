@@ -43,6 +43,7 @@ export const createPackageJson = ({
 
 	const usesReact = frontendDirectories['react'] !== undefined;
 	const usesSvelte = frontendDirectories['svelte'] !== undefined;
+	const usesVue = frontendDirectories['vue'] !== undefined;
 
 	for (const p of defaultPlugins) {
 		dependencies[p.value] = resolveVersion(p.value, p.latestVersion);
@@ -110,11 +111,15 @@ export const createPackageJson = ({
 		);
 	}
 
+	if (usesVue) {
+		dependencies['vue'] = resolveVersion('vue', '3.5.17');
+	}
+
 	void (latest && s.stop(green('Package versions resolved')));
 
 	const scripts: PackageJson['scripts'] = {
 		dev: 'bun run --watch src/backend/server.ts',
-		format: `prettier --write "./**/*.{js,ts,css,json,mjs,md${usesReact ? ',jsx,tsx' : ''}${usesSvelte ? ',svelte' : ''}}"`,
+		format: `prettier --write "./**/*.{js,ts,css,json,mjs,md${usesReact ? ',jsx,tsx' : ''}${usesSvelte ? ',svelte' : ''}${usesVue ? ',vue' : ''}}"`,
 		lint: 'eslint ./src',
 		test: 'echo "Error: no test specified" && exit 1',
 		typecheck: 'bun run tsc --noEmit'

@@ -8,6 +8,13 @@ import {
 	availableORMs
 } from './data';
 
+export type ScaffoldFrontendProps = {
+	targetDirectory: string;
+	templatesDirectory: string;
+	projectAssetsDirectory: string;
+	isSingleFrontend: boolean;
+};
+
 export type Frontend = (typeof availableFrontends)[number];
 export type FrontendLabels = Record<Frontend, string>;
 export type FrontendDirectories = Partial<Record<Frontend, string>>;
