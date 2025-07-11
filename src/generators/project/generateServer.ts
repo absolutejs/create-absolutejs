@@ -140,9 +140,7 @@ export const createServerFile = ({
 			vueDirectory === ''
 				? '../frontend/pages/VueExample'
 				: `../frontend/${vueDirectory}/pages/VueExample`;
-		importLines.push(
-			`import VueExample from '${vueImportSource}.vue';`
-		);
+		importLines.push(`import VueExample from '${vueImportSource}.vue';`);
 	}
 
 	const useStatements = uniqueDependencies

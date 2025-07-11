@@ -180,7 +180,7 @@
 		display: flex;
 		flex-direction: column;
 		gap: 0.75rem;
-		background: rgba(128, 128, 128, 0.15);
+		background: rgba(185, 185, 185, 0.1);
 		backdrop-filter: blur(4px);
 		border: 1px solid #5fbeeb;
 		border-radius: 1rem;
@@ -205,5 +205,11 @@
 		font-size: 1.1rem;
 		padding: 0.25rem 0;
 		white-space: nowrap;
+	}
+
+	@media (prefers-color-scheme: light) {
+		header {
+			background-color: #ffffff;
+		}
 	}
 </style>
