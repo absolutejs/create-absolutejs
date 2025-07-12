@@ -3,7 +3,8 @@ import { UNFOUND_INDEX } from '../../constants';
 import {
 	absoluteAuthPlugin,
 	defaultDependencies,
-	defaultPlugins
+	defaultPlugins,
+	scopedStatePlugin
 } from '../../data';
 import type { AvailableDependency, CreateConfiguration } from '../../types';
 
@@ -42,19 +43,25 @@ export const createServerFile = ({
 	const requiresVue = vueDirectory !== undefined;
 	const requiresHtmx = htmxDirectory !== undefined;
 
-	const htmlOnly = requiresHtml && !requiresReact && !requiresSvelte;
+	const nonFrameworkOnly =
+		(requiresHtml || requiresHtmx) &&
+		!requiresReact &&
+		!requiresSvelte &&
+		!requiresVue;
 
 	const selectedCustomPlugins = availablePlugins.filter(
 		({ value }) => plugins.indexOf(value) !== UNFOUND_INDEX
 	);
 	const authenticationPlugins =
 		authProvider === 'absoluteAuth' ? [absoluteAuthPlugin] : [];
+	const htmxPlugins = requiresHtmx ? [scopedStatePlugin] : [];
 
 	const allDependencies = [
 		...defaultDependencies,
 		...defaultPlugins,
 		...selectedCustomPlugins,
-		...authenticationPlugins
+		...authenticationPlugins,
+		...htmxPlugins
 	];
 
 	const uniqueDependencies = Array.from(
@@ -65,7 +72,7 @@ export const createServerFile = ({
 
 	const importLines = uniqueDependencies.flatMap(({ value, imports }) => {
 		const filteredImports =
-			htmlOnly && imports
+			nonFrameworkOnly && imports
 				? imports.filter(({ packageName }) => packageName !== 'asset')
 				: imports;
 
@@ -105,8 +112,8 @@ export const createServerFile = ({
 				!existingItems.includes('generateHeadElement') &&
 				'generateHeadElement',
 			requiresHtmx &&
-				!existingItems.includes('handleHtmxPageRequest') &&
-				'handleHtmxPageRequest'
+				!existingItems.includes('handleHTMXPageRequest') &&
+				'handleHTMXPageRequest'
 		].filter((value): value is string => typeof value === 'string');
 
 		importLines[absoluteImportIdx] = `import { ${[
@@ -149,7 +156,6 @@ export const createServerFile = ({
 		.map((entry) => {
 			if (entry.config === undefined) return `.use(${entry.packageName})`;
 			if (entry.config === null) return `.use(${entry.packageName}())`;
-
 			return `.use(${entry.packageName}(${JSON.stringify(entry.config)}))`;
 		});
 
@@ -163,75 +169,70 @@ export const createServerFile = ({
 		tailwind ? `tailwind: ${JSON.stringify(tailwind)}` : ''
 	].filter(Boolean);
 
-	const manifestDeclaration = `${htmlOnly ? '' : 'const manifest = '}await build({
+	const manifestDeclaration = `${
+		nonFrameworkOnly ? '' : 'const manifest = '
+	}await build({
   ${manifestOptions.join(',\n  ')}
 });`;
 
-	const routes = Object.entries(frontendDirectories)
-		.reduce<string[]>(
-			(routesAccumulator, [frameworkName, directory], index) => {
-				let handler = '';
+	const routesData = Object.entries(frontendDirectories).reduce<{
+		indexRoute: string | null;
+		otherRoutes: string[];
+	}>(
+		(acc, [frameworkName, directory], index) => {
+			let handler = '';
 
-				switch (frameworkName) {
-					case 'html':
-						handler = `handleHTMLPageRequest(\`${buildDirectory}${directory ? `/${directory}` : ''}/pages/HTMLExample.html\`)`;
-						break;
+			switch (frameworkName) {
+				case 'html':
+					handler = `handleHTMLPageRequest(\`${buildDirectory}${directory ? `/${directory}` : ''}/pages/HTMLExample.html\`)`;
+					break;
+				case 'react':
+					handler = `handleReactPageRequest(ReactExample, asset(manifest, 'ReactExampleIndex'), { initialCount: 0, cssPath: asset(manifest, 'ReactExampleCSS') })`;
+					break;
+				case 'svelte':
+					handler = `handleSveltePageRequest(SvelteExample, asset(manifest, 'SvelteExample'), asset(manifest, 'SvelteExampleIndex'), { initialCount: 0, cssPath: asset(manifest, 'SvelteExampleCSS') })`;
+					break;
+				case 'vue':
+					handler = `handleVuePageRequest(VueExample, asset(manifest, 'VueExample'), asset(manifest, 'VueExampleIndex'), generateHeadElement({ cssPath: asset(manifest, 'VueExampleCSS'), title: 'AbsoluteJS + Vue' }), { initialCount: 0 })`;
+					break;
+				case 'htmx':
+					handler = `handleHTMXPageRequest(\`${buildDirectory}${directory ? `/${directory}` : ''}/pages/HTMXExample.html\`)`;
+					if (index === 0) {
+						acc.indexRoute = `.get('/', () => ${handler})`;
+					}
+					acc.otherRoutes.push(
+						`.post('/htmx/reset', ({ resetScopedStore }) => resetScopedStore())`,
+						`.get('/htmx/count', ({ scopedStore }) => scopedStore.count)`,
+						`.post('/htmx/increment', ({ scopedStore }) => ++scopedStore.count)`,
+						`.get('htmx', () => ${handler})`
+					);
+					return acc;
+				default:
+					return acc;
+			}
 
-					case 'react':
-						handler = `handleReactPageRequest(
-						ReactExample,
-						asset(manifest, 'ReactExampleIndex'),
-						{
-							initialCount: 0,
-							cssPath: asset(manifest, 'ReactExampleCSS')
-						}
-					)`;
-						break;
+			if (index === 0) {
+				acc.indexRoute = `.get('/', () => ${handler})`;
+			}
+			acc.otherRoutes.push(`.get('${frameworkName}', () => ${handler})`);
+			return acc;
+		},
+		{ indexRoute: null, otherRoutes: [] }
+	);
 
-					case 'svelte':
-						handler = `handleSveltePageRequest(SvelteExample, asset(manifest, 'SvelteExample'), asset(manifest, 'SvelteExampleIndex'), {
-						initialCount: 0,
-						cssPath: asset(manifest, 'SvelteExampleCSS')
-					})`;
-						break;
-
-					case 'vue':
-						handler = `handleVuePageRequest(
-						VueExample,
-						asset(manifest, 'VueExample'),
-						asset(manifest, 'VueExampleIndex'),
-						generateHeadElement({
-							cssPath: asset(manifest, 'VueExampleCSS'),
-							title: 'AbsoluteJS + Vue'
-						}),
-						{ initialCount: 0 }
-					)`;
-						break;
-
-					default:
-						return routesAccumulator;
-				}
-
-				if (index === 0) {
-					routesAccumulator.push(`.get('/', () => ${handler})`);
-				}
-
-				routesAccumulator.push(
-					`.get('${frameworkName}', () => ${handler})`
-				);
-
-				return routesAccumulator;
-			},
-			[]
-		)
+	const routes = [routesData.indexRoute ?? '', ...routesData.otherRoutes]
+		.filter(Boolean)
 		.join('\n  ');
+
+	const useLines = useStatements.map((s) => `  ${s}`).join('\n');
 
 	const serverFileContent = `${importLines.join('\n')}
 
 ${manifestDeclaration}
 
-new Elysia()${routes}
-${useStatements.map((s) => `  ${s}`).join('\n')}
+new Elysia()
+${useLines}
+  ${routes}
   .on('error', (err) => {
     const { request } = err;
     console.error(\`Server error on \${request.method} \${request.url}: \${err.message}\`);

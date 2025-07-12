@@ -1,4 +1,4 @@
-export const generateHTMLCSS = (isSingleFrontend: boolean) =>
+export const generateMarkupCSS = (isSingleFrontend: boolean) =>
 	`@import url('${isSingleFrontend ? '../styles/reset.css' : '../../styles/reset.css'}');
 
 header {

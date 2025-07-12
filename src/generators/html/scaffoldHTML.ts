@@ -1,6 +1,6 @@
 import { copyFileSync, cpSync, mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { generateHTMLCSS } from './generateHTMLCSS';
+import { generateMarkupCSS } from '../project/generateMarkupCSS';
 import { ScaffoldFrontendProps } from '../../types';
 
 type ScaffoldHTMLProps = ScaffoldFrontendProps & {
@@ -26,6 +26,6 @@ export const scaffoldHTML = ({
 	mkdirSync(cssOutputDir, { recursive: true });
 
 	const cssOutputFile = join(cssOutputDir, 'html-example.css');
-	const htmlCSS = generateHTMLCSS(isSingleFrontend);
+	const htmlCSS = generateMarkupCSS(isSingleFrontend);
 	writeFileSync(cssOutputFile, htmlCSS, 'utf-8');
 };

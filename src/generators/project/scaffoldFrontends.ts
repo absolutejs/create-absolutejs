@@ -6,6 +6,7 @@ import { generateReactCSS } from '../react/generateReactCSS';
 import { scaffoldReact } from '../react/scaffoldReact';
 import { scaffoldSvelte } from '../svelte/scaffoldSvelte';
 import { scaffoldVue } from '../vue/scaffoldVue';
+import { scaffoldHTMX } from '../htmx/scaffoldHTMX';
 
 type ScaffoldFrontendsProps = Pick<
 	CreateConfiguration,
@@ -88,24 +89,12 @@ export const scaffoldFrontends = ({
 				});
 				break;
 			case 'htmx':
-				copyFileSync(
-					join(
-						templatesDirectory,
-						'assets',
-						'svg',
-						'htmx-logo-black.svg'
-					),
-					join(projectAssetsDirectory, 'svg', 'htmx-logo-black.svg')
-				);
-				copyFileSync(
-					join(
-						templatesDirectory,
-						'assets',
-						'svg',
-						'htmx-logo-white.svg'
-					),
-					join(projectAssetsDirectory, 'svg', 'htmx-logo-white.svg')
-				);
+				scaffoldHTMX({
+					targetDirectory,
+					templatesDirectory,
+					projectAssetsDirectory,
+					isSingleFrontend
+				});
 				break;
 		}
 	}

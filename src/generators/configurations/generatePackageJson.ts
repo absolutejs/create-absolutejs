@@ -41,9 +41,10 @@ export const createPackageJson = ({
 	const dependencies: PackageJson['dependencies'] = {};
 	const devDependencies: PackageJson['devDependencies'] = {};
 
-	const usesReact = frontendDirectories['react'] !== undefined;
-	const usesSvelte = frontendDirectories['svelte'] !== undefined;
-	const usesVue = frontendDirectories['vue'] !== undefined;
+	const requiresReact = frontendDirectories['react'] !== undefined;
+	const requiresSvelte = frontendDirectories['svelte'] !== undefined;
+	const requiresVue = frontendDirectories['vue'] !== undefined;
+	const requiresHtmx = frontendDirectories['htmx'] !== undefined;
 
 	for (const p of defaultPlugins) {
 		dependencies[p.value] = resolveVersion(p.value, p.latestVersion);
@@ -87,7 +88,7 @@ export const createPackageJson = ({
 		);
 	}
 
-	if (usesReact) {
+	if (requiresReact) {
 		dependencies['react'] = resolveVersion('react', '19.1.0');
 		dependencies['react-dom'] = resolveVersion('react-dom', '19.1.0');
 		devDependencies['@types/react'] = resolveVersion(
@@ -100,7 +101,7 @@ export const createPackageJson = ({
 		);
 	}
 
-	if (usesSvelte) {
+	if (requiresSvelte) {
 		dependencies['svelte'] = resolveVersion('svelte', '5.34.7');
 		void (
 			codeQualityTool === 'eslint+prettier' &&
@@ -111,15 +112,22 @@ export const createPackageJson = ({
 		);
 	}
 
-	if (usesVue) {
+	if (requiresVue) {
 		dependencies['vue'] = resolveVersion('vue', '3.5.17');
+	}
+
+	if (requiresHtmx) {
+		dependencies['elysia-scoped-state'] = resolveVersion(
+			'elysia-scoped-state',
+			'0.1.1'
+		);
 	}
 
 	void (latest && s.stop(green('Package versions resolved')));
 
 	const scripts: PackageJson['scripts'] = {
 		dev: 'bun run --watch src/backend/server.ts',
-		format: `prettier --write "./**/*.{js,ts,css,json,mjs,md${usesReact ? ',jsx,tsx' : ''}${usesSvelte ? ',svelte' : ''}${usesVue ? ',vue' : ''}}"`,
+		format: `prettier --write "./**/*.{js,ts,css,json,mjs,md${requiresReact ? ',jsx,tsx' : ''}${requiresSvelte ? ',svelte' : ''}${requiresVue ? ',vue' : ''}}"`,
 		lint: 'eslint ./src',
 		test: 'echo "Error: no test specified" && exit 1',
 		typecheck: 'bun run tsc --noEmit'

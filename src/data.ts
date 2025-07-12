@@ -79,6 +79,18 @@ export const absoluteAuthPlugin: AvailableDependency = {
 	value: '@absolutejs/auth'
 };
 
+export const scopedStatePlugin: AvailableDependency = {
+	imports: [
+		{
+			config: { count: { value: 0 } },
+			isPlugin: true,
+			packageName: 'scopedState'
+		}
+	],
+	latestVersion: '0.1.1',
+	value: 'elysia-scoped-state'
+};
+
 export const eslintAndPrettierDependencies: AvailableDependency[] = [
 	{
 		latestVersion: '9.27.0',
