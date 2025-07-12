@@ -1,4 +1,4 @@
-import { cpSync, copyFileSync, mkdirSync, writeFileSync } from 'fs';
+import { cpSync, copyFileSync } from 'fs';
 import { join } from 'path';
 import { ScaffoldFrontendProps } from '../../types';
 

@@ -1,7 +1,7 @@
-import { generateReactCSS } from './generateReactCSS';
-import { join } from 'path';
 import { copyFileSync, cpSync, mkdirSync, writeFileSync } from 'fs';
+import { join } from 'path';
 import { ScaffoldFrontendProps } from '../../types';
+import { generateMarkupCSS } from '../project/generateMarkupCSS';
 
 export const scaffoldReact = ({
 	isSingleFrontend,
@@ -21,6 +21,6 @@ export const scaffoldReact = ({
 	mkdirSync(cssOutputDir, { recursive: true });
 
 	const cssOutputFile = join(cssOutputDir, 'react-example.css');
-	const reactCSS = generateReactCSS(isSingleFrontend);
+	const reactCSS = generateMarkupCSS(isSingleFrontend);
 	writeFileSync(cssOutputFile, reactCSS, 'utf-8');
 };

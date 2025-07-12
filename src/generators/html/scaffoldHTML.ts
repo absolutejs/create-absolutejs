@@ -1,7 +1,7 @@
 import { copyFileSync, cpSync, mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { generateMarkupCSS } from '../project/generateMarkupCSS';
 import { ScaffoldFrontendProps } from '../../types';
+import { generateMarkupCSS } from '../project/generateMarkupCSS';
 
 type ScaffoldHTMLProps = ScaffoldFrontendProps & {
 	useHTMLScripts: boolean;

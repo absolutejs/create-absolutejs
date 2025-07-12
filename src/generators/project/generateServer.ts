@@ -156,6 +156,7 @@ export const createServerFile = ({
 		.map((entry) => {
 			if (entry.config === undefined) return `.use(${entry.packageName})`;
 			if (entry.config === null) return `.use(${entry.packageName}())`;
+
 			return `.use(${entry.packageName}(${JSON.stringify(entry.config)}))`;
 		});
 
@@ -180,7 +181,7 @@ export const createServerFile = ({
 		otherRoutes: string[];
 	}>(
 		(acc, [frameworkName, directory], index) => {
-			let handler = '';
+			let handler;
 
 			switch (frameworkName) {
 				case 'html':
@@ -206,6 +207,7 @@ export const createServerFile = ({
 						`.post('/htmx/increment', ({ scopedStore }) => ++scopedStore.count)`,
 						`.get('htmx', () => ${handler})`
 					);
+
 					return acc;
 				default:
 					return acc;
@@ -215,6 +217,7 @@ export const createServerFile = ({
 				acc.indexRoute = `.get('/', () => ${handler})`;
 			}
 			acc.otherRoutes.push(`.get('${frameworkName}', () => ${handler})`);
+
 			return acc;
 		},
 		{ indexRoute: null, otherRoutes: [] }

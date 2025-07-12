@@ -1,12 +1,11 @@
-import { copyFileSync, cpSync, mkdirSync, writeFileSync } from 'node:fs';
+import { cpSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import type { CreateConfiguration } from '../../types';
 import { scaffoldHTML } from '../html/scaffoldHTML';
-import { generateReactCSS } from '../react/generateReactCSS';
+import { scaffoldHTMX } from '../htmx/scaffoldHTMX';
 import { scaffoldReact } from '../react/scaffoldReact';
 import { scaffoldSvelte } from '../svelte/scaffoldSvelte';
 import { scaffoldVue } from '../vue/scaffoldVue';
-import { scaffoldHTMX } from '../htmx/scaffoldHTMX';
 
 type ScaffoldFrontendsProps = Pick<
 	CreateConfiguration,
@@ -54,24 +53,24 @@ export const scaffoldFrontends = ({
 			case 'react':
 				scaffoldReact({
 					isSingleFrontend,
+					projectAssetsDirectory,
 					targetDirectory,
-					templatesDirectory,
-					projectAssetsDirectory
+					templatesDirectory
 				});
 				break;
 			case 'svelte':
 				scaffoldSvelte({
 					isSingleFrontend,
+					projectAssetsDirectory,
 					targetDirectory,
-					templatesDirectory,
-					projectAssetsDirectory
+					templatesDirectory
 				});
 				break;
 			case 'vue':
 				scaffoldVue({
+					projectAssetsDirectory,
 					targetDirectory,
-					templatesDirectory,
-					projectAssetsDirectory
+					templatesDirectory
 				});
 				break;
 			case 'angular':
@@ -90,10 +89,10 @@ export const scaffoldFrontends = ({
 				break;
 			case 'htmx':
 				scaffoldHTMX({
-					targetDirectory,
-					templatesDirectory,
+					isSingleFrontend,
 					projectAssetsDirectory,
-					isSingleFrontend
+					targetDirectory,
+					templatesDirectory
 				});
 				break;
 		}
