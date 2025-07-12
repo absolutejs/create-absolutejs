@@ -39,10 +39,10 @@ export const availableCodeQualityTools = ['eslint+prettier', 'biome'] as const;
 export const frontendLabels: FrontendLabels = {
 	react: cyan('React'),
 	html: 'HTML',
+	htmx: 'HTMX',
 	svelte: magenta('Svelte'),
+	vue: green('Vue')
 	// angular: red('Angular'),
-	vue: green('Vue'),
-	htmx: 'HTMX'
 };
 /* eslint-enable absolute/sort-keys-fixable */
 
