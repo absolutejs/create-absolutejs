@@ -38,7 +38,7 @@
 		"typescript": "5.8.3"
 	},
 	"scripts": {
-		"build": "rm -rf dist && bun build src/index.ts --target node --outdir dist && cp -R src/templates dist/templates && tsc --emitDeclarationOnly --project tsconfig.json",
+		"build": "rm -rf dist && bun build src/index.ts --target node --outdir dist && cp -R src/templates dist/templates && tsc --emitDeclarationOnly --project tsconfig.build.json",
 		"dev": "rm -rf absolutejs-project && bun run src/index.ts",
 		"format": "prettier --write \"./**/*.{js,jsx,ts,tsx,css,json,mjs,md,svelte,html,vue}\"",
 		"lint": "eslint ./",

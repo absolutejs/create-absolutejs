@@ -1,0 +1,20 @@
+{
+	"compilerOptions": {
+		"allowJs": true,
+		"declaration": true,
+		"esModuleInterop": true,
+		"forceConsistentCasingInFileNames": true,
+		"jsx": "react-jsx",
+		"lib": ["DOM", "DOM.Iterable", "ESNext"],
+		"module": "ESNext",
+		"moduleResolution": "bundler",
+		"noImplicitAny": true,
+		"noUncheckedIndexedAccess": true,
+		"outDir": "dist",
+		"skipLibCheck": true,
+		"strict": true,
+		"target": "ESNext"
+	},
+	"exclude": ["node_modules", "src/templates/**/*"],
+	"include": ["src/**/*"]
+}
