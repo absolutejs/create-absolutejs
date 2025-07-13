@@ -20,9 +20,10 @@ export const getDirectoryConfiguration = async ({
 			assetsDirectory:
 				argumentConfiguration.assetsDirectory ?? 'src/backend/assets',
 			buildDirectory: argumentConfiguration.buildDirectory ?? 'build',
-			databaseDirectory: databaseEngine
-				? (argumentConfiguration.databaseDirectory ?? 'db')
-				: undefined,
+			databaseDirectory:
+				databaseEngine !== undefined && databaseEngine !== 'none'
+					? (argumentConfiguration.databaseDirectory ?? 'db')
+					: undefined,
 			tailwind: useTailwind
 				? {
 						input:
@@ -80,7 +81,7 @@ export const getDirectoryConfiguration = async ({
 
 	// Database
 	let databaseDirectory;
-	if (databaseEngine !== undefined) {
+	if (databaseEngine !== undefined && databaseEngine !== 'none') {
 		databaseDirectory =
 			argumentConfiguration.databaseDirectory ??
 			(await text({
