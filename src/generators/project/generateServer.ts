@@ -165,7 +165,7 @@ export const createServerFile = ({
 		`buildDirectory: '${buildDirectory}'`,
 		...Object.entries(frontendDirectories).map(
 			([frameworkName, directory]) =>
-				`${frameworkName}Directory: './src/frontend/${directory}'`
+				`${frameworkName}Directory: 'src/frontend/${directory}'`
 		),
 		tailwind ? `tailwind: ${JSON.stringify(tailwind)}` : ''
 	].filter(Boolean);
