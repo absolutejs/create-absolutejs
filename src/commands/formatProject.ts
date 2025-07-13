@@ -1,6 +1,6 @@
-import { execSync } from 'child_process';
 import { exit } from 'process';
 import { spinner } from '@clack/prompts';
+import { $ } from 'bun';
 import { green, red } from 'picocolors';
 import { PackageManager } from '../types';
 import { formatCommands, formatNoInstallCommands } from '../utils/commandMaps';
@@ -11,7 +11,7 @@ type FormatProjectProps = {
 	installDependenciesNow: boolean;
 };
 
-export const formatProject = ({
+export const formatProject = async ({
 	projectName,
 	packageManager,
 	installDependenciesNow
@@ -24,7 +24,7 @@ export const formatProject = ({
 			: formatNoInstallCommands[packageManager];
 
 		spin.start('Formatting files…');
-		execSync(fmt, { cwd: projectName, stdio: 'pipe' });
+		await $`sh -c ${fmt}`.cwd(projectName).quiet();
 		spin.stop(green('Files formatted'));
 	} catch (err) {
 		spin.stop(red('Failed to format files'), 1);

@@ -19,7 +19,7 @@ if (help === true) {
 
 const response = await prompt(argumentConfiguration);
 
-scaffold({ latest, packageManager, response });
+await scaffold({ latest, packageManager, response });
 
 const debugMessage =
 	debug !== false

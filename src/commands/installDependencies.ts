@@ -1,24 +1,20 @@
-import { execSync } from 'child_process';
 import { exit } from 'process';
 import { spinner } from '@clack/prompts';
+import { $ } from 'bun';
 import { green, red } from 'picocolors';
+import { PackageManager } from '../types';
 import { installCommands } from '../utils/commandMaps';
 
-type InstallDependenciesProps = {
-	projectName: string;
-	packageManager: string;
-};
-
-export const installDependencies = async ({
-	projectName,
-	packageManager
-}: InstallDependenciesProps) => {
+export const installDependencies = async (
+	packageManager: PackageManager,
+	projectName: string
+) => {
 	const spin = spinner();
-	const cmd = installCommands[packageManager] ?? 'bun install';
+	const cmd = installCommands[packageManager];
 
 	try {
 		spin.start('Installing dependencies…');
-		execSync(cmd, { cwd: projectName, stdio: 'pipe' });
+		await $`sh -c ${cmd}`.cwd(projectName).quiet();
 		spin.stop(green('Dependencies installed'));
 	} catch (err) {
 		spin.stop(red('Installation failed'), 1);

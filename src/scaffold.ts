@@ -2,6 +2,7 @@ import { copyFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { formatProject } from './commands/formatProject';
+import { initializeGit } from './commands/initializeGit';
 import { installDependencies } from './commands/installDependencies';
 import { availablePlugins } from './data';
 import { addConfigurationFiles } from './generators/configurations/addConfigurationFiles';
@@ -18,7 +19,7 @@ type ScaffoldProps = {
 	latest: boolean;
 };
 
-export const scaffold = ({
+export const scaffold = async ({
 	response: {
 		projectName,
 		codeQualityTool,
@@ -102,12 +103,16 @@ export const scaffold = ({
 	});
 
 	if (installDependenciesNow) {
-		installDependencies({ packageManager, projectName });
+		await installDependencies(packageManager, projectName);
 	}
 
-	formatProject({
+	await formatProject({
 		installDependenciesNow,
 		packageManager,
 		projectName
 	});
+
+	if (initializeGitNow) {
+		await initializeGit(projectName);
+	}
 };
