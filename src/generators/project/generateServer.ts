@@ -33,7 +33,6 @@ export const generateServerFile = ({
 	plugins
 }: CreateServerFileProps) => {
 	const serverFilePath = join(backendDirectory, 'server.ts');
-	console.log(`Generating server file at ${serverFilePath}`);
 
 	const htmlDirectory = frontendDirectories['html'];
 	const reactDirectory = frontendDirectories['react'];
