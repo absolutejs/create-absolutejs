@@ -106,6 +106,7 @@ export const scaffold = ({
 	}
 
 	formatProject({
+		installDependenciesNow,
 		packageManager,
 		projectName
 	});
