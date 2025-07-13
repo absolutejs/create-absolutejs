@@ -164,6 +164,12 @@ export const parseCommandLineOptions = () => {
 		databaseDirectory = undefined;
 	}
 
+	if (values['eslint+prettier'] && values.biome) {
+		console.warn(
+			'Warning: Both ESLint+Prettier and Biome are set to enabled. Only ESLint+Prettier will be used.'
+		);
+	}
+
 	const selectedFrontends: Frontend[] = [];
 	// if (values.angular) selectedFrontends.push('angular')
 	if (values.html) selectedFrontends.push('html');
