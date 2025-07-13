@@ -25,8 +25,8 @@ Options:
   ${cyan('--host')} ${dim(cyan('<host>'))}                   Database host provider (neon | planetscale | supabase | turso | vercel | upstash | atlas) or 'none' to skip database host setup
   ${cyan('--html')} ${dim(cyan('<dir>'))}                    Directory name for an HTML frontend
   ${cyan('--htmx')} ${dim(cyan('<dir>'))}                    Directory name for an HTMX frontend
+  ${cyan('--install')}                           Use the package manager that invoked this command to install dependencies
   ${cyan('--lts')}                           Use LTS versions of required packages
-  ${cyan('--npm')}                           Use the package manager that invoked this command to install dependencies
   ${cyan('--orm')} ${dim(cyan('<orm>'))}                     ORM to configure: "drizzle" or "prisma" or 'none' to skip ORM setup
   ${cyan('--plugin')} ${dim(cyan('<plugin>'))}               Elysia plugin(s) to include (can be specified multiple times), passing 'none' will skip plugin setup and ignore any other plugin options
   ${cyan('--quality')} ${dim(cyan('<tool>'))}                Code quality tool: "eslint+prettier" or "biome"

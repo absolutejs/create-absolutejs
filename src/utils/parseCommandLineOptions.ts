@@ -3,7 +3,6 @@ import { parseArgs } from 'node:util';
 import { DEFAULT_ARG_LENGTH } from '../constants';
 import {
 	availableAuthProviders,
-	availableCodeQualityTools,
 	availableDatabaseEngines,
 	availableDatabaseHosts,
 	availableDirectoryConfigurations,
@@ -12,7 +11,6 @@ import {
 } from '../data';
 import {
 	isAuthProvider,
-	isCodeQualityTool,
 	isDatabaseEngine,
 	isDatabaseHost,
 	isDirectoryConfig,
@@ -49,11 +47,12 @@ export const parseCommandLineOptions = () => {
 			html: { type: 'string' },
 			'html-script': { type: 'boolean' },
 			htmx: { type: 'string' },
+			install: { type: 'boolean' },
 			lts: { default: false, type: 'boolean' },
-			npm: { type: 'boolean' },
 			orm: { type: 'string' },
 			plugin: { multiple: true, type: 'string' },
-			quality: { type: 'string' },
+			'eslint+prettier': { type: 'boolean' },
+			biome: { type: 'boolean' },
 			react: { type: 'string' },
 			skip: { type: 'boolean' },
 			svelte: { type: 'string' },
@@ -114,13 +113,15 @@ export const parseCommandLineOptions = () => {
 		orm = 'none';
 	}
 
-	const codeQualityTool = isCodeQualityTool(values.quality)
-		? values.quality
-		: undefined;
-	if (values.quality !== undefined && codeQualityTool === undefined) {
-		errors.push(
-			`Invalid code quality tool: "${values.quality}". Expected: [ ${availableCodeQualityTools.join(', ')} ]`
-		);
+	const useESLintPrettier = values['eslint+prettier'];
+	const useBiome = values.biome;
+	let codeQualityTool: 'eslint+prettier' | 'biome' | undefined;
+	if (useESLintPrettier) {
+		codeQualityTool = 'eslint+prettier';
+	} else if (useBiome) {
+		codeQualityTool = 'biome';
+	} else {
+		codeQualityTool = undefined;
 	}
 
 	const directoryConfig =
@@ -222,7 +223,7 @@ export const parseCommandLineOptions = () => {
 		frontendDirectories,
 		frontends: values.frontend?.filter(isFrontend),
 		initializeGitNow: values.git,
-		installDependenciesNow: values.npm,
+		installDependenciesNow: values.install,
 		orm,
 		plugins,
 		projectName,
