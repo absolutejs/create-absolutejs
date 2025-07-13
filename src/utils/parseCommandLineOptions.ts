@@ -47,7 +47,7 @@ export const parseCommandLineOptions = () => {
 			host: { type: 'string' },
 			html: { type: 'boolean' },
 			'html-dir': { type: 'string' },
-			'html-script': { type: 'boolean' },
+			'html-scripts': { type: 'boolean' },
 			htmx: { type: 'boolean' },
 			'htmx-dir': { type: 'string' },
 			install: { type: 'boolean' },
@@ -233,7 +233,7 @@ export const parseCommandLineOptions = () => {
 		plugins,
 		projectName,
 		tailwind,
-		useHTMLScripts: values['html-script'],
+		useHTMLScripts: values['html-scripts'],
 		useTailwind
 	};
 

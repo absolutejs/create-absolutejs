@@ -27,7 +27,7 @@ Options:
   ${cyan('--host')} ${dim(cyan('<host>'))}                   Database host provider (neon | planetscale | supabase | turso | vercel | upstash | atlas) or 'none'
   ${cyan('--html')}                          Include a plain HTML frontend
   ${cyan('--html-dir')} ${dim(cyan('<dir>'))}                Specify the directory for and use the HTML frontend
-  ${cyan('--html-script')}                   Enable experimental HTML scripting with TypeScript
+  ${cyan('--html-scripts')}                   Enable HTML scripting with TypeScript
   ${cyan('--htmx')}                          Include an HTMX frontend
   ${cyan('--htmx-dir')} ${dim(cyan('<dir>'))}                Specify the directory for and use the HTMX frontend
   ${cyan('--install')}                       Use the same package manager to install dependencies

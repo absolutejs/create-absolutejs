@@ -90,8 +90,8 @@ Usage: create-absolute [project-name] [options]
 - `--html-dir <dir>`  
   Specify the directory for and use the HTML frontend.
 
-- `--html-script`  
-  Enable experimental HTML scripting with TypeScript.
+- `--html-scripts`  
+  Enable HTML scripting with TypeScript.
 
 - `--htmx`  
   Include an HTMX frontend.
