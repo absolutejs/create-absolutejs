@@ -202,10 +202,10 @@ export const createServerFile = ({
 						acc.indexRoute = `.get('/', () => ${handler})`;
 					}
 					acc.otherRoutes.push(
+						`.get('/htmx', () => ${handler})`,
 						`.post('/htmx/reset', ({ resetScopedStore }) => resetScopedStore())`,
 						`.get('/htmx/count', ({ scopedStore }) => scopedStore.count)`,
-						`.post('/htmx/increment', ({ scopedStore }) => ++scopedStore.count)`,
-						`.get('htmx', () => ${handler})`
+						`.post('/htmx/increment', ({ scopedStore }) => ++scopedStore.count)`
 					);
 
 					return acc;
@@ -216,7 +216,7 @@ export const createServerFile = ({
 			if (index === 0) {
 				acc.indexRoute = `.get('/', () => ${handler})`;
 			}
-			acc.otherRoutes.push(`.get('${frameworkName}', () => ${handler})`);
+			acc.otherRoutes.push(`.get('/${frameworkName}', () => ${handler})`);
 
 			return acc;
 		},

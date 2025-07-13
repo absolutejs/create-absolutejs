@@ -2,6 +2,7 @@ import { copyFileSync, cpSync, mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { ScaffoldFrontendProps } from '../../types';
 import { generateMarkupCSS } from '../project/generateMarkupCSS';
+import { generateHTMLPage } from './generateHTMLPage';
 
 type ScaffoldHTMLProps = ScaffoldFrontendProps & {
 	useHTMLScripts: boolean;
@@ -10,6 +11,7 @@ type ScaffoldHTMLProps = ScaffoldFrontendProps & {
 export const scaffoldHTML = ({
 	isSingleFrontend,
 	targetDirectory,
+	frontends,
 	useHTMLScripts,
 	templatesDirectory,
 	projectAssetsDirectory
@@ -18,7 +20,15 @@ export const scaffoldHTML = ({
 		join(templatesDirectory, 'assets', 'svg', 'HTML5_Badge.svg'),
 		join(projectAssetsDirectory, 'svg', 'HTML5_Badge.svg')
 	);
-	cpSync(join(templatesDirectory, 'html'), targetDirectory, {
+
+	const htmlPage = generateHTMLPage(frontends);
+	const pagesDirectory = join(targetDirectory, 'pages');
+	mkdirSync(pagesDirectory, { recursive: true });
+	const htmlFilePath = join(pagesDirectory, 'HTMLExample.html');
+	writeFileSync(htmlFilePath, htmlPage, 'utf-8');
+
+	const scriptsDirectory = join(targetDirectory, 'scripts');
+	cpSync(join(templatesDirectory, 'html', 'scripts'), scriptsDirectory, {
 		recursive: true
 	});
 
@@ -26,6 +36,6 @@ export const scaffoldHTML = ({
 	mkdirSync(cssOutputDir, { recursive: true });
 
 	const cssOutputFile = join(cssOutputDir, 'html-example.css');
-	const htmlCSS = generateMarkupCSS(isSingleFrontend);
+	const htmlCSS = generateMarkupCSS('html', '#e34f26', isSingleFrontend);
 	writeFileSync(cssOutputFile, htmlCSS, 'utf-8');
 };

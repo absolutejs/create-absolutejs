@@ -1,10 +1,12 @@
 import { copyFileSync, cpSync, mkdirSync, writeFileSync } from 'fs';
 import { join } from 'path';
 import { ScaffoldFrontendProps } from '../../types';
+import { generateSveltePage } from './generateSveltePage';
 
 export const scaffoldSvelte = ({
 	isSingleFrontend,
 	targetDirectory,
+	frontends,
 	templatesDirectory,
 	projectAssetsDirectory
 }: ScaffoldFrontendProps) => {
@@ -15,6 +17,12 @@ export const scaffoldSvelte = ({
 	cpSync(join(templatesDirectory, 'svelte'), targetDirectory, {
 		recursive: true
 	});
+
+	const sveltePage = generateSveltePage(frontends);
+	const pagesDirectory = join(targetDirectory, 'pages');
+	mkdirSync(pagesDirectory, { recursive: true });
+	const svelteFilePath = join(pagesDirectory, 'SvelteExample.svelte');
+	writeFileSync(svelteFilePath, sveltePage, 'utf-8');
 
 	const cssOutputDirectory = join(targetDirectory, 'styles');
 	mkdirSync(cssOutputDirectory, { recursive: true });

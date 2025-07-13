@@ -9,7 +9,7 @@ import { scaffoldVue } from '../vue/scaffoldVue';
 
 type ScaffoldFrontendsProps = Pick<
 	CreateConfiguration,
-	'useHTMLScripts' | 'frontendDirectories'
+	'useHTMLScripts' | 'frontendDirectories' | 'frontends'
 > & {
 	frontendDirectory: string;
 	templatesDirectory: string;
@@ -21,7 +21,8 @@ export const scaffoldFrontends = ({
 	templatesDirectory,
 	projectAssetsDirectory,
 	useHTMLScripts,
-	frontendDirectories
+	frontendDirectories,
+	frontends
 }: ScaffoldFrontendsProps) => {
 	const stylesTargetDirectory = join(frontendDirectory, 'styles');
 	cpSync(join(templatesDirectory, 'styles'), stylesTargetDirectory, {
@@ -52,6 +53,7 @@ export const scaffoldFrontends = ({
 		switch (frontendName) {
 			case 'react':
 				scaffoldReact({
+					frontends,
 					isSingleFrontend,
 					projectAssetsDirectory,
 					targetDirectory,
@@ -60,6 +62,7 @@ export const scaffoldFrontends = ({
 				break;
 			case 'svelte':
 				scaffoldSvelte({
+					frontends,
 					isSingleFrontend,
 					projectAssetsDirectory,
 					targetDirectory,
@@ -68,6 +71,7 @@ export const scaffoldFrontends = ({
 				break;
 			case 'vue':
 				scaffoldVue({
+					frontends,
 					projectAssetsDirectory,
 					targetDirectory,
 					templatesDirectory
@@ -80,6 +84,7 @@ export const scaffoldFrontends = ({
 				break;
 			case 'html':
 				scaffoldHTML({
+					frontends,
 					isSingleFrontend,
 					projectAssetsDirectory,
 					targetDirectory,
@@ -89,6 +94,7 @@ export const scaffoldFrontends = ({
 				break;
 			case 'htmx':
 				scaffoldHTMX({
+					frontends,
 					isSingleFrontend,
 					projectAssetsDirectory,
 					targetDirectory,

@@ -16,7 +16,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig([
 	{
-		ignores: ['dist/**', 'absolutejs-project/**']
+		ignores: ['dist/**', 'absolutejs-project/**', '**/*/htmx.*.min.js']
 	},
 
 	pluginJs.configs.recommended,
@@ -196,7 +196,8 @@ export default defineConfig([
 			'src/templates/configurations/.prettierrc.json',
 			'package.json',
 			'.prettierrc.json',
-			'src/templates/html/scripts/*'
+			'src/templates/html/scripts/*',
+			'tsconfig.build.json'
 		],
 		rules: {
 			'import/no-unused-modules': 'off'
@@ -208,7 +209,8 @@ export default defineConfig([
 			'src/templates/configurations/tsconfig.example.json',
 			'src/templates/configurations/.prettierrc.json',
 			'package.json',
-			'.prettierrc.json'
+			'.prettierrc.json',
+			'tsconfig.build.json'
 		],
 		rules: {
 			'@typescript-eslint/no-unused-expressions': 'off'

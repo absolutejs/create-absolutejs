@@ -25,6 +25,11 @@
 		"target": "ESNext",
 		"useDefineForClassFields": false
 	},
-	"exclude": ["node_modules", "dist", "absolutejs-project"],
+	"exclude": [
+		"node_modules",
+		"dist",
+		"absolutejs-project",
+		"src/templates/htmx/htmx.*.min.js"
+	],
 	"include": ["src/**/*"]
 }

@@ -1,4 +1,10 @@
-<script setup lang="ts">
+import { Frontend } from '../../types';
+import { formatNavLink } from '../../utils/formatNavLink';
+
+export const generateVuePage = (frontends: Frontend[]) => {
+	const navLinks = frontends.map(formatNavLink).join('\n\t\t\t');
+
+	return `<script setup lang="ts">
 import { ref } from 'vue';
 import CountButton from '../components/CountButton.vue';
 
@@ -20,12 +26,7 @@ const isOpen = ref(false);
 		>
 			<summary>Pages</summary>
 			<nav>
-				<a href="/html">HTML</a>
-				<a href="/react">React</a>
-				<a href="/htmx">HTMX</a>
-				<a href="/svelte">Svelte</a>
-				<a href="/vue">Vue</a>
-				<a href="/angular">Angular</a>
+				${navLinks}
 			</nav>
 		</details>
 	</header>
@@ -264,3 +265,5 @@ header details nav a {
 	}
 }
 </style>
+`;
+};

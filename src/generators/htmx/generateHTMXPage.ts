@@ -1,4 +1,10 @@
-<!doctype html>
+import { Frontend } from '../../types';
+import { formatNavLink } from '../../utils/formatNavLink';
+
+export const generateHTMXPage = (isSingle: boolean, frontends: Frontend[]) => {
+	const navLinks = frontends.map(formatNavLink).join('\n\t\t\t');
+
+	return `<!doctype html>
 <html>
 	<head>
 		<title>AbsoluteJS + HTMX</title>
@@ -11,8 +17,7 @@
 			href="../styles/htmx-example.css"
 		/>
 		<link rel="icon" href="/assets/ico/favicon.ico" />
-		<!-- TODO : Download htmx instead of from CDN -->
-		<script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.6/dist/htmx.min.js"></script>
+		<script src="${isSingle ? '' : '/htmx'}/htmx.min.js"></script>
 	</head>
 	<body
 		hx-post="/htmx/reset"
@@ -27,12 +32,7 @@
 			>
 				<summary>Pages</summary>
 				<nav>
-					<a href="/html">HTML</a>
-					<a href="/react">React</a>
-					<a href="/htmx">HTMX</a>
-					<a href="/svelte">Svelte</a>
-					<a href="/vue">Vue</a>
-					<a href="/angular">Angular</a>
+					${navLinks}
 				</nav>
 			</details>
 		</header>
@@ -90,3 +90,5 @@
 		</main>
 	</body>
 </html>
+`;
+};

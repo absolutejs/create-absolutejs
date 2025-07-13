@@ -13,6 +13,7 @@ export type ScaffoldFrontendProps = {
 	templatesDirectory: string;
 	projectAssetsDirectory: string;
 	isSingleFrontend: boolean;
+	frontends: Frontend[];
 };
 
 export type Frontend = (typeof availableFrontends)[number];

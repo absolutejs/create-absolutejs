@@ -1,4 +1,10 @@
-export const generateMarkupCSS = (isSingleFrontend: boolean) =>
+import { Frontend } from '../../types';
+
+export const generateMarkupCSS = (
+	frontend: Frontend,
+	color: string,
+	isSingleFrontend: boolean
+) =>
 	`@import url('${isSingleFrontend ? '../styles/reset.css' : '../../styles/reset.css'}');
 
 header {
@@ -50,8 +56,8 @@ h1 {
 	filter: drop-shadow(0 0 2rem #5fbeeb);
 }
 
-.logo.html:hover {
-	filter: drop-shadow(0 0 2rem #e34f26);
+.logo.${frontend}:hover {
+	filter: drop-shadow(0 0 2rem ${color});
 }
 
 nav {
@@ -131,4 +137,21 @@ header details nav a {
 		background-color: #ffffff;
 	}
 }
-`;
+${
+	frontend === 'react'
+		? `\n@keyframes logo-spin {
+	from {
+		transform: rotate(0deg);
+	}
+	to {
+		transform: rotate(360deg);
+	}
+}
+
+@media (prefers-reduced-motion: no-preference) {
+	a:nth-of-type(2) .logo {
+		animation: logo-spin infinite 20s linear;
+	}
+}`
+		: ''
+}`;

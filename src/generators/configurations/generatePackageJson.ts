@@ -45,6 +45,7 @@ export const createPackageJson = ({
 	const requiresSvelte = frontendDirectories['svelte'] !== undefined;
 	const requiresVue = frontendDirectories['vue'] !== undefined;
 	const requiresHtmx = frontendDirectories['htmx'] !== undefined;
+	const requiresHtml = frontendDirectories['html'] !== undefined;
 
 	for (const p of defaultPlugins) {
 		dependencies[p.value] = resolveVersion(p.value, p.latestVersion);
@@ -127,7 +128,7 @@ export const createPackageJson = ({
 
 	const scripts: PackageJson['scripts'] = {
 		dev: 'bun run --watch src/backend/server.ts',
-		format: `prettier --write "./**/*.{js,ts,css,json,mjs,md${requiresReact ? ',jsx,tsx' : ''}${requiresSvelte ? ',svelte' : ''}${requiresVue ? ',vue' : ''}}"`,
+		format: `prettier --write "./**/*.{js,ts,css,json,mjs,md${requiresReact ? ',jsx,tsx' : ''}${requiresSvelte ? ',svelte' : ''}${requiresVue ? ',vue' : ''}${requiresHtml || requiresHtmx ? ',html' : ''}}"`,
 		lint: 'eslint ./src',
 		test: 'echo "Error: no test specified" && exit 1',
 		typecheck: 'bun run tsc --noEmit'

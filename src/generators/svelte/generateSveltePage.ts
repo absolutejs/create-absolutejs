@@ -1,4 +1,10 @@
-<script lang="ts">
+import { Frontend } from '../../types';
+import { formatNavLink } from '../../utils/formatNavLink';
+
+export const generateSveltePage = (frontends: Frontend[]) => {
+	const navLinks = frontends.map(formatNavLink).join('\n\t\t\t');
+
+	return `<script lang="ts">
 	type SvelteExampleProps = {
 		initialCount: number;
 		cssPath: string;
@@ -22,7 +28,7 @@
 		crossOrigin="anonymous"
 	/>
 	<link
-		href={`https://fonts.googleapis.com/css2?family=Poppins:wght@100..900&display=swap`}
+		href={\`https://fonts.googleapis.com/css2?family=Poppins:wght@100..900&display=swap\`}
 		rel="stylesheet"
 	/>
 	<link rel="stylesheet" href={cssPath} type="text/css" />
@@ -37,12 +43,7 @@
 	>
 		<summary>Pages</summary>
 		<nav>
-			<a href="/html">HTML</a>
-			<a href="/react">React</a>
-			<a href="/htmx">HTMX</a>
-			<a href="/svelte">Svelte</a>
-			<a href="/vue">Vue</a>
-			<a href="/angular">Angular</a>
+			${navLinks}
 		</nav>
 	</details>
 </header>
@@ -213,3 +214,5 @@
 		}
 	}
 </style>
+`;
+};

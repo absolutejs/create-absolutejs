@@ -96,6 +96,7 @@ export const scaffold = ({
 	scaffoldFrontends({
 		frontendDirectories,
 		frontendDirectory,
+		frontends,
 		projectAssetsDirectory,
 		templatesDirectory,
 		useHTMLScripts
