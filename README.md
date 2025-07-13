@@ -168,6 +168,8 @@ bun install
 bun run dev
 ```
 
+If you downloaded this repository to test or make changes you can use `bun run test` to start the created dev server without having to change directories back and forth.
+
 ## Contributing
 
 Contributions are welcome! Feel free to open issues or submit pull requests to improve the CLI.
