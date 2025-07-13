@@ -8,7 +8,7 @@ import { addConfigurationFiles } from './generators/configurations/addConfigurat
 import { createPackageJson } from './generators/configurations/generatePackageJson';
 import { initalizeRoot } from './generators/configurations/initializeRoot';
 import { scaffoldDatabase } from './generators/db/scaffoldDatabase';
-import { createServerFile } from './generators/project/generateServer';
+import { generateServerFile } from './generators/project/generateServer';
 import { scaffoldFrontends } from './generators/project/scaffoldFrontends';
 import type { PackageManager, CreateConfiguration } from './types';
 
@@ -71,15 +71,14 @@ export const scaffold = ({
 		useTailwind
 	});
 
-	const serverFilePath = join(backendDirectory, 'server.ts');
-	createServerFile({
+	generateServerFile({
 		assetsDirectory,
 		authProvider,
 		availablePlugins,
+		backendDirectory,
 		buildDirectory,
 		frontendDirectories,
 		plugins,
-		serverFilePath,
 		tailwind
 	});
 
