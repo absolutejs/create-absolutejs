@@ -6,15 +6,13 @@ import {
 	availableDatabaseEngines,
 	availableDatabaseHosts,
 	availableDirectoryConfigurations,
-	availableORMs,
-	availableFrontends
+	availableORMs
 } from '../data';
 import {
 	isAuthProvider,
 	isDatabaseEngine,
 	isDatabaseHost,
 	isDirectoryConfig,
-	isFrontend,
 	isORM
 } from '../typeGuards';
 import type {
@@ -22,6 +20,7 @@ import type {
 	AuthProvider,
 	DatabaseEngine,
 	DatabaseHost,
+	Frontend,
 	FrontendDirectories,
 	ORM
 } from '../types';
@@ -32,34 +31,39 @@ export const parseCommandLineOptions = () => {
 		allowPositionals: true,
 		args: argv.slice(DEFAULT_ARG_LENGTH),
 		options: {
-			angular: { type: 'string' },
+			angular: { type: 'boolean' },
+			'angular-dir': { type: 'string' },
 			assets: { type: 'string' },
 			auth: { type: 'string' },
+			biome: { type: 'boolean' },
 			build: { type: 'string' },
 			database: { type: 'string' },
 			debug: { default: false, short: 'd', type: 'boolean' },
 			directory: { type: 'string' },
 			engine: { type: 'string' },
-			frontend: { multiple: true, type: 'string' },
+			'eslint+prettier': { type: 'boolean' },
 			git: { type: 'boolean' },
 			help: { default: false, short: 'h', type: 'boolean' },
 			host: { type: 'string' },
-			html: { type: 'string' },
+			html: { type: 'boolean' },
+			'html-dir': { type: 'string' },
 			'html-script': { type: 'boolean' },
-			htmx: { type: 'string' },
+			htmx: { type: 'boolean' },
+			'htmx-dir': { type: 'string' },
 			install: { type: 'boolean' },
 			lts: { default: false, type: 'boolean' },
 			orm: { type: 'string' },
 			plugin: { multiple: true, type: 'string' },
-			'eslint+prettier': { type: 'boolean' },
-			biome: { type: 'boolean' },
-			react: { type: 'string' },
+			react: { type: 'boolean' },
+			'react-dir': { type: 'string' },
 			skip: { type: 'boolean' },
-			svelte: { type: 'string' },
+			svelte: { type: 'boolean' },
+			'svelte-dir': { type: 'string' },
 			tailwind: { type: 'boolean' },
 			'tailwind-input': { type: 'string' },
 			'tailwind-output': { type: 'string' },
-			vue: { type: 'string' }
+			vue: { type: 'boolean' },
+			'vue-dir': { type: 'string' }
 		}
 	});
 
@@ -115,6 +119,7 @@ export const parseCommandLineOptions = () => {
 
 	const useESLintPrettier = values['eslint+prettier'];
 	const useBiome = values.biome;
+
 	let codeQualityTool: 'eslint+prettier' | 'biome' | undefined;
 	if (useESLintPrettier) {
 		codeQualityTool = 'eslint+prettier';
@@ -131,13 +136,6 @@ export const parseCommandLineOptions = () => {
 	if (values.directory !== undefined && directoryConfig === undefined) {
 		errors.push(
 			`Invalid directory configuration: "${values.directory}". Expected: [ ${availableDirectoryConfigurations.join(', ')} ]`
-		);
-	}
-
-	for (const f of values.frontend || []) {
-		if (isFrontend(f)) continue;
-		errors.push(
-			`Invalid frontend: "${f}". Expected: [ ${availableFrontends.join(', ')} ]`
 		);
 	}
 
@@ -166,23 +164,33 @@ export const parseCommandLineOptions = () => {
 		databaseDirectory = undefined;
 	}
 
-	const frontendsWithDirectory = availableFrontends.filter(
-		(f) => values[f] !== undefined
-	);
+	const selectedFrontends: Frontend[] = [];
+	// if (values.angular) selectedFrontends.push('angular')
+	if (values.html) selectedFrontends.push('html');
+	if (values.htmx) selectedFrontends.push('htmx');
+	if (values.react) selectedFrontends.push('react');
+	if (values.svelte) selectedFrontends.push('svelte');
+	if (values.vue) selectedFrontends.push('vue');
 
 	const frontendDirectories: FrontendDirectories = {};
-	for (const frontend of frontendsWithDirectory) {
-		frontendDirectories[frontend] = values[frontend]!;
+	// if (values['angular-dir'] !== undefined) {
+	// 	frontendDirectories.angular = values['angular-dir']
+	// }
+	if (values['html-dir'] !== undefined) {
+		frontendDirectories.html = values['html-dir'];
 	}
-
-	const originalFrontends = values.frontend;
-	const collector = new Set<string>(originalFrontends ?? []);
-
-	for (const frontend of frontendsWithDirectory) {
-		collector.add(frontend);
+	if (values['htmx-dir'] !== undefined) {
+		frontendDirectories.htmx = values['htmx-dir'];
 	}
-
-	values.frontend = collector.size > 0 ? Array.from(collector) : undefined;
+	if (values['react-dir'] !== undefined) {
+		frontendDirectories.react = values['react-dir'];
+	}
+	if (values['svelte-dir'] !== undefined) {
+		frontendDirectories.svelte = values['svelte-dir'];
+	}
+	if (values['vue-dir'] !== undefined) {
+		frontendDirectories.vue = values['vue-dir'];
+	}
 
 	if (values.plugin === undefined && values.skip) {
 		values.plugin = ['none'];
@@ -195,10 +203,7 @@ export const parseCommandLineOptions = () => {
 		values['tailwind-output'] !== undefined;
 
 	let tailwind = hasTailwindFiles
-		? {
-				input: values['tailwind-input'],
-				output: values['tailwind-output']
-			}
+		? { input: values['tailwind-input'], output: values['tailwind-output'] }
 		: undefined;
 
 	const useTailwind =
@@ -221,7 +226,7 @@ export const parseCommandLineOptions = () => {
 		databaseHost,
 		directoryConfig,
 		frontendDirectories,
-		frontends: values.frontend?.filter(isFrontend),
+		frontends: selectedFrontends.length ? selectedFrontends : undefined,
 		initializeGitNow: values.git,
 		installDependenciesNow: values.install,
 		orm,

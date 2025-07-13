@@ -43,61 +43,103 @@ Usage: create-absolute [options] [project-name]
 ### Options
 
 - `--help`, `-h`  
-  Show the help message and exit.
+  Show this help message and exit.
+
 - `--debug`, `-d`  
   Display a summary of the project configuration after creation.
-- `--angular <name>`  
-  Directory name for an Angular frontend.
-- `--assets <name>`  
+
+- `--angular`  
+  Include an Angular frontend.
+
+- `--angular-dir <dir>`  
+  Specify the directory for and use the Angular frontend.
+
+- `--assets <dir>`  
   Directory name for your static assets.
-- `--auth <provider|none>`  
-  Preconfigured auth plugin or `none` to skip auth setup.
+
+- `--auth <plugin|none>`  
+  Pre-configured auth plugin (currently only `absolute-auth`) or `none`.
+
+- `--biome`  
+  Use Biome for code quality and formatting.
+
 - `--build <dir>`  
   Output directory for build artifacts.
-- `--database <name>`  
+
+- `--database <dir>`  
   Directory name for your database files.
+
 - `--directory <default|custom>`  
   Directory-naming strategy: `default` or `custom`.
+
 - `--engine <engine|none>`  
   Database engine (`postgresql` | `mysql` | `sqlite` | `mongodb` | `redis` | `singlestore` | `cockroachdb` | `mssql`) or `none`.
-- `--frontend <framework>`  
-  Frontend framework(s) to include: one or more of `react`, `svelte`, `html`, `htmx`, `vue`, `angular`.
+
+- `--eslint+prettier`  
+  Use ESLint + Prettier for code quality and formatting.
+
 - `--git`  
   Initialize a Git repository.
+
 - `--host <provider|none>`  
   Database host provider (`neon` | `planetscale` | `supabase` | `turso` | `vercel` | `upstash` | `atlas`) or `none`.
-- `--html <name>`  
-  Directory name for an HTML frontend.
-- `--htmx <name>`  
-  Directory name for an HTMX frontend.
-- `--lang <ts|js>`  
-  Language: `ts` or `js`.
+
+- `--html`  
+  Include a plain HTML frontend.
+
+- `--html-dir <dir>`  
+  Specify the directory for and use the HTML frontend.
+
+- `--html-script`  
+  Enable experimental HTML scripting with TypeScript.
+
+- `--htmx`  
+  Include an HTMX frontend.
+
+- `--htmx-dir <dir>`  
+  Specify the directory for and use the HTMX frontend.
+
+- `--install`  
+  Use the same package manager to install dependencies.
+
 - `--lts`  
-  Use the latest published versions of required packages.
-- `--npm`  
-  Use the package manager that invoked this command to install dependencies.
+  Use LTS versions of required packages.
+
 - `--orm <drizzle|prisma|none>`  
-  ORM to configure: `drizzle`, `prisma`, or `none`.
+  ORM to configure: `drizzle` | `prisma` | `none`.
+
 - `--plugin <plugin>`  
-  Elysia plugin(s) to include (can be specified multiple times), or `none` to skip plugins.
-- `--quality <eslint+prettier|biome>`  
-  Code quality tool: `eslint+prettier` or `biome`.
-- `--react <name>`  
-  Directory name for a React frontend.
-- `--script <ts|js|none>`  
-  HTML scripting option: `ts`, `js`, or `none`.
+  Elysia plugin(s) to include (repeatable); `none` skips plugin setup.
+
+- `--react`  
+  Include a React frontend.
+
+- `--react-dir <dir>`  
+  Specify the directory for and use the React frontend.
+
 - `--skip`  
-  Skip **all** non-required prompts and use `none` for every optional configuration.
-- `--svelte <name>`  
-  Directory name for a Svelte frontend.
+  Skip non-required prompts; uses `none` for all optional configs.
+
+- `--svelte`  
+  Include a Svelte frontend.
+
+- `--svelte-dir <dir>`  
+  Specify the directory for and use the Svelte frontend.
+
 - `--tailwind`  
   Include Tailwind CSS setup.
-- `--tailwind-input <path>`  
+
+- `--tailwind-input <file>`  
   Path to your Tailwind CSS entry file.
-- `--tailwind-output <path>`  
+
+- `--tailwind-output <file>`  
   Path for the generated Tailwind CSS bundle.
-- `--vue <name>`  
-  Directory name for a Vue frontend.
+
+- `--vue`  
+  Include a Vue frontend.
+
+- `--vue-dir <dir>`  
+  Specify the directory for and use the Vue frontend.
 
 ## Directory Configuration
 

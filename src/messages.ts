@@ -13,31 +13,37 @@ Options:
   ${cyan('--help, -h')}                      Show this help message and exit
   ${cyan('--debug, -d')}                     Display a summary of the project configuration after creation
 
-  ${cyan('--angular')} ${dim(cyan('<dir>'))}                 Directory name for an Angular frontend
+  ${cyan('--angular')}                       Include an Angular frontend
+  ${cyan('--angular-dir')} ${dim(cyan('<dir>'))}             Specify the directory for and use the Angular frontend
   ${cyan('--assets')} ${dim(cyan('<dir>'))}                  Directory name for your static assets
-  ${cyan('--auth')} ${dim(cyan('<plugin>'))}                 Preconfigured auth plugin (currently only "absolute-auth") or 'none' to skip auth setup
+  ${cyan('--auth')} ${dim(cyan('<plugin>'))}                 Pre-configured auth plugin (currently only "absolute-auth") or 'none'
+  ${cyan('--biome')}                         Use Biome for code quality and formatting
   ${cyan('--build')} ${dim(cyan('<dir>'))}                   Output directory for build artifacts
   ${cyan('--database')} ${dim(cyan('<dir>'))}                Directory name for your database files
   ${cyan('--directory')} ${dim(cyan('<mode>'))}              Directory-naming strategy: "default" or "custom"
-  ${cyan('--engine')} ${dim(cyan('<engine>'))}               Database engine (postgresql | mysql | sqlite | mongodb | redis | singlestore | cockroachdb | mssql) or 'none' to skip database setup
-  ${cyan('--frontend')} ${dim(cyan('<name>'))}               Frontend framework(s) to include: one or more of "react", "svelte", "html", "htmx", "vue", "angular"
+  ${cyan('--engine')} ${dim(cyan('<engine>'))}               Database engine (postgresql | mysql | sqlite | mongodb | redis | singlestore | cockroachdb | mssql) or 'none'
+  ${cyan('--eslint+prettier')}                   Use ESLint + Prettier for code quality and formatting
   ${cyan('--git')}                           Initialize a Git repository
-  ${cyan('--host')} ${dim(cyan('<host>'))}                   Database host provider (neon | planetscale | supabase | turso | vercel | upstash | atlas) or 'none' to skip database host setup
-  ${cyan('--html')} ${dim(cyan('<dir>'))}                    Directory name for an HTML frontend
-  ${cyan('--htmx')} ${dim(cyan('<dir>'))}                    Directory name for an HTMX frontend
-  ${cyan('--install')}                           Use the package manager that invoked this command to install dependencies
+  ${cyan('--host')} ${dim(cyan('<host>'))}                   Database host provider (neon | planetscale | supabase | turso | vercel | upstash | atlas) or 'none'
+  ${cyan('--html')}                          Include a plain HTML frontend
+  ${cyan('--html-dir')} ${dim(cyan('<dir>'))}                Specify the directory for and use the HTML frontend
+  ${cyan('--html-script')}                   Enable experimental HTML scripting with TypeScript
+  ${cyan('--htmx')}                          Include an HTMX frontend
+  ${cyan('--htmx-dir')} ${dim(cyan('<dir>'))}                Specify the directory for and use the HTMX frontend
+  ${cyan('--install')}                       Use the same package manager to install dependencies
   ${cyan('--lts')}                           Use LTS versions of required packages
-  ${cyan('--orm')} ${dim(cyan('<orm>'))}                     ORM to configure: "drizzle" or "prisma" or 'none' to skip ORM setup
-  ${cyan('--plugin')} ${dim(cyan('<plugin>'))}               Elysia plugin(s) to include (can be specified multiple times), passing 'none' will skip plugin setup and ignore any other plugin options
-  ${cyan('--quality')} ${dim(cyan('<tool>'))}                Code quality tool: "eslint+prettier" or "biome"
-  ${cyan('--react')} ${dim(cyan('<dir>'))}                   Directory name for a React frontend
-  ${cyan('--html-script')} ${dim(cyan('<option>'))}          Enable HTML scripting with TypeScript
-  ${cyan('--skip')}                          Skips non required prompts and uses 'none' for all optional configurations
-  ${cyan('--svelte')} ${dim(cyan('<dir>'))}                  Directory name for a Svelte frontend
+  ${cyan('--orm')} ${dim(cyan('<orm>'))}                     ORM to configure: "drizzle" | "prisma" | 'none'
+  ${cyan('--plugin')} ${dim(cyan('<plugin>'))}               Elysia plugin(s) to include (repeatable); 'none' skips plugin setup
+  ${cyan('--react')}                         Include a React frontend
+  ${cyan('--react-dir')} ${dim(cyan('<dir>'))}               Specify the directory for and use the React frontend
+  ${cyan('--skip')}                          Skip non-required prompts; uses 'none' for all optional configs
+  ${cyan('--svelte')}                        Include a Svelte frontend
+  ${cyan('--svelte-dir')} ${dim(cyan('<dir>'))}              Specify the directory for and use the Svelte frontend
   ${cyan('--tailwind')}                      Include Tailwind CSS setup
   ${cyan('--tailwind-input')} ${dim(cyan('<file>'))}         Path to your Tailwind CSS entry file
   ${cyan('--tailwind-output')} ${dim(cyan('<file>'))}        Path for the generated Tailwind CSS bundle
-  ${cyan('--vue')} ${dim(cyan('<dir>'))}                     Directory name for a Vue frontend
+  ${cyan('--vue')}                           Include a Vue frontend
+  ${cyan('--vue-dir')} ${dim(cyan('<dir>'))}                 Specify the directory for and use the Vue frontend
 `;
 
 type OutroMessageProps = {
