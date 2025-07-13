@@ -32,7 +32,7 @@ By default, the CLI will interactively prompt you for any missing configuration 
 ## Options
 
 ```text
-Usage: create-absolute [options] [project-name]
+Usage: create-absolute [project-name] [options]
 ```
 
 ### Arguments
