@@ -25,7 +25,7 @@ export const scaffold = async ({
 		codeQualityTool,
 		initializeGitNow,
 		databaseEngine,
-		// databaseHost,
+		databaseHost,
 		useHTMLScripts,
 		useTailwind,
 		databaseDirectory,
@@ -85,9 +85,13 @@ export const scaffold = async ({
 
 	void (
 		databaseDirectory !== undefined &&
+		databaseEngine !== 'none' &&
+		databaseEngine !== undefined &&
 		scaffoldDatabase({
+			authProvider,
 			databaseDirectory,
 			databaseEngine,
+			databaseHost,
 			orm,
 			projectName
 		})

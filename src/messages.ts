@@ -19,9 +19,9 @@ Options:
   ${cyan('--auth')} ${dim(cyan('<plugin>'))}                 Pre-configured auth plugin (currently only "absolute-auth") or 'none'
   ${cyan('--biome')}                         Use Biome for code quality and formatting
   ${cyan('--build')} ${dim(cyan('<directory>'))}             Output directory for build artifacts
-  ${cyan('--db')} ${dim(cyan('<engine>'))}                   Database engine (postgresql | mysql | sqlite | mongodb | redis | singlestore | cockroachdb | mssql) or 'none'
+  ${cyan('--db')} ${dim(cyan('<engine>'))}                   Database engine (postgresql | mysql | sqlite | mongodb | mariadb | gel | singlestore | cockroachdb | mssql) or 'none'
   ${cyan('--db-dir')} ${dim(cyan('<directory>'))}            Directory name for your database files
-  ${cyan('--db-host')} ${dim(cyan('<host>'))}                Database host provider (neon | planetscale | supabase | turso | vercel | upstash | atlas) or 'none'
+  ${cyan('--db-host')} ${dim(cyan('<host>'))}                Database host provider (neon | planetscale) or 'none'
   ${cyan('--directory')} ${dim(cyan('<mode>'))}              Directory-naming strategy: "default" or "custom"
   ${cyan('--eslint+prettier')}               Use ESLint + Prettier for code quality and formatting
   ${cyan('--git')}                           Initialize a Git repository

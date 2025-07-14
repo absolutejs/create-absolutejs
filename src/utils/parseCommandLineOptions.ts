@@ -6,14 +6,18 @@ import {
 	availableDatabaseEngines,
 	availableDatabaseHosts,
 	availableDirectoryConfigurations,
-	availableORMs
+	availableDrizzleDialects,
+	availableORMs,
+	availablePrismaDialects
 } from '../data';
 import {
 	isAuthProvider,
 	isDatabaseEngine,
 	isDatabaseHost,
 	isDirectoryConfig,
-	isORM
+	isDrizzleDialect,
+	isORM,
+	isPrismaDialect
 } from '../typeGuards';
 import type {
 	ArgumentConfiguration,
@@ -136,6 +140,50 @@ export const parseCommandLineOptions = () => {
 	if (values.directory !== undefined && directoryConfig === undefined) {
 		errors.push(
 			`Invalid directory configuration: "${values.directory}". Expected: [ ${availableDirectoryConfigurations.join(', ')} ]`
+		);
+	}
+
+	if (
+		values.orm === 'drizzle' &&
+		databaseEngine !== undefined &&
+		databaseEngine !== 'none' &&
+		!isDrizzleDialect(databaseEngine)
+	) {
+		errors.push(
+			`Invalid database engine for Drizzle ORM: "${databaseEngine}". Expected: [ ${availableDrizzleDialects.join(', ')} ]`
+		);
+	}
+
+	if (
+		values.orm === 'prisma' &&
+		databaseEngine !== undefined &&
+		databaseEngine !== 'none' &&
+		!isPrismaDialect(databaseEngine)
+	) {
+		errors.push(
+			`Invalid database engine for Prisma ORM: "${databaseEngine}". Expected: [ ${availablePrismaDialects.join(', ')} ]`
+		);
+	}
+
+	if (values['db-host'] === 'turso' && databaseEngine !== 'sqlite') {
+		errors.push(
+			`Invalid database engine for Turso: "${databaseEngine}". Expected: "sqlite".`
+		);
+	}
+
+	if (values['db-host'] === 'neon' && databaseEngine !== 'postgresql') {
+		errors.push(
+			`Invalid database engine for Neon: "${databaseEngine}". Expected: "postgresql".`
+		);
+	}
+
+	if (
+		values['db-host'] === 'planetscale' &&
+		databaseEngine !== 'postgresql' &&
+		databaseEngine !== 'mysql'
+	) {
+		errors.push(
+			`Invalid database engine for PlanetScale: "${databaseEngine}". Expected: "postgresql" or "mysql".`
 		);
 	}
 

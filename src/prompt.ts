@@ -54,7 +54,7 @@ export const prompt = async (argumentConfiguration: ArgumentConfiguration) => {
 	// 8. ORM choice
 	const orm =
 		databaseEngine !== undefined && databaseEngine !== 'none'
-			? (argumentConfiguration.orm ?? (await getORM()))
+			? (argumentConfiguration.orm ?? (await getORM(databaseEngine)))
 			: undefined;
 
 	// 9. Configuration type

@@ -10,12 +10,32 @@ export const availableFrontends = [
 	'htmx'
 ] as const;
 export const availableAuthProviders = ['absoluteAuth', 'none'] as const;
+
+export const availableDrizzleDialects = [
+	'gel',
+	'mysql',
+	'postgresql',
+	'sqlite',
+	'singlestore'
+] as const;
+
+export const availablePrismaDialects = [
+	'mysql',
+	'postgresql',
+	'sqlite',
+	'mongodb',
+	'mariadb',
+	'cockroachdb',
+	'mssql'
+] as const;
+
 export const availableDatabaseEngines = [
 	'postgresql',
 	'mysql',
 	'sqlite',
 	'mongodb',
-	'redis',
+	'mariadb',
+	'gel',
 	'singlestore',
 	'cockroachdb',
 	'mssql',
@@ -26,11 +46,7 @@ export const availableORMs = ['drizzle', 'prisma', 'none'] as const;
 export const availableDatabaseHosts = [
 	'neon',
 	'planetscale',
-	'supabase',
 	'turso',
-	'vercel',
-	'upstash',
-	'atlas',
 	'none'
 ] as const;
 export const availableCodeQualityTools = ['eslint+prettier', 'biome'] as const;

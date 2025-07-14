@@ -1,6 +1,13 @@
-import { frontendLabels } from './data';
+import {
+	availableDatabaseEngines,
+	availableDatabaseHosts,
+	availableDrizzleDialects,
+	availablePrismaDialects,
+	frontendLabels
+} from './data';
 import type {
 	AuthProvider,
+	AvailableDrizzleDialect,
 	CodeQualityTool,
 	DatabaseEngine,
 	DatabaseHost,
@@ -17,31 +24,23 @@ export const isDirectoryConfig = (
 	value: string
 ): value is 'default' | 'custom' => value === 'default' || value === 'custom';
 
+export const isDrizzleDialect = (
+	value: string
+): value is AvailableDrizzleDialect =>
+	availableDrizzleDialects.some((dialect) => dialect === value);
+
+export const isPrismaDialect = (value: string): value is string =>
+	availablePrismaDialects.some((dialect) => dialect === value);
+
 export const isDatabaseEngine = (
 	value: string | undefined
 ): value is DatabaseEngine =>
-	value === 'postgresql' ||
-	value === 'mysql' ||
-	value === 'sqlite' ||
-	value === 'mongodb' ||
-	value === 'redis' ||
-	value === 'singlestore' ||
-	value === 'cockroachdb' ||
-	value === 'mssql' ||
-	value === 'none' ||
-	value === undefined;
+	availableDatabaseEngines.some((engine) => engine === value);
 
 export const isDatabaseHost = (
 	value: string | undefined
 ): value is DatabaseHost =>
-	value === 'neon' ||
-	value === 'planetscale' ||
-	value === 'supabase' ||
-	value === 'turso' ||
-	value === 'vercel' ||
-	value === 'upstash' ||
-	value === 'atlas' ||
-	value === undefined;
+	availableDatabaseHosts.some((host) => host === value);
 
 export const isORM = (value: string | undefined): value is ORM =>
 	value === 'drizzle' || value === 'prisma' || value === undefined;

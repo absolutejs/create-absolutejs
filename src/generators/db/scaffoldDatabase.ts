@@ -1,32 +1,49 @@
-import { mkdirSync } from 'fs';
+import { mkdirSync, writeFileSync } from 'fs';
 import { join } from 'path';
 import { dim, yellow } from 'picocolors';
-import type { DatabaseEngine, ORM } from '../../types';
+import { isDrizzleDialect } from '../../typeGuards';
+import type { CreateConfiguration } from '../../types';
 import { createDrizzleConfig } from '../configurations/generateDrizzleConfig';
+import { generateDrizzleSchema } from './generateDrizzleSchema';
 
-type ScaffoldDatabaseProps = {
-	projectName: string;
-	orm: ORM;
-	databaseEngine: DatabaseEngine;
+type ScaffoldDatabaseProps = Pick<
+	CreateConfiguration,
+	| 'projectName'
+	| 'databaseHost'
+	| 'orm'
+	| 'databaseDirectory'
+	| 'authProvider'
+	| 'databaseEngine'
+> & {
 	databaseDirectory: string;
 };
 
 export const scaffoldDatabase = ({
 	projectName,
 	databaseEngine,
+	databaseHost,
 	databaseDirectory,
+	authProvider,
 	orm
 }: ScaffoldDatabaseProps) => {
-	mkdirSync(join(projectName, databaseDirectory), { recursive: true });
+	const projectDatabaseDirectory = join(projectName, databaseDirectory);
+	mkdirSync(projectDatabaseDirectory, { recursive: true });
 
-	if (databaseEngine !== 'postgresql' && databaseEngine !== 'none') {
-		console.warn(
-			`${dim('│')}\n${yellow('▲')}  Only PostgreSQL support is implemented so far`
-		);
-	}
+	if (
+		orm === 'drizzle' &&
+		databaseEngine !== undefined &&
+		isDrizzleDialect(databaseEngine)
+	) {
+		const drizzleSchema = generateDrizzleSchema({
+			authProvider,
+			databaseEngine,
+			databaseHost
+		});
+		const schemaFilePath = join(projectDatabaseDirectory, 'schema.ts');
+		writeFileSync(schemaFilePath, drizzleSchema);
+		createDrizzleConfig({ databaseDirectory, databaseEngine, projectName });
 
-	if (orm === 'drizzle') {
-		createDrizzleConfig({ databaseEngine, projectName });
+		return;
 	}
 
 	if (orm === 'prisma') {

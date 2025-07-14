@@ -1,4 +1,4 @@
-import { select, isCancel, confirm } from '@clack/prompts';
+import { select, isCancel } from '@clack/prompts';
 import { cyan } from 'picocolors';
 import type { DatabaseEngine } from '../types';
 import { abort } from '../utils/abort';
@@ -8,9 +8,9 @@ export const getDatabaseHost = async (databaseEngine: DatabaseEngine) => {
 		const databaseHost = await select({
 			message: 'Select database host:',
 			options: [
+				{ label: 'None', value: 'none' },
 				{ label: cyan('Neon'), value: 'neon' },
-				{ label: cyan('Supabase'), value: 'supabase' },
-				{ label: 'None', value: 'none' }
+				{ label: cyan('PlanetScale'), value: 'planetscale' }
 			]
 		});
 		if (isCancel(databaseHost)) abort();
@@ -18,40 +18,17 @@ export const getDatabaseHost = async (databaseEngine: DatabaseEngine) => {
 		return databaseHost === 'none' ? undefined : databaseHost;
 	}
 
-	if (databaseEngine === 'mysql') {
-		const databaseHost = await confirm({
-			message: 'Are you using PlanetScale?'
-		});
-		if (isCancel(databaseHost)) abort();
-
-		return databaseHost ? 'planetscale' : undefined;
-	}
-
 	if (databaseEngine === 'sqlite') {
-		const databaseHost = await confirm({
-			message: 'Are you using Turso?'
+		const databaseHost = await select({
+			message: 'Select database host:',
+			options: [
+				{ label: 'None', value: 'none' },
+				{ label: cyan('Turso'), value: 'turso' }
+			]
 		});
 		if (isCancel(databaseHost)) abort();
 
-		return databaseHost ? 'turso' : undefined;
-	}
-
-	if (databaseEngine === 'mongodb') {
-		const databaseHost = await confirm({
-			message: 'Are you using Atlas?'
-		});
-		if (isCancel(databaseHost)) abort();
-
-		return databaseHost ? 'atlas' : undefined;
-	}
-
-	if (databaseEngine === 'redis') {
-		const databaseHost = await confirm({
-			message: 'Are you using Upstash?'
-		});
-		if (isCancel(databaseHost)) abort();
-
-		return databaseHost ? 'upstash' : undefined;
+		return databaseHost === 'none' ? undefined : databaseHost;
 	}
 
 	return undefined;
