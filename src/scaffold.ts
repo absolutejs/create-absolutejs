@@ -78,7 +78,9 @@ export const scaffold = async ({
 		availablePlugins,
 		backendDirectory,
 		buildDirectory,
+		databaseHost,
 		frontendDirectories,
+		orm,
 		plugins,
 		tailwind
 	});

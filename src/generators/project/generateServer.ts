@@ -7,7 +7,11 @@ import {
 	defaultPlugins,
 	scopedStatePlugin
 } from '../../data';
-import type { AvailableDependency, CreateConfiguration } from '../../types';
+import type {
+	AvailableDependency,
+	CreateConfiguration,
+	Frontend
+} from '../../types';
 
 type CreateServerFileProps = Pick<
 	CreateConfiguration,
@@ -15,6 +19,8 @@ type CreateServerFileProps = Pick<
 	| 'authProvider'
 	| 'plugins'
 	| 'buildDirectory'
+	| 'databaseHost'
+	| 'orm'
 	| 'assetsDirectory'
 	| 'frontendDirectories'
 > & {
@@ -34,11 +40,13 @@ export const generateServerFile = ({
 }: CreateServerFileProps) => {
 	const serverFilePath = join(backendDirectory, 'server.ts');
 
-	const htmlDirectory = frontendDirectories['html'];
-	const reactDirectory = frontendDirectories['react'];
-	const svelteDirectory = frontendDirectories['svelte'];
-	const vueDirectory = frontendDirectories['vue'];
-	const htmxDirectory = frontendDirectories['htmx'];
+	const {
+		html: htmlDirectory,
+		react: reactDirectory,
+		svelte: svelteDirectory,
+		vue: vueDirectory,
+		htmx: htmxDirectory
+	} = frontendDirectories;
 
 	const requiresHtml = htmlDirectory !== undefined;
 	const requiresReact = reactDirectory !== undefined;
@@ -52,8 +60,8 @@ export const generateServerFile = ({
 		!requiresSvelte &&
 		!requiresVue;
 
-	const selectedCustomPlugins = availablePlugins.filter(
-		({ value }) => plugins.indexOf(value) !== UNFOUND_INDEX
+	const selectedCustomPlugins = availablePlugins.filter((plugin) =>
+		plugins.includes(plugin.value)
 	);
 	const authenticationPlugins =
 		authProvider === 'absoluteAuth' ? [absoluteAuthPlugin] : [];
@@ -68,198 +76,163 @@ export const generateServerFile = ({
 	];
 
 	const uniqueDependencies = Array.from(
-		new Map(
-			allDependencies.map((dependency) => [dependency.value, dependency])
-		).values()
+		new Map(allDependencies.map((dep) => [dep.value, dep])).values()
 	).sort((a, b) => a.value.localeCompare(b.value));
 
-	const importLines = uniqueDependencies.flatMap(({ value, imports }) => {
-		const filteredImports =
-			nonFrameworkOnly && imports
-				? imports.filter(({ packageName }) => packageName !== 'asset')
-				: imports;
+	const importStatements: string[] = [];
 
-		return filteredImports && filteredImports.length > 0
-			? [
-					`import { ${filteredImports
-						.map(({ packageName }) => packageName)
-						.join(', ')} } from '${value}';`
-				]
-			: [];
-	});
+	for (const dependency of uniqueDependencies) {
+		const items = dependency.imports ?? [];
+		const filteredItems = nonFrameworkOnly
+			? items.filter((item) => item.packageName !== 'asset')
+			: items;
 
-	const absoluteImportIdx = importLines.findIndex((line) =>
-		line.includes("from '@absolutejs/absolute'")
-	);
-	if (absoluteImportIdx !== UNFOUND_INDEX && importLines[absoluteImportIdx]) {
-		const existingItems = importLines[absoluteImportIdx]
-			.replace(/import\s*\{\s*|\}\s*from.*$/g, '')
-			.split(',')
-			.map((item) => item.trim())
-			.filter((value): value is string => value.length > 0);
+		if (!filteredItems.length) continue;
 
-		const additionalItems = [
-			requiresHtml &&
-				!existingItems.includes('handleHTMLPageRequest') &&
-				'handleHTMLPageRequest',
-			requiresReact &&
-				!existingItems.includes('handleReactPageRequest') &&
-				'handleReactPageRequest',
-			requiresSvelte &&
-				!existingItems.includes('handleSveltePageRequest') &&
-				'handleSveltePageRequest',
-			requiresVue &&
-				!existingItems.includes('handleVuePageRequest') &&
-				'handleVuePageRequest',
-			requiresVue &&
-				!existingItems.includes('generateHeadElement') &&
-				'generateHeadElement',
-			requiresHtmx &&
-				!existingItems.includes('handleHTMXPageRequest') &&
-				'handleHTMXPageRequest'
-		].filter((value): value is string => typeof value === 'string');
-
-		importLines[absoluteImportIdx] = `import { ${[
-			...existingItems,
-			...additionalItems
-		].join(', ')} } from '@absolutejs/absolute';`;
+		importStatements.push(
+			`import { ${filteredItems.map((i) => i.packageName).join(', ')} } from '${dependency.value}';`
+		);
 	}
 
-	if (reactDirectory !== undefined) {
-		const reactImportSource =
-			reactDirectory === ''
-				? '../frontend/pages/ReactExample'
-				: `../frontend/${reactDirectory}/pages/ReactExample`;
-		importLines.push(
-			`import { ReactExample } from '${reactImportSource}';`
+	const absoluteImportIndex = importStatements.findIndex((line) =>
+		line.includes("from '@absolutejs/absolute'")
+	);
+	const importStatementIndex = absoluteImportIndex;
+	const importLine = importStatements[importStatementIndex];
+
+	if (importStatementIndex !== UNFOUND_INDEX && importLine) {
+		const existingImports = importLine
+			.replace(/import\s*\{\s*|\}\s*from.*$/g, '')
+			.split(',')
+			.map((name) => name.trim())
+			.filter((name): name is string => Boolean(name));
+
+		const requiredImports = [
+			requiresHtml && 'handleHTMLPageRequest',
+			requiresReact && 'handleReactPageRequest',
+			requiresSvelte && 'handleSveltePageRequest',
+			requiresVue && 'handleVuePageRequest',
+			requiresVue && 'generateHeadElement',
+			requiresHtmx && 'handleHTMXPageRequest'
+		].filter((imp): imp is string => Boolean(imp));
+
+		const mergedImports = Array.from(
+			new Set([...existingImports, ...requiredImports])
 		);
+
+		importStatements[importStatementIndex] =
+			`import { ${mergedImports.join(', ')} } from '@absolutejs/absolute';`;
+	}
+
+	if (requiresReact) {
+		const path = reactDirectory
+			? `../frontend/${reactDirectory}/pages/ReactExample`
+			: '../frontend/pages/ReactExample';
+		importStatements.push(`import { ReactExample } from '${path}';`);
 	}
 
 	if (requiresSvelte) {
-		const svelteImportSource =
-			svelteDirectory === ''
-				? '../frontend/pages/SvelteExample'
-				: `../frontend/${svelteDirectory}/pages/SvelteExample`;
-		importLines.push(
-			`import SvelteExample from '${svelteImportSource}.svelte';`
-		);
+		const path = svelteDirectory
+			? `../frontend/${svelteDirectory}/pages/SvelteExample.svelte`
+			: '../frontend/pages/SvelteExample.svelte';
+		importStatements.push(`import SvelteExample from '${path}';`);
 	}
 
 	if (requiresVue) {
-		const vueImportSource =
-			vueDirectory === ''
-				? '../frontend/pages/VueExample'
-				: `../frontend/${vueDirectory}/pages/VueExample`;
-		const vueImportLine = requiresSvelte
+		const path = vueDirectory
+			? `../frontend/${vueDirectory}/pages/VueExample.vue`
+			: '../frontend/pages/VueExample.vue';
+		const vueStatement = requiresSvelte
 			? `import { vueImports } from './utils/vueImporter';\n\nconst { VueExample } = vueImports;`
-			: `import VueExample from '${vueImportSource}.vue';`;
-		importLines.push(vueImportLine);
+			: `import VueExample from '${path}';`;
+		importStatements.push(vueStatement);
 	}
 
 	if (requiresVue && requiresSvelte) {
-		const vueImporter = `// This file is auto-generated by the AbsoluteJS project generator. 
-		// It is required to use Vue and Svelte together in the same project. 
-		// This is due to how the Vue Official plugin handles non .ts files.
-
-import VueExample from "../../frontend/vue/pages/VueExample.vue";
-
-export const vueImports = {
-	VueExample
-} as const;
-`;
-		const backendUtilsDirectory = join(backendDirectory, 'utils');
-		mkdirSync(backendUtilsDirectory, { recursive: true });
+		const utilsDir = join(backendDirectory, 'utils');
+		mkdirSync(utilsDir, { recursive: true });
 		writeFileSync(
-			join(backendUtilsDirectory, 'vueImporter.ts'),
-			vueImporter
+			join(utilsDir, 'vueImporter.ts'),
+			`import VueExample from "../../frontend/vue/pages/VueExample.vue";
+
+export const vueImports = { VueExample } as const;
+`
 		);
 	}
 
 	const useStatements = uniqueDependencies
-		.flatMap(({ imports }) => imports ?? [])
-		.filter((entry) => entry.isPlugin)
-		.map((entry) => {
-			if (entry.config === undefined) return `.use(${entry.packageName})`;
-			if (entry.config === null) return `.use(${entry.packageName}())`;
+		.flatMap((dep) => dep.imports ?? [])
+		.filter((i) => i.isPlugin)
+		.map((i) => {
+			if (i.config === undefined) return `  .use(${i.packageName})`;
+			if (i.config === null) return `  .use(${i.packageName}())`;
 
-			return `.use(${entry.packageName}(${JSON.stringify(entry.config)}))`;
-		});
+			return `  .use(${i.packageName}(${JSON.stringify(i.config)}))`;
+		})
+		.join('\n');
 
+	const frontendEntries = Object.entries(frontendDirectories) as [
+		Frontend,
+		string
+	][];
 	const manifestOptions = [
 		`assetsDirectory: '${assetsDirectory}'`,
 		`buildDirectory: '${buildDirectory}'`,
-		...Object.entries(frontendDirectories).map(
-			([frameworkName, directory]) =>
-				`${frameworkName}Directory: 'src/frontend/${directory}'`
+		...frontendEntries.map(
+			([framework, dir]) => `${framework}Directory: 'src/frontend/${dir}'`
 		),
 		tailwind ? `tailwind: ${JSON.stringify(tailwind)}` : ''
 	].filter(Boolean);
 
-	const manifestDeclaration = `${
-		nonFrameworkOnly ? '' : 'const manifest = '
-	}await build({
+	const manifestDeclaration = `${nonFrameworkOnly ? '' : 'const manifest = '}await build({
   ${manifestOptions.join(',\n  ')}
 });`;
 
-	const routesData = Object.entries(frontendDirectories).reduce<{
-		indexRoute: string | null;
-		otherRoutes: string[];
-	}>(
-		(acc, [frameworkName, directory], index) => {
-			let handler;
+	const getHandler = (framework: Frontend, directory: string) => {
+		switch (framework) {
+			case 'html':
+				return `handleHTMLPageRequest(\`${buildDirectory}${directory ? `/${directory}` : ''}/pages/HTMLExample.html\`)`;
+			case 'react':
+				return `handleReactPageRequest(ReactExample, asset(manifest, 'ReactExampleIndex'), { initialCount: 0, cssPath: asset(manifest, 'ReactExampleCSS') })`;
+			case 'svelte':
+				return `handleSveltePageRequest(SvelteExample, asset(manifest, 'SvelteExample'), asset(manifest, 'SvelteExampleIndex'), { initialCount: 0, cssPath: asset(manifest, 'SvelteExampleCSS') })`;
+			case 'vue':
+				return `handleVuePageRequest(VueExample, asset(manifest, 'VueExample'), asset(manifest, 'VueExampleIndex'), generateHeadElement({ cssPath: asset(manifest, 'VueExampleCSS'), title: 'AbsoluteJS + Vue' }), { initialCount: 0 })`;
+			case 'htmx':
+				return `handleHTMXPageRequest(\`${buildDirectory}${directory ? `/${directory}` : ''}/pages/HTMXExample.html\`)`;
+			default:
+				return '';
+		}
+	};
 
-			switch (frameworkName) {
-				case 'html':
-					handler = `handleHTMLPageRequest(\`${buildDirectory}${directory ? `/${directory}` : ''}/pages/HTMLExample.html\`)`;
-					break;
-				case 'react':
-					handler = `handleReactPageRequest(ReactExample, asset(manifest, 'ReactExampleIndex'), { initialCount: 0, cssPath: asset(manifest, 'ReactExampleCSS') })`;
-					break;
-				case 'svelte':
-					handler = `handleSveltePageRequest(SvelteExample, asset(manifest, 'SvelteExample'), asset(manifest, 'SvelteExampleIndex'), { initialCount: 0, cssPath: asset(manifest, 'SvelteExampleCSS') })`;
-					break;
-				case 'vue':
-					handler = `handleVuePageRequest(VueExample, asset(manifest, 'VueExample'), asset(manifest, 'VueExampleIndex'), generateHeadElement({ cssPath: asset(manifest, 'VueExampleCSS'), title: 'AbsoluteJS + Vue' }), { initialCount: 0 })`;
-					break;
-				case 'htmx':
-					handler = `handleHTMXPageRequest(\`${buildDirectory}${directory ? `/${directory}` : ''}/pages/HTMXExample.html\`)`;
-					if (index === 0) {
-						acc.indexRoute = `.get('/', () => ${handler})`;
-					}
-					acc.otherRoutes.push(
-						`.get('/htmx', () => ${handler})`,
-						`.post('/htmx/reset', ({ resetScopedStore }) => resetScopedStore())`,
-						`.get('/htmx/count', ({ scopedStore }) => scopedStore.count)`,
-						`.post('/htmx/increment', ({ scopedStore }) => ++scopedStore.count)`
-					);
+	let indexRoute = '';
+	const otherRoutes: string[] = [];
 
-					return acc;
-				default:
-					return acc;
-			}
+	frontendEntries.forEach(([framework, dir], idx) => {
+		const handlerCall = getHandler(framework, dir);
+		if (idx === 0) {
+			indexRoute = `.get('/', () => ${handlerCall})`;
+		}
+		if (framework === 'htmx') {
+			otherRoutes.push(
+				`.get('/htmx', () => ${handlerCall})`,
+				`.post('/htmx/reset', ({ resetScopedStore }) => resetScopedStore())`,
+				`.get('/htmx/count', ({ scopedStore }) => scopedStore.count)`,
+				`.post('/htmx/increment', ({ scopedStore }) => ++scopedStore.count)`
+			);
+		} else {
+			otherRoutes.push(`.get('/${framework}', () => ${handlerCall})`);
+		}
+	});
 
-			if (index === 0) {
-				acc.indexRoute = `.get('/', () => ${handler})`;
-			}
-			acc.otherRoutes.push(`.get('/${frameworkName}', () => ${handler})`);
+	const routes = [indexRoute, ...otherRoutes].filter(Boolean).join('\n  ');
 
-			return acc;
-		},
-		{ indexRoute: null, otherRoutes: [] }
-	);
-
-	const routes = [routesData.indexRoute ?? '', ...routesData.otherRoutes]
-		.filter(Boolean)
-		.join('\n  ');
-
-	const useLines = useStatements.map((s) => `  ${s}`).join('\n');
-
-	const serverFileContent = `${importLines.join('\n')}
+	const content = `${importStatements.join('\n')}
 
 ${manifestDeclaration}
 
 new Elysia()
-${useLines}
+${useStatements}
   ${routes}
   .on('error', (err) => {
     const { request } = err;
@@ -267,5 +240,5 @@ ${useLines}
   });
 `;
 
-	writeFileSync(serverFilePath, serverFileContent);
+	writeFileSync(serverFilePath, content);
 };
