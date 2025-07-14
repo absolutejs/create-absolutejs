@@ -51,10 +51,10 @@ Usage: create-absolute [project-name] [options]
 - `--angular`  
   Include an Angular frontend.
 
-- `--angular-dir <dir>`  
+- `--angular-dir <directory>`  
   Specify the directory for and use the Angular frontend.
 
-- `--assets <dir>`  
+- `--assets <directory>`  
   Directory name for your static assets.
 
 - `--auth <plugin|none>`  
@@ -63,17 +63,20 @@ Usage: create-absolute [project-name] [options]
 - `--biome`  
   Use Biome for code quality and formatting.
 
-- `--build <dir>`  
+- `--build <direrctory>`  
   Output directory for build artifacts.
 
-- `--database <dir>`  
+- `--db <engine|none>`  
+  Database engine (`postgresql` | `mysql` | `sqlite` | `mongodb` | `redis` | `singlestore` | `cockroachdb` | `mssql`) or `none`.
+
+- `--db-dir <directory>`  
   Directory name for your database files.
+
+- `--db-host <provider|none>`  
+  Database host provider (`neon` | `planetscale` | `supabase` | `turso` | `vercel` | `upstash` | `atlas`) or `none`.
 
 - `--directory <default|custom>`  
   Directory-naming strategy: `default` or `custom`.
-
-- `--engine <engine|none>`  
-  Database engine (`postgresql` | `mysql` | `sqlite` | `mongodb` | `redis` | `singlestore` | `cockroachdb` | `mssql`) or `none`.
 
 - `--eslint+prettier`  
   Use ESLint + Prettier for code quality and formatting.
@@ -81,13 +84,10 @@ Usage: create-absolute [project-name] [options]
 - `--git`  
   Initialize a Git repository.
 
-- `--host <provider|none>`  
-  Database host provider (`neon` | `planetscale` | `supabase` | `turso` | `vercel` | `upstash` | `atlas`) or `none`.
-
 - `--html`  
   Include a plain HTML frontend.
 
-- `--html-dir <dir>`  
+- `--html-dir <directory>`  
   Specify the directory for and use the HTML frontend.
 
 - `--html-scripts`  
@@ -96,7 +96,7 @@ Usage: create-absolute [project-name] [options]
 - `--htmx`  
   Include an HTMX frontend.
 
-- `--htmx-dir <dir>`  
+- `--htmx-dir <directory>`  
   Specify the directory for and use the HTMX frontend.
 
 - `--install`  
@@ -114,7 +114,7 @@ Usage: create-absolute [project-name] [options]
 - `--react`  
   Include a React frontend.
 
-- `--react-dir <dir>`  
+- `--react-dir <directory>`  
   Specify the directory for and use the React frontend.
 
 - `--skip`  
@@ -123,7 +123,7 @@ Usage: create-absolute [project-name] [options]
 - `--svelte`  
   Include a Svelte frontend.
 
-- `--svelte-dir <dir>`  
+- `--svelte-dir <directory>`  
   Specify the directory for and use the Svelte frontend.
 
 - `--tailwind`  
@@ -138,7 +138,7 @@ Usage: create-absolute [project-name] [options]
 - `--vue`  
   Include a Vue frontend.
 
-- `--vue-dir <dir>`  
+- `--vue-dir <directory>`  
   Specify the directory for and use the Vue frontend.
 
 ## Directory Configuration

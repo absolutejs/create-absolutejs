@@ -37,14 +37,14 @@ export const parseCommandLineOptions = () => {
 			auth: { type: 'string' },
 			biome: { type: 'boolean' },
 			build: { type: 'string' },
-			database: { type: 'string' },
+			db: { type: 'string' },
+			'db-dir': { type: 'string' },
+			'db-host': { type: 'string' },
 			debug: { default: false, short: 'd', type: 'boolean' },
 			directory: { type: 'string' },
-			engine: { type: 'string' },
 			'eslint+prettier': { type: 'boolean' },
 			git: { type: 'boolean' },
 			help: { default: false, short: 'h', type: 'boolean' },
-			host: { type: 'string' },
 			html: { type: 'boolean' },
 			'html-dir': { type: 'string' },
 			'html-scripts': { type: 'boolean' },
@@ -84,23 +84,23 @@ export const parseCommandLineOptions = () => {
 	}
 
 	let databaseEngine: DatabaseEngine;
-	if (values.engine !== undefined && !isDatabaseEngine(values.engine)) {
+	if (values.db !== undefined && !isDatabaseEngine(values.db)) {
 		errors.push(
-			`Invalid database engine: "${values.engine}". Expected: [ ${availableDatabaseEngines.join(', ')} ]`
+			`Invalid database engine: "${values.db}". Expected: [ ${availableDatabaseEngines.join(', ')} ]`
 		);
-	} else if (values.engine !== undefined) {
-		databaseEngine = values.engine;
+	} else if (values.db !== undefined) {
+		databaseEngine = values.db;
 	} else if (values.skip) {
 		databaseEngine = 'none';
 	}
 
 	let databaseHost: DatabaseHost;
-	if (values.host !== undefined && !isDatabaseHost(values.host)) {
+	if (values['db-host'] !== undefined && !isDatabaseHost(values['db-host'])) {
 		errors.push(
-			`Invalid database host: "${values.host}". Expected: [ ${availableDatabaseHosts.join(', ')} ]`
+			`Invalid database host: "${values['db-host']}". Expected: [ ${availableDatabaseHosts.join(', ')} ]`
 		);
-	} else if (values.host !== undefined) {
-		databaseHost = values.host;
+	} else if (values['db-host'] !== undefined) {
+		databaseHost = values['db-host'];
 	} else if (values.skip) {
 		databaseHost = 'none';
 	}
@@ -146,7 +146,7 @@ export const parseCommandLineOptions = () => {
 
 	if (databaseEngine === 'none' && databaseHost !== 'none') {
 		console.warn(
-			'Warning: Setting the database host without a database engine has no effect.'
+			'Warning: Setting the database host without setting a database engine has no effect.'
 		);
 	}
 
@@ -156,7 +156,7 @@ export const parseCommandLineOptions = () => {
 		);
 	}
 
-	let databaseDirectory = values.database;
+	let databaseDirectory = values['db-dir'];
 	if (databaseEngine === 'none' && databaseDirectory !== undefined) {
 		console.warn(
 			'Warning: Setting a database directory without a database engine has no effect.'
