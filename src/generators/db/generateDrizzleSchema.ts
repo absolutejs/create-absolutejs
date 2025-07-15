@@ -4,11 +4,8 @@ import {
 	DatabaseHost
 } from '../../types';
 
-type GenerateSchemaProps = {
-	databaseEngine: AvailableDrizzleDialect;
-	databaseHost: DatabaseHost;
-	authProvider: AuthProvider;
-};
+const JULIAN_DAY_UNIX_EPOCH_OFFSET = 2440587.5;
+const MILLIS_PER_DAY = 86400000;
 
 const DIALECTS = {
 	gel: {
@@ -59,9 +56,12 @@ export const generateDrizzleSchema = ({
 	databaseEngine,
 	databaseHost,
 	authProvider
-}: GenerateSchemaProps) => {
+}: {
+	databaseEngine: AvailableDrizzleDialect;
+	databaseHost: DatabaseHost;
+	authProvider: AuthProvider;
+}) => {
 	const cfg = DIALECTS[databaseEngine];
-
 	const intBuilder =
 		databaseEngine === 'mysql' || databaseEngine === 'singlestore'
 			? 'int'
@@ -74,8 +74,12 @@ export const generateDrizzleSchema = ({
 		authProvider === 'absoluteAuth'
 			? [...new Set([cfg.table, stringBuilder, timeBuilder, jsonBuilder])]
 			: [...new Set([cfg.table, intBuilder, timeBuilder])];
-
 	const builderImport = `import { ${builders.join(', ')} } from 'drizzle-orm/${cfg.pkg}';`;
+
+	let importBlock = [
+		`import { sql } from 'drizzle-orm';`,
+		builderImport
+	].join('\n');
 
 	let dbImport = '';
 	let dbTypeLine = '';
@@ -90,8 +94,7 @@ export const generateDrizzleSchema = ({
 		dbImport = `import { LibSQLDatabase } from 'drizzle-orm/libsql';`;
 		dbTypeLine = 'export type DatabaseType = LibSQLDatabase<SchemaType>;';
 	}
-
-	const importBlock = [builderImport, dbImport].filter(Boolean).join('\n');
+	importBlock = [importBlock, dbImport].filter(Boolean).join('\n');
 
 	let uidColumn: string;
 	if (databaseEngine === 'mysql' || databaseEngine === 'singlestore') {
@@ -102,17 +105,22 @@ export const generateDrizzleSchema = ({
 		uidColumn = `integer('uid').primaryKey().generatedAlwaysAsIdentity()`;
 	}
 
+	const timestampColumn =
+		databaseEngine === 'sqlite'
+			? `${cfg.time}.notNull().default(sql\`(julianday('now') - \${JULIAN_DAY_UNIX_EPOCH_OFFSET}) * \${MILLIS_PER_DAY}\`)`
+			: `${cfg.time}.notNull().defaultNow()`;
+
 	const tableBlock =
 		authProvider === 'absoluteAuth'
 			? `export const users = ${cfg.table}('users', {
   auth_sub: ${cfg.string}.primaryKey(),
-  created_at: ${cfg.time}.notNull().defaultNow(),
+  created_at: ${timestampColumn},
   metadata: ${cfg.json}.$type<Record<string, unknown>>().default({})
 });`
 			: `export const countHistory = ${cfg.table}('count_history', {
   uid: ${uidColumn},
   count: ${intBuilder}('count').notNull(),
-  created_at: ${cfg.time}.notNull().defaultNow()
+  created_at: ${timestampColumn}
 });`;
 
 	const schemaKey =
@@ -125,6 +133,9 @@ export type NewUser = typeof users.$inferInsert;`
 export type NewCountHistory = typeof countHistory.$inferInsert;`;
 
 	return `${importBlock}
+
+const JULIAN_DAY_UNIX_EPOCH_OFFSET = ${JULIAN_DAY_UNIX_EPOCH_OFFSET};
+const MILLIS_PER_DAY = ${MILLIS_PER_DAY};
 
 ${tableBlock}
 
