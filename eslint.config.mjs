@@ -125,7 +125,11 @@ export default defineConfig([
 			'no-loop-func': 'error',
 			'no-magic-numbers': [
 				'warn',
-				{ detectObjects: false, enforceConst: true, ignore: [0, 1, 2] }
+				{
+					detectObjects: false,
+					enforceConst: true,
+					ignore: [0, 1, 2, -1]
+				}
 			],
 			'no-misleading-character-class': 'error',
 			'no-nested-ternary': 'error',

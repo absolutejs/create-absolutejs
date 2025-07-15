@@ -165,7 +165,12 @@ export const parseCommandLineOptions = () => {
 		);
 	}
 
-	if (values['db-host'] === 'turso' && databaseEngine !== 'sqlite') {
+	if (
+		values['db-host'] === 'turso' &&
+		(databaseEngine === undefined || databaseEngine === 'none')
+	) {
+		databaseEngine = 'sqlite';
+	} else if (values['db-host'] === 'turso' && databaseEngine !== 'sqlite') {
 		errors.push(
 			`Invalid database engine for Turso: "${databaseEngine}". Expected: "sqlite".`
 		);

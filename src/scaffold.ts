@@ -65,6 +65,7 @@ export const scaffold = async ({
 	createPackageJson({
 		authProvider,
 		codeQualityTool,
+		databaseHost,
 		frontendDirectories,
 		latest,
 		plugins,

@@ -1,12 +1,12 @@
 import { mkdirSync, writeFileSync } from 'fs';
 import { join } from 'path';
-import { UNFOUND_INDEX } from '../../constants';
 import {
 	absoluteAuthPlugin,
 	defaultDependencies,
 	defaultPlugins,
 	scopedStatePlugin
 } from '../../data';
+import { isFrontend } from '../../typeGuards';
 import type {
 	AvailableDependency,
 	CreateConfiguration,
@@ -31,12 +31,14 @@ type CreateServerFileProps = Pick<
 export const generateServerFile = ({
 	tailwind,
 	frontendDirectories,
+	databaseHost,
 	backendDirectory,
 	authProvider,
 	availablePlugins,
 	buildDirectory,
 	assetsDirectory,
-	plugins
+	plugins,
+	orm
 }: CreateServerFileProps) => {
 	const serverFilePath = join(backendDirectory, 'server.ts');
 
@@ -60,8 +62,8 @@ export const generateServerFile = ({
 		!requiresSvelte &&
 		!requiresVue;
 
-	const selectedCustomPlugins = availablePlugins.filter((plugin) =>
-		plugins.includes(plugin.value)
+	const selectedCustomPlugins = availablePlugins.filter((p) =>
+		plugins.includes(p.value)
 	);
 	const authenticationPlugins =
 		authProvider === 'absoluteAuth' ? [absoluteAuthPlugin] : [];
@@ -76,77 +78,109 @@ export const generateServerFile = ({
 	];
 
 	const uniqueDependencies = Array.from(
-		new Map(allDependencies.map((dep) => [dep.value, dep])).values()
+		new Map(allDependencies.map((d) => [d.value, d])).values()
 	).sort((a, b) => a.value.localeCompare(b.value));
 
-	const importStatements: string[] = [];
+	const rawImports: string[] = [];
 
-	for (const dependency of uniqueDependencies) {
-		const items = dependency.imports ?? [];
-		const filteredItems = nonFrameworkOnly
-			? items.filter((item) => item.packageName !== 'asset')
-			: items;
+	const handlerImports = [
+		[requiresHtml, 'handleHTMLPageRequest'],
+		[requiresReact, 'handleReactPageRequest'],
+		[requiresSvelte, 'handleSveltePageRequest'],
+		[requiresVue, 'handleVuePageRequest'],
+		[requiresHtmx, 'handleHTMXPageRequest']
+	];
 
-		if (!filteredItems.length) continue;
+	for (const [needed, name] of handlerImports) {
+		if (needed)
+			rawImports.push(`import { ${name} } from '@absolutejs/absolute';`);
+	}
 
-		importStatements.push(
-			`import { ${filteredItems.map((i) => i.packageName).join(', ')} } from '${dependency.value}';`
+	for (const dep of uniqueDependencies) {
+		const importsArr = dep.imports ?? [];
+		const filtered = nonFrameworkOnly
+			? importsArr.filter((i) => i.packageName !== 'asset')
+			: importsArr;
+		if (!filtered.length) continue;
+		rawImports.push(
+			`import { ${filtered
+				.map((i) => i.packageName)
+				.sort()
+				.join(', ')} } from '${dep.value}';`
 		);
 	}
 
-	const absoluteImportIndex = importStatements.findIndex((line) =>
-		line.includes("from '@absolutejs/absolute'")
-	);
-	const importStatementIndex = absoluteImportIndex;
-	const importLine = importStatements[importStatementIndex];
+	const drizzleHostImports = {
+		neon: [
+			`import { neon } from '@neondatabase/serverless';`,
+			`import { drizzle } from 'drizzle-orm/neon-http';`
+		],
+		planetscale: [
+			`import { connect } from '@planetscale/database';`,
+			`import { drizzle } from 'drizzle-orm/planetscale-serverless';`
+		],
+		turso: [
+			`import { createClient } from '@libsql/client';`,
+			`import { drizzle } from 'drizzle-orm/libsql';`
+		]
+	} as const;
 
-	if (importStatementIndex !== UNFOUND_INDEX && importLine) {
-		const existingImports = importLine
-			.replace(/import\s*\{\s*|\}\s*from.*$/g, '')
-			.split(',')
-			.map((name) => name.trim())
-			.filter((name): name is string => Boolean(name));
-
-		const requiredImports = [
-			requiresHtml && 'handleHTMLPageRequest',
-			requiresReact && 'handleReactPageRequest',
-			requiresSvelte && 'handleSveltePageRequest',
-			requiresVue && 'handleVuePageRequest',
-			requiresVue && 'generateHeadElement',
-			requiresHtmx && 'handleHTMXPageRequest'
-		].filter((imp): imp is string => Boolean(imp));
-
-		const mergedImports = Array.from(
-			new Set([...existingImports, ...requiredImports])
+	if (orm === 'drizzle') {
+		const hostImports =
+			databaseHost === 'neon' ||
+			databaseHost === 'planetscale' ||
+			databaseHost === 'turso'
+				? drizzleHostImports[databaseHost]
+				: [];
+		rawImports.push(
+			`import { Elysia, env } from 'elysia';`,
+			`import { schema } from '../../db/schema';`,
+			...hostImports
 		);
-
-		importStatements[importStatementIndex] =
-			`import { ${mergedImports.join(', ')} } from '@absolutejs/absolute';`;
 	}
 
-	if (requiresReact) {
-		const path = reactDirectory
-			? `../frontend/${reactDirectory}/pages/ReactExample`
-			: '../frontend/pages/ReactExample';
-		importStatements.push(`import { ReactExample } from '${path}';`);
+	const importMap = new Map<
+		string,
+		{ default: string | null; named: Set<string> }
+	>();
+
+	for (const stmt of rawImports) {
+		const match = stmt.match(/^import\s+(.+)\s+from\s+['"](.+)['"];/);
+		if (!match) continue;
+
+		const [, rawPart, rawPath] = match;
+		if (!rawPart || !rawPath) continue;
+
+		const entry = importMap.get(rawPath) ?? {
+			default: null,
+			named: new Set<string>()
+		};
+
+		const segments = rawPart.startsWith('{')
+			? rawPart
+					.slice(1, -1)
+					.split(',')
+					.map((t) => t.trim())
+					.filter((t) => t)
+			: [];
+
+		segments.forEach((name) => entry.named.add(name));
+
+		if (!rawPart.startsWith('{')) entry.default = rawPart.trim();
+
+		importMap.set(rawPath, entry);
 	}
 
-	if (requiresSvelte) {
-		const path = svelteDirectory
-			? `../frontend/${svelteDirectory}/pages/SvelteExample.svelte`
-			: '../frontend/pages/SvelteExample.svelte';
-		importStatements.push(`import SvelteExample from '${path}';`);
-	}
+	const importStatements = Array.from(importMap.entries())
+		.sort(([a], [b]) => a.localeCompare(b))
+		.map(([path, { default: def, named }]) => {
+			const parts: string[] = [];
+			if (def) parts.push(def);
+			if (named.size) parts.push(`{ ${[...named].sort().join(', ')} }`);
 
-	if (requiresVue) {
-		const path = vueDirectory
-			? `../frontend/${vueDirectory}/pages/VueExample.vue`
-			: '../frontend/pages/VueExample.vue';
-		const vueStatement = requiresSvelte
-			? `import { vueImports } from './utils/vueImporter';\n\nconst { VueExample } = vueImports;`
-			: `import VueExample from '${path}';`;
-		importStatements.push(vueStatement);
-	}
+			return `import ${parts.join(', ')} from '${path}';`;
+		})
+		.join('\n');
 
 	if (requiresVue && requiresSvelte) {
 		const utilsDir = join(backendDirectory, 'utils');
@@ -160,80 +194,94 @@ export const vueImports = { VueExample } as const;
 		);
 	}
 
-	const useStatements = uniqueDependencies
-		.flatMap((dep) => dep.imports ?? [])
+	const useStatementsArr = uniqueDependencies
+		.flatMap((d) => d.imports ?? [])
 		.filter((i) => i.isPlugin)
 		.map((i) => {
-			if (i.config === undefined) return `  .use(${i.packageName})`;
-			if (i.config === null) return `  .use(${i.packageName}())`;
+			if (i.config === undefined) return `.use(${i.packageName})`;
+			if (i.config === null) return `.use(${i.packageName}())`;
 
-			return `  .use(${i.packageName}(${JSON.stringify(i.config)}))`;
-		})
-		.join('\n');
+			return `.use(${i.packageName}(${JSON.stringify(i.config)}))`;
+		});
 
-	const frontendEntries = Object.entries(frontendDirectories) as [
-		Frontend,
-		string
-	][];
+	const useStatements = useStatementsArr.join('\n');
+
+	const frontendEntries = Object.entries(frontendDirectories);
+
 	const manifestOptions = [
 		`assetsDirectory: '${assetsDirectory}'`,
 		`buildDirectory: '${buildDirectory}'`,
 		...frontendEntries.map(
-			([framework, dir]) => `${framework}Directory: 'src/frontend/${dir}'`
+			([f, dir]) => `${f}Directory: 'src/frontend${dir ? `/${dir}` : ''}'`
 		),
 		tailwind ? `tailwind: ${JSON.stringify(tailwind)}` : ''
-	].filter(Boolean);
+	]
+		.filter(Boolean)
+		.join(',\n  ');
 
-	const manifestDeclaration = `${nonFrameworkOnly ? '' : 'const manifest = '}await build({
-  ${manifestOptions.join(',\n  ')}
+	const manifestDecl = `${nonFrameworkOnly ? '' : 'const manifest = '}await build({
+  ${manifestOptions}
 });`;
 
-	const getHandler = (framework: Frontend, directory: string) => {
-		switch (framework) {
+	const getHandler = (f: Frontend, dir: string) => {
+		switch (f) {
 			case 'html':
-				return `handleHTMLPageRequest(\`${buildDirectory}${directory ? `/${directory}` : ''}/pages/HTMLExample.html\`)`;
-			case 'react':
-				return `handleReactPageRequest(ReactExample, asset(manifest, 'ReactExampleIndex'), { initialCount: 0, cssPath: asset(manifest, 'ReactExampleCSS') })`;
-			case 'svelte':
-				return `handleSveltePageRequest(SvelteExample, asset(manifest, 'SvelteExample'), asset(manifest, 'SvelteExampleIndex'), { initialCount: 0, cssPath: asset(manifest, 'SvelteExampleCSS') })`;
-			case 'vue':
-				return `handleVuePageRequest(VueExample, asset(manifest, 'VueExample'), asset(manifest, 'VueExampleIndex'), generateHeadElement({ cssPath: asset(manifest, 'VueExampleCSS'), title: 'AbsoluteJS + Vue' }), { initialCount: 0 })`;
+				return `handleHTMLPageRequest(\`${buildDirectory}${dir ? `/${dir}` : ''}/pages/HTMLExample.html\`)`;
 			case 'htmx':
-				return `handleHTMXPageRequest(\`${buildDirectory}${directory ? `/${directory}` : ''}/pages/HTMXExample.html\`)`;
+				return `handleHTMXPageRequest(\`${buildDirectory}${dir ? `/${dir}` : ''}/pages/HTMXExample.html\`)`;
 			default:
 				return '';
 		}
 	};
 
-	let indexRoute = '';
-	const otherRoutes: string[] = [];
-
-	frontendEntries.forEach(([framework, dir], idx) => {
-		const handlerCall = getHandler(framework, dir);
-		if (idx === 0) {
-			indexRoute = `.get('/', () => ${handlerCall})`;
-		}
-		if (framework === 'htmx') {
-			otherRoutes.push(
+	const routes: string[] = [];
+	frontendEntries.forEach(([f, dir], i) => {
+		if (!isFrontend(f)) return;
+		const handlerCall = getHandler(f, dir);
+		if (i === 0) routes.push(`.get('/', () => ${handlerCall})`);
+		if (f === 'htmx') {
+			routes.push(
 				`.get('/htmx', () => ${handlerCall})`,
 				`.post('/htmx/reset', ({ resetScopedStore }) => resetScopedStore())`,
 				`.get('/htmx/count', ({ scopedStore }) => scopedStore.count)`,
 				`.post('/htmx/increment', ({ scopedStore }) => ++scopedStore.count)`
 			);
 		} else {
-			otherRoutes.push(`.get('/${framework}', () => ${handlerCall})`);
+			routes.push(`.get('/${f}', () => ${handlerCall})`);
 		}
 	});
 
-	const routes = [indexRoute, ...otherRoutes].filter(Boolean).join('\n  ');
+	const clientInitMap = {
+		neon: 'const sql = neon(env.DATABASE_URL);',
+		planetscale: 'const sql = connect({ url: env.DATABASE_URL });',
+		turso: 'const sql = createClient({ url: env.DATABASE_URL });'
+	} as const;
 
-	const content = `${importStatements.join('\n')}
+	let initLine;
+	if (databaseHost !== undefined && databaseHost !== 'none') {
+		initLine = clientInitMap[databaseHost];
+	} else {
+		initLine = undefined;
+	}
 
-${manifestDeclaration}
+	const dbSetup =
+		orm === 'drizzle' && initLine
+			? `
+if (env.DATABASE_URL === undefined) {
+	throw new Error('DATABASE_URL is not set in .env file');
+}
+${initLine}
+const db = drizzle(sql, { schema });
+`
+			: '';
 
+	const content = `${importStatements}
+
+${manifestDecl}
+${dbSetup}
 new Elysia()
 ${useStatements}
-  ${routes}
+  ${routes.join('\n  ')}
   .on('error', (err) => {
     const { request } = err;
     console.error(\`Server error on \${request.method} \${request.url}: \${err.message}\`);

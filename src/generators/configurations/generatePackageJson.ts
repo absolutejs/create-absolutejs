@@ -15,6 +15,7 @@ type CreatePackageJsonProps = Pick<
 	CreateConfiguration,
 	| 'authProvider'
 	| 'useTailwind'
+	| 'databaseHost'
 	| 'plugins'
 	| 'frontendDirectories'
 	| 'codeQualityTool'
@@ -27,6 +28,7 @@ export const createPackageJson = ({
 	projectName,
 	authProvider,
 	plugins,
+	databaseHost,
 	useTailwind,
 	latest,
 	frontendDirectories,
@@ -122,6 +124,27 @@ export const createPackageJson = ({
 			'elysia-scoped-state',
 			'0.1.1'
 		);
+	}
+
+	switch (databaseHost) {
+		case 'neon':
+			dependencies['@neondatabase/serverless'] = resolveVersion(
+				'@neondatabase/serverless',
+				'1.0.0'
+			);
+			break;
+		case 'planetscale':
+			dependencies['@planetscale/database'] = resolveVersion(
+				'@planetscale/database',
+				'1.0.0'
+			);
+			break;
+		case 'turso':
+			dependencies['@libsql/client'] = resolveVersion(
+				'@libsql/client',
+				'0.15.9'
+			);
+			break;
 	}
 
 	void (latest && s.stop(green('Package versions resolved')));
