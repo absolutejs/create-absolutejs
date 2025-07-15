@@ -4,9 +4,6 @@ import {
 	DatabaseHost
 } from '../../types';
 
-const JULIAN_DAY_UNIX_EPOCH_OFFSET = 2440587.5;
-const MILLIS_PER_DAY = 86400000;
-
 const DIALECTS = {
 	gel: {
 		builders: ['text', 'gelTable', 'timestamp', 'integer'],
@@ -50,17 +47,19 @@ const DIALECTS = {
 	}
 } as const;
 
+type GenerateSchemaProps = {
+	databaseEngine: AvailableDrizzleDialect;
+	databaseHost: DatabaseHost;
+	authProvider: AuthProvider;
+};
+
 const builder = (expr: string) => expr.split('(')[0];
 
 export const generateDrizzleSchema = ({
 	databaseEngine,
 	databaseHost,
 	authProvider
-}: {
-	databaseEngine: AvailableDrizzleDialect;
-	databaseHost: DatabaseHost;
-	authProvider: AuthProvider;
-}) => {
+}: GenerateSchemaProps) => {
 	const cfg = DIALECTS[databaseEngine];
 	const intBuilder =
 		databaseEngine === 'mysql' || databaseEngine === 'singlestore'
@@ -70,16 +69,19 @@ export const generateDrizzleSchema = ({
 	const jsonBuilder = builder(cfg.json);
 	const stringBuilder = builder(cfg.string);
 
-	const builders =
+	const importBuilders =
 		authProvider === 'absoluteAuth'
-			? [...new Set([cfg.table, stringBuilder, timeBuilder, jsonBuilder])]
-			: [...new Set([cfg.table, intBuilder, timeBuilder])];
-	const builderImport = `import { ${builders.join(', ')} } from 'drizzle-orm/${cfg.pkg}';`;
+			? [cfg.table, stringBuilder, timeBuilder, jsonBuilder]
+			: [cfg.table, intBuilder, timeBuilder];
+	const uniqueBuilders = Array.from(new Set(importBuilders));
+	const builderImport = `import { ${uniqueBuilders.join(
+		', '
+	)} } from 'drizzle-orm/${cfg.pkg}';`;
 
-	let importBlock = [
-		`import { sql } from 'drizzle-orm';`,
-		builderImport
-	].join('\n');
+	const sqliteImports =
+		databaseEngine === 'sqlite'
+			? `import { sql } from 'drizzle-orm';\n`
+			: '';
 
 	let dbImport = '';
 	let dbTypeLine = '';
@@ -94,7 +96,6 @@ export const generateDrizzleSchema = ({
 		dbImport = `import { LibSQLDatabase } from 'drizzle-orm/libsql';`;
 		dbTypeLine = 'export type DatabaseType = LibSQLDatabase<SchemaType>;';
 	}
-	importBlock = [importBlock, dbImport].filter(Boolean).join('\n');
 
 	let uidColumn: string;
 	if (databaseEngine === 'mysql' || databaseEngine === 'singlestore') {
@@ -104,6 +105,12 @@ export const generateDrizzleSchema = ({
 	} else {
 		uidColumn = `integer('uid').primaryKey().generatedAlwaysAsIdentity()`;
 	}
+
+	const constsBlock =
+		databaseEngine === 'sqlite'
+			? `const JULIAN_DAY_UNIX_EPOCH_OFFSET = 2440587.5;
+const MILLIS_PER_DAY = 86400000;\n\n`
+			: '';
 
 	const timestampColumn =
 		databaseEngine === 'sqlite'
@@ -132,18 +139,17 @@ export type NewUser = typeof users.$inferInsert;`
 			: `export type CountHistory = typeof countHistory.$inferSelect;
 export type NewCountHistory = typeof countHistory.$inferInsert;`;
 
-	return `${importBlock}
+	return `
+${sqliteImports}${builderImport}
+${dbImport}
 
-const JULIAN_DAY_UNIX_EPOCH_OFFSET = ${JULIAN_DAY_UNIX_EPOCH_OFFSET};
-const MILLIS_PER_DAY = ${MILLIS_PER_DAY};
-
-${tableBlock}
+${constsBlock}${tableBlock}
 
 export const schema = {
   ${schemaKey}
 };
 
 export type SchemaType = typeof schema;
-${dbTypeLine ? `${dbTypeLine}\n\n` : '\n'}
-${extraTypes}`;
+${dbTypeLine ? `${dbTypeLine}\n\n` : '\n'}${extraTypes}
+`;
 };
