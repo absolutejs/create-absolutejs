@@ -68,6 +68,7 @@ export const scaffold = async ({
 		databaseHost,
 		frontendDirectories,
 		latest,
+		orm,
 		plugins,
 		projectName,
 		useTailwind

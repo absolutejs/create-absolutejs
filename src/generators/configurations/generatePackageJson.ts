@@ -17,6 +17,7 @@ type CreatePackageJsonProps = Pick<
 	| 'useTailwind'
 	| 'databaseHost'
 	| 'plugins'
+	| 'orm'
 	| 'frontendDirectories'
 	| 'codeQualityTool'
 > & {
@@ -28,6 +29,7 @@ export const createPackageJson = ({
 	projectName,
 	authProvider,
 	plugins,
+	orm,
 	databaseHost,
 	useTailwind,
 	latest,
@@ -124,6 +126,10 @@ export const createPackageJson = ({
 			'elysia-scoped-state',
 			'0.1.1'
 		);
+	}
+
+	if (orm === 'drizzle') {
+		dependencies['drizzle-orm'] = resolveVersion('drizzle-orm', '0.41.0');
 	}
 
 	switch (databaseHost) {
