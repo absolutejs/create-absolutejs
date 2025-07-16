@@ -86,7 +86,7 @@ export const availablePlugins: AvailableDependency[] = [
 export const absoluteAuthPlugin: AvailableDependency = {
 	imports: [
 		{
-			config: { providersConfiguration: {} },
+			config: { config: {} },
 			isPlugin: true,
 			packageName: 'absoluteAuth'
 		}
