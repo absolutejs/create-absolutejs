@@ -88,6 +88,7 @@ export const generateServerFile = ({
 		[requiresReact, 'handleReactPageRequest'],
 		[requiresSvelte, 'handleSveltePageRequest'],
 		[requiresVue, 'handleVuePageRequest'],
+		[requiresVue, 'generateHeadElement'],
 		[requiresHtmx, 'handleHTMXPageRequest']
 	];
 
@@ -109,6 +110,21 @@ export const generateServerFile = ({
 				.join(', ')} } from '${dep.value}';`
 		);
 	}
+
+	if (requiresReact)
+		rawImports.push(
+			`import { ReactExample } from '../frontend/react/pages/ReactExample';`
+		);
+	if (requiresSvelte)
+		rawImports.push(
+			`import SvelteExample from '../frontend/svelte/pages/SvelteExample.svelte';`
+		);
+	if (requiresVue && !requiresSvelte)
+		rawImports.push(
+			`import VueExample from '../frontend/vue/pages/VueExample.vue';`
+		);
+	if (requiresVue && requiresSvelte)
+		rawImports.push(`import { vueImports } from './utils/vueImporter';`);
 
 	const drizzleHostImports = {
 		neon: [
@@ -155,20 +171,18 @@ export const generateServerFile = ({
 			default: null,
 			named: new Set<string>()
 		};
+		importMap.set(rawPath, entry);
 
-		const segments = rawPart.startsWith('{')
+		const names = rawPart.startsWith('{')
 			? rawPart
 					.slice(1, -1)
 					.split(',')
 					.map((t) => t.trim())
-					.filter((t) => t)
+					.filter(Boolean)
 			: [];
 
-		segments.forEach((name) => entry.named.add(name));
-
-		if (!rawPart.startsWith('{')) entry.default = rawPart.trim();
-
-		importMap.set(rawPath, entry);
+		names.forEach((name) => entry.named.add(name));
+		if (names.length === 0) entry.default = rawPart.trim();
 	}
 
 	const importStatements = Array.from(importMap.entries())
@@ -189,22 +203,24 @@ export const generateServerFile = ({
 			join(utilsDir, 'vueImporter.ts'),
 			`import VueExample from "../../frontend/vue/pages/VueExample.vue";
 
-export const vueImports = { VueExample } as const;
-`
+export const vueImports = { VueExample } as const;`
 		);
 	}
 
-	const useStatementsArr = uniqueDependencies
+	const useStatements = uniqueDependencies
 		.flatMap((d) => d.imports ?? [])
 		.filter((i) => i.isPlugin)
 		.map((i) => {
-			if (i.config === undefined) return `.use(${i.packageName})`;
-			if (i.config === null) return `.use(${i.packageName}())`;
+			if (i.config === undefined) {
+				return `.use(${i.packageName})`;
+			}
+			if (i.config === null) {
+				return `.use(${i.packageName}())`;
+			}
 
 			return `.use(${i.packageName}(${JSON.stringify(i.config)}))`;
-		});
-
-	const useStatements = useStatementsArr.join('\n');
+		})
+		.join('\n');
 
 	const frontendEntries = Object.entries(frontendDirectories);
 
@@ -219,16 +235,56 @@ export const vueImports = { VueExample } as const;
 		.filter(Boolean)
 		.join(',\n  ');
 
-	const manifestDecl = `${nonFrameworkOnly ? '' : 'const manifest = '}await build({
+	const manifestDecl = `${
+		nonFrameworkOnly ? '' : 'const manifest = '
+	}await build({
   ${manifestOptions}
 });`;
 
 	const getHandler = (f: Frontend, dir: string) => {
+		const base = `${buildDirectory}${dir ? `/${dir}` : ''}/pages`;
 		switch (f) {
 			case 'html':
-				return `handleHTMLPageRequest(\`${buildDirectory}${dir ? `/${dir}` : ''}/pages/HTMLExample.html\`)`;
+				return `handleHTMLPageRequest(\`${base}/HTMLExample.html\`)`;
 			case 'htmx':
-				return `handleHTMXPageRequest(\`${buildDirectory}${dir ? `/${dir}` : ''}/pages/HTMXExample.html\`)`;
+				return `handleHTMXPageRequest(\`${base}/HTMXExample.html\`)`;
+			case 'react':
+				return `handleReactPageRequest(
+					ReactExample,
+					asset(manifest, 'ReactExampleIndex'),
+					{ initialCount: 0, cssPath: asset(manifest, 'ReactExampleCSS') }
+				)`;
+			case 'svelte':
+				return `handleSveltePageRequest(
+					SvelteExample,
+					asset(manifest, 'SvelteExample'),
+					asset(manifest, 'SvelteExampleIndex'),
+					{ initialCount: 0, cssPath: asset(manifest, 'SvelteExampleCSS') }
+				)`;
+			case 'vue':
+				return requiresSvelte
+					? `handleVuePageRequest(
+						vueImports.VueExample,
+						asset(manifest, 'VueExample'),
+						asset(manifest, 'VueExampleIndex'),
+						generateHeadElement({
+							cssPath: asset(manifest, 'VueExampleCSS'),
+							title: 'AbsoluteJS + Vue',
+							description: 'A Vue.js example with AbsoluteJS'
+						}),
+						{ initialCount: 0 }
+					)`
+					: `handleVuePageRequest(
+						VueExample,
+						asset(manifest, 'VueExample'),
+						asset(manifest, 'VueExampleIndex'),
+						generateHeadElement({
+							cssPath: asset(manifest, 'VueExampleCSS'),
+							title: 'AbsoluteJS + Vue',
+							description: 'A Vue.js example with AbsoluteJS'
+						}),
+						{ initialCount: 0 }
+					)`;
 			default:
 				return '';
 		}
@@ -257,11 +313,9 @@ export const vueImports = { VueExample } as const;
 		turso: 'const sql = createClient({ url: env.DATABASE_URL });'
 	} as const;
 
-	let initLine;
-	if (databaseHost !== undefined && databaseHost !== 'none') {
+	let initLine: string | undefined;
+	if (databaseHost && databaseHost !== 'none') {
 		initLine = clientInitMap[databaseHost];
-	} else {
-		initLine = undefined;
 	}
 
 	const dbSetup =
