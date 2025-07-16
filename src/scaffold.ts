@@ -92,6 +92,7 @@ export const scaffold = async ({
 		databaseEngine !== undefined &&
 		scaffoldDatabase({
 			authProvider,
+			backendDirectory,
 			databaseDirectory,
 			databaseEngine,
 			databaseHost,
