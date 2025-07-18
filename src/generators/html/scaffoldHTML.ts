@@ -21,7 +21,7 @@ export const scaffoldHTML = ({
 		join(projectAssetsDirectory, 'svg', 'HTML5_Badge.svg')
 	);
 
-	const htmlPage = generateHTMLPage(frontends);
+	const htmlPage = generateHTMLPage(frontends, useHTMLScripts);
 	const pagesDirectory = join(targetDirectory, 'pages');
 	mkdirSync(pagesDirectory, { recursive: true });
 	const htmlFilePath = join(pagesDirectory, 'HTMLExample.html');

@@ -1,8 +1,15 @@
-import { Frontend } from '../../types';
+import { CreateConfiguration, Frontend } from '../../types';
 import { formatNavLink } from '../../utils/formatNavLink';
 
-export const generateHTMLPage = (frontends: Frontend[]) => {
+export const generateHTMLPage = (
+	frontends: Frontend[],
+	useHTMLScripts: CreateConfiguration['useHTMLScripts']
+) => {
 	const navLinks = frontends.map(formatNavLink).join('\n\t\t\t');
+	const initialCount = useHTMLScripts ? '0' : 'disabled';
+	const scriptTagBlock = useHTMLScripts
+		? `        <script src="../scripts/typescript-example.ts"></script>\n`
+		: '';
 
 	return `<!doctype html>
 <html>
@@ -47,7 +54,7 @@ export const generateHTMLPage = (frontends: Frontend[]) => {
             </nav>
             <h1>AbsoluteJS + HTML</h1>
             <button id="counter-button">
-                count is <span id="counter">0</span>
+                count is <span id="counter">${initialCount}</span>
             </button>
             <p>
                 Edit <code>example/html/pages/HtmlExample.html</code> save and
@@ -62,8 +69,7 @@ export const generateHTMLPage = (frontends: Frontend[]) => {
                 Click on the AbsoluteJS and HTML logos to learn more.
             </p>
         </main>
-        <script src="../scripts/typescript-example.ts"></script>
-    </body>
+${scriptTagBlock}    </body>
 </html>
 `;
 };

@@ -35,12 +35,10 @@ export const prompt = async (argumentConfiguration: ArgumentConfiguration) => {
 		) ?? (await getFrontends());
 
 	// 5. HTML scripting option (if HTML was selected)
-	const useHTMLScripts =
-		!frontends.includes('html') ||
-		argumentConfiguration.useHTMLScripts === undefined
-			? false
-			: (argumentConfiguration.useHTMLScripts ??
-				(await getHtmlScriptingOption()));
+	const useHTMLScripts = frontends.includes('html')
+		? (argumentConfiguration.useHTMLScripts ??
+			(await getHtmlScriptingOption()))
+		: false;
 
 	// 6. Database engine
 	const databaseEngine =
@@ -70,7 +68,7 @@ export const prompt = async (argumentConfiguration: ArgumentConfiguration) => {
 			useTailwind
 		});
 
-	// 11. Framework-specific directories
+	// 11. Framework specific directories
 	const frontendDirectories = await getFrontendDirectoryConfigurations(
 		directoryConfig,
 		frontends,
