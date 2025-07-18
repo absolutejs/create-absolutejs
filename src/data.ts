@@ -133,7 +133,7 @@ export const defaultPlugins: AvailableDependency[] = [
 			{ isPlugin: false, packageName: 'build' },
 			{ isPlugin: true, packageName: 'networking' }
 		],
-		latestVersion: '0.12.2',
+		latestVersion: '0.12.3',
 		value: '@absolutejs/absolute'
 	},
 	{

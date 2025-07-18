@@ -4,7 +4,6 @@ import { fileURLToPath } from 'node:url';
 import { formatProject } from './commands/formatProject';
 import { initializeGit } from './commands/initializeGit';
 import { installDependencies } from './commands/installDependencies';
-import { availablePlugins } from './data';
 import { addConfigurationFiles } from './generators/configurations/addConfigurationFiles';
 import { createPackageJson } from './generators/configurations/generatePackageJson';
 import { initalizeRoot } from './generators/configurations/initializeRoot';
@@ -77,7 +76,6 @@ export const scaffold = async ({
 	generateServerFile({
 		assetsDirectory,
 		authProvider,
-		availablePlugins,
 		backendDirectory,
 		buildDirectory,
 		databaseHost,
