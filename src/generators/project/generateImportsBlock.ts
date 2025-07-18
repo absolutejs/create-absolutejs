@@ -94,7 +94,8 @@ export const generateImportsBlock = ({
 				: [];
 
 		rawImports.push(
-			`import { Elysia, env } from 'elysia';`,
+			`import { Elysia } from 'elysia';`,
+			`import { getEnv } from '@absolutejs/absolute';`,
 			`import { schema } from '../../db/schema';`,
 			...hostImports
 		);
