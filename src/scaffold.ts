@@ -78,6 +78,7 @@ export const scaffold = async ({
 		authProvider,
 		backendDirectory,
 		buildDirectory,
+		databaseEngine,
 		databaseHost,
 		frontendDirectories,
 		orm,

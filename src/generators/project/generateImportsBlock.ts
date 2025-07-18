@@ -8,6 +8,8 @@ type GenerateImportsBlockProps = {
 	deps: AvailableDependency[];
 	flags: FrameworkFlags;
 	orm: CreateConfiguration['orm'];
+	authProvider: CreateConfiguration['authProvider'];
+	databaseEngine: CreateConfiguration['databaseEngine'];
 	databaseHost: CreateConfiguration['databaseHost'];
 };
 
@@ -16,6 +18,8 @@ export const generateImportsBlock = ({
 	deps,
 	flags,
 	orm,
+	authProvider,
+	databaseEngine,
 	databaseHost
 }: GenerateImportsBlockProps) => {
 	const rawImports: string[] = [];
@@ -98,6 +102,16 @@ export const generateImportsBlock = ({
 			`import { getEnv } from '@absolutejs/absolute';`,
 			`import { schema } from '../../db/schema';`,
 			...hostImports
+		);
+	}
+
+	if (
+		authProvider === 'absoluteAuth' &&
+		databaseEngine !== undefined &&
+		databaseEngine !== 'none'
+	) {
+		rawImports.push(
+			`import { instantiateUserSession } from '@absolutejs/auth';`
 		);
 	}
 

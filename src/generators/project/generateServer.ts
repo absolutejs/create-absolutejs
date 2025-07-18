@@ -13,6 +13,7 @@ type CreateServerFileProps = Pick<
 	CreateConfiguration,
 	| 'tailwind'
 	| 'authProvider'
+	| 'databaseEngine'
 	| 'plugins'
 	| 'buildDirectory'
 	| 'databaseHost'
@@ -28,6 +29,7 @@ export const generateServerFile = ({
 	authProvider,
 	plugins,
 	buildDirectory,
+	databaseEngine,
 	databaseHost,
 	orm,
 	assetsDirectory,
@@ -40,7 +42,9 @@ export const generateServerFile = ({
 	const deps = collectDependencies({ authProvider, flags, plugins });
 
 	const importsBlock = generateImportsBlock({
+		authProvider,
 		backendDirectory,
+		databaseEngine,
 		databaseHost,
 		deps,
 		flags,
@@ -55,7 +59,11 @@ export const generateServerFile = ({
 	});
 
 	const dbBlock = generateDBBlock(orm, databaseHost);
-	const useBlock = generateUseBlock(deps);
+	const useBlock = generateUseBlock({
+		databaseEngine,
+		deps,
+		orm
+	});
 	const routesBlock = generateRoutesBlock({
 		buildDirectory,
 		flags,

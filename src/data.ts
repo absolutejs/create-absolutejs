@@ -86,12 +86,14 @@ export const availablePlugins: AvailableDependency[] = [
 export const absoluteAuthPlugin: AvailableDependency = {
 	imports: [
 		{
-			config: { config: {} },
+			config: {
+				providersConfiguration: {}
+			},
 			isPlugin: true,
 			packageName: 'absoluteAuth'
 		}
 	],
-	latestVersion: '0.3.2',
+	latestVersion: '0.14.4',
 	value: '@absolutejs/auth'
 };
 
