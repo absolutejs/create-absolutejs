@@ -15,33 +15,25 @@ export const generateUseBlock = ({
 		.map((pluginImport) => {
 			const isAuth = pluginImport.packageName === 'absoluteAuth';
 
-			if (
-				isAuth &&
-				databaseEngine !== undefined &&
-				databaseEngine !== 'none'
-			) {
-				const baseConfigString = pluginImport.config
-					? JSON.stringify(pluginImport.config).slice(1, -1)
-					: '';
-				const instantiate =
-					orm !== undefined && orm !== 'none'
-						? 'instantiateUserSession<User>'
-						: 'instantiateUserSession';
-				const mergedConfig = `{ ${baseConfigString}${
-					baseConfigString ? ',' : ''
-				} onCallbackSuccess: async ({ authProvider, providerInstance, tokenResponse, userSessionId, session }) => ${instantiate}({ authProvider, providerInstance, session, tokenResponse, userSessionId, createUser: async (userIdentity) => { const user = await createUser({ authProvider, db, userIdentity }); if (!user) throw new Error('Failed to create user'); return user; }, getUser: async (userIdentity) => { const user = await getUser({ authProvider, db, userIdentity }); return user; } }) }`;
+			if (isAuth) {
+				const baseConfigString =
+					pluginImport.config !== null
+						? JSON.stringify(pluginImport.config).slice(1, -1)
+						: '';
 
-				return `.use(absoluteAuth(${mergedConfig}))`;
-			}
+				const hasDatabase =
+					databaseEngine !== undefined && databaseEngine !== 'none';
+				const hasOrm = orm !== undefined && orm !== 'none';
+				const instantiate = 'instantiateUserSession';
+				const pluginGeneric = hasOrm ? '<User>' : '';
 
-			if (isAuth && pluginImport.config !== undefined) {
-				return `.use(absoluteAuth(${JSON.stringify(
-					pluginImport.config
-				)}))`;
-			}
+				const callback = hasDatabase
+					? `async ({ authProvider, providerInstance, tokenResponse, userSessionId, session }) => ${instantiate}({ authProvider, providerInstance, session, tokenResponse, userSessionId, createUser: (userIdentity) => createUser({ authProvider, db, userIdentity }), getUser: (userIdentity) => getUser({ authProvider, db, userIdentity }) })`
+					: `({ authProvider, tokenResponse, userSessionId }) => { console.log(\`Successfully authorized OAuth2 with \${authProvider} (session: \${userSessionId})\`, tokenResponse); }`;
 
-			if (isAuth && pluginImport.config === null) {
-				return `.use(absoluteAuth())`;
+				const mergedConfig = `{ ${baseConfigString}${baseConfigString ? ',' : ''} onCallbackSuccess: ${callback} }`;
+
+				return `.use(absoluteAuth${pluginGeneric}(${mergedConfig}))`;
 			}
 
 			if (pluginImport.config === undefined) {
