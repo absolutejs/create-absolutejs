@@ -1,8 +1,9 @@
-import { mkdirSync, writeFileSync } from 'fs';
+import { copyFileSync, mkdirSync, writeFileSync } from 'fs';
 import { join } from 'path';
 import { dim, yellow } from 'picocolors';
 import { isDrizzleDialect } from '../../typeGuards';
 import type { CreateConfiguration } from '../../types';
+import { checkDockerInstalled } from '../../utils/checkDockerInstalled';
 import { createDrizzleConfig } from '../configurations/generateDrizzleConfig';
 import { generateDBHandlers } from './generateDBHandlers';
 import { generateDrizzleSchema } from './generateDrizzleSchema';
@@ -17,15 +18,17 @@ type ScaffoldDatabaseProps = Pick<
 	| 'databaseEngine'
 > & {
 	databaseDirectory: string;
+	templatesDirectory: string;
 	backendDirectory: string;
 };
 
-export const scaffoldDatabase = ({
+export const scaffoldDatabase = async ({
 	projectName,
 	databaseEngine,
 	databaseHost,
 	databaseDirectory,
 	backendDirectory,
+	templatesDirectory,
 	authProvider,
 	orm
 }: ScaffoldDatabaseProps) => {
@@ -42,10 +45,21 @@ export const scaffoldDatabase = ({
 	writeFileSync(join(handlerDirectory, handlerFileName), dbHandlers, 'utf-8');
 
 	if (
-		orm === 'drizzle' &&
-		databaseEngine !== undefined &&
-		isDrizzleDialect(databaseEngine)
+		databaseEngine === 'postgresql' &&
+		(databaseHost === undefined || databaseHost === 'none')
 	) {
+		await checkDockerInstalled();
+		copyFileSync(
+			join(templatesDirectory, 'db', 'docker-compose.db.yml'),
+			join(projectDatabaseDirectory, 'docker-compose.db.yml')
+		);
+	}
+
+	if (orm === 'drizzle') {
+		if (!isDrizzleDialect(databaseEngine)) {
+			throw new Error('Internal type error: Expected a Drizzle dialect');
+		}
+
 		const drizzleSchema = generateDrizzleSchema({
 			authProvider,
 			databaseEngine,

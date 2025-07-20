@@ -15,6 +15,7 @@ type CreatePackageJsonProps = Pick<
 	CreateConfiguration,
 	| 'authProvider'
 	| 'useTailwind'
+	| 'databaseEngine'
 	| 'databaseHost'
 	| 'plugins'
 	| 'orm'
@@ -29,6 +30,7 @@ export const createPackageJson = ({
 	projectName,
 	authProvider,
 	plugins,
+	databaseEngine,
 	orm,
 	databaseHost,
 	useTailwind,
@@ -37,7 +39,7 @@ export const createPackageJson = ({
 	codeQualityTool
 }: CreatePackageJsonProps) => {
 	const s = spinner();
-	void (latest && s.start('Resolving package versions…'));
+	if (latest) s.start('Resolving package versions…');
 
 	const resolveVersion = (name: string, listed: string) =>
 		latest ? (getPackageVersion(name) ?? listed) : listed;
@@ -45,11 +47,11 @@ export const createPackageJson = ({
 	const dependencies: PackageJson['dependencies'] = {};
 	const devDependencies: PackageJson['devDependencies'] = {};
 
-	const requiresReact = frontendDirectories['react'] !== undefined;
-	const requiresSvelte = frontendDirectories['svelte'] !== undefined;
-	const requiresVue = frontendDirectories['vue'] !== undefined;
-	const requiresHtmx = frontendDirectories['htmx'] !== undefined;
-	const requiresHtml = frontendDirectories['html'] !== undefined;
+	const requiresReact = Boolean(frontendDirectories['react']);
+	const requiresSvelte = Boolean(frontendDirectories['svelte']);
+	const requiresVue = Boolean(frontendDirectories['vue']);
+	const requiresHtmx = Boolean(frontendDirectories['htmx']);
+	const requiresHtml = Boolean(frontendDirectories['html']);
 
 	for (const p of defaultPlugins) {
 		dependencies[p.value] = resolveVersion(p.value, p.latestVersion);
@@ -108,13 +110,12 @@ export const createPackageJson = ({
 
 	if (requiresSvelte) {
 		dependencies['svelte'] = resolveVersion('svelte', '5.34.7');
-		void (
-			codeQualityTool === 'eslint+prettier' &&
-			(devDependencies['prettier-plugin-svelte'] = resolveVersion(
+		if (codeQualityTool === 'eslint+prettier') {
+			devDependencies['prettier-plugin-svelte'] = resolveVersion(
 				'prettier-plugin-svelte',
 				'3.4.0'
-			))
-		);
+			);
+		}
 	}
 
 	if (requiresVue) {
@@ -153,7 +154,7 @@ export const createPackageJson = ({
 			break;
 	}
 
-	void (latest && s.stop(green('Package versions resolved')));
+	if (latest) s.stop(green('Package versions resolved'));
 
 	const scripts: PackageJson['scripts'] = {
 		dev: 'bun run --watch src/backend/server.ts',
@@ -162,6 +163,19 @@ export const createPackageJson = ({
 		test: 'echo "Error: no test specified" && exit 1',
 		typecheck: 'bun run tsc --noEmit'
 	};
+
+	if (
+		databaseEngine === 'postgresql' &&
+		(!databaseHost || databaseHost === 'none')
+	) {
+		scripts['db:up'] =
+			'sh -c "docker info >/dev/null 2>&1 || sudo service docker start; docker compose -f db/docker-compose.db.yml up -d db"';
+		scripts['db:down'] = 'docker compose -f db/docker-compose.db.yml down';
+		scripts['db:psql'] =
+			'docker compose -f db/docker-compose.db.yml exec db psql -U postgres -d appdb';
+		scripts['predev'] = 'bun db:up';
+		scripts['postdev'] = 'bun db:down';
+	}
 
 	const packageJson: PackageJson = {
 		dependencies,
@@ -174,6 +188,6 @@ export const createPackageJson = ({
 
 	writeFileSync(
 		join(projectName, 'package.json'),
-		JSON.stringify(packageJson)
+		JSON.stringify(packageJson, null, 2)
 	);
 };

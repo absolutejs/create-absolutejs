@@ -64,6 +64,7 @@ export const scaffold = async ({
 	createPackageJson({
 		authProvider,
 		codeQualityTool,
+		databaseEngine,
 		databaseHost,
 		frontendDirectories,
 		latest,
@@ -90,15 +91,16 @@ export const scaffold = async ({
 		databaseDirectory !== undefined &&
 		databaseEngine !== 'none' &&
 		databaseEngine !== undefined &&
-		scaffoldDatabase({
+		(await scaffoldDatabase({
 			authProvider,
 			backendDirectory,
 			databaseDirectory,
 			databaseEngine,
 			databaseHost,
 			orm,
-			projectName
-		})
+			projectName,
+			templatesDirectory
+		}))
 	);
 
 	scaffoldFrontends({

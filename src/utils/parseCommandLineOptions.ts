@@ -201,12 +201,14 @@ export const parseCommandLineOptions = () => {
 		console.warn(
 			'Warning: Setting the database host without setting a database engine has no effect.'
 		);
+		databaseHost = 'none';
 	}
 
 	if (databaseEngine === 'none' && orm !== 'none') {
 		console.warn(
 			'Warning: Setting an ORM without a database engine has no effect.'
 		);
+		orm = 'none';
 	}
 
 	let databaseDirectory = values['db-dir'];

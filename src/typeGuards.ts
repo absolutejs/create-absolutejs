@@ -25,11 +25,11 @@ export const isDirectoryConfig = (
 ): value is 'default' | 'custom' => value === 'default' || value === 'custom';
 
 export const isDrizzleDialect = (
-	value: string
+	value: string | undefined
 ): value is AvailableDrizzleDialect =>
 	availableDrizzleDialects.some((dialect) => dialect === value);
 
-export const isPrismaDialect = (value: string): value is string =>
+export const isPrismaDialect = (value: string | undefined): value is string =>
 	availablePrismaDialects.some((dialect) => dialect === value);
 
 export const isDatabaseEngine = (
