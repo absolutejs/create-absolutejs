@@ -58,7 +58,7 @@ export const generateServerFile = ({
 		tailwind
 	});
 
-	const dbBlock = generateDBBlock(orm, databaseHost);
+	const dbBlock = generateDBBlock({ databaseEngine, databaseHost, orm });
 	const useBlock = generateUseBlock({
 		databaseEngine,
 		deps,

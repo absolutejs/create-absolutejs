@@ -24,8 +24,8 @@ export const generateImportsBlock = ({
 }: GenerateImportsBlockProps) => {
 	const rawImports: string[] = [];
 
-	const pushHandler = (condition: boolean, name: string) =>
-		condition &&
+	const pushHandler = (cond: boolean, name: string) =>
+		cond &&
 		rawImports.push(`import { ${name} } from '@absolutejs/absolute';`);
 
 	pushHandler(flags.requiresHtml, 'handleHTMLPageRequest');
@@ -41,22 +41,19 @@ export const generateImportsBlock = ({
 		!flags.requiresSvelte &&
 		!flags.requiresVue;
 
-	deps.forEach((dependency) => {
+	for (const dependency of deps) {
 		const importsList = dependency.imports ?? [];
-		const filteredList = nonFrameworkOnly
-			? importsList.filter(
-					(modImport) => modImport.packageName !== 'asset'
-				)
+		const relevantImports = nonFrameworkOnly
+			? importsList.filter((imp) => imp.packageName !== 'asset')
 			: importsList;
-		if (filteredList.length) {
-			rawImports.push(
-				`import { ${filteredList
-					.map((modImport) => modImport.packageName)
-					.sort()
-					.join(', ')} } from '${dependency.value}';`
-			);
-		}
-	});
+		if (relevantImports.length === 0) continue;
+		rawImports.push(
+			`import { ${relevantImports
+				.map((imp) => imp.packageName)
+				.sort()
+				.join(', ')} } from '${dependency.value}';`
+		);
+	}
 
 	if (flags.requiresReact) {
 		rawImports.push(
@@ -74,50 +71,62 @@ export const generateImportsBlock = ({
 		);
 	}
 
-	const drizzleHostImports = {
-		neon: [
-			`import { neon } from '@neondatabase/serverless';`,
-			`import { drizzle } from 'drizzle-orm/neon-http';`
-		],
-		planetscale: [
-			`import { connect } from '@planetscale/database';`,
-			`import { drizzle } from 'drizzle-orm/planetscale-serverless';`
-		],
-		turso: [
-			`import { createClient } from '@libsql/client';`,
-			`import { drizzle } from 'drizzle-orm/libsql';`
-		]
+	const connectorImports = {
+		neon: ["import { neon } from '@neondatabase/serverless';"],
+		planetscale: ["import { connect } from '@planetscale/database';"],
+		turso: ["import { createClient } from '@libsql/client';"]
 	} as const;
 
-	if (orm === 'drizzle') {
-		const hostImports =
-			databaseHost === 'neon' ||
-			databaseHost === 'planetscale' ||
-			databaseHost === 'turso'
-				? drizzleHostImports[databaseHost]
-				: [];
+	const dialectImports = {
+		neon: ["import { drizzle } from 'drizzle-orm/neon-http';"],
+		planetscale: [
+			"import { drizzle } from 'drizzle-orm/planetscale-serverless';"
+		],
+		turso: ["import { drizzle } from 'drizzle-orm/libsql';"]
+	} as const;
 
+	const isRemoteHost = databaseHost !== undefined && databaseHost !== 'none';
+
+	if (orm === 'drizzle' && isRemoteHost) {
+		const key = databaseHost;
+		rawImports.push(...connectorImports[key], ...dialectImports[key]);
+	}
+
+	if (orm === 'drizzle' && !isRemoteHost && databaseEngine === 'postgresql') {
+		rawImports.push(
+			`import { SQL } from 'bun';`,
+			`import { drizzle } from 'drizzle-orm/bun-sql';`
+		);
+	}
+
+	if (orm === 'drizzle') {
 		rawImports.push(
 			`import { Elysia } from 'elysia';`,
 			`import { getEnv } from '@absolutejs/absolute';`,
-			`import { schema, User } from '../../db/schema';`,
-			...hostImports
+			`import { schema, User } from '../../db/schema';`
+		);
+	}
+
+	if (
+		(orm === undefined || orm === 'none') &&
+		databaseEngine === 'postgresql'
+	) {
+		rawImports.push(
+			...(isRemoteHost
+				? connectorImports[databaseHost]
+				: [`import { SQL } from 'bun';`]),
+			`import { getEnv } from '@absolutejs/absolute';`
 		);
 	}
 
 	if (authProvider === 'absoluteAuth') {
 		rawImports.push(
-			`import { absoluteAuth, instantiateUserSession } from '@absolutejs/auth';`
-		);
-	}
-
-	if (
-		authProvider === 'absoluteAuth' &&
-		databaseEngine !== undefined &&
-		databaseEngine !== 'none'
-	) {
-		rawImports.push(
-			`import { createUser, getUser } from './handlers/userHandlers';`
+			`import { absoluteAuth, instantiateUserSession } from '@absolutejs/auth';`,
+			...(databaseEngine && databaseEngine !== 'none'
+				? [
+						`import { createUser, getUser } from './handlers/userHandlers';`
+					]
+				: [])
 		);
 	}
 
@@ -139,39 +148,38 @@ export const vueImports = { VueExample } as const;
 		{ defaultImport: string | null; namedImports: Set<string> }
 	>();
 
-	rawImports.forEach((statement) => {
-		const matchResult = statement.match(
-			/^import\s+(.+)\s+from\s+['"](.+)['"];/
-		);
-		if (!matchResult) return;
-		const [, importClause, modulePath] = matchResult;
-		if (!importClause || !modulePath) return;
+	for (const stmt of rawImports) {
+		const match = stmt.match(/^import\s+(.+)\s+from\s+['"](.+)['"];/);
+		if (!match) continue;
+
+		const [, importClause, modulePath] = match;
+		if (!importClause || !modulePath) continue;
+
 		const entry = importMap.get(modulePath) ?? {
 			defaultImport: null,
 			namedImports: new Set<string>()
 		};
 		importMap.set(modulePath, entry);
-		if (importClause.startsWith('{')) {
-			importClause
-				.slice(1, -1)
-				.split(',')
-				.map((fragment) => fragment.trim())
-				.filter(Boolean)
-				.forEach((name) => entry.namedImports.add(name));
-		} else {
-			entry.defaultImport = importClause.trim();
-		}
-	});
+
+		void (importClause.startsWith('{')
+			? importClause
+					.slice(1, -1)
+					.split(',')
+					.map((segment) => segment.trim())
+					.filter(Boolean)
+					.forEach((name) => entry.namedImports.add(name))
+			: (entry.defaultImport = importClause.trim()));
+	}
 
 	return Array.from(importMap.entries())
-		.sort(([pathA], [pathB]) => pathA.localeCompare(pathB))
-		.map(([modulePath, { defaultImport, namedImports }]) => {
+		.sort(([a], [b]) => a.localeCompare(b))
+		.map(([path, { defaultImport, namedImports }]) => {
 			const parts: string[] = [];
 			if (defaultImport) parts.push(defaultImport);
 			if (namedImports.size)
 				parts.push(`{ ${[...namedImports].sort().join(', ')} }`);
 
-			return `import ${parts.join(', ')} from '${modulePath}';`;
+			return `import ${parts.join(', ')} from '${path}';`;
 		})
 		.join('\n');
 };

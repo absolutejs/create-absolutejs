@@ -1,23 +1,63 @@
 import type { CreateConfiguration } from '../../types';
 
-export const generateDBBlock = (
-	orm: CreateConfiguration['orm'],
-	host: CreateConfiguration['databaseHost']
-) => {
-	if (orm !== 'drizzle' || !host || host === 'none') {
+type GenerateDBBlockProps = Pick<
+	CreateConfiguration,
+	'databaseEngine' | 'orm' | 'databaseHost'
+>;
+
+export const generateDBBlock = ({
+	databaseEngine,
+	orm,
+	databaseHost
+}: GenerateDBBlockProps) => {
+	const isLocalPostgres =
+		databaseEngine === 'postgresql' &&
+		(!databaseHost || databaseHost === 'none');
+	if (isLocalPostgres && orm === 'drizzle') {
+		return `
+const sql = new SQL(getEnv("DATABASE_URL"))
+const db = drizzle(sql, { schema })
+`;
+	}
+	if (isLocalPostgres) {
+		return `
+const db = new SQL(getEnv("DATABASE_URL"))
+await db.connect();
+`;
+	}
+
+	const isNeonPostgres =
+		databaseEngine === 'postgresql' && databaseHost === 'neon';
+	if (isNeonPostgres && orm === 'drizzle') {
+		return `
+const sql = neon(getEnv("DATABASE_URL"))
+const db = drizzle(sql, { schema })
+`;
+	}
+	if (isNeonPostgres) {
+		return `
+const db = neon(getEnv("DATABASE_URL"))
+`;
+	}
+
+	if (orm !== 'drizzle') {
 		return '';
 	}
 
 	const clientInitMap = {
-		neon: 'const sql = neon(getEnv("DATABASE_URL"));',
-		planetscale: 'const sql = connect({ url: getEnv("DATABASE_URL") });',
-		turso: 'const sql = createClient({ url: getEnv("DATABASE_URL") });'
+		neon: 'const sql = neon(getEnv("DATABASE_URL"))',
+		planetscale: 'const sql = connect({ url: getEnv("DATABASE_URL") })',
+		turso: 'const sql = createClient({ url: getEnv("DATABASE_URL") })'
 	} as const;
 
-	const initLine = host in clientInitMap ? clientInitMap[host] : '';
+	if (databaseHost === 'none' || databaseHost === undefined) {
+		return ``;
+	}
+
+	const initLine = clientInitMap[databaseHost];
 
 	return `
 ${initLine}
-const db = drizzle(sql, { schema });
+const db = drizzle(sql, { schema })
 `;
 };

@@ -41,7 +41,12 @@ export const scaffoldDatabase = async ({
 	const handlerFileName = usesAuth
 		? 'userHandlers.ts'
 		: 'countHistoryHandlers.ts';
-	const dbHandlers = generateDBHandlers(usesAuth);
+	const dbHandlers = generateDBHandlers({
+		databaseEngine,
+		databaseHost,
+		orm,
+		usesAuth
+	});
 	writeFileSync(join(handlerDirectory, handlerFileName), dbHandlers, 'utf-8');
 
 	if (

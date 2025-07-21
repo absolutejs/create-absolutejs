@@ -110,12 +110,13 @@ export const createPackageJson = ({
 
 	if (requiresSvelte) {
 		dependencies['svelte'] = resolveVersion('svelte', '5.34.7');
-		if (codeQualityTool === 'eslint+prettier') {
-			devDependencies['prettier-plugin-svelte'] = resolveVersion(
-				'prettier-plugin-svelte',
-				'3.4.0'
-			);
-		}
+	}
+
+	if (requiresSvelte && codeQualityTool === 'eslint+prettier') {
+		devDependencies['prettier-plugin-svelte'] = resolveVersion(
+			'prettier-plugin-svelte',
+			'3.4.0'
+		);
 	}
 
 	if (requiresVue) {
