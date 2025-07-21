@@ -157,7 +157,7 @@ export const createPackageJson = ({
 	if (latest) s.stop(green('Package versions resolved'));
 
 	const scripts: PackageJson['scripts'] = {
-		dev: 'bun run --watch src/backend/server.ts',
+		dev: 'bash -c \'trap "exit 0" INT; bun run --watch src/backend/server.ts\'',
 		format: `prettier --write "./**/*.{js,ts,css,json,mjs,md${requiresReact ? ',jsx,tsx' : ''}${requiresSvelte ? ',svelte' : ''}${requiresVue ? ',vue' : ''}${requiresHtml || requiresHtmx ? ',html' : ''}}"`,
 		lint: 'eslint ./src',
 		test: 'echo "Error: no test specified" && exit 1',
