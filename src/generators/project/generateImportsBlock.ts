@@ -55,21 +55,20 @@ export const generateImportsBlock = ({
 		);
 	}
 
-	if (flags.requiresReact) {
+	if (flags.requiresReact)
 		rawImports.push(
 			`import { ReactExample } from '../frontend/react/pages/ReactExample';`
 		);
-	}
-	if (flags.requiresSvelte) {
+
+	if (flags.requiresSvelte)
 		rawImports.push(
 			`import SvelteExample from '../frontend/svelte/pages/SvelteExample.svelte';`
 		);
-	}
-	if (flags.requiresVue && !flags.requiresSvelte) {
+
+	if (flags.requiresVue && !flags.requiresSvelte)
 		rawImports.push(
 			`import VueExample from '../frontend/vue/pages/VueExample.vue';`
 		);
-	}
 
 	const connectorImports = {
 		neon: ["import { neon } from '@neondatabase/serverless';"],
@@ -99,13 +98,30 @@ export const generateImportsBlock = ({
 		);
 	}
 
-	if (orm === 'drizzle') {
+	if (orm === 'drizzle' && databaseEngine === 'sqlite' && !isRemoteHost) {
+		rawImports.push(
+			`import { Database } from 'bun:sqlite';`,
+			`import { drizzle } from 'drizzle-orm/bun-sqlite';`
+		);
+	}
+
+	if ((orm ?? 'none') === 'none' && databaseEngine === 'sqlite') {
+		rawImports.push(
+			...(databaseHost === 'turso'
+				? [
+						`import { createClient } from '@libsql/client';`,
+						`import { getEnv } from '@absolutejs/absolute';`
+					]
+				: [`import { Database } from 'bun:sqlite';`])
+		);
+	}
+
+	if (orm === 'drizzle')
 		rawImports.push(
 			`import { Elysia } from 'elysia';`,
 			`import { getEnv } from '@absolutejs/absolute';`,
 			`import { schema, User } from '../../db/schema';`
 		);
-	}
 
 	if (
 		(orm === undefined || orm === 'none') &&
@@ -119,7 +135,7 @@ export const generateImportsBlock = ({
 		);
 	}
 
-	if (authProvider === 'absoluteAuth') {
+	if (authProvider === 'absoluteAuth')
 		rawImports.push(
 			`import { absoluteAuth, instantiateUserSession } from '@absolutejs/auth';`,
 			...(databaseEngine && databaseEngine !== 'none'
@@ -128,7 +144,6 @@ export const generateImportsBlock = ({
 					]
 				: [])
 		);
-	}
 
 	if (flags.requiresVue && flags.requiresSvelte) {
 		const utilsDir = join(backendDirectory, 'utils');
@@ -149,7 +164,7 @@ export const vueImports = { VueExample } as const;
 	>();
 
 	for (const stmt of rawImports) {
-		const match = stmt.match(/^import\s+(.+)\s+from\s+['"](.+)['"];/);
+		const match = stmt.match(/^import\s+(.+)\s+from\s+['"](.+)['"];?/);
 		if (!match) continue;
 
 		const [, importClause, modulePath] = match;
