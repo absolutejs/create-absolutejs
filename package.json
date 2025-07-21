@@ -43,7 +43,7 @@
 		"format": "prettier --write \"./**/*.{js,jsx,ts,tsx,css,json,mjs,md,svelte,html,vue}\"",
 		"lint": "eslint ./",
 		"release": "bun run format && bun run build && bun publish",
-		"test": "cd absolutejs-project && bun dev",
+		"test": "bash -c 'trap \"exit 0\" INT; cd absolutejs-project && bun dev'",
 		"typecheck": "bun run tsc --noEmit"
 	},
 	"type": "module",
