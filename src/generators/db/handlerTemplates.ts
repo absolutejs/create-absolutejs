@@ -1,7 +1,6 @@
-type DrizzleOpts = { dbTypeImport: string; dbType: string };
-type RawSQLOpts = { importLines: string; dbType: string };
+type DrizzleOpts = { dbType: string; dbTypeImport: string };
 
-const drizzleAuthTemplate = ({ dbTypeImport, dbType }: DrizzleOpts) => `
+const drizzleAuthTemplate = ({ dbType, dbTypeImport }: DrizzleOpts) => `
 import { isValidProviderOption, providers } from 'citra'
 import { eq } from 'drizzle-orm'
 ${dbTypeImport}
@@ -9,11 +8,11 @@ import { schema, type SchemaType } from '../../../db/schema'
 
 type UserHandlerProps = {
   authProvider: string
-  userIdentity: Record<string, unknown>
   db: ${dbType}<SchemaType>
+  userIdentity: Record<string, unknown>
 }
 
-export const getUser = async ({ authProvider, userIdentity, db }: UserHandlerProps) => {
+export const getUser = async ({ authProvider, db, userIdentity }: UserHandlerProps) => {
   if (!isValidProviderOption(authProvider)) throw new Error(\`Invalid auth provider: \${authProvider}\`)
   const subject = providers[authProvider].extractSubjectFromIdentity(userIdentity)
   const authSub = \`\${authProvider.toUpperCase()}|\${subject}\`
@@ -21,7 +20,7 @@ export const getUser = async ({ authProvider, userIdentity, db }: UserHandlerPro
   return user
 }
 
-export const createUser = async ({ authProvider, userIdentity, db }: UserHandlerProps) => {
+export const createUser = async ({ authProvider, db, userIdentity }: UserHandlerProps) => {
   if (!isValidProviderOption(authProvider)) throw new Error(\`Invalid auth provider: \${authProvider}\`)
   const subject = providers[authProvider].extractSubjectFromIdentity(userIdentity)
   const authSub = \`\${authProvider.toUpperCase()}|\${subject}\`
@@ -31,38 +30,33 @@ export const createUser = async ({ authProvider, userIdentity, db }: UserHandler
 }
 `;
 
-const drizzleCountTemplate = ({ dbTypeImport, dbType }: DrizzleOpts) => `
+const drizzleCountTemplate = ({ dbType, dbTypeImport }: DrizzleOpts) => `
 import { eq } from 'drizzle-orm'
 ${dbTypeImport}
 import { schema, type SchemaType } from '../../../db/schema'
-
-type CountHistoryProps = {
-  count: number
-  db: ${dbType}<SchemaType>
-}
 
 export const getCountHistory = async (db: ${dbType}<SchemaType>, uid: number) => {
   const [history] = await db.select().from(schema.countHistory).where(eq(schema.countHistory.uid, uid)).execute()
   return history
 }
 
-export const createCountHistory = async ({ count, db }: CountHistoryProps) => {
+export const createCountHistory = async (db: ${dbType}<SchemaType>, count: number) => {
   const [newHistory] = await db.insert(schema.countHistory).values({ count }).returning()
   return newHistory
 }
 `;
 
-const libsqlAuthTemplate = ({ importLines, dbType }: RawSQLOpts) => `
-${importLines}
+const libsqlAuthTemplate = `
+import { Client } from '@libsql/client'
 import { isValidProviderOption, providers } from 'citra'
 
 type UserHandlerProps = {
   authProvider: string
+  db: Client
   userIdentity: Record<string, unknown>
-  db: ${dbType}
 }
 
-export const getUser = async ({ authProvider, userIdentity, db }: UserHandlerProps) => {
+export const getUser = async ({ authProvider, db, userIdentity }: UserHandlerProps) => {
   if (!isValidProviderOption(authProvider)) throw new Error(\`Invalid auth provider: \${authProvider}\`)
   const subject = providers[authProvider].extractSubjectFromIdentity(userIdentity)
   const authSub = \`\${authProvider.toUpperCase()}|\${subject}\`
@@ -73,7 +67,7 @@ export const getUser = async ({ authProvider, userIdentity, db }: UserHandlerPro
   return rows[0] ?? null
 }
 
-export const createUser = async ({ authProvider, userIdentity, db }: UserHandlerProps) => {
+export const createUser = async ({ authProvider, db, userIdentity }: UserHandlerProps) => {
   if (!isValidProviderOption(authProvider)) throw new Error(\`Invalid auth provider: \${authProvider}\`)
   const subject = providers[authProvider].extractSubjectFromIdentity(userIdentity)
   const authSub = \`\${authProvider.toUpperCase()}|\${subject}\`
@@ -87,10 +81,10 @@ export const createUser = async ({ authProvider, userIdentity, db }: UserHandler
 }
 `;
 
-const libsqlCountTemplate = ({ importLines, dbType }: RawSQLOpts) => `
-${importLines}
+const libsqlCountTemplate = `
+import { Client } from '@libsql/client'
 
-export const getCountHistory = async (db: ${dbType}, uid: number) => {
+export const getCountHistory = async (db: Client, uid: number) => {
   const { rows } = await db.execute({
     sql: 'SELECT * FROM count_history WHERE uid = ? LIMIT 1',
     args: [uid]
@@ -98,7 +92,7 @@ export const getCountHistory = async (db: ${dbType}, uid: number) => {
   return rows[0] ?? null
 }
 
-export const createCountHistory = async ({ count, db }: { count: number; db: ${dbType} }) => {
+export const createCountHistory = async (db: Client, count: number) => {
   const { rows } = await db.execute({
     sql: 'INSERT INTO count_history (count) VALUES (?) RETURNING *',
     args: [count]
@@ -113,11 +107,11 @@ import { isValidProviderOption, providers } from 'citra'
 
 type UserHandlerProps = {
   authProvider: string
-  userIdentity: Record<string, unknown>
   db: Database
+  userIdentity: Record<string, unknown>
 }
 
-export const getUser = async ({ authProvider, userIdentity, db }: UserHandlerProps) => {
+export const getUser = async ({ authProvider, db, userIdentity }: UserHandlerProps) => {
   if (!isValidProviderOption(authProvider)) throw new Error(\`Invalid auth provider: \${authProvider}\`)
   const subject = providers[authProvider].extractSubjectFromIdentity(userIdentity)
   const authSub = \`\${authProvider.toUpperCase()}|\${subject}\`
@@ -126,7 +120,7 @@ export const getUser = async ({ authProvider, userIdentity, db }: UserHandlerPro
   return user ?? null
 }
 
-export const createUser = async ({ authProvider, userIdentity, db }: UserHandlerProps) => {
+export const createUser = async ({ authProvider, db, userIdentity }: UserHandlerProps) => {
   if (!isValidProviderOption(authProvider)) throw new Error(\`Invalid auth provider: \${authProvider}\`)
   const subject = providers[authProvider].extractSubjectFromIdentity(userIdentity)
   const authSub = \`\${authProvider.toUpperCase()}|\${subject}\`
@@ -146,7 +140,7 @@ export const getCountHistory = async (db: Database, uid: number) => {
   return history ?? null
 }
 
-export const createCountHistory = async ({ count, db }: { count: number; db: Database }) => {
+export const createCountHistory = async (db: Database, count: number) => {
   db.run('INSERT INTO count_history (count) VALUES (?)', [count])
   const stmt = db.query('SELECT * FROM count_history ORDER BY rowid DESC LIMIT 1')
   const [newHistory] = stmt.all()
@@ -159,11 +153,11 @@ import { isValidProviderOption, providers } from 'citra'
 
 type UserHandlerProps = {
   authProvider: string
-  userIdentity: Record<string, unknown>
   db: NeonQueryFunction<false, false>
+  userIdentity: Record<string, unknown>
 }
 
-export const getUser = async ({ authProvider, userIdentity, db }: UserHandlerProps) => {
+export const getUser = async ({ authProvider, db, userIdentity }: UserHandlerProps) => {
   if (!isValidProviderOption(authProvider)) throw new Error(\`Invalid auth provider: \${authProvider}\`)
   const subject = providers[authProvider].extractSubjectFromIdentity(userIdentity)
   const authSub = \`\${authProvider.toUpperCase()}|\${subject}\`
@@ -175,7 +169,7 @@ export const getUser = async ({ authProvider, userIdentity, db }: UserHandlerPro
   return user ?? null
 }
 
-export const createUser = async ({ authProvider, userIdentity, db }: UserHandlerProps) => {
+export const createUser = async ({ authProvider, db, userIdentity }: UserHandlerProps) => {
   if (!isValidProviderOption(authProvider)) throw new Error(\`Invalid auth provider: \${authProvider}\`)
   const subject = providers[authProvider].extractSubjectFromIdentity(userIdentity)
   const authSub = \`\${authProvider.toUpperCase()}|\${subject}\`
@@ -200,7 +194,7 @@ export const getCountHistory = async (db: NeonQueryFunction<false, false>, uid: 
   return history ?? null
 }
 
-export const createCountHistory = async ({ count, db }: { count: number; db: NeonQueryFunction<false, false> }) => {
+export const createCountHistory = async (db: NeonQueryFunction<false, false>, count: number) => {
   const [newHistory] = await db\`
     INSERT INTO count_history (count)
     VALUES (\${count})
@@ -215,11 +209,11 @@ import { isValidProviderOption, providers } from 'citra'
 
 type UserHandlerProps = {
   authProvider: string
-  userIdentity: Record<string, unknown>
   db: SQL
+  userIdentity: Record<string, unknown>
 }
 
-export const getUser = async ({ authProvider, userIdentity, db }: UserHandlerProps) => {
+export const getUser = async ({ authProvider, db, userIdentity }: UserHandlerProps) => {
   if (!isValidProviderOption(authProvider)) throw new Error(\`Invalid auth provider: \${authProvider}\`)
   const subject = providers[authProvider].extractSubjectFromIdentity(userIdentity)
   const authSub = \`\${authProvider.toUpperCase()}|\${subject}\`
@@ -231,7 +225,7 @@ export const getUser = async ({ authProvider, userIdentity, db }: UserHandlerPro
   return user ?? null
 }
 
-export const createUser = async ({ authProvider, userIdentity, db }: UserHandlerProps) => {
+export const createUser = async ({ authProvider, db, userIdentity }: UserHandlerProps) => {
   if (!isValidProviderOption(authProvider)) throw new Error(\`Invalid auth provider: \${authProvider}\`)
   const subject = providers[authProvider].extractSubjectFromIdentity(userIdentity)
   const authSub = \`\${authProvider.toUpperCase()}|\${subject}\`
@@ -256,7 +250,7 @@ export const getCountHistory = async (db: SQL, uid: number) => {
   return history ?? null
 }
 
-export const createCountHistory = async ({ count, db }: { count: number; db: SQL }) => {
+export const createCountHistory = async (db: SQL, count: number) => {
   const [newHistory] = await db\`
     INSERT INTO count_history (count)
     VALUES (\${count})
@@ -306,12 +300,6 @@ export const dbHandlerTemplates = {
 	}),
 	'sqlite:sql:local:auth': bunSqliteAuthTemplate,
 	'sqlite:sql:local:count': bunSqliteCountTemplate,
-	'sqlite:sql:turso:auth': libsqlAuthTemplate({
-		dbType: 'Client',
-		importLines: "import { Client } from '@libsql/client'"
-	}),
-	'sqlite:sql:turso:count': libsqlCountTemplate({
-		dbType: 'Client',
-		importLines: "import { Client } from '@libsql/client'"
-	})
+	'sqlite:sql:turso:auth': libsqlAuthTemplate,
+	'sqlite:sql:turso:count': libsqlCountTemplate
 } as const;
