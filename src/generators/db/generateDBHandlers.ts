@@ -163,7 +163,7 @@ export const getCountHistory = async (db: Database, uid: number) => {
 }
 
 export const createCountHistory = async ({ count, db }: { count: number; db: Database }) => {
-  db.run('INSERT INTO count_history (count) VALUES (?)', count)
+  db.run('INSERT INTO count_history (count) VALUES (?)', [count])
   const stmt = db.query('SELECT * FROM count_history ORDER BY rowid DESC LIMIT 1')
   const [newHistory] = stmt.all()
   return newHistory
@@ -232,7 +232,6 @@ export const generateDBHandlers = ({
 	if (isNeon && !isDrizzle && isPostgres) {
 		const neonAuth = `
 import { NeonQueryFunction } from '@neondatabase/serverless'
-import { isValidProviderOption, providers } from 'citra'
 
 type UserHandlerProps = {
   authProvider: string
@@ -265,9 +264,9 @@ export const createUser = async ({ authProvider, userIdentity, db }: UserHandler
   return newUser
 }`;
 		const neonCount = `
-import { neon } from '@neondatabase/serverless'
+import { NeonQueryFunction } from '@neondatabase/serverless'
 
-export const getCountHistory = async (db: ReturnType<typeof neon>, uid: number) => {
+export const getCountHistory = async (db: NeonQueryFunction<false, false>, uid: number) => {
   const [history] = await db\`
     SELECT * FROM count_history
     WHERE uid = \${uid}
@@ -276,7 +275,7 @@ export const getCountHistory = async (db: ReturnType<typeof neon>, uid: number) 
   return history ?? null
 }
 
-export const createCountHistory = async ({ count, db }: { count: number; db: ReturnType<typeof neon> }) => {
+export const createCountHistory = async ({ count, db }: { count: number; db: NeonQueryFunction<false, false> }) => {
   const [newHistory] = await db\`
     INSERT INTO count_history (count)
     VALUES (\${count})
