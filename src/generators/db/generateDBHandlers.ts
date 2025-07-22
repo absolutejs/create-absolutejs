@@ -1,5 +1,5 @@
 import { CreateConfiguration } from '../../types';
-import { dbHandlerTemplates } from './handlerTemplates';
+import { getAuthTemplate, getCountTemplate } from './handlerTemplates';
 
 type GenerateDBHandlersProps = Pick<
 	CreateConfiguration,
@@ -20,13 +20,9 @@ export const generateDBHandlers = ({
 
 	const host =
 		databaseHost && databaseHost !== 'none' ? databaseHost : 'local';
+	const ormKey = orm === 'drizzle' ? 'drizzle' : 'sql';
+	const key = `${databaseEngine}:${ormKey}:${host}` as const;
 
-	let ormKey: 'drizzle' | 'sql' = 'sql';
-	if (orm === 'drizzle') ormKey = 'drizzle';
-
-	const kind = usesAuth ? 'auth' : 'count';
-	const key = `${databaseEngine}:${ormKey}:${host}:${kind}` as const;
-
-	// @ts-expect-error - Need to add the rest of the templates
-	return dbHandlerTemplates[key];
+	// @ts-expect-error - TODO: Finish the other templates
+	return usesAuth ? getAuthTemplate(key) : getCountTemplate(key);
 };
