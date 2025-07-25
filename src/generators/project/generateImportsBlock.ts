@@ -113,14 +113,17 @@ export const generateImportsBlock = ({
 				: [`import { Database } from 'bun:sqlite'`])
 		);
 
-	if (orm === 'drizzle')
+	if (orm === 'drizzle') {
 		rawImports.push(
 			`import { Elysia } from 'elysia'`,
 			...(databaseEngine === 'sqlite' && !isRemoteHost
 				? []
 				: [`import { getEnv } from '@absolutejs/absolute'`]),
-			`import { schema, User } from '../../db/schema'`
+			authProvider === 'absoluteAuth'
+				? `import { schema, User } from '../../db/schema'`
+				: `import { schema } from '../../db/schema'`
 		);
+	}
 
 	if (
 		(orm === undefined || orm === 'none') &&
@@ -128,7 +131,9 @@ export const generateImportsBlock = ({
 	)
 		rawImports.push(
 			...(isRemoteHost
-				? connectorImports[databaseHost]
+				? connectorImports[
+						databaseHost
+					]
 				: [`import { SQL } from 'bun'`]),
 			`import { getEnv } from '@absolutejs/absolute'`
 		);
@@ -141,6 +146,16 @@ export const generateImportsBlock = ({
 						`import { createUser, getUser } from './handlers/userHandlers'`
 					]
 				: [])
+		);
+
+	if (
+		(authProvider === undefined || authProvider === 'none') &&
+		databaseEngine !== undefined &&
+		databaseEngine !== 'none'
+	)
+		rawImports.push(
+			`import { getCountHistory, createCountHistory } from './handlers/countHistoryHandlers'`,
+			`import { t } from 'elysia'`
 		);
 
 	if (flags.requiresVue && flags.requiresSvelte) {

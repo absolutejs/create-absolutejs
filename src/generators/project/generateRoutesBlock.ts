@@ -1,44 +1,47 @@
 import { isFrontend } from '../../typeGuards';
-import type { FrontendDirectories } from '../../types';
+import type { AuthProvider, FrontendDirectories } from '../../types';
 import type { FrameworkFlags } from './computeFlags';
 
 type GenerateRoutesBlockProps = {
 	flags: FrameworkFlags;
 	frontendDirectories: FrontendDirectories;
+	authProvider: AuthProvider;
 	buildDirectory: string;
 };
 
 export const generateRoutesBlock = ({
 	flags,
 	frontendDirectories,
+	authProvider,
 	buildDirectory
 }: GenerateRoutesBlockProps) => {
 	const routes: string[] = [];
 
 	const createHandlerCall = (frontend: string, directory: string) => {
 		const base = `${buildDirectory}${directory ? `/${directory}` : ''}/pages`;
-		if (frontend === 'html') {
+
+		if (frontend === 'html')
 			return `handleHTMLPageRequest(\`${base}/HTMLExample.html\`)`;
-		}
-		if (frontend === 'htmx') {
+
+		if (frontend === 'htmx')
 			return `handleHTMXPageRequest(\`${base}/HTMXExample.html\`)`;
-		}
-		if (frontend === 'react') {
+
+		if (frontend === 'react')
 			return `handleReactPageRequest(
         ReactExample,
         asset(manifest, 'ReactExampleIndex'),
         { initialCount: 0, cssPath: asset(manifest, 'ReactExampleCSS') }
       )`;
-		}
-		if (frontend === 'svelte') {
+
+		if (frontend === 'svelte')
 			return `handleSveltePageRequest(
         SvelteExample,
         asset(manifest, 'SvelteExample'),
         asset(manifest, 'SvelteExampleIndex'),
         { initialCount: 0, cssPath: asset(manifest, 'SvelteExampleCSS') }
       )`;
-		}
-		if (frontend === 'vue') {
+
+		if (frontend === 'vue')
 			return flags.requiresSvelte
 				? `handleVuePageRequest(
           vueImports.VueExample,
@@ -62,7 +65,6 @@ export const generateRoutesBlock = ({
           }),
           { initialCount: 0 }
         )`;
-		}
 
 		return '';
 	};
@@ -73,9 +75,8 @@ export const generateRoutesBlock = ({
 
 			const handlerCall = createHandlerCall(frontend, directory);
 
-			if (entryIndex === 0) {
+			if (entryIndex === 0)
 				routes.push(`.get('/', () => ${handlerCall})`);
-			}
 
 			if (frontend === 'htmx') {
 				routes.push(
@@ -89,6 +90,21 @@ export const generateRoutesBlock = ({
 			}
 		}
 	);
+
+	if (authProvider === undefined || authProvider === 'none') {
+		routes.push(
+			`.get('/count/:uid', ({ params: { uid } }) => getCountHistory(db, uid), {
+    params: t.Object({
+      uid: t.Number()
+    })
+  })`,
+			`.post('/count', ({ body: { count } }) => createCountHistory(db, count), {
+    body: t.Object({
+      count: t.Number()
+    })
+  })`
+		);
+	}
 
 	return routes.join('\n  ');
 };

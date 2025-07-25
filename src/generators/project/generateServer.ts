@@ -65,9 +65,7 @@ export const generateServerFile = ({
 		orm
 	});
 	const routesBlock = generateRoutesBlock({
-		buildDirectory,
-		flags,
-		frontendDirectories
+		authProvider, buildDirectory, flags, frontendDirectories
 	});
 
 	const content = `${importsBlock}
