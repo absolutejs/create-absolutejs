@@ -131,9 +131,7 @@ export const generateImportsBlock = ({
 	)
 		rawImports.push(
 			...(isRemoteHost
-				? connectorImports[
-						databaseHost
-					]
+				? connectorImports[databaseHost]
 				: [`import { SQL } from 'bun'`]),
 			`import { getEnv } from '@absolutejs/absolute'`
 		);
