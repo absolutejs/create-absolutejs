@@ -11,6 +11,7 @@ type GenerateImportsBlockProps = {
 	authProvider: CreateConfiguration['authProvider'];
 	databaseEngine: CreateConfiguration['databaseEngine'];
 	databaseHost: CreateConfiguration['databaseHost'];
+	frontendDirectories: CreateConfiguration['frontendDirectories'];
 };
 
 export const generateImportsBlock = ({
@@ -20,7 +21,8 @@ export const generateImportsBlock = ({
 	orm,
 	authProvider,
 	databaseEngine,
-	databaseHost
+	databaseHost,
+	frontendDirectories
 }: GenerateImportsBlockProps) => {
 	const rawImports: string[] = [];
 
@@ -55,19 +57,35 @@ export const generateImportsBlock = ({
 		);
 	}
 
-	if (flags.requiresReact)
+	const buildExamplePath = (dir: string, file: string) =>
+		`../frontend${dir ? `/${dir}` : ''}/pages/${file}`;
+
+	const reactDir = frontendDirectories.react;
+	const svelteDir = frontendDirectories.svelte;
+	const vueDir = frontendDirectories.vue;
+
+	if (flags.requiresReact && reactDir !== undefined)
 		rawImports.push(
-			`import { ReactExample } from '../frontend/react/pages/ReactExample'`
+			`import { ReactExample } from '${buildExamplePath(
+				reactDir,
+				'ReactExample'
+			)}'`
 		);
 
-	if (flags.requiresSvelte)
+	if (flags.requiresSvelte && svelteDir !== undefined)
 		rawImports.push(
-			`import SvelteExample from '../frontend/svelte/pages/SvelteExample.svelte'`
+			`import SvelteExample from '${buildExamplePath(
+				svelteDir,
+				'SvelteExample.svelte'
+			)}'`
 		);
 
-	if (flags.requiresVue && !flags.requiresSvelte)
+	if (flags.requiresVue && !flags.requiresSvelte && vueDir !== undefined)
 		rawImports.push(
-			`import VueExample from '../frontend/vue/pages/VueExample.vue'`
+			`import VueExample from '${buildExamplePath(
+				vueDir,
+				'VueExample.vue'
+			)}'`
 		);
 
 	const connectorImports = {
@@ -85,6 +103,9 @@ export const generateImportsBlock = ({
 	} as const;
 
 	const isRemoteHost = databaseHost !== undefined && databaseHost !== 'none';
+	const hasDatabase =
+		databaseEngine !== undefined && databaseEngine !== 'none';
+	const noOrm = orm === undefined || orm === 'none';
 
 	if (orm === 'drizzle' && isRemoteHost) {
 		const key = databaseHost;
@@ -103,7 +124,7 @@ export const generateImportsBlock = ({
 			`import { drizzle } from 'drizzle-orm/bun-sqlite'`
 		);
 
-	if ((orm ?? 'none') === 'none' && databaseEngine === 'sqlite')
+	if (noOrm && databaseEngine === 'sqlite')
 		rawImports.push(
 			...(databaseHost === 'turso'
 				? [
@@ -111,6 +132,14 @@ export const generateImportsBlock = ({
 						`import { getEnv } from '@absolutejs/absolute'`
 					]
 				: [`import { Database } from 'bun:sqlite'`])
+		);
+
+	if (noOrm && databaseEngine === 'postgresql')
+		rawImports.push(
+			...(isRemoteHost
+				? connectorImports[databaseHost]
+				: [`import { SQL } from 'bun'`]),
+			`import { getEnv } from '@absolutejs/absolute'`
 		);
 
 	if (orm === 'drizzle') {
@@ -125,32 +154,17 @@ export const generateImportsBlock = ({
 		);
 	}
 
-	if (
-		(orm === undefined || orm === 'none') &&
-		databaseEngine === 'postgresql'
-	)
-		rawImports.push(
-			...(isRemoteHost
-				? connectorImports[databaseHost]
-				: [`import { SQL } from 'bun'`]),
-			`import { getEnv } from '@absolutejs/absolute'`
-		);
-
 	if (authProvider === 'absoluteAuth')
 		rawImports.push(
 			`import { absoluteAuth, instantiateUserSession } from '@absolutejs/auth'`,
-			...(databaseEngine && databaseEngine !== 'none'
+			...(hasDatabase
 				? [
 						`import { createUser, getUser } from './handlers/userHandlers'`
 					]
 				: [])
 		);
 
-	if (
-		(authProvider === undefined || authProvider === 'none') &&
-		databaseEngine !== undefined &&
-		databaseEngine !== 'none'
-	)
+	if (hasDatabase && (authProvider === undefined || authProvider === 'none'))
 		rawImports.push(
 			`import { getCountHistory, createCountHistory } from './handlers/countHistoryHandlers'`,
 			`import { t } from 'elysia'`
@@ -159,9 +173,12 @@ export const generateImportsBlock = ({
 	if (flags.requiresVue && flags.requiresSvelte) {
 		const utilsDir = join(backendDirectory, 'utils');
 		mkdirSync(utilsDir, { recursive: true });
+		const vuePathForUtils = `../../frontend${
+			vueDir ? `/${vueDir}` : ''
+		}/pages/VueExample.vue`;
 		writeFileSync(
 			join(utilsDir, 'vueImporter.ts'),
-			`import VueExample from "../../frontend/vue/pages/VueExample.vue"\n\nexport const vueImports = { VueExample } as const\n`
+			`import VueExample from "${vuePathForUtils}"\n\nexport const vueImports = { VueExample } as const\n`
 		);
 		rawImports.push(`import { vueImports } from './utils/vueImporter'`);
 	}

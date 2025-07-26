@@ -47,5 +47,5 @@
 		"typecheck": "bun run tsc --noEmit"
 	},
 	"type": "module",
-	"version": "0.3.11"
+	"version": "0.3.12"
 }

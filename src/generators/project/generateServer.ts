@@ -48,6 +48,7 @@ export const generateServerFile = ({
 		databaseHost,
 		deps,
 		flags,
+		frontendDirectories,
 		orm
 	});
 
