@@ -10,6 +10,7 @@ import {
 } from '../../data';
 import type { CreateConfiguration, PackageJson } from '../../types';
 import { getPackageVersion } from '../../utils/getPackageVersion';
+import { computeFlags } from '../project/computeFlags';
 
 type CreatePackageJsonProps = Pick<
 	CreateConfiguration,
@@ -47,11 +48,7 @@ export const createPackageJson = ({
 	const dependencies: PackageJson['dependencies'] = {};
 	const devDependencies: PackageJson['devDependencies'] = {};
 
-	const requiresReact = Boolean(frontendDirectories['react']);
-	const requiresSvelte = Boolean(frontendDirectories['svelte']);
-	const requiresVue = Boolean(frontendDirectories['vue']);
-	const requiresHtmx = Boolean(frontendDirectories['htmx']);
-	const requiresHtml = Boolean(frontendDirectories['html']);
+	const flags = computeFlags(frontendDirectories);
 
 	for (const p of defaultPlugins) {
 		dependencies[p.value] = resolveVersion(p.value, p.latestVersion);
@@ -95,35 +92,30 @@ export const createPackageJson = ({
 		);
 	}
 
-	if (requiresReact) {
+	if (flags.requiresReact) {
 		dependencies['react'] = resolveVersion('react', '19.1.0');
-		dependencies['react-dom'] = resolveVersion('react-dom', '19.1.0');
 		devDependencies['@types/react'] = resolveVersion(
 			'@types/react',
-			'19.1.5'
-		);
-		devDependencies['@types/react-dom'] = resolveVersion(
-			'@types/react-dom',
-			'19.1.5'
+			'19.1.8'
 		);
 	}
 
-	if (requiresSvelte) {
+	if (flags.requiresSvelte) {
 		dependencies['svelte'] = resolveVersion('svelte', '5.34.7');
 	}
 
-	if (requiresSvelte && codeQualityTool === 'eslint+prettier') {
+	if (flags.requiresSvelte && codeQualityTool === 'eslint+prettier') {
 		devDependencies['prettier-plugin-svelte'] = resolveVersion(
 			'prettier-plugin-svelte',
 			'3.4.0'
 		);
 	}
 
-	if (requiresVue) {
+	if (flags.requiresVue) {
 		dependencies['vue'] = resolveVersion('vue', '3.5.17');
 	}
 
-	if (requiresHtmx) {
+	if (flags.requiresHtmx) {
 		dependencies['elysia-scoped-state'] = resolveVersion(
 			'elysia-scoped-state',
 			'0.1.1'
@@ -159,7 +151,7 @@ export const createPackageJson = ({
 
 	const scripts: PackageJson['scripts'] = {
 		dev: 'bash -c \'trap "exit 0" INT; bun run --watch src/backend/server.ts\'',
-		format: `prettier --write "./**/*.{js,ts,css,json,mjs,md${requiresReact ? ',jsx,tsx' : ''}${requiresSvelte ? ',svelte' : ''}${requiresVue ? ',vue' : ''}${requiresHtml || requiresHtmx ? ',html' : ''}}"`,
+		format: `prettier --write "./**/*.{js,ts,css,json,mjs,md${flags.requiresReact ? ',jsx,tsx' : ''}${flags.requiresSvelte ? ',svelte' : ''}${flags.requiresVue ? ',vue' : ''}${flags.requiresHtml || flags.requiresHtmx ? ',html' : ''}}"`,
 		lint: 'eslint ./src',
 		test: 'echo "Error: no test specified" && exit 1',
 		typecheck: 'bun run tsc --noEmit'
