@@ -170,6 +170,14 @@ export const createPackageJson = ({
 		scripts['postdev'] = 'bun db:down';
 	}
 
+	if (
+		databaseEngine === 'sqlite' &&
+		(!databaseHost || databaseHost === 'none')
+	) {
+		scripts['db:sqlite'] = 'sqlite3 db/database.sqlite';
+		scripts['db:init'] = 'sqlite3 db/database.sqlite < db/init.sql';
+	}
+
 	const packageJson: PackageJson = {
 		dependencies,
 		devDependencies,

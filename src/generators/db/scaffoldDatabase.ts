@@ -1,5 +1,6 @@
 import { copyFileSync, mkdirSync, writeFileSync } from 'fs';
 import { join } from 'path';
+import { $ } from 'bun';
 import { dim, yellow } from 'picocolors';
 import { isDrizzleDialect } from '../../typeGuards';
 import type { CreateConfiguration } from '../../types';
@@ -59,9 +60,12 @@ export const scaffoldDatabase = async ({
 		const sqliteSchema = generateSqliteSchema(authProvider);
 		const sqliteSchemaFilePath = join(
 			projectDatabaseDirectory,
-			'database.sqlite'
+			'schema.sql'
 		);
 		writeFileSync(sqliteSchemaFilePath, sqliteSchema);
+		await $`sqlite3 ${databaseDirectory}/database.sqlite ".read ${join(databaseDirectory, 'schema.sql')}"`.cwd(
+			projectName
+		);
 	}
 
 	if (orm === 'drizzle') {
