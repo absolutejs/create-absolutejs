@@ -134,13 +134,20 @@ export const generateImportsBlock = ({
 				: [`import { Database } from 'bun:sqlite'`])
 		);
 
-	if (noOrm && databaseEngine === 'mysql') {
-		rawImports.push(
-			...(isRemoteHost
-				? connectorImports[databaseHost]
-				: [`import { createPool } from 'mysql2/promise'`]),
-			`import { getEnv } from '@absolutejs/absolute'`
-		);
+	if (databaseEngine === 'mysql' && isRemoteHost) {
+		rawImports.push(...connectorImports[databaseHost]);
+	}
+
+	if (databaseEngine === 'mysql' && !isRemoteHost) {
+		rawImports.push("import { createPool } from 'mysql2/promise'");
+	}
+
+	if (databaseEngine === 'mysql' && orm === 'drizzle') {
+		rawImports.push("import { drizzle } from 'drizzle-orm/mysql2'");
+	}
+
+	if (databaseEngine === 'mysql') {
+		rawImports.push("import { getEnv } from '@absolutejs/absolute'");
 	}
 
 	if (noOrm && databaseEngine === 'postgresql')

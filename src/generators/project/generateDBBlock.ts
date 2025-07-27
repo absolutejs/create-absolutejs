@@ -70,14 +70,22 @@ export const generateDBBlock = ({
 
 		return `
 const db = ${hostCfg.expr}
-${hostCfg.connect ? 'await db.connect();\n' : ''}
-`;
+${hostCfg.connect ? 'await db.connect();\n' : ''}`;
 	}
 
 	if (!drizzleDialectSet.has(databaseEngine)) return '';
 
 	const expr = engineGroup[hostKey]?.expr ?? remoteDrizzleInit[hostKey];
 	if (!expr) return '';
+
+	if (databaseEngine === 'mysql') {
+		const mode = databaseHost === 'planetscale' ? 'planetscale' : 'default';
+
+		return `
+const sql = ${expr}
+const db = drizzle(sql, { schema, mode: '${mode}' })
+`;
+	}
 
 	return `
 const sql = ${expr}

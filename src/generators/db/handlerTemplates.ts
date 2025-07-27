@@ -288,6 +288,42 @@ const mysqlHandlerTypes: HandlerType = {
 	}`
 };
 
+const mysqlDrizzleQueryOperations: QueryOperations = {
+	insertHistory: `const [row] = await db
+    .insert(schema.countHistory)
+    .values({ count })
+    .$returningId();
+
+  if (!row) throw new Error('insert failed: no uid returned');
+  const { uid } = row;
+
+  const [newHistory] = await db
+    .select()
+    .from(schema.countHistory)
+    .where(eq(schema.countHistory.uid, uid));
+
+  return newHistory;`,
+
+	insertUser: `const [row] = await db
+    .insert(schema.users)
+    .values({ auth_sub: authSub, metadata: userIdentity })
+    .$returningId();
+
+  if (!row) throw new Error('insert failed: no uid returned');
+  const { uid } = row;
+
+  const [newUser] = await db
+    .select()
+    .from(schema.users)
+    .where(eq(schema.users.uid, uid));
+
+  if (!newUser) throw new Error('Failed to create user');
+  return newUser;`,
+
+	selectHistory: drizzleQueryOperations.selectHistory,
+	selectUser: drizzleQueryOperations.selectUser
+};
+
 const driverConfigurations = {
 	'cockroachdb:sql:local': {
 		dbType: 'Pool',
@@ -313,6 +349,14 @@ const driverConfigurations = {
 		dbType: 'ConnectionPool',
 		importLines: `import { ConnectionPool } from 'mssql'`,
 		queries: mssqlSqlQueryOperations
+	},
+	'mysql:drizzle:local': {
+		dbType: 'MySql2Database<SchemaType>',
+		importLines: `
+import { eq } from 'drizzle-orm'
+import { MySql2Database } from 'drizzle-orm/mysql2'
+import { schema, type SchemaType } from '../../../db/schema'`,
+		queries: mysqlDrizzleQueryOperations
 	},
 	'mysql:sql:local': {
 		dbType: 'Pool',
