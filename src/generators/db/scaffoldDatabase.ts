@@ -51,6 +51,19 @@ export const scaffoldDatabase = async ({
 	});
 	writeFileSync(join(handlerDirectory, handlerFileName), dbHandlers, 'utf-8');
 
+	if (databaseEngine === 'sqlite') {
+		void (
+			(orm === undefined || orm === 'none') &&
+			(await checkSqliteInstalled())
+		);
+		const sqliteSchema = generateSqliteSchema(authProvider);
+		const sqliteSchemaFilePath = join(
+			projectDatabaseDirectory,
+			'database.sqlite'
+		);
+		writeFileSync(sqliteSchemaFilePath, sqliteSchema);
+	}
+
 	if (orm === 'drizzle') {
 		if (!isDrizzleDialect(databaseEngine)) {
 			throw new Error('Internal type error: Expected a Drizzle dialect');
@@ -82,17 +95,5 @@ export const scaffoldDatabase = async ({
 			join(templatesDirectory, 'db', 'docker-compose.db.yml'),
 			join(projectDatabaseDirectory, 'docker-compose.db.yml')
 		);
-
-		return;
-	}
-
-	if (databaseEngine === 'sqlite') {
-		await checkSqliteInstalled();
-		const sqliteSchema = generateSqliteSchema(authProvider);
-		const sqliteSchemaFilePath = join(
-			projectDatabaseDirectory,
-			'database.sqlite'
-		);
-		writeFileSync(sqliteSchemaFilePath, sqliteSchema);
 	}
 };

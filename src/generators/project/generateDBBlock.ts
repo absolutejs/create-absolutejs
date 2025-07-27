@@ -45,13 +45,13 @@ const db = neon(getEnv("DATABASE_URL"))
 		(!databaseHost || databaseHost === 'none');
 	if (isLocalSqlite && orm === 'drizzle') {
 		return `
-const sql = new Database("database.sqlite")
+const sql = new Database("db/database.sqlite")
 const db = drizzle(sql, { schema })
 `;
 	}
 	if (isLocalSqlite) {
 		return `
-const db = new Database("database.sqlite")
+const db = new Database("db/database.sqlite")
 `;
 	}
 
