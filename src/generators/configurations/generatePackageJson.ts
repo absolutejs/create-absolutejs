@@ -183,10 +183,12 @@ export const createPackageJson = ({
 		scripts['db:up'] =
 			'sh -c "docker info >/dev/null 2>&1 || sudo service docker start; docker compose -f db/docker-compose.db.yml up -d db"';
 		scripts['db:down'] = 'docker compose -f db/docker-compose.db.yml down';
+		scripts['db:reset'] =
+			'docker compose -f db/docker-compose.db.yml down -v';
+		scripts['db:mysql'] =
+			'docker compose -f db/docker-compose.db.yml exec db mysql -u user -ppassword';
 		scripts['predev'] = 'bun db:up';
 		scripts['postdev'] = 'bun db:down';
-		scripts['db:mysql'] =
-			'docker compose -f db/docker-compose.db.yml exec db mysql -u appuser -pappuser appdb';
 	}
 
 	if (

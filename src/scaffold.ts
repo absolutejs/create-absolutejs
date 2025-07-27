@@ -4,9 +4,9 @@ import { fileURLToPath } from 'node:url';
 import { formatProject } from './commands/formatProject';
 import { initializeGit } from './commands/initializeGit';
 import { installDependencies } from './commands/installDependencies';
-import { addConfigurationFiles } from './generators/configurations/addConfigurationFiles';
 import { createPackageJson } from './generators/configurations/generatePackageJson';
 import { initalizeRoot } from './generators/configurations/initializeRoot';
+import { scaffoldConfigurationFiles } from './generators/configurations/scaffoldConfigurationFiles';
 import { scaffoldDatabase } from './generators/db/scaffoldDatabase';
 import { generateServerFile } from './generators/project/generateServer';
 import { scaffoldFrontends } from './generators/project/scaffoldFrontends';
@@ -54,13 +54,13 @@ export const scaffold = async ({
 		join(projectName, 'README.md')
 	);
 
-	addConfigurationFiles({
+	scaffoldConfigurationFiles({
 		codeQualityTool,
 		databaseEngine,
+		databaseHost,
 		envVariables,
 		frontends,
 		initializeGitNow,
-		orm,
 		projectName,
 		tailwind,
 		templatesDirectory

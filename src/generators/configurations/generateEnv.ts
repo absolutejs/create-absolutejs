@@ -4,7 +4,7 @@ import { CreateConfiguration } from '../../types';
 
 type GenerateEnvProps = Pick<
 	CreateConfiguration,
-	'databaseEngine' | 'orm' | 'projectName'
+	'databaseEngine' | 'databaseHost' | 'projectName'
 > & {
 	envVariables?: string[];
 };
@@ -22,7 +22,7 @@ const databaseURLS = {
 
 export const generateEnv = ({
 	databaseEngine,
-	orm,
+	databaseHost,
 	envVariables = [],
 	projectName
 }: GenerateEnvProps) => {
@@ -32,7 +32,7 @@ export const generateEnv = ({
 		databaseEngine !== 'sqlite' &&
 		databaseEngine !== 'none' &&
 		databaseEngine !== undefined &&
-		(orm === 'none' || orm === undefined)
+		(databaseHost === 'none' || databaseHost === undefined)
 	) {
 		vars.push(`DATABASE_URL=${databaseURLS[databaseEngine]}`);
 	}

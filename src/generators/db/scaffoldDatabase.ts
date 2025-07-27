@@ -3,7 +3,7 @@ import { join } from 'path';
 import { $ } from 'bun';
 import { dim, yellow } from 'picocolors';
 import { isDrizzleDialect } from '../../typeGuards';
-import type { CreateConfiguration } from '../../types';
+import type { CreateConfiguration, DatabaseEngine } from '../../types';
 import { checkDockerInstalled } from '../../utils/checkDockerInstalled';
 import { checkSqliteInstalled } from '../../utils/checkSqliteInstalled';
 import { createDrizzleConfig } from '../configurations/generateDrizzleConfig';
@@ -11,6 +11,19 @@ import { generateDatabaseContainer } from './generateDBContainer';
 import { generateDBHandlers } from './generateDBHandlers';
 import { generateDrizzleSchema } from './generateDrizzleSchema';
 import { generateSqliteSchema } from './generateSqliteSchema';
+
+const scaffoldDocker = async (
+	databaseEngine: DatabaseEngine,
+	projectDatabaseDirectory: string
+) => {
+	await checkDockerInstalled();
+	const dbContainer = generateDatabaseContainer(databaseEngine);
+	writeFileSync(
+		join(projectDatabaseDirectory, 'docker-compose.db.yml'),
+		dbContainer,
+		'utf-8'
+	);
+};
 
 type ScaffoldDatabaseProps = Pick<
 	CreateConfiguration,
@@ -57,14 +70,21 @@ export const scaffoldDatabase = async ({
 			(await checkSqliteInstalled())
 		);
 		const sqliteSchema = generateSqliteSchema(authProvider);
-		const sqliteSchemaFilePath = join(
-			projectDatabaseDirectory,
+		writeFileSync(
+			join(projectDatabaseDirectory, 'schema.sql'),
+			sqliteSchema
+		);
+		await $`sqlite3 ${databaseDirectory}/database.sqlite ".read ${join(
+			databaseDirectory,
 			'schema.sql'
-		);
-		writeFileSync(sqliteSchemaFilePath, sqliteSchema);
-		await $`sqlite3 ${databaseDirectory}/database.sqlite ".read ${join(databaseDirectory, 'schema.sql')}"`.cwd(
-			projectName
-		);
+		)}"`.cwd(projectName);
+	}
+
+	if (
+		databaseEngine !== 'sqlite' &&
+		(databaseHost === undefined || databaseHost === 'none')
+	) {
+		await scaffoldDocker(databaseEngine, projectDatabaseDirectory);
 	}
 
 	if (orm === 'drizzle') {
@@ -77,8 +97,10 @@ export const scaffoldDatabase = async ({
 			databaseEngine,
 			databaseHost
 		});
-		const schemaFilePath = join(projectDatabaseDirectory, 'schema.ts');
-		writeFileSync(schemaFilePath, drizzleSchema);
+		writeFileSync(
+			join(projectDatabaseDirectory, 'schema.ts'),
+			drizzleSchema
+		);
 		createDrizzleConfig({ databaseDirectory, databaseEngine, projectName });
 
 		return;
@@ -87,18 +109,6 @@ export const scaffoldDatabase = async ({
 	if (orm === 'prisma') {
 		console.warn(
 			`${dim('│')}\n${yellow('▲')}  Prisma support is not implemented yet`
-		);
-
-		return;
-	}
-
-	if (databaseEngine !== 'sqlite' && (orm === undefined || orm === 'none')) {
-		await checkDockerInstalled();
-		const dbContainer = generateDatabaseContainer(databaseEngine);
-		writeFileSync(
-			join(projectDatabaseDirectory, 'docker-compose.db.yml'),
-			dbContainer,
-			'utf-8'
 		);
 	}
 };
