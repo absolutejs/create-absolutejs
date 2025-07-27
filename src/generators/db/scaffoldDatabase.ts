@@ -4,9 +4,11 @@ import { dim, yellow } from 'picocolors';
 import { isDrizzleDialect } from '../../typeGuards';
 import type { CreateConfiguration } from '../../types';
 import { checkDockerInstalled } from '../../utils/checkDockerInstalled';
+import { checkSqliteInstalled } from '../../utils/checkSqliteInstalled';
 import { createDrizzleConfig } from '../configurations/generateDrizzleConfig';
 import { generateDBHandlers } from './generateDBHandlers';
 import { generateDrizzleSchema } from './generateDrizzleSchema';
+import { generateSqliteSchema } from './generateSqliteSchema';
 
 type ScaffoldDatabaseProps = Pick<
 	CreateConfiguration,
@@ -49,17 +51,6 @@ export const scaffoldDatabase = async ({
 	});
 	writeFileSync(join(handlerDirectory, handlerFileName), dbHandlers, 'utf-8');
 
-	if (
-		databaseEngine === 'postgresql' &&
-		(databaseHost === undefined || databaseHost === 'none')
-	) {
-		await checkDockerInstalled();
-		copyFileSync(
-			join(templatesDirectory, 'db', 'docker-compose.db.yml'),
-			join(projectDatabaseDirectory, 'docker-compose.db.yml')
-		);
-	}
-
 	if (orm === 'drizzle') {
 		if (!isDrizzleDialect(databaseEngine)) {
 			throw new Error('Internal type error: Expected a Drizzle dialect');
@@ -81,5 +72,27 @@ export const scaffoldDatabase = async ({
 		console.warn(
 			`${dim('│')}\n${yellow('▲')}  Prisma support is not implemented yet`
 		);
+
+		return;
+	}
+
+	if (databaseEngine === 'postgresql') {
+		await checkDockerInstalled();
+		copyFileSync(
+			join(templatesDirectory, 'db', 'docker-compose.db.yml'),
+			join(projectDatabaseDirectory, 'docker-compose.db.yml')
+		);
+
+		return;
+	}
+
+	if (databaseEngine === 'sqlite') {
+		await checkSqliteInstalled();
+		const sqliteSchema = generateSqliteSchema(authProvider);
+		const sqliteSchemaFilePath = join(
+			projectDatabaseDirectory,
+			'database.sqlite'
+		);
+		writeFileSync(sqliteSchemaFilePath, sqliteSchema);
 	}
 };
