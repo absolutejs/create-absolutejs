@@ -134,6 +134,15 @@ export const generateImportsBlock = ({
 				: [`import { Database } from 'bun:sqlite'`])
 		);
 
+	if (noOrm && databaseEngine === 'mysql') {
+		rawImports.push(
+			...(isRemoteHost
+				? connectorImports[databaseHost]
+				: [`import { createPool } from 'mysql2/promise'`]),
+			`import { getEnv } from '@absolutejs/absolute'`
+		);
+	}
+
 	if (noOrm && databaseEngine === 'postgresql')
 		rawImports.push(
 			...(isRemoteHost

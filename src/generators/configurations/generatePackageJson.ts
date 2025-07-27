@@ -164,10 +164,29 @@ export const createPackageJson = ({
 		scripts['db:up'] =
 			'sh -c "docker info >/dev/null 2>&1 || sudo service docker start; docker compose -f db/docker-compose.db.yml up -d db"';
 		scripts['db:down'] = 'docker compose -f db/docker-compose.db.yml down';
+		scripts['db:reset'] =
+			'docker compose -f db/docker-compose.db.yml down -v';
 		scripts['db:psql'] =
-			'docker compose -f db/docker-compose.db.yml exec db psql -U postgres -d appdb';
+			'docker compose -f db/docker-compose.db.yml exec db psql -U postgres';
 		scripts['predev'] = 'bun db:up';
 		scripts['postdev'] = 'bun db:down';
+	}
+
+	if (databaseEngine === 'mysql') {
+		dependencies['mysql2'] = resolveVersion('mysql2', '3.14.2');
+	}
+
+	if (
+		databaseEngine === 'mysql' &&
+		(!databaseHost || databaseHost === 'none')
+	) {
+		scripts['db:up'] =
+			'sh -c "docker info >/dev/null 2>&1 || sudo service docker start; docker compose -f db/docker-compose.db.yml up -d db"';
+		scripts['db:down'] = 'docker compose -f db/docker-compose.db.yml down';
+		scripts['predev'] = 'bun db:up';
+		scripts['postdev'] = 'bun db:down';
+		scripts['db:mysql'] =
+			'docker compose -f db/docker-compose.db.yml exec db mysql -u appuser -pappuser appdb';
 	}
 
 	if (

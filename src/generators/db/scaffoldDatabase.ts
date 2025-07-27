@@ -1,4 +1,4 @@
-import { copyFileSync, mkdirSync, writeFileSync } from 'fs';
+import { mkdirSync, writeFileSync } from 'fs';
 import { join } from 'path';
 import { $ } from 'bun';
 import { dim, yellow } from 'picocolors';
@@ -7,6 +7,7 @@ import type { CreateConfiguration } from '../../types';
 import { checkDockerInstalled } from '../../utils/checkDockerInstalled';
 import { checkSqliteInstalled } from '../../utils/checkSqliteInstalled';
 import { createDrizzleConfig } from '../configurations/generateDrizzleConfig';
+import { generateDatabaseContainer } from './generateDBContainer';
 import { generateDBHandlers } from './generateDBHandlers';
 import { generateDrizzleSchema } from './generateDrizzleSchema';
 import { generateSqliteSchema } from './generateSqliteSchema';
@@ -21,7 +22,6 @@ type ScaffoldDatabaseProps = Pick<
 	| 'databaseEngine'
 > & {
 	databaseDirectory: string;
-	templatesDirectory: string;
 	backendDirectory: string;
 };
 
@@ -31,7 +31,6 @@ export const scaffoldDatabase = async ({
 	databaseHost,
 	databaseDirectory,
 	backendDirectory,
-	templatesDirectory,
 	authProvider,
 	orm
 }: ScaffoldDatabaseProps) => {
@@ -93,11 +92,13 @@ export const scaffoldDatabase = async ({
 		return;
 	}
 
-	if (databaseEngine === 'postgresql') {
+	if (databaseEngine !== 'sqlite' && (orm === undefined || orm === 'none')) {
 		await checkDockerInstalled();
-		copyFileSync(
-			join(templatesDirectory, 'db', 'docker-compose.db.yml'),
-			join(projectDatabaseDirectory, 'docker-compose.db.yml')
+		const dbContainer = generateDatabaseContainer(databaseEngine);
+		writeFileSync(
+			join(projectDatabaseDirectory, 'docker-compose.db.yml'),
+			dbContainer,
+			'utf-8'
 		);
 	}
 };

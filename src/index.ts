@@ -9,7 +9,7 @@ import { getUserPackageManager } from './utils/t3-utils';
 
 const packageManager = getUserPackageManager();
 
-const { help, argumentConfiguration, latest, debug } =
+const { help, argumentConfiguration, latest, debug, envVariables } =
 	parseCommandLineOptions();
 
 if (help === true) {
@@ -19,7 +19,7 @@ if (help === true) {
 
 const response = await prompt(argumentConfiguration);
 
-await scaffold({ latest, packageManager, response });
+await scaffold({ envVariables, latest, packageManager, response });
 
 const debugMessage =
 	debug !== false

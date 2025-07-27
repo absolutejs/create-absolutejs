@@ -46,6 +46,7 @@ export const parseCommandLineOptions = () => {
 			'db-host': { type: 'string' },
 			debug: { default: false, short: 'd', type: 'boolean' },
 			directory: { type: 'string' },
+			env: { multiple: true, type: 'string' },
 			'eslint+prettier': { type: 'boolean' },
 			git: { type: 'boolean' },
 			help: { default: false, short: 'h', type: 'boolean' },
@@ -277,6 +278,29 @@ export const parseCommandLineOptions = () => {
 		tailwind = undefined;
 	}
 
+	const rawEnv = values.env ?? [];
+	const validEnv: string[] = [];
+
+	for (const entry of rawEnv) {
+		const idx = entry.indexOf('=');
+		const key = idx > 0 ? entry.slice(0, idx) : '';
+		const badFormat = idx <= 0;
+		const badKey = !badFormat && !/^[A-Za-z_][A-Za-z0-9_]*$/.test(key);
+
+		const errorMsg =
+			(badFormat &&
+				`Invalid --env entry: "${entry}". Expected KEY=VALUE`) ||
+			(badKey && `Invalid env var name: "${key}"`) ||
+			undefined;
+
+		void (errorMsg && console.error(errorMsg));
+		if (errorMsg) continue;
+
+		validEnv.push(entry);
+	}
+
+	values.env = validEnv.length ? validEnv : undefined;
+
 	const argumentConfiguration: ArgumentConfiguration = {
 		assetsDirectory: values.assets,
 		authProvider,
@@ -301,6 +325,7 @@ export const parseCommandLineOptions = () => {
 	return {
 		argumentConfiguration,
 		debug: values.debug,
+		envVariables: values.env,
 		help: values.help,
 		latest: values.lts
 	};

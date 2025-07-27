@@ -16,6 +16,7 @@ type ScaffoldProps = {
 	response: CreateConfiguration;
 	packageManager: PackageManager;
 	latest: boolean;
+	envVariables: string[] | undefined;
 };
 
 export const scaffold = async ({
@@ -39,6 +40,7 @@ export const scaffold = async ({
 		frontendDirectories
 	},
 	latest,
+	envVariables,
 	packageManager
 }: ScaffoldProps) => {
 	const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -54,8 +56,11 @@ export const scaffold = async ({
 
 	addConfigurationFiles({
 		codeQualityTool,
+		databaseEngine,
+		envVariables,
 		frontends,
 		initializeGitNow,
+		orm,
 		projectName,
 		tailwind,
 		templatesDirectory
@@ -98,8 +103,7 @@ export const scaffold = async ({
 			databaseEngine,
 			databaseHost,
 			orm,
-			projectName,
-			templatesDirectory
+			projectName
 		}))
 	);
 
