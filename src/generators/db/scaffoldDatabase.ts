@@ -3,27 +3,13 @@ import { join } from 'path';
 import { $ } from 'bun';
 import { dim, yellow } from 'picocolors';
 import { isDrizzleDialect } from '../../typeGuards';
-import type { CreateConfiguration, DatabaseEngine } from '../../types';
-import { checkDockerInstalled } from '../../utils/checkDockerInstalled';
+import type { CreateConfiguration } from '../../types';
 import { checkSqliteInstalled } from '../../utils/checkSqliteInstalled';
 import { createDrizzleConfig } from '../configurations/generateDrizzleConfig';
-import { generateDatabaseContainer } from './generateDBContainer';
 import { generateDBHandlers } from './generateDBHandlers';
 import { generateDrizzleSchema } from './generateDrizzleSchema';
 import { generateSqliteSchema } from './generateSqliteSchema';
-
-const scaffoldDocker = async (
-	databaseEngine: DatabaseEngine,
-	projectDatabaseDirectory: string
-) => {
-	await checkDockerInstalled();
-	const dbContainer = generateDatabaseContainer(databaseEngine);
-	writeFileSync(
-		join(projectDatabaseDirectory, 'docker-compose.db.yml'),
-		dbContainer,
-		'utf-8'
-	);
-};
+import { scaffoldDocker } from './scaffoldDocker';
 
 type ScaffoldDatabaseProps = Pick<
 	CreateConfiguration,
