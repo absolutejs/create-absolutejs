@@ -81,7 +81,7 @@ const templates = {
 	}
 } as const;
 
-export const generateDatabaseContainer = (databaseEngine: DatabaseEngine) => {
+export const generateDockerContainer = (databaseEngine: DatabaseEngine) => {
 	if (
 		databaseEngine === undefined ||
 		databaseEngine === 'none' ||

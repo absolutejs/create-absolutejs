@@ -6,8 +6,8 @@ import { isDrizzleDialect } from '../../typeGuards';
 import type { CreateConfiguration } from '../../types';
 import { checkSqliteInstalled } from '../../utils/checkSqliteInstalled';
 import { createDrizzleConfig } from '../configurations/generateDrizzleConfig';
-import { generateDBHandlers } from './generateDBHandlers';
 import { generateDrizzleSchema } from './generateDrizzleSchema';
+import { generateDBHandlers } from './generateHandlers';
 import { generateSqliteSchema } from './generateSqliteSchema';
 import { scaffoldDocker } from './scaffoldDocker';
 
