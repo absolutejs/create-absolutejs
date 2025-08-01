@@ -59,7 +59,11 @@ export const generateServerFile = ({
 		tailwind
 	});
 
-	const dbBlock = generateDBBlock({ databaseEngine, databaseHost, orm });
+	let dbBlock = '';
+	if (databaseEngine && databaseEngine !== 'none') {
+		dbBlock = generateDBBlock({ databaseEngine, databaseHost, orm });
+	}
+
 	const useBlock = generateUseBlock({
 		databaseEngine,
 		deps,

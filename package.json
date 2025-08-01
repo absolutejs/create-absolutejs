@@ -39,7 +39,7 @@
 	},
 	"scripts": {
 		"build": "rm -rf dist && tsc --project tsconfig.build.json && cp -R src/templates dist/templates",
-		"dev": "rm -rf absolutejs-project && bun run src/index.ts",
+		"dev": "if [ -f absolutejs-project/package.json ] && grep -q '\"db:reset\"' absolutejs-project/package.json; then cd absolutejs-project && bun run db:reset && cd ..; fi && rm -rf absolutejs-project && bun run src/index.ts",
 		"format": "prettier --write \"./**/*.{js,jsx,ts,tsx,css,json,mjs,md,svelte,html,vue}\"",
 		"lint": "eslint ./",
 		"release": "bun run format && bun run build && bun publish",
@@ -47,5 +47,5 @@
 		"typecheck": "bun run tsc --noEmit"
 	},
 	"type": "module",
-	"version": "0.3.17"
+	"version": "0.3.18"
 }

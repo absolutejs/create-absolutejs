@@ -68,9 +68,15 @@ export const scaffoldDatabase = async ({
 
 	if (
 		databaseEngine !== 'sqlite' &&
-		(databaseHost === undefined || databaseHost === 'none')
+		databaseEngine !== undefined &&
+		databaseEngine !== 'none'
 	) {
-		await scaffoldDocker(databaseEngine, projectDatabaseDirectory);
+		await scaffoldDocker({
+			authProvider,
+			databaseEngine,
+			projectDatabaseDirectory,
+			projectName
+		});
 	}
 
 	if (orm === 'drizzle') {
