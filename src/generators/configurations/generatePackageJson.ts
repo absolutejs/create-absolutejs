@@ -162,13 +162,13 @@ export const createPackageJson = ({
 		(!databaseHost || databaseHost === 'none')
 	) {
 		scripts['db:up'] =
-			'sh -c "docker info >/dev/null 2>&1 || sudo service docker start; docker compose -p postgres -f db/docker-compose.db.yml up -d db"';
+			'sh -c "docker info >/dev/null 2>&1 || sudo service docker start; docker compose -p postgresql -f db/docker-compose.db.yml up -d db"';
 		scripts['db:down'] =
-			'docker compose -p postgres -f db/docker-compose.db.yml down';
+			'docker compose -p postgresql -f db/docker-compose.db.yml down';
 		scripts['db:reset'] =
-			'docker compose -p postgres -f db/docker-compose.db.yml down -v';
+			'docker compose -p postgresql -f db/docker-compose.db.yml down -v';
 		scripts['db:psql'] =
-			"docker compose -p postgres -f db/docker-compose.db.yml exec db bash -lc 'until pg_isready -U user -h localhost --quiet; do sleep 1; done; exec psql -h localhost -U user -d database'";
+			"docker compose -p postgresql -f db/docker-compose.db.yml exec db bash -lc 'until pg_isready -U user -h localhost --quiet; do sleep 1; done; exec psql -h localhost -U user -d database'";
 		scripts['predev'] = 'bun db:up';
 		scripts['predb:psql'] = 'bun db:up';
 		scripts['postdev'] = 'bun db:down';

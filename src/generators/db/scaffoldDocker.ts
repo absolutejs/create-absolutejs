@@ -3,7 +3,11 @@ import { join } from 'path';
 import { $ } from 'bun';
 import { AuthProvider, DatabaseEngine } from '../../types';
 import { checkDockerInstalled } from '../../utils/checkDockerInstalled';
-import { countHistoryTables, userTables } from './dockerInitTemplates';
+import {
+	countHistoryTables,
+	initTemplates,
+	userTables
+} from './dockerInitTemplates';
 import { generateDockerContainer } from './generateDockerContainer';
 
 type ScaffoldDockerProps = {
@@ -19,13 +23,6 @@ export const scaffoldDocker = async ({
 	projectName,
 	authProvider
 }: ScaffoldDockerProps) => {
-	await checkDockerInstalled();
-	const dbContainer = generateDockerContainer(databaseEngine);
-	writeFileSync(
-		join(projectDatabaseDirectory, 'docker-compose.db.yml'),
-		dbContainer,
-		'utf-8'
-	);
 	if (
 		databaseEngine === undefined ||
 		databaseEngine === 'none' ||
@@ -36,16 +33,24 @@ export const scaffoldDocker = async ({
 		);
 	}
 
+	await checkDockerInstalled();
+	const dbContainer = generateDockerContainer(databaseEngine);
+	writeFileSync(
+		join(projectDatabaseDirectory, 'docker-compose.db.yml'),
+		dbContainer,
+		'utf-8'
+	);
+
 	if (databaseEngine === 'mongodb') {
 	} else {
+		const { wait, cli } = initTemplates[databaseEngine];
 		const usesAuth = authProvider !== undefined && authProvider !== 'none';
 		const dbCommand = usesAuth
 			? userTables[databaseEngine]
 			: countHistoryTables[databaseEngine];
 		await $`bun db:up`.cwd(projectName);
-		await $`docker compose -p postgres -f db/docker-compose.db.yml exec -T db \
-  bash -lc 'until pg_isready -U user -h localhost --quiet; do sleep 1; done && \
-            psql -U user -d database -c "${dbCommand}"'`.cwd(projectName);
+		await $`docker compose -p ${databaseEngine} -f db/docker-compose.db.yml exec -T db \
+  bash -lc '${wait} && ${cli} "${dbCommand}"'`.cwd(projectName);
 		await $`bun db:down`.cwd(projectName);
 	}
 };
