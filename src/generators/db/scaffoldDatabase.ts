@@ -67,6 +67,7 @@ export const scaffoldDatabase = async ({
 	}
 
 	if (
+		(databaseHost === 'none' || databaseHost === undefined) &&
 		databaseEngine !== 'sqlite' &&
 		databaseEngine !== undefined &&
 		databaseEngine !== 'none'
