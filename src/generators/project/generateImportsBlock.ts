@@ -66,40 +66,31 @@ export const generateImportsBlock = ({
 
 	if (flags.requiresReact && reactDir !== undefined)
 		rawImports.push(
-			`import { ReactExample } from '${buildExamplePath(
-				reactDir,
-				'ReactExample'
-			)}'`
+			`import { ReactExample } from '${buildExamplePath(reactDir, 'ReactExample')}'`
 		);
 
 	if (flags.requiresSvelte && svelteDir !== undefined)
 		rawImports.push(
-			`import SvelteExample from '${buildExamplePath(
-				svelteDir,
-				'SvelteExample.svelte'
-			)}'`
+			`import SvelteExample from '${buildExamplePath(svelteDir, 'SvelteExample.svelte')}'`
 		);
 
 	if (flags.requiresVue && !flags.requiresSvelte && vueDir !== undefined)
 		rawImports.push(
-			`import VueExample from '${buildExamplePath(
-				vueDir,
-				'VueExample.vue'
-			)}'`
+			`import VueExample from '${buildExamplePath(vueDir, 'VueExample.vue')}'`
 		);
 
 	const connectorImports = {
-		neon: ["import { neon } from '@neondatabase/serverless'"],
-		planetscale: ["import { connect } from '@planetscale/database'"],
-		turso: ["import { createClient } from '@libsql/client'"]
+		neon: [`import { Pool } from '@neondatabase/serverless'`],
+		planetscale: [`import { connect } from '@planetscale/database'`],
+		turso: [`import { createClient } from '@libsql/client'`]
 	} as const;
 
 	const dialectImports = {
-		neon: ["import { drizzle } from 'drizzle-orm/neon-http'"],
+		neon: [`import { drizzle } from 'drizzle-orm/node-postgres'`],
 		planetscale: [
-			"import { drizzle } from 'drizzle-orm/planetscale-serverless'"
+			`import { drizzle } from 'drizzle-orm/planetscale-serverless'`
 		],
-		turso: ["import { drizzle } from 'drizzle-orm/libsql'"]
+		turso: [`import { drizzle } from 'drizzle-orm/libsql'`]
 	} as const;
 
 	const isRemoteHost = databaseHost !== undefined && databaseHost !== 'none';
@@ -108,14 +99,14 @@ export const generateImportsBlock = ({
 	const noOrm = orm === undefined || orm === 'none';
 
 	if (orm === 'drizzle' && isRemoteHost) {
-		const key = databaseHost;
+		const key = databaseHost as keyof typeof connectorImports;
 		rawImports.push(...connectorImports[key], ...dialectImports[key]);
 	}
 
 	if (orm === 'drizzle' && !isRemoteHost && databaseEngine === 'postgresql')
 		rawImports.push(
-			`import { SQL } from 'bun'`,
-			`import { drizzle } from 'drizzle-orm/bun-sql'`
+			`import { Pool } from 'pg'`,
+			`import { drizzle } from 'drizzle-orm/node-postgres'`
 		);
 
 	if (orm === 'drizzle' && databaseEngine === 'sqlite' && !isRemoteHost)
@@ -135,26 +126,27 @@ export const generateImportsBlock = ({
 		);
 
 	if (databaseEngine === 'mysql' && isRemoteHost) {
-		rawImports.push(...connectorImports[databaseHost]);
+		const key = databaseHost as 'planetscale';
+		rawImports.push(...connectorImports[key]);
 	}
 
 	if (databaseEngine === 'mysql' && !isRemoteHost) {
-		rawImports.push("import { createPool } from 'mysql2/promise'");
+		rawImports.push(`import { createPool } from 'mysql2/promise'`);
 	}
 
 	if (databaseEngine === 'mysql' && orm === 'drizzle') {
-		rawImports.push("import { drizzle } from 'drizzle-orm/mysql2'");
+		rawImports.push(`import { drizzle } from 'drizzle-orm/mysql2'`);
 	}
 
 	if (databaseEngine === 'mysql') {
-		rawImports.push("import { getEnv } from '@absolutejs/absolute'");
+		rawImports.push(`import { getEnv } from '@absolutejs/absolute'`);
 	}
 
 	if (noOrm && databaseEngine === 'postgresql')
 		rawImports.push(
 			...(isRemoteHost
-				? connectorImports[databaseHost]
-				: [`import { SQL } from 'bun'`]),
+				? connectorImports[databaseHost as 'neon']
+				: [`import { Pool } from 'pg'`]),
 			`import { getEnv } from '@absolutejs/absolute'`
 		);
 
@@ -189,9 +181,7 @@ export const generateImportsBlock = ({
 	if (flags.requiresVue && flags.requiresSvelte) {
 		const utilsDir = join(backendDirectory, 'utils');
 		mkdirSync(utilsDir, { recursive: true });
-		const vuePathForUtils = `../../frontend${
-			vueDir ? `/${vueDir}` : ''
-		}/pages/VueExample.vue`;
+		const vuePathForUtils = `../../frontend${vueDir ? `/${vueDir}` : ''}/pages/VueExample.vue`;
 		writeFileSync(
 			join(utilsDir, 'vueImporter.ts'),
 			`import VueExample from "${vuePathForUtils}"\n\nexport const vueImports = { VueExample } as const\n`
@@ -207,7 +197,6 @@ export const generateImportsBlock = ({
 	for (const stmt of rawImports) {
 		const match = stmt.match(/^import\s+(.+)\s+from\s+['"](.+)['"];?/);
 		if (!match) continue;
-
 		const [, importClause, modulePath] = match;
 		if (!importClause || !modulePath) continue;
 
@@ -234,7 +223,6 @@ export const generateImportsBlock = ({
 			if (defaultImport) parts.push(defaultImport);
 			if (namedImports.size)
 				parts.push(`{ ${[...namedImports].sort().join(', ')} }`);
-
 			return `import ${parts.join(', ')} from '${path}'`;
 		})
 		.join('\n');

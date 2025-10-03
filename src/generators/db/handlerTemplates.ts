@@ -365,7 +365,7 @@ import { schema, type SchemaType } from '../../../db/schema'`,
 		queries: mysqlSqlQueryOperations
 	},
 	'postgresql:drizzle:local': {
-		dbType: 'BunSQLDatabase<SchemaType>',
+		dbType: 'NodePgDatabase<SchemaType>',
 		importLines: `
 import { eq } from 'drizzle-orm'
 import { BunSQLDatabase } from 'drizzle-orm/bun-sql'
@@ -373,10 +373,10 @@ import { schema, type SchemaType } from '../../../db/schema'`,
 		queries: drizzleQueryOperations
 	},
 	'postgresql:drizzle:neon': {
-		dbType: 'NeonHttpDatabase<SchemaType>',
+		dbType: 'NeonDatabase<SchemaType>',
 		importLines: `
 import { eq } from 'drizzle-orm'
-import { NeonHttpDatabase } from 'drizzle-orm/neon-http'
+import { NeonDatabase } from 'drizzle-orm/neon-serverless'
 import { schema, type SchemaType } from '../../../db/schema'`,
 		queries: drizzleQueryOperations
 	},

@@ -1,11 +1,11 @@
 import { availableDrizzleDialects } from '../../data';
 import type { CreateConfiguration } from '../../types';
 
-type DBExpr = { expr: string; connect?: boolean };
+type DBExpr = { expr: string };
 
 const connectionMap: Record<string, Record<string, DBExpr>> = {
 	cockroachdb: {
-		none: { connect: true, expr: 'new SQL(getEnv("DATABASE_URL"))' }
+		none: { expr: 'new Pool({ connectionString: getEnv("DATABASE_URL") })' }
 	},
 	gel: {
 		none: { expr: 'gelClient({ url: getEnv("DATABASE_URL") })' }
@@ -14,18 +14,20 @@ const connectionMap: Record<string, Record<string, DBExpr>> = {
 		none: { expr: 'createPool(getEnv("DATABASE_URL"))' }
 	},
 	mongodb: {
-		none: { expr: 'new MongoClient(getEnv("DATABASE_URL"))' }
+		none: { expr: 'new MongoClient(getEnv("DATABASE_URL") })' }
 	},
 	mssql: {
-		none: { expr: 'connect(getEnv("DATABASE_URL"))' }
+		none: { expr: 'await connect(getEnv("DATABASE_URL"))' }
 	},
 	mysql: {
 		none: { expr: 'createPool(getEnv("DATABASE_URL"))' },
 		planetscale: { expr: 'connect({ url: getEnv("DATABASE_URL") })' }
 	},
 	postgresql: {
-		neon: { expr: 'neon(getEnv("DATABASE_URL"))' },
-		none: { connect: true, expr: 'new SQL(getEnv("DATABASE_URL"))' }
+		neon: {
+			expr: 'new Pool({ connectionString: getEnv("DATABASE_URL") })'
+		},
+		none: { expr: 'new Pool({ connectionString: getEnv("DATABASE_URL") })' }
 	},
 	singlestore: {
 		none: { expr: 'createClient({ url: getEnv("DATABASE_URL") })' }
@@ -37,7 +39,7 @@ const connectionMap: Record<string, Record<string, DBExpr>> = {
 };
 
 const remoteDrizzleInit: Record<string, string> = {
-	neon: 'neon(getEnv("DATABASE_URL"))',
+	neon: 'new Pool({ connectionString: getEnv("DATABASE_URL") })',
 	planetscale: 'connect({ url: getEnv("DATABASE_URL") })',
 	turso: 'createClient({ url: getEnv("DATABASE_URL") })'
 };
@@ -67,10 +69,9 @@ export const generateDBBlock = ({
 	if (orm !== 'drizzle') {
 		const hostCfg = engineGroup[hostKey];
 		if (!hostCfg) return '';
-
 		return `
-const db = ${hostCfg.expr}
-${hostCfg.connect ? 'await db.connect();\n' : ''}`;
+const pool = ${hostCfg.expr}
+`;
 	}
 
 	if (!drizzleDialectSet.has(databaseEngine)) return '';
@@ -80,15 +81,21 @@ ${hostCfg.connect ? 'await db.connect();\n' : ''}`;
 
 	if (databaseEngine === 'mysql') {
 		const mode = databaseHost === 'planetscale' ? 'planetscale' : 'default';
-
 		return `
-const sql = ${expr}
-const db = drizzle(sql, { schema, mode: '${mode}' })
+const pool = ${expr}
+const db = drizzle(pool, { schema, mode: '${mode}' })
+`;
+	}
+
+	if (databaseEngine === 'sqlite') {
+		return `
+const pool = ${expr}
+const db = drizzle(pool, { schema })
 `;
 	}
 
 	return `
-const sql = ${expr}
-const db = drizzle(sql, { schema })
+const pool = ${expr}
+const db = drizzle(pool, { schema })
 `;
 };
