@@ -75,7 +75,7 @@ export const parseCommandLineOptions = () => {
 	const errors: string[] = [];
 
 	const projectName =
-		(positionals[0] ?? values.skip) ? 'absolutejs-project' : undefined;
+		positionals[0] ?? (values.skip ? undefined : 'absolutejs-project');
 
 	let authProvider: AuthProvider;
 	if (values.auth !== undefined && !isAuthProvider(values.auth)) {

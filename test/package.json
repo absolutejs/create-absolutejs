@@ -1,0 +1,25 @@
+{
+	"dependencies": {
+		"@absolutejs/absolute": "0.12.3",
+		"@absolutejs/auth": "0.14.4",
+		"@elysiajs/static": "1.3.0",
+		"@neondatabase/serverless": "1.0.0",
+		"drizzle-orm": "0.41.0",
+		"react": "19.2.0"
+	},
+	"devDependencies": {
+		"@types/react": "19.2.0",
+		"eslint": "9.27.0",
+		"prettier": "3.5.3"
+	},
+	"name": "test",
+	"scripts": {
+		"dev": "bash -c 'trap \"exit 0\" INT; bun run --watch src/backend/server.ts'",
+		"format": "prettier --write \"./**/*.{js,ts,css,json,mjs,md,jsx,tsx}\"",
+		"lint": "eslint ./src",
+		"test": "echo \"Error: no test specified\" && exit 1",
+		"typecheck": "bun run tsc --noEmit"
+	},
+	"type": "module",
+	"version": "0.0.0"
+}

@@ -69,6 +69,7 @@ export const generateDBBlock = ({
 	if (orm !== 'drizzle') {
 		const hostCfg = engineGroup[hostKey];
 		if (!hostCfg) return '';
+
 		return `
 const pool = ${hostCfg.expr}
 `;
@@ -81,6 +82,7 @@ const pool = ${hostCfg.expr}
 
 	if (databaseEngine === 'mysql') {
 		const mode = databaseHost === 'planetscale' ? 'planetscale' : 'default';
+
 		return `
 const pool = ${expr}
 const db = drizzle(pool, { schema, mode: '${mode}' })

@@ -99,7 +99,7 @@ export const generateImportsBlock = ({
 	const noOrm = orm === undefined || orm === 'none';
 
 	if (orm === 'drizzle' && isRemoteHost) {
-		const key = databaseHost as keyof typeof connectorImports;
+		const key = databaseHost;
 		rawImports.push(...connectorImports[key], ...dialectImports[key]);
 	}
 
@@ -223,6 +223,7 @@ export const generateImportsBlock = ({
 			if (defaultImport) parts.push(defaultImport);
 			if (namedImports.size)
 				parts.push(`{ ${[...namedImports].sort().join(', ')} }`);
+
 			return `import ${parts.join(', ')} from '${path}'`;
 		})
 		.join('\n');
