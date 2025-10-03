@@ -93,7 +93,7 @@ export const absoluteAuthPlugin: AvailableDependency = {
 			packageName: 'absoluteAuth'
 		}
 	],
-	latestVersion: '0.14.4',
+	latestVersion: '0.20.3',
 	value: '@absolutejs/auth'
 };
 
@@ -123,7 +123,7 @@ export const eslintAndPrettierDependencies: AvailableDependency[] = [
 export const defaultDependencies: AvailableDependency[] = [
 	{
 		imports: [{ isPlugin: false, packageName: 'Elysia' }],
-		latestVersion: '1.3.1',
+		latestVersion: '1.4.9',
 		value: 'elysia'
 	}
 ];
@@ -146,7 +146,7 @@ export const defaultPlugins: AvailableDependency[] = [
 				packageName: 'staticPlugin'
 			}
 		],
-		latestVersion: '1.3.0',
+		latestVersion: '1.4.0',
 		value: '@elysiajs/static'
 	}
 ];

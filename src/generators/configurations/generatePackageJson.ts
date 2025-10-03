@@ -5,6 +5,7 @@ import { green } from 'picocolors';
 import {
 	absoluteAuthPlugin,
 	availablePlugins,
+	defaultDependencies,
 	defaultPlugins,
 	eslintAndPrettierDependencies
 } from '../../data';
@@ -52,6 +53,10 @@ export const createPackageJson = ({
 
 	for (const p of defaultPlugins) {
 		dependencies[p.value] = resolveVersion(p.value, p.latestVersion);
+	}
+
+	for (const dep of defaultDependencies) {
+		dependencies[dep.value] = resolveVersion(dep.value, dep.latestVersion);
 	}
 
 	if (authProvider === 'absoluteAuth') {

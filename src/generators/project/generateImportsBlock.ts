@@ -86,7 +86,7 @@ export const generateImportsBlock = ({
 	} as const;
 
 	const dialectImports = {
-		neon: [`import { drizzle } from 'drizzle-orm/node-postgres'`],
+		neon: [`import { drizzle } from 'drizzle-orm/neon-serverless'`],
 		planetscale: [
 			`import { drizzle } from 'drizzle-orm/planetscale-serverless'`
 		],
