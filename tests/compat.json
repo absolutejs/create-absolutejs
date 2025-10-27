@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "_meta": {
+    "version": 1,
+    "source": "extracted from CLI and curated manually",
+    "notes": [
+      "Angular excluded for now",
+      "Auth 'none' works",
+      "Add constraints as we validate combinations"
+    ]
+  },
+  "frameworks": [
+    { "name": "react",  "status": "works" },
+    { "name": "svelte", "status": "works" },
+    { "name": "vue",    "status": "unknown" },
+    { "name": "angular","status": "excluded", "reason": "out of scope for sprint" }
+  ],
+  "databases": {
+    "engines": [
+      { "name": "sqlite",   "status": "works" },
+      { "name": "postgres", "status": "works" },
+      { "name": "mysql",    "status": "unknown" }
+    ]
+  },
+  "orms": [
+    { "name": "drizzle", "status": "works" },
+    { "name": "prisma",  "status": "unknown" }
+  ],
+  "hosts": [
+    { "name": "vercel",    "status": "works" },
+    { "name": "netlify",   "status": "unknown" },
+    { "name": "docker",    "status": "works" }
+  ],
+  "auth": {
+    "providers": [
+      { "name": "none",     "status": "works" },
+      { "name": "clerk",    "status": "unknown" },
+      { "name": "authjs",   "status": "unknown" },
+      { "name": "supabase", "status": "unknown" }
+    ]
+  },
+  "formatters": [
+    { "name": "biome",  "status": "works" },
+    { "name": "prettier","status": "unknown" }
+  ],
+  "rules": [
+    {
+      "when": { "orm": "prisma", "db.engine": "sqlite" },
+      "status": "works",
+      "note": "Validate: prisma client generates and runs with sqlite. Keep until E2E confirms."
+    },
+    {
+      "when": { "orm": "prisma", "db.engine": "mysql" },
+      "status": "unknown",
+      "note": "Mark after scaffold+smoke test."
+    },
+    {
+      "when": { "framework": "angular" },
+      "status": "excluded",
+      "note": "Angular out."
+    },
+    {
+      "when": { "auth.provider": "none" },
+      "status": "works",
+      "note": "Baseline path for tests."
+    }
+  ]
+}
