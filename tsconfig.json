@@ -31,5 +31,5 @@
 		"absolutejs-project",
 		"src/templates/htmx/htmx.*.min.js"
 	],
-	"include": ["src/**/*"]
+	"include": ["src/**/*", "tests/**/*"]
 }
