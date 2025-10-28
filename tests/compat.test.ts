@@ -17,16 +17,7 @@ import { isDrizzleDialect, isPrismaDialect } from "../src/typeGuards";
 
 export {};
 
-// ---------- helpers -----------------------------------------------------------
-// Mirrors host↔engine rules in parseCommandLineOptions.
-const hostAllowsEngine = (host: string, engine: string) => {
-  if (host === "turso") return engine === "sqlite";
-  if (host === "neon") return engine === "postgresql";
-  if (host === "planetscale") return engine === "postgresql" || engine === "mysql";
-  if (host === "none") return true;
-
-  return true; // unknown host, no restriction
-};
+import { hostAllowsEngine } from "./utils/hostRules";
 
 // ---------- integrity checks --------------------------------------------------
 describe("option integrity (from src/data.ts)", () => {
@@ -126,5 +117,3 @@ test.skip("scaffold smoke: react + drizzle + sqlite + auth none", () => {
 test.skip("scaffold smoke: html only, no db, no orm, no auth", () => {
   expect(true).toBe(true);
 });
-
-export {};

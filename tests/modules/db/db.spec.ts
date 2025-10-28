@@ -6,6 +6,7 @@ import {
   availablePrismaDialects
 } from "../../../src/data";
 import { isDrizzleDialect, isPrismaDialect } from "../../../src/typeGuards";
+import { hostAllowsEngine } from "../../utils/hostRules";
 
 describe("db engines exist", () => {
   it("includes none", () => {
@@ -14,13 +15,6 @@ describe("db engines exist", () => {
 });
 
 describe("db host rules (subset checks)", () => {
-  const hostAllows = (host:string, engine:string) => {
-    if (host === "turso") return engine === "sqlite";
-    if (host === "neon") return engine === "postgresql";
-    if (host === "planetscale") return engine === "postgresql" || engine === "mysql";
-
-    return true;
-  };
 
   const cases: Array<{ host: string; engine: string; expected: boolean }> = [
     { engine: "sqlite", expected: true, host: "turso" },
@@ -37,7 +31,7 @@ describe("db host rules (subset checks)", () => {
 
   for (const { host, engine, expected } of cases) {
     it(`host ${host} with engine ${engine} => ${expected}`, () => {
-      expect(hostAllows(host, engine)).toBe(expected);
+      expect(hostAllowsEngine(host, engine)).toBe(expected);
     });
   }
 });
