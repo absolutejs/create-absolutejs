@@ -60,26 +60,26 @@ describe("option integrity (from src/data.ts)", () => {
 
 // ---------- host ↔ engine rules ----------------------------------------------
 describe("host ↔ engine compatibility", () => {
-  const cases: Array<{ host: string; eng: string; ok: boolean }> = [
-    { host: "turso",        eng: "sqlite",      ok: true  },
-    { host: "turso",        eng: "postgresql",  ok: false },
-    { host: "turso",        eng: "mysql",       ok: false },
+  const cases: Array<{ host: string; eng: string; isAllowed: boolean }> = [
+    { eng: "sqlite", host: "turso", isAllowed: true  },
+    { eng: "postgresql", host: "turso", isAllowed: false },
+    { eng: "mysql", host: "turso", isAllowed: false },
 
-    { host: "neon",         eng: "postgresql",  ok: true  },
-    { host: "neon",         eng: "sqlite",      ok: false },
-    { host: "neon",         eng: "mysql",       ok: false },
+    { eng: "postgresql", host: "neon", isAllowed: true  },
+    { eng: "sqlite", host: "neon", isAllowed: false },
+    { eng: "mysql", host: "neon", isAllowed: false },
 
-    { host: "planetscale",  eng: "mysql",       ok: true  },
-    { host: "planetscale",  eng: "postgresql",  ok: true  }, // per current rule helper
-    { host: "planetscale",  eng: "sqlite",      ok: false },
+    { eng: "mysql", host: "planetscale", isAllowed: true  },
+    { eng: "postgresql", host: "planetscale", isAllowed: true  },
+    { eng: "sqlite", host: "planetscale", isAllowed: false },
 
-    { host: "none",         eng: "sqlite",      ok: true  },
-    { host: "none",         eng: "postgresql",  ok: true  },
-    { host: "none",         eng: "mysql",       ok: true  },
+    { eng: "sqlite", host: "none", isAllowed: true  },
+    { eng: "postgresql", host: "none", isAllowed: true  },
+    { eng: "mysql", host: "none", isAllowed: true  },
   ];
 
-  it.each(cases)("host %s with engine %s => %s", ({ host, eng, ok }) => {
-    expect(hostAllowsEngine(host, eng)).toBe(ok);
+  it.each(cases)("host %s with engine %s => %s", ({ host, eng, isAllowed }) => {
+    expect(hostAllowsEngine(host, eng)).toBe(isAllowed);
   });
 });
 

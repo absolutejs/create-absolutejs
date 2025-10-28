@@ -2,7 +2,6 @@
 import { describe, it, expect } from "bun:test";
 import {
   availableDatabaseEngines,
-  availableDatabaseHosts,
   availableDrizzleDialects,
   availablePrismaDialects
 } from "../../../src/data";
@@ -23,12 +22,22 @@ describe("db host rules (subset checks)", () => {
     return true;
   };
 
-  for (const h of availableDatabaseHosts) {
-    it(`host ${h} has coherent engine rules`, () => {
-      for (const engine of availableDatabaseEngines) {
-        // assertion documents the rule but does not require scaffold
-        expect(hostAllows(h, engine)).toBe(hostAllows(h, engine));
-      }
+  const cases: Array<{ host: string; engine: string; expected: boolean }> = [
+    { engine: "sqlite", expected: true, host: "turso" },
+    { engine: "postgresql", expected: false, host: "turso" },
+    { engine: "postgresql", expected: true, host: "neon" },
+    { engine: "sqlite", expected: false, host: "neon" },
+    { engine: "mysql", expected: true, host: "planetscale" },
+    { engine: "postgresql", expected: true, host: "planetscale" },
+    { engine: "sqlite", expected: false, host: "planetscale" },
+    { engine: "sqlite", expected: true, host: "none" },
+    { engine: "postgresql", expected: true, host: "none" },
+    { engine: "mysql", expected: true, host: "none" }
+  ];
+
+  for (const { host, engine, expected } of cases) {
+    it(`host ${host} with engine ${engine} => ${expected}`, () => {
+      expect(hostAllows(host, engine)).toBe(expected);
     });
   }
 });
