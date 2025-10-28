@@ -61,13 +61,13 @@ type CheckResult = {
   ok: boolean;
   msg: string;
 };
-const phase = (name: string) => console.log(`\n\x1b[1m\x1b[36m▶ ${name}\x1b[0m`);
-const info = (msg: string) => console.log(`  ${msg}`);
-const error = (msg: string) => console.error(`[31m  ${msg}[0m`);
-const success = (msg: string) => console.log(`[32m  ${msg}[0m`);
+const phase = (name: string) => console.log(`${name}`);
+const info = (msg: string) => console.log(`${msg}`);
+const error = (msg: string) => console.error(`${msg}`);
+const success = (msg: string) => console.log(`${msg}`);
 async function exec(cmd: string, args: string[], cwd: string, timeoutMs?: number): Promise<ExecResult> {
   const fullCmd = `${cmd} ${args.join(' ')}`;
-  console.log(`[90m$ ${fullCmd}[0m`);
+  console.log(`${fullCmd}`);
 
   const proc = spawn({
     cmd: [cmd, ...args],
@@ -119,8 +119,6 @@ function fileExists(path: string, name: string): CheckResult {
     msg: exists ? `${name}` : `Missing file: ${name}`,
   };
 }
-
-// verify all required dependencies are in package.json
 function hasDeps(pkgPath: string, deps: string[]): CheckResult {
   if (!existsSync(pkgPath)) {
     return { ok: false, msg: 'package.json not found' };
