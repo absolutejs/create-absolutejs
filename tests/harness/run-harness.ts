@@ -1,32 +1,188 @@
-import { rmSync, existsSync } from 'fs';
+import { spawn } from 'bun';
+import { existsSync, readFileSync, rmSync } from 'fs';
 import { join } from 'path';
-import {
-  COMBO,
-  FLAGS,
-  PROJECT_NAME,
-  CLI_PATH,
-  OUTPUT_PATH,
-  TIMEOUTS,
-  EXPECTED,
-} from './constants';
-import { exec, runCLI } from './exec';
-import {
-  dirExists,
-  fileExists,
-  hasDeps,
-  hasEnvVars,
-  hasBuildOutput,
-} from './checks';
 
-const phase = (name: string) => console.log(`${name}`);
+const COMBO = {
+  frontend: 'react',
+  backend: 'elysia',
+  database: 'postgresql',
+  orm: 'prisma',
+  auth: 'absoluteAuth',
+  host: 'neon',
+};
+
+const FLAGS = [
+  '--react',
+  '--db', 'postgresql',
+  '--orm', 'prisma',
+  '--auth', 'absoluteAuth',
+  '--db-host', 'neon',
+  '--skip',
+  '--install',
+];
+
+const PROJECT_NAME = 'test-scaffold';
+const REPO_ROOT = process.cwd();
+const CLI_PATH = join(REPO_ROOT, 'src', 'index.ts');
+const OUTPUT_PATH = join(REPO_ROOT, PROJECT_NAME);
+
+const TIMEOUTS = {
+  scaffold: 180_000,  
+  install: 180_000,
+  build: 180_000,
+};
+
+const EXPECTED = {
+  dirs: ['src', 'src/frontend', 'src/backend', 'db'],
+  files: [
+    'package.json',
+    '.env',
+    'tsconfig.json',
+    'src/backend/server.ts',
+    'db/schema.ts',
+  ],
+  deps: [
+    '@prisma/client',
+    'react',
+    'react-dom',
+    'elysia',
+    '@absolutejs/absolute',
+    '@absolutejs/auth',
+  ],
+  envVars: ['DATABASE_URL'],
+};
+
+type ExecResult = {
+  ok: boolean;
+  code: number;
+  stdout: string;
+  stderr: string;
+};
+
+type CheckResult = {
+  ok: boolean;
+  msg: string;
+};
+
+const phase = (name: string) => console.log(`\n\x1b[1m\x1b[36m▶ ${name}\x1b[0m`);
 const info = (msg: string) => console.log(`  ${msg}`);
-const error = (msg: string) => console.error(`${msg}`);
-const success = (msg: string) => console.log(`${msg}`);
+const error = (msg: string) => console.error(`\x1b[31m  ${msg}\x1b[0m`);
+const success = (msg: string) => console.log(`\x1b[32m  ${msg}\x1b[0m`);
+
+async function exec(
+  cmd: string,
+  args: string[],
+  cwd: string,
+  timeoutMs?: number,
+): Promise<ExecResult> {
+  const fullCmd = `${cmd} ${args.join(' ')}`;
+  console.log(`\x1b[90m$ ${fullCmd}\x1b[0m`);
+
+  const proc = spawn({
+    cmd: [cmd, ...args],
+    cwd,
+    stdout: 'pipe',
+    stderr: 'pipe',
+  });
+
+  let timedOut = false;
+  const timer = timeoutMs
+    ? setTimeout(() => {
+        timedOut = true;
+        proc.kill();
+      }, timeoutMs)
+    : undefined;
+
+  const stdout = await new Response(proc.stdout).text();
+  const stderr = await new Response(proc.stderr).text();
+  const code = await proc.exited;
+
+  if (timer) clearTimeout(timer);
+
+  if (timedOut) {
+    return {
+      ok: false,
+      code: 124,
+      stdout,
+      stderr: `Command timed out after ${timeoutMs}ms\n${stderr}`,
+    };
+  }
+
+  return { ok: code === 0, code, stdout, stderr };
+}
+
+function runCLI(
+  cliPath: string,
+  flags: string[],
+  projectName: string,
+  timeout: number,
+): Promise<ExecResult> {
+  return exec('bun', ['run', cliPath, projectName, ...flags], process.cwd(), timeout);
+}
+
+function dirExists(path: string, name: string): CheckResult {
+  const exists = existsSync(path);
+  return {
+    ok: exists,
+    msg: exists ? `✓ ${name}` : `✗ Missing dir: ${name}`,
+  };
+}
+
+function fileExists(path: string, name: string): CheckResult {
+  const exists = existsSync(path);
+  return {
+    ok: exists,
+    msg: exists ? `✓ ${name}` : `✗ Missing file: ${name}`,
+  };
+}
+
+function hasDeps(pkgPath: string, deps: string[]): CheckResult {
+  if (!existsSync(pkgPath)) {
+    return { ok: false, msg: '✗ package.json not found' };
+  }
+
+  try {
+    const pkg = JSON.parse(readFileSync(pkgPath, 'utf-8'));
+    const allDeps = { ...pkg.dependencies, ...pkg.devDependencies };
+    const missing = deps.filter(d => !allDeps[d]);
+
+    if (missing.length === 0) {
+      return { ok: true, msg: `All ${deps.length} deps present` };
+    }
+    return { ok: false, msg: `Missing deps: ${missing.join(', ')}` };
+  } catch (e) {
+    return { ok: false, msg: `Failed to parse package.json: ${e}` };
+  }
+}
+
+function hasEnvVars(envPath: string, vars: string[]): CheckResult {
+  if (!existsSync(envPath)) {
+    return { ok: false, msg: '✗ .env not found' };
+  }
+
+  const content = readFileSync(envPath, 'utf-8');
+  const missing = vars.filter(v => !content.includes(v));
+
+  if (missing.length === 0) {
+    return { ok: true, msg: `All ${vars.length} env vars present` };
+  }
+  return { ok: false, msg: `Missing env vars: ${missing.join(', ')}` };
+}
+
+function hasBuildOutput(projectPath: string): CheckResult {
+  const dist = existsSync(join(projectPath, 'dist'));
+  const build = existsSync(join(projectPath, 'build'));
+
+  if (dist || build) {
+    return { ok: true, msg: `Build output (${dist ? 'dist' : 'build'})` };
+  }
+  return { ok: false, msg: 'No build output (checked dist/ and build/)' };
+}
 
 let failed = false;
-const results: { phase: string; checks: Array<{ ok: boolean; msg: string }> }[] = [];
+const results: { phase: string; checks: CheckResult[] }[] = [];
 
-function runChecks(phaseName: string, checks: Array<{ ok: boolean; msg: string }>) {
+function runChecks(phaseName: string, checks: CheckResult[]) {
   results.push({ phase: phaseName, checks });
   
   for (const check of checks) {
@@ -87,6 +243,7 @@ async function install() {
     if (result.stderr) console.error(result.stderr);
     throw new Error('Install failed');
   }
+
   const checks = [
     dirExists(join(OUTPUT_PATH, 'node_modules'), 'node_modules'),
     fileExists(join(OUTPUT_PATH, 'bun.lockb'), 'bun.lockb'),
