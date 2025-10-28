@@ -60,16 +60,27 @@ describe("option integrity (from src/data.ts)", () => {
 
 // ---------- host ↔ engine rules ----------------------------------------------
 describe("host ↔ engine compatibility", () => {
-  for (const host of availableDatabaseHosts) {
-    it(`host ${host}: only allows its whitelist`, () => {
-      for (const eng of availableDatabaseEngines) {
-        // Expected truth based on our rule helper
-        const expected = hostAllowsEngine(host, eng);
-        // Our test just checks the rule function behaves as expected.
-        expect(hostAllowsEngine(host, eng)).toBe(expected);
-      }
-    });
-  }
+  const cases: Array<{ host: string; eng: string; ok: boolean }> = [
+    { host: "turso",        eng: "sqlite",      ok: true  },
+    { host: "turso",        eng: "postgresql",  ok: false },
+    { host: "turso",        eng: "mysql",       ok: false },
+
+    { host: "neon",         eng: "postgresql",  ok: true  },
+    { host: "neon",         eng: "sqlite",      ok: false },
+    { host: "neon",         eng: "mysql",       ok: false },
+
+    { host: "planetscale",  eng: "mysql",       ok: true  },
+    { host: "planetscale",  eng: "postgresql",  ok: true  }, // per current rule helper
+    { host: "planetscale",  eng: "sqlite",      ok: false },
+
+    { host: "none",         eng: "sqlite",      ok: true  },
+    { host: "none",         eng: "postgresql",  ok: true  },
+    { host: "none",         eng: "mysql",       ok: true  },
+  ];
+
+  it.each(cases)("host %s with engine %s => %s", ({ host, eng, ok }) => {
+    expect(hostAllowsEngine(host, eng)).toBe(ok);
+  });
 });
 
 // ---------- ORM ↔ engine dialect subsets -------------------------------------
