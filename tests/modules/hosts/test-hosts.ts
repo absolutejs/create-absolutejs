@@ -9,7 +9,7 @@ const HOSTS = [
   },
   {
     name: 'planetscale',
-    dbEngine: 'mysql',
+    dbEngine: 'postgresql',
     package: '@planetscale/database',
   },
   {
@@ -47,7 +47,7 @@ async function testHost(host: { name: string; dbEngine: string; package: string;
   ];
 
   console.log('\n Step 1 - Running CLI: ');
-  const proc = spawn({
+  const procedure = spawn({
     cmd: command,
     cwd: process.cwd(),
     stdout: 'pipe',
@@ -57,10 +57,10 @@ async function testHost(host: { name: string; dbEngine: string; package: string;
   let timedOut = false;
   const timer = setTimeout(() => {
     timedOut = true;
-    proc.kill();
+    procedure.kill();
   }, TIMEOUT);
 
-  const exitCode = await proc.exited;
+  const exitCode = await procedure.exited;
   clearTimeout(timer);
 
   if (timedOut) {
@@ -70,7 +70,7 @@ async function testHost(host: { name: string; dbEngine: string; package: string;
 
   if (exitCode !== 0) {
     console.log('Failed: CLI returned error');
-    const stderr = await new Response(proc.stderr).text();
+    const stderr = await new Response(procedure.stderr).text();
     if (stderr) {
       console.log('Error output: ', stderr.substring(0, 200));
     }
@@ -93,11 +93,11 @@ async function testHost(host: { name: string; dbEngine: string; package: string;
     return false;
   }
 
-  const pkgContent = readFileSync(pkgPath, 'utf-8');
-  const pkg = JSON.parse(pkgContent);
+  const packageContent = readFileSync(pkgPath, 'utf-8');
+  const pck = JSON.parse(packageContent);
   const allDeps = {
-    ...pkg.dependencies,
-    ...pkg.devDependencies,
+    ...pck.dependencies,
+    ...pck.devDependencies,
   };
 
   if (!allDeps[host.package]) {
@@ -226,5 +226,4 @@ async function runAllTests() {
     process.exit(0);
   }
 }
-
 runAllTests();
