@@ -42,6 +42,7 @@ export const scaffoldDocker = async ({
 	);
 
 	if (databaseEngine === 'mongodb') {
+		// ...work...
 	} else {
 		const { wait, cli } = initTemplates[databaseEngine];
 		const usesAuth = authProvider !== undefined && authProvider !== 'none';
