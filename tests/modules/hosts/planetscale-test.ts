@@ -12,14 +12,14 @@ describe('PlanetScale Host Tests', () => {
     }
   });
   test('should create project with planetscale host', async () => {
-    const command = [
+   const command = [
       'bun',
       'run',
       'src/index.ts',
       PROJECT_NAME,
       '--react',
       '--db',
-      'mysql',
+      'postgresql',
       '--orm',
       'drizzle',
       '--db-host',
@@ -34,29 +34,37 @@ describe('PlanetScale Host Tests', () => {
       '--no-install',
       '--no-git',
     ];
-    const proc = spawn({
+    const processes = spawn({
       cmd: command,
       cwd: process.cwd(),
       stdout: 'pipe',
       stderr: 'pipe',
     });
-    const exitCode = await proc.exited;
-    expect(exitCode).toBe(0);
+    const exitCode = await processes.exited;
+    if (exitCode !== 0) {
+        const stderr = await new Response(processes.stderr).text();
+        const stdout = await new Response(processes.stdout).text();
+        console.error('CLI failed with exit code:', exitCode);
+        console.error('stderr:', stderr.substring(0, 500));
+        console.error('stdout:', stdout.substring(0, 500));
+    }
+
+expect(exitCode).toBe(0);
   });
   test('project folder should exist', () => {
     const projectPath = join(process.cwd(), PROJECT_NAME);
     expect(existsSync(projectPath)).toBe(true);
   });
   test('package.json should have @planetscale/database', () => {
-    const pkgPath = join(process.cwd(), PROJECT_NAME, 'package.json');
-    const pkgContent = readFileSync(pkgPath, 'utf-8');
-    const pkg = JSON.parse(pkgContent);
+    const packagePath = join(process.cwd(), PROJECT_NAME, 'package.json');
+    const packageContent = readFileSync(packagePath, 'utf-8');
+    const pkg = JSON.parse(packageContent);
 
-    const allDeps = {
+    const allDependencies = {
       ...pkg.dependencies,
       ...pkg.devDependencies,
     };
-    expect(allDeps['@planetscale/database']).toBeDefined();
+    expect(allDependencies['@planetscale/database']).toBeDefined();
   });
    test('.env should NOT exist for hosted database (planetscale)', () => {
     const envPath = join(process.cwd(), PROJECT_NAME, '.env');
@@ -80,7 +88,7 @@ describe('PlanetScale Host Tests', () => {
     const serverContent = readFileSync(serverPath, 'utf-8');
     expect(serverContent).toContain('@planetscale/database');
   });
-  test('cleanup after tests', () => {
+  test('cleaning up aftert the testing', () => {
     const projectPath = join(process.cwd(), PROJECT_NAME);
     if (existsSync(projectPath)) {
       rmSync(projectPath, { recursive: true, force: true });
