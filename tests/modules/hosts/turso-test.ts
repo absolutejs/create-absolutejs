@@ -1,14 +1,18 @@
-import { describe, expect, test } from 'bun:test';
-import { spawn } from 'bun';
+/* eslint-disable import/no-unused-modules */
 import { existsSync, readFileSync, rmSync } from 'fs';
 import { join } from 'path';
+import { spawn } from 'bun';
+import { describe, expect, test } from 'bun:test';
+
+// Allow process usage in test environment
+declare const process: { cwd(): string; env: Record<string, string> };
 
 const PROJECT_NAME = 'turso-test';
 describe('Turso Host Tests', () => {
   test('cleanup before tests', () => {
     const projectPath = join(process.cwd(), PROJECT_NAME);
     if (existsSync(projectPath)) {
-      rmSync(projectPath, { recursive: true, force: true });
+      rmSync(projectPath, { force: true, recursive: true });
     }
   });
   test('should create project with turso host', async () => {
@@ -35,10 +39,7 @@ describe('Turso Host Tests', () => {
       '--no-git',
     ];
     const proc = spawn({
-      cmd: command,
-      cwd: process.cwd(),
-      stdout: 'pipe',
-      stderr: 'pipe',
+      cmd: command, cwd: process.cwd(), stderr: 'pipe', stdout: 'pipe',
     });
     const exitCode = await proc.exited;
     expect(exitCode).toBe(0);
@@ -51,7 +52,7 @@ describe('Turso Host Tests', () => {
     const pkgPath = join(process.cwd(), PROJECT_NAME, 'package.json');
     const pkgContent = readFileSync(pkgPath, 'utf-8');
     const pkg = JSON.parse(pkgContent);
-    const allDeps = {
+    const allDeps: Record<string, string> = {
       ...pkg.dependencies,
       ...pkg.devDependencies,
     };
@@ -82,7 +83,7 @@ describe('Turso Host Tests', () => {
   test('cleanup after tests', () => {
     const projectPath = join(process.cwd(), PROJECT_NAME);
     if (existsSync(projectPath)) {
-      rmSync(projectPath, { recursive: true, force: true });
+      rmSync(projectPath, { force: true, recursive: true });
     }
     expect(existsSync(projectPath)).toBe(false);
   });

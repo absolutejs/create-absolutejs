@@ -1,29 +1,46 @@
-import { spawn } from 'bun';
+/* eslint-disable import/no-unused-modules */
 import { existsSync, readFileSync, rmSync } from 'fs';
 import { join } from 'path';
-const HOSTS = [
+import { spawn } from 'bun';
+
+// Allow process usage in test environment
+declare const process: { 
+  cwd(): string; 
+  env: Record<string, string>;
+  exit(code: number): never;
+};
+
+interface HostConfig {
+  name: string;
+  dbEngine: string;
+  package: string;
+}
+
+const HOSTS: HostConfig[] = [
   {
-    name: 'neon',
-    dbEngine: 'postgresql',
-    package: '@neondatabase/serverless',
+    dbEngine: 'postgresql', name: 'neon', package: '@neondatabase/serverless',
   },
   {
-    name: 'planetscale',
-    dbEngine: 'mysql',
-    package: '@planetscale/database',
+    dbEngine: 'mysql', name: 'planetscale', package: '@planetscale/database',
   },
   {
-    name: 'turso',
-    dbEngine: 'sqlite',
-    package: '@libsql/client',
+    dbEngine: 'sqlite', name: 'turso', package: '@libsql/client',
   },
 ];
-const TIMEOUT = 60_000;
-async function testHost(host: { name: string; dbEngine: string; package: string; }) {
+const TIMEOUT_MINUTES = 1;
+const MS_PER_MINUTE = 60_000;
+const TIMEOUT = TIMEOUT_MINUTES * MS_PER_MINUTE;
+
+interface TestResult { name: string; passed: boolean; }
+
+const testHost = async (host: HostConfig): Promise<TestResult> => {
   const projectName = `test-${host.name}`;
-  console.log(`Testing: ${host.name.toUpperCase()}`); 
+  const fail = () => ({ name: host.name, passed: false });
+  const success = () => ({ name: host.name, passed: true });
+
+  console.log(`Testing: ${host.name.toUpperCase()}`);
   cleanup(projectName);
-  const command = [
+  const command: string[] = [
     'bun',
     'run',
     'src/index.ts',
@@ -48,10 +65,7 @@ async function testHost(host: { name: string; dbEngine: string; package: string;
 
   console.log('\n Step 1 - Running CLI: ');
   const proc = spawn({
-    cmd: command,
-    cwd: process.cwd(),
-    stdout: 'pipe',
-    stderr: 'pipe',
+    cmd: command, cwd: process.cwd(), stderr: 'pipe', stdout: 'pipe',
   });
 
   let timedOut = false;
@@ -63,46 +77,57 @@ async function testHost(host: { name: string; dbEngine: string; package: string;
   const exitCode = await proc.exited;
   clearTimeout(timer);
 
-  if (timedOut) {
+  const checkTimeout = () => {
+    if (!timedOut) return true;
     console.log('Failed: Timed out');
-    return false;
-  }
 
-  if (exitCode !== 0) {
+    return false;
+  };
+
+  const checkExitCode = async () => {
+    if (exitCode === 0) return true;
     console.log('Failed: CLI returned error');
     const stderr = await new Response(proc.stderr).text();
     if (stderr) {
-      console.log('Error output: ', stderr.substring(0, 200));
+      const MAX_ERROR_LENGTH = 200;
+      console.log('Error output: ', stderr.substring(0, MAX_ERROR_LENGTH));
     }
-    return false;
-  }
+
+    return { name: host.name, passed: false };
+  };
+
+  if (!checkTimeout()) return fail();
+  if (!await checkExitCode()) return fail();
   console.log('CLI completed successfully');
 
   console.log('\n Step 2 - Checking project folder: ');
   const projectPath = join(process.cwd(), projectName);
   if (!existsSync(projectPath)) {
     console.log('Failed: No project folder');
-    return false;
+
+    return { name: host.name, passed: false };
   }
-  console.log('Project folder exists');
+  console.log(' Project folder exists');
 
   console.log('\n Step 3 - Checking package.json: ');
   const pkgPath = join(projectPath, 'package.json');
   if (!existsSync(pkgPath)) {
     console.log('Failed: No package.json');
+
     return false;
   }
 
   const pkgContent = readFileSync(pkgPath, 'utf-8');
-  const pkg = JSON.parse(pkgContent);
-  const allDeps = {
+  const pkg: { dependencies?: Record<string, string>; devDependencies?: Record<string, string> } = JSON.parse(pkgContent);
+  const allDeps: Record<string, string> = {
     ...pkg.dependencies,
     ...pkg.devDependencies,
   };
 
   if (!allDeps[host.package]) {
     console.log(`Failed: Missing ${host.package}`);
-    console.log('Available packages:', Object.keys(allDeps).filter(p => p.includes('data')));
+    console.log('Available packages:', Object.keys(allDeps).filter(packageName => packageName.includes('data')));
+
     return false;
   }
   console.log(`Has ${host.package}`);
@@ -112,6 +137,7 @@ async function testHost(host: { name: string; dbEngine: string; package: string;
   if (existsSync(envPath)) {
     console.log(`Failed: .env file should NOT exist for hosted database (${host.name})`);
     console.log('Hosted databases expect DATABASE_URL to be provided by the user');
+
     return false;
   }
   console.log('Correctly no .env file for hosted database');
@@ -120,12 +146,14 @@ async function testHost(host: { name: string; dbEngine: string; package: string;
   const drizzlePath = join(projectPath, 'drizzle.config.ts');
   if (!existsSync(drizzlePath)) {
     console.log('Failed: No drizzle.config.ts');
+
     return false;
   }
 
   const drizzleContent = readFileSync(drizzlePath, 'utf-8');
   if (!drizzleContent.includes('DATABASE_URL')) {
     console.log('Failed: drizzle.config.ts missing DATABASE_URL reference');
+
     return false;
   }
 
@@ -138,6 +166,7 @@ async function testHost(host: { name: string; dbEngine: string; package: string;
   const schemaPath = join(projectPath, 'db', 'schema.ts');
   if (!existsSync(schemaPath)) {
     console.log(' Failed: No db/schema.ts');
+
     return false;
   }
   console.log(' db/schema.ts exists');
@@ -146,6 +175,7 @@ async function testHost(host: { name: string; dbEngine: string; package: string;
   const serverPath = join(projectPath, 'src', 'backend', 'server.ts');
   if (!existsSync(serverPath)) {
     console.log(' Failed: No server.ts');
+
     return false;
   }
 
@@ -162,23 +192,24 @@ async function testHost(host: { name: string; dbEngine: string; package: string;
 
   if (!hasCorrectImport) {
     console.log(` Failed: server.ts missing ${host.package} import`);
+
     return false;
   }
   console.log(' server.ts has correct database import');
 
   console.log(`${host.name.toUpperCase()} - ALL CHECKS PASSED`);
   
-  return true;
+  return success();
 }
 
-function cleanup(projectName: string) {
+const cleanup = (projectName: string) => {
   const projectPath = join(process.cwd(), projectName);
   if (existsSync(projectPath)) {
-    rmSync(projectPath, { recursive: true, force: true });
+    rmSync(projectPath, { force: true, recursive: true });
   }
-}
+};
 
-async function runAllTests() {
+const runAllTests = async () => {
   console.log('DATABASE HOST CONFIGURATION TEST SUITE');
   console.log(`\nTesting ${HOSTS.length} hosted database providers`);
   console.log('\n Hosted databases (neon, planetscale, turso) do NOT');
@@ -186,45 +217,46 @@ async function runAllTests() {
   console.log('production environment. Tests verify configuration files are');
   console.log('set up to expect DATABASE_URL from the environment.\n');
 
-  const results = [];
-  
-  for (const host of HOSTS) {
-    const passed = await testHost(host);
-    results.push({
-      name: host.name,
-      passed: passed,
-    });
+  interface TestResult {
+    name: string;
+    passed: boolean;
   }
+  
+  const runTestForHost = async (host: HostConfig): Promise<TestResult> =>
+    testHost(host);
+
+  const results: TestResult[] = await Promise.all(HOSTS.map(runTestForHost));
+  
   console.log('TEST SUMMARY');
   
-  let passCount = 0;
-  let failCount = 0;
+  const PAD_WIDTH = 15;
+  const DEFAULT_COUNTS = { failed: 0, passed: 0 };
 
-  for (const result of results) {
-    if (result.passed) {
-      console.log(`${result.name.padEnd(15)} - PASSED`);
-      passCount++;
-    } else {
-      console.log(`${result.name.padEnd(15)} - FAILED`);
-      failCount++;
-    }
-  }
-  console.log(`Total: ${results.length} | Passed: ${passCount} | Failed: ${failCount}`);
+  const summary = results.reduce((acc, result) => ({
+    failed: acc.failed + (result.passed ? 0 : 1),
+    passed: acc.passed + (result.passed ? 1 : 0),
+  }), DEFAULT_COUNTS);
+
+  console.log(`\nResults: ${summary.passed} passed, ${summary.failed} failed\n`);
+
+  results.forEach(result => {
+    console.log(`${result.name.padEnd(PAD_WIDTH)} - ${result.passed ? 'PASSED' : 'FAILED'}`);
+  });
+
+  console.log(`Total: ${results.length} | Passed: ${summary.passed} | Failed: ${summary.failed}`);
 
   console.log('\n🧹 Cleaning up test artifacts...');
-  for (const host of HOSTS) {
-    cleanup(`test-${host.name}`);
-  }
+  await Promise.all(HOSTS.map(host => cleanup(`test-${host.name}`)));
   console.log('Cleanup complete\n');
 
-  if (failCount > 0) {
+  if (summary.failed > 0) {
     console.error('Some tests failed');
     process.exit(1);
-  } else {
-    console.log('All tests passed!');
-    console.log('\n Database host configuration verification complete!\n');
-    process.exit(0);
   }
+  
+  console.log('All tests passed!');
+  console.log('\n Database host configuration verification complete!\n');
+  process.exit(0);
 }
 
 runAllTests();
