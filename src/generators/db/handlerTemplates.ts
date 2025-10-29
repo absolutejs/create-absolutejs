@@ -390,6 +390,14 @@ import { schema, type SchemaType } from '../../../db/schema'`,
 		importLines: `import { NeonQueryFunction } from '@neondatabase/serverless'`,
 		queries: postgresSqlQueryOperations
 	},
+	'postgresql:drizzle:planetscale': {
+  dbType: 'PlanetScaleDatabase<SchemaType>',
+  importLines: `
+import { eq } from 'drizzle-orm'
+import { PlanetScaleDatabase } from 'drizzle-orm/planetscale-serverless'
+import { schema, type SchemaType } from '../../../db/schema'`,
+  queries: drizzleQueryOperations
+},
 	'singlestore:sql:local': {
 		dbType: 'Connection',
 		importLines: `import { Connection } from '@singlestore/db-client'`,
@@ -440,3 +448,4 @@ export const getCountTemplate = (key: DriverConfigurationKey) => {
 
 	return buildSqlCountTemplate(configuration);
 };
+
