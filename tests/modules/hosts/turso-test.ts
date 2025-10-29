@@ -34,23 +34,29 @@ describe('Turso Host Tests', () => {
       '--no-install',
       '--no-git',
     ];
-    const proc = spawn({
+    const procedure = spawn({
       cmd: command,
       cwd: process.cwd(),
       stdout: 'pipe',
       stderr: 'pipe',
     });
-    const exitCode = await proc.exited;
-    expect(exitCode).toBe(0);
+    const exitCode = await procedure.exited;
+
+    if (exitCode !== 0) {
+         const stderr = await new Response(procedure.stderr).text();
+  console.error('Turso CLI failed:', stderr.substring(0, 300));
+    }
+
+expect(exitCode).toBe(0);
   });
   test('project folder should exist', () => {
     const projectPath = join(process.cwd(), PROJECT_NAME);
     expect(existsSync(projectPath)).toBe(true);
   });
   test('package.json should have @libsql/client', () => {
-    const pkgPath = join(process.cwd(), PROJECT_NAME, 'package.json');
-    const pkgContent = readFileSync(pkgPath, 'utf-8');
-    const pkg = JSON.parse(pkgContent);
+    const packagePath = join(process.cwd(), PROJECT_NAME, 'package.json');
+    const packageContent = readFileSync(packagePath, 'utf-8');
+    const pkg = JSON.parse(packageContent);
     const allDeps = {
       ...pkg.dependencies,
       ...pkg.devDependencies,
