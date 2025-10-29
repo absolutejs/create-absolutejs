@@ -41,16 +41,21 @@ describe('Neon Host Tests', () => {
       stderr: 'pipe',
     });
     const exitCode = await proc.exited;
-    expect(exitCode).toBe(0);
+    if (exitCode !== 0) {
+  const stderr = await new Response(proc.stderr).text();
+  console.error('Neon CLI failed:', stderr.substring(0, 300));
+    }
+
+expect(exitCode).toBe(0);
   });
-  test('project folder should exist', () => {
+  test('project folder', () => {
     const projectPath = join(process.cwd(), PROJECT_NAME);
     expect(existsSync(projectPath)).toBe(true);
   });
   test('package.json should have @neondatabase/serverless', () => {
-    const pkgPath = join(process.cwd(), PROJECT_NAME, 'package.json');
-    const pkgContent = readFileSync(pkgPath, 'utf-8');
-    const pkg = JSON.parse(pkgContent);
+    const packagePath = join(process.cwd(), PROJECT_NAME, 'package.json');
+    const packageContent = readFileSync(packagePath, 'utf-8');
+    const pkg = JSON.parse(packageContent);
     const allDeps = {
       ...pkg.dependencies,
       ...pkg.devDependencies,
