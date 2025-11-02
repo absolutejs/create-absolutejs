@@ -50,7 +50,7 @@ export const scaffoldDatabase = async ({
 	});
 	writeFileSync(join(handlerDirectory, handlerFileName), dbHandlers, 'utf-8');
 
-	if (databaseEngine === 'sqlite') {
+	if (databaseEngine === 'sqlite' && databaseHost !== 'turso') {
 		void (
 			(orm === undefined || orm === 'none') &&
 			(await checkSqliteInstalled())
@@ -64,6 +64,12 @@ export const scaffoldDatabase = async ({
 			databaseDirectory,
 			'schema.sql'
 		)}"`.cwd(projectName);
+	} else if (databaseEngine === 'sqlite' && databaseHost === 'turso') {
+		const sqliteSchema = generateSqliteSchema(authProvider);
+		writeFileSync(
+			join(projectDatabaseDirectory, 'schema.sql'),
+			sqliteSchema
+		);
 	}
 
 	if (
@@ -94,7 +100,10 @@ export const scaffoldDatabase = async ({
 			join(projectDatabaseDirectory, 'schema.ts'),
 			drizzleSchema
 		);
-		createDrizzleConfig({ databaseDirectory, databaseEngine, projectName });
+		
+		if (databaseHost === 'neon' || databaseHost === 'planetscale' || databaseHost === 'turso') {
+			createDrizzleConfig({ databaseDirectory, databaseEngine, projectName });
+		}
 
 		return;
 	}

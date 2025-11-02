@@ -93,7 +93,7 @@ const testHost = async (host: HostConfig): Promise<TestResult> => {
       console.log('Error output: ', stderr.substring(0, MAX_ERROR_LENGTH));
     }
 
-    return { name: host.name, passed: false };
+    return false;
   };
 
   if (!checkTimeout()) return fail();
@@ -114,7 +114,7 @@ const testHost = async (host: HostConfig): Promise<TestResult> => {
   if (!existsSync(pkgPath)) {
     console.log('Failed: No package.json');
 
-    return false;
+    return fail();
   }
 
   const pkgContent = readFileSync(pkgPath, 'utf-8');
@@ -128,7 +128,7 @@ const testHost = async (host: HostConfig): Promise<TestResult> => {
     console.log(`Failed: Missing ${host.package}`);
     console.log('Available packages:', Object.keys(allDeps).filter(packageName => packageName.includes('data')));
 
-    return false;
+    return fail();
   }
   console.log(`Has ${host.package}`);
 
@@ -138,7 +138,7 @@ const testHost = async (host: HostConfig): Promise<TestResult> => {
     console.log(`Failed: .env file should NOT exist for hosted database (${host.name})`);
     console.log('Hosted databases expect DATABASE_URL to be provided by the user');
 
-    return false;
+    return fail();
   }
   console.log('Correctly no .env file for hosted database');
 
@@ -147,14 +147,14 @@ const testHost = async (host: HostConfig): Promise<TestResult> => {
   if (!existsSync(drizzlePath)) {
     console.log('Failed: No drizzle.config.ts');
 
-    return false;
+    return fail();
   }
 
   const drizzleContent = readFileSync(drizzlePath, 'utf-8');
   if (!drizzleContent.includes('DATABASE_URL')) {
     console.log('Failed: drizzle.config.ts missing DATABASE_URL reference');
 
-    return false;
+    return fail();
   }
 
   if (!drizzleContent.includes('env.DATABASE_URL')) {
@@ -167,7 +167,7 @@ const testHost = async (host: HostConfig): Promise<TestResult> => {
   if (!existsSync(schemaPath)) {
     console.log(' Failed: No db/schema.ts');
 
-    return false;
+    return fail();
   }
   console.log(' db/schema.ts exists');
 
@@ -176,7 +176,7 @@ const testHost = async (host: HostConfig): Promise<TestResult> => {
   if (!existsSync(serverPath)) {
     console.log(' Failed: No server.ts');
 
-    return false;
+    return fail();
   }
 
   const serverContent = readFileSync(serverPath, 'utf-8');
@@ -193,7 +193,7 @@ const testHost = async (host: HostConfig): Promise<TestResult> => {
   if (!hasCorrectImport) {
     console.log(` Failed: server.ts missing ${host.package} import`);
 
-    return false;
+    return fail();
   }
   console.log(' server.ts has correct database import');
 
@@ -216,11 +216,6 @@ const runAllTests = async () => {
   console.log('generate .env files. Users must provide DATABASE_URL in their');
   console.log('production environment. Tests verify configuration files are');
   console.log('set up to expect DATABASE_URL from the environment.\n');
-
-  interface TestResult {
-    name: string;
-    passed: boolean;
-  }
   
   const runTestForHost = async (host: HostConfig): Promise<TestResult> =>
     testHost(host);

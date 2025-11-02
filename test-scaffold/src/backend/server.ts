@@ -1,3 +1,6 @@
+import { User, schema } from '../../db/schema';
+import { ReactExample } from '../frontend/pages/ReactExample';
+import { createUser, getUser } from './handlers/userHandlers';
 import {
 	asset,
 	build,
@@ -10,9 +13,6 @@ import { staticPlugin } from '@elysiajs/static';
 import { Pool } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-serverless';
 import { Elysia } from 'elysia';
-import { User, schema } from '../../db/schema';
-import { ReactExample } from '../frontend/pages/ReactExample';
-import { createUser, getUser } from './handlers/userHandlers';
 
 const manifest = await build({
 	assetsDirectory: 'src/backend/assets',
@@ -57,14 +57,14 @@ new Elysia()
 		handleReactPageRequest(
 			ReactExample,
 			asset(manifest, 'ReactExampleIndex'),
-			{ cssPath: asset(manifest, 'ReactExampleCSS'), initialCount: 0 }
+			{ initialCount: 0, cssPath: asset(manifest, 'ReactExampleCSS') }
 		)
 	)
 	.get('/react', () =>
 		handleReactPageRequest(
 			ReactExample,
 			asset(manifest, 'ReactExampleIndex'),
-			{ cssPath: asset(manifest, 'ReactExampleCSS'), initialCount: 0 }
+			{ initialCount: 0, cssPath: asset(manifest, 'ReactExampleCSS') }
 		)
 	)
 	.on('error', (err) => {

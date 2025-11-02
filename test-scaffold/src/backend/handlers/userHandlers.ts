@@ -25,7 +25,6 @@ export const getUser = async ({
 		.from(schema.users)
 		.where(eq(schema.users.auth_sub, authSub))
 		.execute();
-
 	return user;
 };
 
@@ -44,6 +43,5 @@ export const createUser = async ({
 		.values({ auth_sub: authSub, metadata: userIdentity })
 		.returning();
 	if (!newUser) throw new Error('Failed to create user');
-
 	return newUser;
 };

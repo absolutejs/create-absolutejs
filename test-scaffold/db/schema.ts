@@ -1,5 +1,5 @@
-import { NeonHttpDatabase } from 'drizzle-orm/neon-http';
 import { pgTable, varchar, timestamp, jsonb } from 'drizzle-orm/pg-core';
+import { NeonHttpDatabase } from 'drizzle-orm/neon-http';
 
 export const users = pgTable('users', {
 	auth_sub: varchar({ length: 255 }).primaryKey(),
