@@ -44,6 +44,7 @@
 		"lint": "eslint ./",
     "gen:matrix": "bun run scripts/generate-test-matrix.ts",
     "verify:matrix": "bun run scripts/verify-test-matrix.ts",
+    "check:structure": "bun run scripts/check-project-structure.ts",
 		"release": "bun run format && bun run build && bun publish",
 		"test": "bash -c 'trap \"exit 0\" INT; cd absolutejs-project && bun dev'",
 		"typecheck": "bun run tsc --noEmit"
