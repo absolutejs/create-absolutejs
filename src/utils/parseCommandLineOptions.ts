@@ -319,6 +319,8 @@ export const parseCommandLineOptions = () => {
         if (values.install === undefined) (values as any).install = false;
         // If DB host not provided, default to 'none'
         if (databaseHost === undefined) databaseHost = 'none';
+        // If HTML scripting not provided, default to false to avoid prompt
+        if (values['html-scripts'] === undefined) (values as any)['html-scripts'] = false;
     }
 
     const argumentConfiguration: ArgumentConfiguration = {
