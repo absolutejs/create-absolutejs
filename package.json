@@ -45,6 +45,12 @@
     "gen:matrix": "bun run scripts/generate-test-matrix.ts",
     "verify:matrix": "bun run scripts/verify-test-matrix.ts",
     "check:structure": "bun run scripts/check-project-structure.ts",
+    "test:functional": "bun run scripts/functional-tests/functional-test-runner.ts",
+    "test:server": "bun run scripts/functional-tests/server-startup-validator.ts",
+    "test:build": "bun run scripts/functional-tests/build-validator.ts",
+    "test:deps": "bun run scripts/functional-tests/dependency-installer-tester.ts",
+    "test:react": "bun run scripts/functional-tests/react-validator.ts",
+    "test:react:all": "bun run scripts/functional-tests/react-test-runner.ts",
 		"release": "bun run format && bun run build && bun publish",
 		"test": "bash -c 'trap \"exit 0\" INT; cd absolutejs-project && bun dev'",
 		"typecheck": "bun run tsc --noEmit"

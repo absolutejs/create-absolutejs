@@ -18,7 +18,7 @@ const buildSqlAuthTemplate = ({
 	dbType,
 	queries
 }: AuthTemplateOptions) => `
-import { isValidProviderOption, providers } from 'citra'
+import { isValidProviderOption, providers } from '@absolutejs/auth'
 ${importLines}
 ${handlerTypes?.UserRow ? `\ntype UserRow = ${handlerTypes.UserRow}` : ''}
 type UserHandlerProps = {
@@ -29,14 +29,16 @@ type UserHandlerProps = {
 
 export const getUser = async ({ authProvider, db, userIdentity }: UserHandlerProps) => {
   if (!isValidProviderOption(authProvider)) throw new Error(\`Invalid auth provider: \${authProvider}\`)
-  const subject = providers[authProvider].extractSubjectFromIdentity(userIdentity)
+  const provider = providers[authProvider as keyof typeof providers]
+  const subject = (provider as any).extractSubjectFromIdentity?.(userIdentity) ?? (userIdentity as any).sub ?? (userIdentity as any).id ?? String(userIdentity.sub || userIdentity.id || 'unknown')
   const authSub = \`\${authProvider.toUpperCase()}|\${subject}\`
   ${queries.selectUser}
 }
 
 export const createUser = async ({ authProvider, db, userIdentity }: UserHandlerProps) => {
   if (!isValidProviderOption(authProvider)) throw new Error(\`Invalid auth provider: \${authProvider}\`)
-  const subject = providers[authProvider].extractSubjectFromIdentity(userIdentity)
+  const provider = providers[authProvider as keyof typeof providers]
+  const subject = (provider as any).extractSubjectFromIdentity?.(userIdentity) ?? (userIdentity as any).sub ?? (userIdentity as any).id ?? String(userIdentity.sub || userIdentity.id || 'unknown')
   const authSub = \`\${authProvider.toUpperCase()}|\${subject}\`
   ${queries.insertUser}
 }

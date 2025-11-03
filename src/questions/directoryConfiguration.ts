@@ -37,58 +37,35 @@ export const getDirectoryConfiguration = async ({
 		};
 	}
 
-	// Build directory
+	// Build directory - use default if not provided (non-interactive mode)
 	const buildDirectory =
-		argumentConfiguration.buildDirectory ??
-		(await text({
-			message: 'Build directory:',
-			placeholder: 'build'
-		}));
-	if (isCancel(buildDirectory)) abort();
+		argumentConfiguration.buildDirectory ?? 'build';
 
-	// Assets directory
+	// Assets directory - use default if not provided (non-interactive mode)
 	const assetsDirectory =
-		argumentConfiguration.assetsDirectory ??
-		(await text({
-			message: 'Assets directory:',
-			placeholder: 'src/backend/assets'
-		}));
-	if (isCancel(assetsDirectory)) abort();
+		argumentConfiguration.assetsDirectory ?? 'src/backend/assets';
 
-	// Tailwind directory
+	// Tailwind directory - use defaults if not provided (non-interactive mode)
 	let tailwind;
 	if (useTailwind) {
 		const input =
 			argumentConfiguration.tailwind?.input ??
-			(await text({
-				message: 'Tailwind input CSS file:',
-				placeholder: './src/frontend/styles/tailwind.css'
-			}));
-		if (isCancel(input)) abort();
+			'./src/frontend/styles/tailwind.css';
 
 		const output =
 			argumentConfiguration.tailwind?.output ??
-			(await text({
-				message: 'Tailwind output CSS file:',
-				placeholder: '/assets/css/tailwind.generated.css'
-			}));
-		if (isCancel(output)) abort();
+			'/assets/css/tailwind.generated.css';
 
 		tailwind = { input, output };
 	} else {
 		tailwind = undefined;
 	}
 
-	// Database
+	// Database - use default if not provided (non-interactive mode)
 	let databaseDirectory;
 	if (databaseEngine !== undefined && databaseEngine !== 'none') {
 		databaseDirectory =
-			argumentConfiguration.databaseDirectory ??
-			(await text({
-				message: 'Database directory:',
-				placeholder: 'db'
-			}));
-		if (isCancel(databaseDirectory)) abort();
+			argumentConfiguration.databaseDirectory ?? 'db';
 	}
 
 	return {
