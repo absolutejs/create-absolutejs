@@ -53,6 +53,8 @@
     "test:react:all": "bun run scripts/functional-tests/react-test-runner.ts",
     "test:vue": "bun run scripts/functional-tests/vue-validator.ts",
     "test:vue:all": "bun run scripts/functional-tests/vue-test-runner.ts",
+    "test:svelte": "bun run scripts/functional-tests/svelte-validator.ts",
+    "test:svelte:all": "bun run scripts/functional-tests/svelte-test-runner.ts",
 		"release": "bun run format && bun run build && bun publish",
 		"test": "bash -c 'trap \"exit 0\" INT; cd absolutejs-project && bun dev'",
 		"typecheck": "bun run tsc --noEmit"

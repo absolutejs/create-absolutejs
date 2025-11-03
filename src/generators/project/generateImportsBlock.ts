@@ -79,8 +79,16 @@ export const generateImportsBlock = ({
 			`import VueExample from '${buildExamplePath(vueDir, 'VueExample.vue')}'`
 		);
 
+	// Neon requires different imports based on whether ORM is used
+	const getNeonImport = () => {
+		if (orm === 'drizzle') {
+			return [`import { Pool } from '@neondatabase/serverless'`];
+		}
+		return [`import { neon } from '@neondatabase/serverless'`];
+	};
+
 	const connectorImports = {
-		neon: [`import { Pool } from '@neondatabase/serverless'`],
+		neon: getNeonImport(),
 		planetscale: [`import { connect } from '@planetscale/database'`],
 		turso: [`import { createClient } from '@libsql/client'`]
 	} as const;

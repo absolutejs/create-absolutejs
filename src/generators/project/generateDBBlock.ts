@@ -25,7 +25,7 @@ const connectionMap: Record<string, Record<string, DBExpr>> = {
 	},
 	postgresql: {
 		neon: {
-			expr: 'new Pool({ connectionString: getEnv("DATABASE_URL") })'
+			expr: 'neon(getEnv("DATABASE_URL"))'
 		},
 		none: { expr: 'new Pool({ connectionString: getEnv("DATABASE_URL") })' }
 	},
@@ -77,7 +77,11 @@ const db = ${hostCfg.expr}
 
 	if (!drizzleDialectSet.has(databaseEngine)) return '';
 
-	const expr = engineGroup[hostKey]?.expr ?? remoteDrizzleInit[hostKey];
+	// For Drizzle with remote hosts, use remoteDrizzleInit; otherwise use connectionMap
+	const isRemoteHost = hostKey !== 'none' && hostKey in remoteDrizzleInit;
+	const expr = isRemoteHost 
+		? (remoteDrizzleInit[hostKey] ?? engineGroup[hostKey]?.expr)
+		: (engineGroup[hostKey]?.expr ?? remoteDrizzleInit[hostKey]);
 	if (!expr) return '';
 
 	if (databaseEngine === 'mysql') {

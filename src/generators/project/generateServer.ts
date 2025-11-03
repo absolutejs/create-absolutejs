@@ -73,7 +73,8 @@ export const generateServerFile = ({
 		authProvider,
 		buildDirectory,
 		flags,
-		frontendDirectories
+		frontendDirectories,
+		databaseEngine
 	});
 
 	const content = `${importsBlock}
