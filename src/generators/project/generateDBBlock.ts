@@ -71,7 +71,7 @@ export const generateDBBlock = ({
 		if (!hostCfg) return '';
 
 		return `
-const pool = ${hostCfg.expr}
+const db = ${hostCfg.expr}
 `;
 	}
 

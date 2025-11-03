@@ -74,4 +74,15 @@ export const scaffoldConfigurationFiles = ({
 		envVariables,
 		projectName
 	});
+
+	// Generate Vue type declarations if Vue is included
+	if (frontends.includes('vue')) {
+		const vueShimContent = `declare module '*.vue' {
+	import type { DefineComponent } from 'vue';
+	const component: DefineComponent<{}, {}, any>;
+	export default component;
+}
+`;
+		writeFileSync(join(projectName, 'src', 'types', 'vue-shim.d.ts'), vueShimContent);
+	}
 };

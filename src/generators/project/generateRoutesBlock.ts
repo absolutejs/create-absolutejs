@@ -51,8 +51,7 @@ export const generateRoutesBlock = ({
             cssPath: asset(manifest, 'VueExampleCSS'),
             title: 'AbsoluteJS + Vue',
             description: 'A Vue.js example with AbsoluteJS'
-          }),
-          { initialCount: 0 }
+          })
         )`
 				: `handleVuePageRequest(
           VueExample,
@@ -62,8 +61,7 @@ export const generateRoutesBlock = ({
             cssPath: asset(manifest, 'VueExampleCSS'),
             title: 'AbsoluteJS + Vue',
             description: 'A Vue.js example with AbsoluteJS'
-          }),
-          { initialCount: 0 }
+          })
         )`;
 
 		return '';
