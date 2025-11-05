@@ -61,6 +61,8 @@
     "test:htmx:all": "bun run scripts/functional-tests/htmx-test-runner.ts",
     "test:sqlite": "bun run scripts/functional-tests/sqlite-validator.ts",
     "test:sqlite:all": "bun run scripts/functional-tests/sqlite-test-runner.ts",
+    "test:postgresql": "bun run scripts/functional-tests/postgresql-validator.ts",
+    "test:postgresql:all": "bun run scripts/functional-tests/postgresql-test-runner.ts",
 		"release": "bun run format && bun run build && bun publish",
 		"test": "bash -c 'trap \"exit 0\" INT; cd absolutejs-project && bun dev'",
 		"typecheck": "bun run tsc --noEmit"
