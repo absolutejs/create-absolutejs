@@ -65,8 +65,10 @@
     "test:postgresql:all": "bun run scripts/functional-tests/postgresql-test-runner.ts",
     "test:mysql": "bun run scripts/functional-tests/mysql-validator.ts",
     "test:mysql:all": "bun run scripts/functional-tests/mysql-test-runner.ts",
-    "test:mongodb": "bun run scripts/functional-tests/mongodb-validator.ts",
-    "test:mongodb:all": "bun run scripts/functional-tests/mongodb-test-runner.ts",
+		"test:mongodb": "bun run scripts/functional-tests/mongodb-validator.ts",
+		"test:mongodb:all": "bun run scripts/functional-tests/mongodb-test-runner.ts",
+		"test:cloud": "bun run scripts/functional-tests/cloud-provider-validator.ts",
+		"test:cloud:all": "bun run scripts/functional-tests/cloud-provider-test-runner.ts",
 		"release": "bun run format && bun run build && bun publish",
 		"test": "bash -c 'trap \"exit 0\" INT; cd absolutejs-project && bun dev'",
 		"typecheck": "bun run tsc --noEmit"

@@ -62,26 +62,26 @@ export const getFrontendDirectoryConfigurations = async (
 			}
 		} else {
 			frontendDirectories[frontend] = prefilled;
-		}
+	}
 	}
 
 	// Only prompt if there are frontends that need prompting (shouldn't happen with --skip)
 	if (frontendsToPrompt.length > 0) {
-		const promptedDirectories = await Promise.all(
-			frontendsToPrompt.map((name) =>
-				getDirectoryForFrontend(
-					directoryConfiguration,
-					name,
+	const promptedDirectories = await Promise.all(
+		frontendsToPrompt.map((name) =>
+			getDirectoryForFrontend(
+				directoryConfiguration,
+				name,
 					isSingleFrontend,
 					passedFrontendDirectories?.[name]
-				)
 			)
-		);
+		)
+	);
 
-		frontendsToPrompt.forEach(
-			(name, index) =>
-				(frontendDirectories[name] = promptedDirectories[index])
-		);
+	frontendsToPrompt.forEach(
+		(name, index) =>
+			(frontendDirectories[name] = promptedDirectories[index])
+	);
 	}
 
 	return frontendDirectories;

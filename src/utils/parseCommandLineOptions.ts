@@ -323,7 +323,7 @@ export const parseCommandLineOptions = () => {
         if (values['html-scripts'] === undefined) (values as any)['html-scripts'] = false;
     }
 
-    const argumentConfiguration: ArgumentConfiguration = {
+	const argumentConfiguration: ArgumentConfiguration = {
 		assetsDirectory: values.assets,
 		authProvider,
 		buildDirectory: values.build,
@@ -334,8 +334,8 @@ export const parseCommandLineOptions = () => {
         directoryConfig: (values.directory as any) ?? directoryConfig,
 		frontendDirectories,
 		frontends: selectedFrontends.length ? selectedFrontends : undefined,
-        initializeGitNow: values.git,
-        installDependenciesNow: values.install,
+		initializeGitNow: values.git,
+		installDependenciesNow: values.install,
 		orm,
 		plugins,
 		projectName,
