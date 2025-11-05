@@ -63,6 +63,8 @@
     "test:sqlite:all": "bun run scripts/functional-tests/sqlite-test-runner.ts",
     "test:postgresql": "bun run scripts/functional-tests/postgresql-validator.ts",
     "test:postgresql:all": "bun run scripts/functional-tests/postgresql-test-runner.ts",
+    "test:mysql": "bun run scripts/functional-tests/mysql-validator.ts",
+    "test:mysql:all": "bun run scripts/functional-tests/mysql-test-runner.ts",
 		"release": "bun run format && bun run build && bun publish",
 		"test": "bash -c 'trap \"exit 0\" INT; cd absolutejs-project && bun dev'",
 		"typecheck": "bun run tsc --noEmit"
