@@ -158,6 +158,13 @@ export const generateImportsBlock = ({
 			`import { getEnv } from '@absolutejs/absolute'`
 		);
 
+	if (noOrm && databaseEngine === 'mongodb') {
+		rawImports.push(
+			`import { MongoClient } from 'mongodb'`,
+			`import { getEnv } from '@absolutejs/absolute'`
+		);
+	}
+
 	if (orm === 'drizzle') {
 		rawImports.push(
 			`import { Elysia } from 'elysia'`,

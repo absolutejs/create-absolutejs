@@ -14,7 +14,7 @@ const connectionMap: Record<string, Record<string, DBExpr>> = {
 		none: { expr: 'createPool(getEnv("DATABASE_URL"))' }
 	},
 	mongodb: {
-		none: { expr: 'new MongoClient(getEnv("DATABASE_URL") })' }
+		none: { expr: 'new MongoClient(getEnv("DATABASE_URL"))' }
 	},
 	mssql: {
 		none: { expr: 'await connect(getEnv("DATABASE_URL"))' }
@@ -69,6 +69,15 @@ export const generateDBBlock = ({
 	if (orm !== 'drizzle') {
 		const hostCfg = engineGroup[hostKey];
 		if (!hostCfg) return '';
+
+		// MongoDB needs special handling: connect and get database
+		if (databaseEngine === 'mongodb') {
+			return `
+const client = ${hostCfg.expr}
+await client.connect()
+const db = client.db('database')
+`;
+		}
 
 		return `
 const db = ${hostCfg.expr}
