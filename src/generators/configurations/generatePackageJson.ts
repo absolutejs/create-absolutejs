@@ -75,6 +75,7 @@ export const createPackageJson = ({
 		);
 	}
 
+	// ---- Code quality devDependencies ----
 	if (codeQualityTool === 'eslint+prettier') {
 		eslintAndPrettierDependencies.forEach((dep) => {
 			devDependencies[dep.value] = resolveVersion(
@@ -82,6 +83,13 @@ export const createPackageJson = ({
 				dep.latestVersion
 			);
 		});
+	}
+	// ✅ Biome: only add the devDependency here (scripts come later after scripts is initialized)
+	else if (codeQualityTool === 'biome') {
+		devDependencies['@biomejs/biome'] = resolveVersion(
+			'@biomejs/biome',
+			'1.7.0'
+		);
 	}
 
 	if (useTailwind) {
@@ -154,6 +162,7 @@ export const createPackageJson = ({
 
 	if (latest) s.stop(green('Package versions resolved'));
 
+	// ---- Scripts (initialize first, then override for Biome below) ----
 	const scripts: PackageJson['scripts'] = {
 		dev: 'bash -c \'trap "exit 0" INT; bun run --watch src/backend/server.ts\'',
 		format: `prettier --write "./**/*.{js,ts,css,json,mjs,md${flags.requiresReact ? ',jsx,tsx' : ''}${flags.requiresSvelte ? ',svelte' : ''}${flags.requiresVue ? ',vue' : ''}${flags.requiresHtml || flags.requiresHtmx ? ',html' : ''}}"`,
@@ -162,6 +171,7 @@ export const createPackageJson = ({
 		typecheck: 'bun run tsc --noEmit'
 	};
 
+	// ---- DB convenience scripts (unchanged) ----
 	if (
 		databaseEngine === 'postgresql' &&
 		(!databaseHost || databaseHost === 'none')
@@ -208,6 +218,14 @@ export const createPackageJson = ({
 	) {
 		scripts['db:sqlite'] = 'sqlite3 db/database.sqlite';
 		scripts['db:init'] = 'sqlite3 db/database.sqlite < db/init.sql';
+	}
+
+	//If Biome is the selected tool, override the code-quality scripts here
+	if (codeQualityTool === 'biome') {
+		scripts.format = 'biome format . --write';
+		scripts.lint = 'biome lint .';
+		scripts.check = 'biome check .';
+		scripts['ci:biome'] = 'biome ci .';
 	}
 
 	const packageJson: PackageJson = {
