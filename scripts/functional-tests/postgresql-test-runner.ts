@@ -9,6 +9,7 @@ import { join } from 'path';
 import { validatePostgreSQLDatabase } from './postgresql-validator';
 import { runFunctionalTests } from './functional-test-runner';
 import { hasCachedDependencies, getOrInstallDependencies } from './dependency-cache';
+import { cleanupProjectDirectory } from './test-utils';
 
 type TestMatrixEntry = {
   frontend: string;
@@ -41,6 +42,8 @@ async function scaffoldAndTestPostgreSQL(
   const projectPath = projectName;
 
   // Ensure cleanup before starting
+  cleanupProjectDirectory(projectPath);
+
   try {
     await $`rm -rf ${projectPath}`.quiet().nothrow();
   } catch {

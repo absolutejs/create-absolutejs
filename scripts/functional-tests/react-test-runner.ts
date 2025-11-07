@@ -8,6 +8,7 @@ import { readFileSync, existsSync } from 'fs';
 import { join } from 'path';
 import { validateReactFramework } from './react-validator';
 import { hasCachedDependencies, getOrInstallDependencies } from './dependency-cache';
+import { cleanupProjectDirectory } from './test-utils';
 
 type TestMatrixEntry = {
   frontend: string;
@@ -38,6 +39,9 @@ async function scaffoldAndTestReact(
   // Generate project name from config
   const projectName = `test-react-${config.databaseEngine}-${config.orm}-${config.authProvider === 'none' ? 'noauth' : 'auth'}-${config.useTailwind ? 'tw' : 'notw'}`.replace(/[^a-z0-9-]/g, '-');
   const projectPath = projectName; // Project is created in current directory
+
+  // Ensure no leftover directory from previous runs
+  cleanupProjectDirectory(projectPath);
 
   try {
     // Build scaffold command (without --install for now, we'll install separately)

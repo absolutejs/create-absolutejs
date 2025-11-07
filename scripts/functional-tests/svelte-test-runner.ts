@@ -8,6 +8,7 @@ import { readFileSync, existsSync } from 'fs';
 import { join } from 'path';
 import { validateSvelteFramework } from './svelte-validator';
 import { hasCachedDependencies, getOrInstallDependencies } from './dependency-cache';
+import { cleanupProjectDirectory } from './test-utils';
 
 type TestMatrixEntry = {
   frontend: string;
@@ -38,6 +39,8 @@ async function scaffoldAndTestSvelte(
   // Generate project name from config
   const projectName = `test-svelte-${config.databaseEngine}-${config.orm}-${config.authProvider === 'none' ? 'noauth' : 'auth'}-${config.useTailwind ? 'tw' : 'notw'}`.replace(/[^a-z0-9-]/g, '-');
   const projectPath = projectName; // Project is created in current directory
+
+  cleanupProjectDirectory(projectPath);
 
   try {
     // Build scaffold command (without --install for now, we'll install separately)

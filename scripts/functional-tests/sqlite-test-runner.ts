@@ -9,6 +9,7 @@ import { join } from 'path';
 import { validateSQLiteDatabase } from './sqlite-validator';
 import { runFunctionalTests } from './functional-test-runner';
 import { hasCachedDependencies, getOrInstallDependencies } from './dependency-cache';
+import { cleanupProjectDirectory } from './test-utils';
 
 type TestMatrixEntry = {
   frontend: string;
@@ -39,6 +40,8 @@ async function scaffoldAndTestSQLite(
   // Generate project name from config
   const projectName = `test-sqlite-${config.orm}-${config.authProvider === 'none' ? 'noauth' : 'auth'}-${config.databaseHost === 'none' ? 'local' : config.databaseHost}-${config.useTailwind ? 'tw' : 'notw'}`.replace(/[^a-z0-9-]/g, '-');
   const projectPath = projectName;
+
+  cleanupProjectDirectory(projectPath);
 
   try {
     // Build scaffold command

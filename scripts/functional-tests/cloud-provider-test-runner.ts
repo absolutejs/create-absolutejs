@@ -8,6 +8,7 @@ import { readFileSync, existsSync } from 'fs';
 import { join } from 'path';
 import { validateCloudProvider } from './cloud-provider-validator';
 import { hasCachedDependencies, getOrInstallDependencies } from './dependency-cache';
+import { cleanupProjectDirectory } from './test-utils';
 
 type TestMatrixEntry = {
   frontend: string;
@@ -40,6 +41,8 @@ async function scaffoldAndTestCloudProvider(
   const projectPath = projectName;
 
   // Ensure cleanup before starting
+  cleanupProjectDirectory(projectPath);
+
   try {
     const { $ } = await import('bun');
     await $`rm -rf ${projectPath}`.quiet().nothrow();
