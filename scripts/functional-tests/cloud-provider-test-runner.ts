@@ -260,8 +260,9 @@ async function scaffoldAndTestCloudProvider(
     }
 
     try {
-      await $`rm -rf ${projectPath}`.quiet();
+      await cleanupProjectDirectory(projectPath);
     } catch {
+      // Ignore cleanup errors
     }
 
     return {
@@ -274,9 +275,9 @@ async function scaffoldAndTestCloudProvider(
   } catch (e: any) {
     errors.push(`Test execution error: ${e.message || e}`);
     try {
-      const { $ } = await import('bun');
-      await $`rm -rf ${projectPath}`.quiet();
+      await cleanupProjectDirectory(projectPath);
     } catch {
+      // Ignore cleanup errors
     }
     return {
       config,

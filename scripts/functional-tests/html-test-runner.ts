@@ -46,6 +46,8 @@ async function scaffoldAndTestHTML(
 
   cleanupProjectDirectory(projectPath);
 
+  const { $ } = await import('bun');
+
   try {
     // Build scaffold command (without --install for now, we'll install separately)
     const cmd = ['bun', 'run', 'src/index.ts', projectName, '--skip'];
@@ -275,7 +277,6 @@ async function scaffoldAndTestHTML(
     errors.push(`Test execution error: ${e.message || e}`);
     // Cleanup on error
     try {
-      const { $ } = await import('bun');
       await $`rm -rf ${projectPath}`.quiet();
     } catch {
       // Ignore cleanup errors
