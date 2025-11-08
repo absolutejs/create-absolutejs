@@ -73,15 +73,39 @@ export async function validateServerStartup(
     try {
       const startTime = Date.now();
       
-      // Use Promise.race for timeout handling
-      const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('TIMEOUT')), COMPILE_TIMEOUT);
+      const compileProcess = $`cd ${projectPath} && ${packageManager} run typecheck`.quiet().nothrow();
+      let timeoutId: ReturnType<typeof setTimeout> | undefined;
+
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        timeoutId = setTimeout(() => {
+          try {
+            const killed = compileProcess.kill?.('SIGTERM');
+            if (killed === false || killed === undefined) {
+              compileProcess.kill?.('SIGKILL');
+            }
+          } catch {
+            // Ignore kill errors (process may have already exited)
+          }
+          reject(new Error('TIMEOUT'));
+        }, COMPILE_TIMEOUT);
       });
 
-      const result = await Promise.race([
-        $`cd ${projectPath} && ${packageManager} run typecheck`.quiet().nothrow(),
-        timeoutPromise
-      ]) as Awaited<ReturnType<typeof $>>;
+      let result: Awaited<ReturnType<typeof $>>;
+      try {
+        result = await Promise.race([
+          compileProcess.finally(() => {
+            if (timeoutId) {
+              clearTimeout(timeoutId);
+              timeoutId = undefined;
+            }
+          }),
+          timeoutPromise
+        ]) as Awaited<ReturnType<typeof $>>;
+      } finally {
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+        }
+      }
 
       const compileTime = Date.now() - startTime;
 

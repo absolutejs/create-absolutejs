@@ -67,6 +67,7 @@ export async function validateCloudProvider(
   // Check 1: No Docker compose files for cloud providers
   if (existsSync(dockerComposePath)) {
     errors.push(`Docker compose file found for cloud provider ${databaseHost}. Cloud providers should not have Docker setup.`);
+    cloudSpecific.noDockerFiles = false;
   } else {
     cloudSpecific.noDockerFiles = true;
   }

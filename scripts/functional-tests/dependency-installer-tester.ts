@@ -58,15 +58,39 @@ export async function testDependencyInstallation(
       yarn: 'yarn install'
     };
 
-    // Use Promise.race for timeout handling
-    const timeoutPromise = new Promise((_, reject) => {
-      setTimeout(() => reject(new Error('TIMEOUT')), INSTALL_TIMEOUT);
+    const installProcess = $`cd ${projectPath} && ${installCommands[packageManager]}`.quiet().nothrow();
+    let timeoutId: ReturnType<typeof setTimeout> | undefined;
+
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      timeoutId = setTimeout(() => {
+        try {
+          const killResult = installProcess.kill?.('SIGTERM');
+          if (killResult === false || killResult === undefined) {
+            installProcess.kill?.('SIGKILL');
+          }
+        } catch {
+          // Ignore kill errors; process may have already exited.
+        }
+        reject(new Error('TIMEOUT'));
+      }, INSTALL_TIMEOUT);
     });
 
-    const result = await Promise.race([
-      $`cd ${projectPath} && ${installCommands[packageManager]}`.quiet().nothrow(),
-      timeoutPromise
-    ]) as Awaited<ReturnType<typeof $>>;
+    let result: Awaited<ReturnType<typeof $>>;
+    try {
+      result = await Promise.race([
+        installProcess.finally(() => {
+          if (timeoutId) {
+            clearTimeout(timeoutId);
+            timeoutId = undefined;
+          }
+        }),
+        timeoutPromise
+      ]) as Awaited<ReturnType<typeof $>>;
+    } finally {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    }
 
     const installTime = Date.now() - startTime;
 

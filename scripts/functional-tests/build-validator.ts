@@ -109,7 +109,7 @@ export async function validateBuild(
 }
 
 // CLI usage
-if (require.main === module) {
+if (import.meta.main) {
   const projectPath = process.argv[2];
   const packageManager = (process.argv[3] as any) || 'bun';
 

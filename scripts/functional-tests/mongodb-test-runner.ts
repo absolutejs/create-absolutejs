@@ -8,6 +8,7 @@ import { readFileSync, existsSync } from 'fs';
 import { join } from 'path';
 import { validateMongoDBDatabase } from './mongodb-validator';
 import { runFunctionalTests } from './functional-test-runner';
+import type { FunctionalTestResult } from './functional-test-runner';
 import { hasCachedDependencies, getOrInstallDependencies } from './dependency-cache';
 import { cleanupProjectDirectory } from './test-utils';
 
@@ -211,7 +212,7 @@ async function scaffoldAndTestMongoDB(
     // Run functional tests (build, server)
     process.stdout.write('  → Running functional tests... ');
     const functionalStart = Date.now();
-    let functionalTestResults;
+    let functionalTestResults: FunctionalTestResult | undefined;
     try {
       functionalTestResults = await runFunctionalTests(projectPath, 'bun', {
         skipDependencies: true,
@@ -226,7 +227,14 @@ async function scaffoldAndTestMongoDB(
         warnings.push(...functionalTestResults.warnings);
       }
     } catch (e: any) {
-      warnings.push(`Functional tests error: ${e.message || e}`);
+      const message = `Functional tests error: ${e.message || e}`;
+      errors.push(message);
+      functionalTestResults = {
+        passed: false,
+        errors: [message],
+        warnings: [],
+        results: {}
+      };
     }
     const functionalTime = Date.now() - functionalStart;
 

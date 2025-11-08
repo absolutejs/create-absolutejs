@@ -106,7 +106,7 @@ export async function validateHTMXFramework(
 
       // Check for HTMX routes
       const hasHtmxRoutes = 
-        (serverContent.includes('/htmx') || (serverContent.includes("'/'") && serverContent.includes('HTMXExample'))) &&
+        ((serverContent.includes('/htmx') || (serverContent.includes("'/'") && serverContent.includes('HTMXExample')))) &&
         serverContent.includes('/htmx/reset') &&
         serverContent.includes('/htmx/count') &&
         serverContent.includes('/htmx/increment');

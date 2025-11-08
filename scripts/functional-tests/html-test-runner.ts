@@ -9,6 +9,7 @@ import { join } from 'path';
 import { validateHTMLFramework } from './html-validator';
 import { hasCachedDependencies, getOrInstallDependencies } from './dependency-cache';
 import { cleanupProjectDirectory } from './test-utils';
+import { spawn } from 'child_process';
 
 type TestMatrixEntry = {
   frontend: string;
@@ -93,33 +94,67 @@ async function scaffoldAndTestHTML(
     // This means useHTMLScripts will default to false when --skip is used
 
     // Scaffold project (run from parent directory)
-    const { $ } = await import('bun');
     process.stdout.write('  → Scaffolding project... ');
     const scaffoldStart = Date.now();
     
     // Add timeout for scaffold (2 minutes max)
     const SCAFFOLD_TIMEOUT = 2 * 60 * 1000;
-    const scaffoldPromise = $`${cmd}`.quiet().nothrow();
-    const timeoutPromise = new Promise((_, reject) => {
-      setTimeout(() => reject(new Error('TIMEOUT')), SCAFFOLD_TIMEOUT);
-    });
-    
-    let scaffoldResult;
-    try {
-      scaffoldResult = await Promise.race([scaffoldPromise, timeoutPromise]) as Awaited<ReturnType<typeof $>>;
-    } catch (e: any) {
-      if (e.message === 'TIMEOUT') {
+    const scaffoldResult = await new Promise<{
+      exitCode: number;
+      stdout: string;
+      stderr: string;
+    }>((resolve, reject) => {
+      const child = spawn(cmd[0], cmd.slice(1), {
+        stdio: ['ignore', 'pipe', 'pipe'],
+        env: process.env,
+      });
+
+      let stdout = '';
+      let stderr = '';
+
+      const timeoutId = setTimeout(() => {
+        child.kill('SIGTERM');
+        reject(new Error('TIMEOUT'));
+      }, SCAFFOLD_TIMEOUT);
+
+      child.stdout?.on('data', (data) => {
+        stdout += data.toString();
+      });
+
+      child.stderr?.on('data', (data) => {
+        stderr += data.toString();
+      });
+
+      child.on('error', (error) => {
+        clearTimeout(timeoutId);
+        reject(error);
+      });
+
+      child.on('close', (code) => {
+        clearTimeout(timeoutId);
+        resolve({
+          exitCode: code ?? -1,
+          stdout,
+          stderr,
+        });
+      });
+    }).catch((e: any) => {
+      if (e?.message === 'TIMEOUT' || String(e) === 'Error: TIMEOUT') {
         console.log(`✗ (TIMEOUT after ${SCAFFOLD_TIMEOUT / 1000}s)`);
         errors.push(`Scaffold timed out after ${SCAFFOLD_TIMEOUT / 1000} seconds`);
-        return {
-          config,
-          passed: false,
-          errors,
-          warnings,
-          testTime: Date.now() - startTime
-        };
+        return null;
       }
       throw e;
+    });
+
+    if (!scaffoldResult) {
+      return {
+        config,
+        passed: false,
+        errors,
+        warnings,
+        testTime: Date.now() - startTime
+      };
     }
     
     const scaffoldTime = Date.now() - scaffoldStart;

@@ -294,7 +294,10 @@ async function runMySQLTests(
   const matrix: TestMatrixEntry[] = JSON.parse(readFileSync(matrixFile, 'utf-8'));
   
   // Filter for MySQL-only configurations
-  const mysqlConfigs = matrix.filter((entry) => entry.databaseEngine === 'mysql');
+  const mysqlConfigs = matrix.filter(
+    (entry) =>
+      entry.databaseEngine === 'mysql' && entry.databaseHost !== 'planetscale'
+  );
   
   // Limit to subset if specified
   const configsToTest = testSubset ? mysqlConfigs.slice(0, testSubset) : mysqlConfigs;

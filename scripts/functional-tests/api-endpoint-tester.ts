@@ -12,9 +12,9 @@ export type APIEndpointResult = {
 };
 
 export async function testAPIEndpoints(
-  projectPath: string,
-  serverUrl: string = 'http://localhost:3000',
-  config: {
+  _projectPath: string,
+  _serverUrl: string = 'http://localhost:3000',
+  _config: {
     authProvider?: string;
     frontends?: string[];
   } = {}
@@ -38,7 +38,7 @@ export async function testAPIEndpoints(
   // - Auth endpoints (if enabled)
   // - Count history endpoints (if no auth)
 
-  return { passed: true, errors: [], warnings };
+  return { passed: true, errors, warnings };
 }
 
 // CLI usage

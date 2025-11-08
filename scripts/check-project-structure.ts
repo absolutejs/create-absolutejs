@@ -24,7 +24,13 @@ export function checkProjectStructure(projectPath: string): CheckResult {
   }
 
   // Check 2: Project is a directory (not a file)
-  const stats = statSync(projectPath);
+  let stats;
+  try {
+    stats = statSync(projectPath);
+  } catch (error: any) {
+    errors.push(`Failed to stat project directory ${projectPath}: ${error?.message ?? error}`);
+    return { passed: false, errors };
+  }
   if (!stats.isDirectory()) {
     errors.push(`Project path exists but is not a directory: ${projectPath}`);
     return { passed: false, errors };
@@ -38,7 +44,13 @@ export function checkProjectStructure(projectPath: string): CheckResult {
   }
 
   // Check 4: package.json is a file (not a directory)
-  const packageJsonStats = statSync(packageJsonPath);
+  let packageJsonStats;
+  try {
+    packageJsonStats = statSync(packageJsonPath);
+  } catch (error: any) {
+    errors.push(`Failed to stat package.json at ${packageJsonPath}: ${error?.message ?? error}`);
+    return { passed: false, errors };
+  }
   if (!packageJsonStats.isFile()) {
     errors.push(`package.json exists but is not a file: ${packageJsonPath}`);
     return { passed: false, errors };
