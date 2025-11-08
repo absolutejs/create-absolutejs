@@ -52,13 +52,11 @@ export const getFrontendDirectoryConfigurations = async (
 	for (const frontend of frontends) {
 		const prefilled = passedFrontendDirectories?.[frontend];
 		if (prefilled === undefined) {
-			// If directoryConfig is 'custom' but no value provided, use default (same as 'default' mode)
-			// This prevents hanging when --skip is used with --directory custom
 			if (directoryConfiguration === 'custom') {
-				// Use default: empty string for single frontend, frontend name for multiple
-				frontendDirectories[frontend] = isSingleFrontend ? '' : frontend;
-			} else {
 				frontendsToPrompt.push(frontend);
+			} else {
+				const defaultValue = isSingleFrontend ? '' : frontend;
+				frontendDirectories[frontend] = defaultValue;
 			}
 		} else {
 			frontendDirectories[frontend] = prefilled;
@@ -72,8 +70,8 @@ export const getFrontendDirectoryConfigurations = async (
 			getDirectoryForFrontend(
 				directoryConfiguration,
 				name,
-					isSingleFrontend,
-					passedFrontendDirectories?.[name]
+				isSingleFrontend,
+				passedFrontendDirectories?.[name]
 			)
 		)
 	);

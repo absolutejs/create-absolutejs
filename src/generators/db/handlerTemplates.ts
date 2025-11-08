@@ -30,7 +30,12 @@ type UserHandlerProps = {
 export const getUser = async ({ authProvider, db, userIdentity }: UserHandlerProps) => {
   if (!isValidProviderOption(authProvider)) throw new Error(\`Invalid auth provider: \${authProvider}\`)
   const provider = providers[authProvider as keyof typeof providers]
-  const subject = (provider as any).extractSubjectFromIdentity?.(userIdentity) ?? (userIdentity as any).sub ?? (userIdentity as any).id ?? String(userIdentity.sub || userIdentity.id || 'unknown')
+  const identity = userIdentity as Record<string, unknown>
+  const subject =
+    (provider as any).extractSubjectFromIdentity?.(identity) ??
+    (identity.sub as string | undefined) ??
+    (identity.id as string | undefined) ??
+    String(identity.sub || identity.id || 'unknown')
   const authSub = \`\${authProvider.toUpperCase()}|\${subject}\`
   ${queries.selectUser}
 }
@@ -38,7 +43,12 @@ export const getUser = async ({ authProvider, db, userIdentity }: UserHandlerPro
 export const createUser = async ({ authProvider, db, userIdentity }: UserHandlerProps) => {
   if (!isValidProviderOption(authProvider)) throw new Error(\`Invalid auth provider: \${authProvider}\`)
   const provider = providers[authProvider as keyof typeof providers]
-  const subject = (provider as any).extractSubjectFromIdentity?.(userIdentity) ?? (userIdentity as any).sub ?? (userIdentity as any).id ?? String(userIdentity.sub || userIdentity.id || 'unknown')
+  const identity = userIdentity as Record<string, unknown>
+  const subject =
+    (provider as any).extractSubjectFromIdentity?.(identity) ??
+    (identity.sub as string | undefined) ??
+    (identity.id as string | undefined) ??
+    String(identity.sub || identity.id || 'unknown')
   const authSub = \`\${authProvider.toUpperCase()}|\${subject}\`
   ${queries.insertUser}
 }
