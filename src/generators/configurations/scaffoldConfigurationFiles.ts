@@ -1,4 +1,4 @@
-import { copyFileSync, writeFileSync } from 'fs';
+import { copyFileSync, writeFileSync, readFileSync } from 'fs';
 import { join } from 'path';
 import { dim, yellow } from 'picocolors';
 import type { CreateConfiguration } from '../../types';
@@ -30,10 +30,28 @@ export const scaffoldConfigurationFiles = ({
 	initializeGitNow,
 	projectName
 }: AddConfigurationProps) => {
-	copyFileSync(
-		join(templatesDirectory, 'configurations', 'tsconfig.example.json'),
-		join(projectName, 'tsconfig.json')
+	const tsconfigTemplatePath = join(
+		templatesDirectory,
+		'configurations',
+		'tsconfig.example.json'
 	);
+	const tsconfigTargetPath = join(projectName, 'tsconfig.json');
+	const tsconfigContent = readFileSync(tsconfigTemplatePath, 'utf-8');
+	const tsconfig = JSON.parse(tsconfigContent);
+
+	if (!tsconfig.compilerOptions) {
+		tsconfig.compilerOptions = {};
+	}
+
+	if (frontends.includes('react')) {
+		tsconfig.compilerOptions.jsx = 'react-jsx';
+	} else if (frontends.includes('vue')) {
+		tsconfig.compilerOptions.jsx = 'preserve';
+	} else {
+		delete tsconfig.compilerOptions.jsx;
+	}
+
+	writeFileSync(tsconfigTargetPath, `${JSON.stringify(tsconfig, null, 2)}\n`);
 
 	if (tailwind) {
 		copyFileSync(
