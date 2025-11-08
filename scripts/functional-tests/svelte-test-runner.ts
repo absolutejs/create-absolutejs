@@ -29,6 +29,9 @@ type SvelteTestResult = {
   testTime?: number;
 };
 
+const SUPPORTED_DATABASE_ENGINES = new Set(['none', 'sqlite', 'mongodb']);
+const SUPPORTED_ORMS = new Set(['none', 'drizzle']);
+
 async function scaffoldAndTestSvelte(
   config: TestMatrixEntry
 ): Promise<SvelteTestResult> {
@@ -256,8 +259,12 @@ async function runSvelteTests(
   // Read test matrix
   const matrix: TestMatrixEntry[] = JSON.parse(readFileSync(matrixFile, 'utf-8'));
   
-  // Filter for Svelte-only configurations
-  const svelteConfigs = matrix.filter((entry) => entry.frontend === 'svelte');
+  const svelteConfigs = matrix.filter(
+    (entry) =>
+      entry.frontend === 'svelte' &&
+      SUPPORTED_DATABASE_ENGINES.has(entry.databaseEngine) &&
+      SUPPORTED_ORMS.has(entry.orm)
+  );
   
   // Limit to subset if specified
   const configsToTest = testSubset ? svelteConfigs.slice(0, testSubset) : svelteConfigs;

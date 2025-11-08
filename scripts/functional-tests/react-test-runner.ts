@@ -29,6 +29,9 @@ type ReactTestResult = {
   testTime?: number;
 };
 
+const SUPPORTED_DATABASE_ENGINES = new Set(['none', 'sqlite', 'mongodb']);
+const SUPPORTED_ORMS = new Set(['none', 'drizzle']);
+
 async function scaffoldAndTestReact(
   config: TestMatrixEntry
 ): Promise<ReactTestResult> {
@@ -257,8 +260,12 @@ async function runReactTests(
   // Read test matrix
   const matrix: TestMatrixEntry[] = JSON.parse(readFileSync(matrixFile, 'utf-8'));
   
-  // Filter for React-only configurations
-  const reactConfigs = matrix.filter((entry) => entry.frontend === 'react');
+  const reactConfigs = matrix.filter(
+    (entry) =>
+      entry.frontend === 'react' &&
+      SUPPORTED_DATABASE_ENGINES.has(entry.databaseEngine) &&
+      SUPPORTED_ORMS.has(entry.orm)
+  );
   
   // Limit to subset if specified
   const configsToTest = testSubset ? reactConfigs.slice(0, testSubset) : reactConfigs;

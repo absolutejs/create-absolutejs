@@ -29,6 +29,9 @@ type HTMLTestResult = {
   testTime?: number;
 };
 
+const SUPPORTED_DATABASE_ENGINES = new Set(['none', 'sqlite', 'mongodb']);
+const SUPPORTED_ORMS = new Set(['none', 'drizzle']);
+
 async function scaffoldAndTestHTML(
   config: TestMatrixEntry
 ): Promise<HTMLTestResult> {
@@ -260,8 +263,12 @@ async function runHTMLTests(
   // Read test matrix
   const matrix: TestMatrixEntry[] = JSON.parse(readFileSync(matrixFile, 'utf-8'));
   
-  // Filter for HTML-only configurations
-  const htmlConfigs = matrix.filter((entry) => entry.frontend === 'html');
+  const htmlConfigs = matrix.filter(
+    (entry) =>
+      entry.frontend === 'html' &&
+      SUPPORTED_DATABASE_ENGINES.has(entry.databaseEngine) &&
+      SUPPORTED_ORMS.has(entry.orm)
+  );
   
   // Limit to subset if specified
   const configsToTest = testSubset ? htmlConfigs.slice(0, testSubset) : htmlConfigs;

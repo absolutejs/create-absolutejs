@@ -29,6 +29,9 @@ type VueTestResult = {
   testTime?: number;
 };
 
+const SUPPORTED_DATABASE_ENGINES = new Set(['none', 'sqlite', 'mongodb']);
+const SUPPORTED_ORMS = new Set(['none', 'drizzle']);
+
 async function scaffoldAndTestVue(
   config: TestMatrixEntry
 ): Promise<VueTestResult> {
@@ -256,8 +259,12 @@ async function runVueTests(
   // Read test matrix
   const matrix: TestMatrixEntry[] = JSON.parse(readFileSync(matrixFile, 'utf-8'));
   
-  // Filter for Vue-only configurations
-  const vueConfigs = matrix.filter((entry) => entry.frontend === 'vue');
+  const vueConfigs = matrix.filter(
+    (entry) =>
+      entry.frontend === 'vue' &&
+      SUPPORTED_DATABASE_ENGINES.has(entry.databaseEngine) &&
+      SUPPORTED_ORMS.has(entry.orm)
+  );
   
   // Limit to subset if specified
   const configsToTest = testSubset ? vueConfigs.slice(0, testSubset) : vueConfigs;

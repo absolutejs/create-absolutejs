@@ -261,9 +261,20 @@ async function runCloudProviderTests(
   // Read test matrix
   const matrix: TestMatrixEntry[] = JSON.parse(readFileSync(matrixFile, 'utf-8'));
   
+  const SUPPORTED_DATABASE_ENGINES = new Set(['sqlite', 'postgresql']);
+  const SUPPORTED_ORMS = new Set(['none', 'drizzle']);
+  const SUPPORTED_FRONTENDS = new Set(['html', 'htmx', 'react', 'vue', 'svelte']);
+  const SUPPORTED_PROVIDERS = new Set(['turso', 'neon']);
+
   // Filter for cloud provider configurations only
   const cloudConfigs = matrix.filter(
-    (entry) => entry.databaseHost === 'neon' || entry.databaseHost === 'planetscale' || entry.databaseHost === 'turso'
+    (entry) =>
+      SUPPORTED_PROVIDERS.has(entry.databaseHost) &&
+      SUPPORTED_DATABASE_ENGINES.has(entry.databaseEngine) &&
+      SUPPORTED_ORMS.has(entry.orm) &&
+      SUPPORTED_FRONTENDS.has(entry.frontend) &&
+      ((entry.databaseHost === 'turso' && entry.databaseEngine === 'sqlite') ||
+        (entry.databaseHost === 'neon' && entry.databaseEngine === 'postgresql'))
   );
   
   // Limit to subset if specified

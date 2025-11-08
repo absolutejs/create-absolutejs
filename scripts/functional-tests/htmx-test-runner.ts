@@ -29,6 +29,9 @@ type HTMXTestResult = {
   testTime?: number;
 };
 
+const SUPPORTED_DATABASE_ENGINES = new Set(['none', 'sqlite', 'mongodb']);
+const SUPPORTED_ORMS = new Set(['none', 'drizzle']);
+
 async function scaffoldAndTestHTMX(
   config: TestMatrixEntry
 ): Promise<HTMXTestResult> {
@@ -256,8 +259,12 @@ async function runHTMXTests(
   // Read test matrix
   const matrix: TestMatrixEntry[] = JSON.parse(readFileSync(matrixFile, 'utf-8'));
   
-  // Filter for HTMX-only configurations
-  const htmxConfigs = matrix.filter((entry) => entry.frontend === 'htmx');
+  const htmxConfigs = matrix.filter(
+    (entry) =>
+      entry.frontend === 'htmx' &&
+      SUPPORTED_DATABASE_ENGINES.has(entry.databaseEngine) &&
+      SUPPORTED_ORMS.has(entry.orm)
+  );
   
   // Limit to subset if specified
   const configsToTest = testSubset ? htmxConfigs.slice(0, testSubset) : htmxConfigs;
