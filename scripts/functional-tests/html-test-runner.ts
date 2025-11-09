@@ -33,6 +33,14 @@ type HTMLTestResult = {
 const SUPPORTED_DATABASE_ENGINES = new Set(['none', 'sqlite', 'mongodb']);
 const SUPPORTED_ORMS = new Set(['none', 'drizzle']);
 
+/**
+ * Scaffolds an HTML project for the given test configuration, runs dependency installation and framework validation, and returns the aggregated test result.
+ *
+ * Attempts to scaffold a project using Bun with flags derived from `config`, installs dependencies (using a cache when available), runs HTML framework validation with dependency checks skipped, cleans up the scaffolded project, and collects any errors and warnings encountered during the process.
+ *
+ * @param config - TestMatrixEntry describing the test configuration (frontend, databaseEngine, orm, databaseHost, authProvider, optional codeQualityTool, useTailwind, and directoryConfig) used to determine scaffold flags and validation options
+ * @returns An HTMLTestResult containing the original `config`, `passed` indicating validation success, `errors` and `warnings` arrays with any messages collected, and `testTime` as the total elapsed time in milliseconds for the test run
+ */
 async function scaffoldAndTestHTML(
   config: TestMatrixEntry
 ): Promise<HTMLTestResult> {
@@ -291,6 +299,15 @@ async function scaffoldAndTestHTML(
   }
 }
 
+/**
+ * Runs HTML framework validation for configurations from a test matrix file and exits with status 0 on success or 1 on any failure.
+ *
+ * Reads and parses `matrixFile`, filters entries for the HTML frontend and supported database/ORM combinations, optionally limits execution to the first `testSubset` entries, and runs each configuration sequentially via `scaffoldAndTestHTML`. Prints per-run progress and a final summary; the process exits with code 0 if all tests passed or 1 if any failed.
+ *
+ * @param matrixFile - Path to the JSON test matrix (defaults to 'test-matrix.json')
+ * @param maxConcurrent - Maximum concurrent tests (currently unused; tests run sequentially)
+ * @param testSubset - If provided, limit execution to the first N matching configurations
+ */
 async function runHTMLTests(
   matrixFile: string = 'test-matrix.json',
   maxConcurrent: number = 2,
@@ -366,4 +383,3 @@ if (require.main === module) {
     process.exit(1);
   });
 }
-

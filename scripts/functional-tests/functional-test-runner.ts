@@ -21,6 +21,23 @@ export type FunctionalTestResult = {
   totalTime?: number;
 };
 
+/**
+ * Runs a sequence of functional tests (project structure, dependency installation, build validation, and server startup) for the given project and aggregates the results.
+ *
+ * The dependency installation, build, and server startup tests can be individually skipped via the `options` flags. Results include per-step pass/fail and timing where applicable, along with collected errors and warnings.
+ *
+ * @param projectPath - Filesystem path to the project to test
+ * @param packageManager - Package manager to use (`'bun' | 'npm' | 'pnpm' | 'yarn'`)
+ * @param options.skipDependencies - When true, skips the dependency installation test
+ * @param options.skipBuild - When true, skips the build validation test
+ * @param options.skipServer - When true, skips the server startup validation test
+ * @returns The consolidated functional test result containing:
+ * - `passed`: `true` if no errors were recorded, `false` otherwise
+ * - `errors`: array of error messages collected from failing steps
+ * - `warnings`: array of warnings (including notifications for skipped tests)
+ * - `results`: per-step results with optional timing fields (`installTime`, `compileTime`)
+ * - `totalTime`: total duration in milliseconds for the entire run
+ */
 export async function runFunctionalTests(
   projectPath: string,
   packageManager: 'bun' | 'npm' | 'pnpm' | 'yarn' = 'bun',
@@ -185,4 +202,3 @@ if (require.main === module) {
       process.exit(1);
     });
 }
-

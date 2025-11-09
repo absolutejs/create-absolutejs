@@ -30,6 +30,13 @@ type MySQLTestResult = {
   testTime?: number;
 };
 
+/**
+ * Scaffolds a project for the given MySQL test configuration, runs dependency installation,
+ * executes functional tests and MySQL-specific validation, performs cleanup, and aggregates results.
+ *
+ * @param config - Test matrix entry that specifies frontend, ORM, database host, auth provider, and other options used to scaffold and test the project
+ * @returns A MySQLTestResult containing the original `config`, `passed` (true if validation and functional tests passed), arrays of `errors` and `warnings`, and `testTime` (milliseconds elapsed for the entire operation)
+ */
 async function scaffoldAndTestMySQL(
   config: TestMatrixEntry
 ): Promise<MySQLTestResult> {
@@ -285,6 +292,15 @@ async function scaffoldAndTestMySQL(
   }
 }
 
+/**
+ * Orchestrates MySQL-focused functional tests defined in a test matrix file and exits the process with status indicating success or failure.
+ *
+ * Reads the provided JSON test matrix, filters entries for MySQL (excluding PlanetScale hosts), optionally limits the set, and runs each configuration through the scaffoldAndTestMySQL workflow. Prints per-configuration progress and a final summary; exits with code 0 if all tests passed or 1 if any failed.
+ *
+ * @param matrixFile - Path to the JSON file containing an array of TestMatrixEntry objects (default: 'test-matrix.json')
+ * @param maxConcurrent - Maximum number of concurrent test workers to allow (currently tests run sequentially; parameter reserved for future concurrency control)
+ * @param testSubset - Optional limit to run only the first N matching configurations from the matrix
+ */
 async function runMySQLTests(
   matrixFile: string = 'test-matrix.json',
   maxConcurrent: number = 2,
@@ -370,4 +386,3 @@ if (require.main === module) {
     process.exit(1);
   });
 }
-

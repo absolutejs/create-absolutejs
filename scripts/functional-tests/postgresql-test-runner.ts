@@ -30,6 +30,12 @@ type PostgreSQLTestResult = {
   testTime?: number;
 };
 
+/**
+ * Orchestrates scaffolding a project from the given test-matrix configuration, installs dependencies (using a cache when available), runs functional tests, performs PostgreSQL-specific validation, attempts cleanup, and returns a summarized test result.
+ *
+ * @param config - Test matrix entry specifying frontend, ORM, auth provider, database host, and other scaffold options
+ * @returns A PostgreSQLTestResult containing the original `config`, `passed` status, arrays of `errors` and `warnings`, and total `testTime` in milliseconds
+ */
 async function scaffoldAndTestPostgreSQL(
   config: TestMatrixEntry
 ): Promise<PostgreSQLTestResult> {
@@ -284,6 +290,18 @@ async function scaffoldAndTestPostgreSQL(
   }
 }
 
+/**
+ * Run the PostgreSQL-focused scaffold-and-test pipeline for entries in a test matrix file.
+ *
+ * Reads the provided JSON matrix, filters to PostgreSQL configurations (excluding PlanetScale),
+ * optionally limits to a subset, and executes scaffold-and-test runs sequentially for each selected
+ * configuration. Prints per-configuration progress and a final summary, and exits the process with
+ * code 0 when all configurations pass or 1 if any fail.
+ *
+ * @param matrixFile - Path to the test matrix JSON file (defaults to "test-matrix.json")
+ * @param maxConcurrent - Maximum concurrency placeholder (currently tests run sequentially)
+ * @param testSubset - Optional limit to the first N PostgreSQL configurations to test
+ */
 async function runPostgreSQLTests(
   matrixFile: string = 'test-matrix.json',
   maxConcurrent: number = 2,
@@ -368,4 +386,3 @@ if (require.main === module) {
     process.exit(1);
   });
 }
-

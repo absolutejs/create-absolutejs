@@ -11,6 +11,21 @@ export type APIEndpointResult = {
   warnings: string[];
 };
 
+/**
+ * Performs API endpoint checks against a scaffolded project.
+ *
+ * The function attempts to validate the project's HTTP endpoints given a running server. Currently the implementation is a placeholder that records informational warnings about incomplete testing and the need for a reachable server.
+ *
+ * @param _projectPath - Filesystem path to the project whose endpoints should be tested
+ * @param _serverUrl - Base URL of the running server to test against (e.g., `http://localhost:3000`)
+ * @param _config - Optional test configuration:
+ *   - `authProvider`: name of the authentication provider to consider when selecting auth-related checks
+ *   - `frontends`: list of frontend identifiers (for example `['react','vue']`) to guide frontend-specific route checks
+ * @returns An object describing the results:
+ *   - `passed`: `true` if all executed checks passed, `false` otherwise
+ *   - `errors`: array of failure messages for checks that did not pass
+ *   - `warnings`: array of informational messages or reminders (currently includes placeholders about incomplete implementation and server availability)
+ */
 export async function testAPIEndpoints(
   _projectPath: string,
   _serverUrl: string = 'http://localhost:3000',
@@ -70,4 +85,3 @@ if (require.main === module) {
       process.exit(1);
     });
 }
-

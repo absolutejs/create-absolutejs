@@ -32,6 +32,12 @@ type SvelteTestResult = {
 const SUPPORTED_DATABASE_ENGINES = new Set(['none', 'sqlite', 'mongodb']);
 const SUPPORTED_ORMS = new Set(['none', 'drizzle']);
 
+/**
+ * Scaffolds a Svelte project from the provided test configuration, installs dependencies, runs framework validation, cleans up the generated project, and returns the aggregated result.
+ *
+ * @param config - Test matrix entry describing the project options to scaffold and test
+ * @returns A SvelteTestResult containing the original `config`, `passed` (validation outcome), collected `errors` and `warnings`, and `testTime` in milliseconds
+ */
 async function scaffoldAndTestSvelte(
   config: TestMatrixEntry
 ): Promise<SvelteTestResult> {
@@ -251,6 +257,13 @@ async function scaffoldAndTestSvelte(
   }
 }
 
+/**
+ * Execute the Svelte test matrix defined in a JSON file and print a per-config and aggregated summary.
+ *
+ * @param matrixFile - Path to a JSON file containing an array of TestMatrixEntry objects (defaults to 'test-matrix.json').
+ * @param maxConcurrent - Maximum number of tests to run concurrently (controls parallelism; tests currently run sequentially).
+ * @param testSubset - If provided, limit execution to the first `testSubset` matching Svelte configurations.
+ */
 async function runSvelteTests(
   matrixFile: string = 'test-matrix.json',
   maxConcurrent: number = 2,
@@ -326,4 +339,3 @@ if (require.main === module) {
     process.exit(1);
   });
 }
-

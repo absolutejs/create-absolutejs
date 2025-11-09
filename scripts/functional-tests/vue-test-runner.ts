@@ -32,6 +32,14 @@ type VueTestResult = {
 const SUPPORTED_DATABASE_ENGINES = new Set(['none', 'sqlite', 'mongodb']);
 const SUPPORTED_ORMS = new Set(['none', 'drizzle']);
 
+/**
+ * Scaffolds a Vue project for the given test configuration, runs dependency installation and framework validation, and aggregates the results.
+ *
+ * This function creates a temporary project directory (named from the provided configuration), attempts to scaffold the project, install dependencies, run framework validation, and then removes the project directory. Any scaffold, install, or validation errors and warnings are collected and returned in the result.
+ *
+ * @param config - Test matrix entry describing the frontend, database engine, ORM, auth provider, tailwind and code-quality options to use when scaffolding and validating the project
+ * @returns A VueTestResult containing the original `config`, a `passed` boolean indicating validation success, an `errors` array of failure messages, a `warnings` array of non-fatal notices, and `testTime` with the total elapsed time in milliseconds for the test run
+ */
 async function scaffoldAndTestVue(
   config: TestMatrixEntry
 ): Promise<VueTestResult> {
@@ -251,6 +259,19 @@ async function scaffoldAndTestVue(
   }
 }
 
+/**
+ * Orchestrates Vue framework tests from a test matrix: filters relevant Vue configurations,
+ * scaffolds and validates each configuration, prints a summary, and exits the process with
+ * a non-zero code if any test failed.
+ *
+ * The function filters entries for frontend === 'vue' and supported database engines/ORMs,
+ * optionally limits the number of tested entries, runs each configuration sequentially,
+ * and reports per-test and aggregate results to stdout.
+ *
+ * @param matrixFile - Path to the JSON test matrix file
+ * @param maxConcurrent - Maximum number of concurrent tests (currently tests run sequentially)
+ * @param testSubset - If provided, limits testing to the first `testSubset` matching configurations
+ */
 async function runVueTests(
   matrixFile: string = 'test-matrix.json',
   maxConcurrent: number = 2,
@@ -326,4 +347,3 @@ if (require.main === module) {
     process.exit(1);
   });
 }
-

@@ -30,6 +30,12 @@ type CloudProviderTestResult = {
   testTime?: number;
 };
 
+/**
+ * Scaffolds a deterministic test project for the given matrix entry, installs dependencies, runs cloud-provider validation, cleans up artifacts, and returns the aggregated test result.
+ *
+ * @param config - Test matrix entry describing frontend, databaseEngine, orm, databaseHost, authProvider, and related test options used to build and validate the project
+ * @returns A CloudProviderTestResult containing the original `config`, a `passed` flag, collected `errors` and `warnings`, and `testTime` in milliseconds
+ */
 async function scaffoldAndTestCloudProvider(
   config: TestMatrixEntry
 ): Promise<CloudProviderTestResult> {
@@ -289,6 +295,14 @@ async function scaffoldAndTestCloudProvider(
   }
 }
 
+/**
+ * Orchestrates cloud provider validation across a set of test matrix entries and exits with a non-zero code if any configuration fails.
+ *
+ * Reads a JSON test matrix, filters entries for supported cloud-provider combinations, optionally limits the run to a subset, and for each configuration scaffolds a project, installs dependencies, runs validation, and aggregates results into a summary grouped by provider.
+ *
+ * @param matrixFile - Path to the JSON test matrix file (defaults to "test-matrix.json")
+ * @param testSubset - Optional maximum number of configurations to test (if provided, runs only the first N matching entries)
+ */
 async function runCloudProviderTests(
   matrixFile: string = 'test-matrix.json',
   testSubset?: number
@@ -399,4 +413,3 @@ async function runCloudProviderTests(
 if (require.main === module) {
   runCloudProviderTests().catch(console.error);
 }
-

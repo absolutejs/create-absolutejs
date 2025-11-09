@@ -29,10 +29,28 @@ const hostConstraints: Record<Exclude<DatabaseHost, 'none'>, DatabaseEngine[]> =
   planetscale: ['postgresql', 'mysql']
 };
 
+/**
+ * Ensures a condition is met and throws an Error when it is not.
+ *
+ * @param condition - The condition to assert.
+ * @param message - The error message to throw when the assertion fails.
+ * @throws Error if `condition` is false.
+ */
 function assert(condition: boolean, message: string) {
   if (!condition) throw new Error(message);
 }
 
+/**
+ * Validates a single Config entry from the test matrix.
+ *
+ * Performs enumeration checks for frontend, orm, databaseHost, databaseEngine, authProvider, and codeQualityTool;
+ * enforces ORM/engine compatibility (e.g., `drizzle` requires a compatible engine), requires `orm` and `databaseHost` to be `none` when `databaseEngine` is `none`,
+ * and enforces host-specific engine constraints.
+ *
+ * @param cfg - The configuration entry to validate
+ * @param idx - Index of the entry in the matrix; used to produce contextual error messages
+ * @throws Error If any validation rule fails; the thrown message includes the entry index and the failing constraint
+ */
 function validateEntry(cfg: Config, idx: number) {
   // Enumerations safety
   assert(['react','html','svelte','vue','htmx'].includes(cfg.frontend), `[${idx}] invalid frontend ${cfg.frontend}`);
@@ -63,6 +81,13 @@ function validateEntry(cfg: Config, idx: number) {
   }
 }
 
+/**
+ * Validate test-matrix.json contents against the project's matrix constraints.
+ *
+ * Reads the local test-matrix.json, verifies it is a non-empty array, validates each entry with the project's rules, and performs additional spot-checks for excluded values.
+ *
+ * @throws Error if test-matrix.json is missing, empty, any entry fails validation, or excluded values (e.g., `biome`, `prisma`) are present.
+ */
 function main() {
   const fs = require('fs');
   const path = 'test-matrix.json';
@@ -82,5 +107,4 @@ function main() {
 }
 
 main();
-
 

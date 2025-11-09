@@ -13,7 +13,13 @@ export type BuildResult = {
   compileTime?: number;
 };
 
-const COMPILE_TIMEOUT = 60000; // 60 seconds
+const COMPILE_TIMEOUT = 60000; /**
+ * Validates that a scaffolded project compiles by checking for tsconfig.json, ensuring package.json has a `typecheck` script, and running that script.
+ *
+ * @param projectPath - Path to the project directory to validate
+ * @param packageManager - Package manager to run the `typecheck` script with (`'bun' | 'npm' | 'pnpm' | 'yarn'`); defaults to `'bun'`
+ * @returns A BuildResult where `passed` is `true` when compilation succeeds, `errors` contains failure messages when present, and `compileTime` (milliseconds) is included when a compilation attempt was performed
+ */
 
 export async function validateBuild(
   projectPath: string,
@@ -137,4 +143,3 @@ if (import.meta.main) {
       process.exit(1);
     });
 }
-

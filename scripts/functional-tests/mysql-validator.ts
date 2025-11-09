@@ -20,6 +20,24 @@ export type MySQLValidationResult = {
   };
 };
 
+/**
+ * Validates a project's MySQL setup and returns a structured result of checks and issues.
+ *
+ * Performs filesystem and runtime checks (db directory, Docker compose file for local setups,
+ * ORM schema presence when using Drizzle, attempt to start and query a local MySQL container,
+ * and required backend handler files). Records errors, warnings, and per-check booleans in the result.
+ *
+ * @param projectPath - Path to the project root to validate
+ * @param config - Optional validation flags:
+ *   - orm: if set to 'drizzle', verifies presence of a Drizzle schema file
+ *   - authProvider: when present, expects authentication-related tables/handlers (e.g., `users`)
+ *   - databaseHost: 'planetscale' to treat database as remote; 'none' or omitted to test local Docker MySQL
+ * @returns A MySQLValidationResult containing:
+ *   - `passed`: whether all required checks succeeded,
+ *   - `errors`: array of error messages found during validation,
+ *   - `warnings`: non-fatal warnings encountered,
+ *   - `mysqlSpecific`: object with booleans for `dockerComposeExists`, `schemaFileExists`, `connectionWorks`, and `queriesWork`
+ */
 export async function validateMySQLDatabase(
   projectPath: string,
   config: {
@@ -238,4 +256,3 @@ if (require.main === module) {
       process.exit(1);
     });
 }
-

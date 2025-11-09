@@ -20,6 +20,16 @@ export type PostgreSQLValidationResult = {
   };
 };
 
+/**
+ * Validate a project's PostgreSQL setup including local Docker files, schema presence, connectivity, and presence of expected tables and handler files.
+ *
+ * @param projectPath - Root path of the project to validate
+ * @param config - Optional validation configuration
+ * @param config.orm - ORM in use; when set to `'drizzle'` the validator requires `db/schema.ts`
+ * @param config.authProvider - Authentication provider; when present the validator checks for a `users` table and `userHandlers.ts`, otherwise it checks for `count_history` and `countHistoryHandlers.ts`
+ * @param config.databaseHost - Database host mode: `'none'` or omitted runs local Docker checks, `'neon'` skips local Docker and connection tests
+ * @returns The validation result containing `passed`, `errors`, `warnings`, and `postgresqlSpecific` flags (`dockerComposeExists`, `schemaFileExists`, `connectionWorks`, `queriesWork`)
+ */
 export async function validatePostgreSQLDatabase(
   projectPath: string,
   config: {
@@ -238,4 +248,3 @@ if (require.main === module) {
       process.exit(1);
     });
 }
-

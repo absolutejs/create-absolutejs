@@ -19,6 +19,24 @@ export type MongoDBValidationResult = {
   };
 };
 
+/**
+ * Validates a project's MongoDB setup and connectivity, returning a structured result.
+ *
+ * Performs checks including presence of the db directory, local Docker compose file (for local setups),
+ * optional startup and readiness checks of a local MongoDB container, basic query verification, and
+ * presence of the expected backend handler file.
+ *
+ * @param projectPath - Path to the project root directory (where `db` and `src` are located)
+ * @param config - Optional configuration:
+ *   - orm: ORM in use (if any)
+ *   - authProvider: authentication provider; when provided and not `'none'` the validator looks for user-related handlers and queries
+ *   - databaseHost: set to `'none'` or omitted for local Docker-based validation; any other value treats MongoDB as remote
+ * @returns The validation result containing:
+ *   - `passed`: `true` if all required checks succeeded
+ *   - `errors`: collected error messages
+ *   - `warnings`: collected warning messages
+ *   - `mongodbSpecific`: object with booleans `dockerComposeExists`, `connectionWorks`, and `queriesWork` indicating MongoDB-specific check outcomes
+ */
 export async function validateMongoDBDatabase(
   projectPath: string,
   config: {
@@ -209,4 +227,3 @@ if (require.main === module) {
       process.exit(1);
     });
 }
-

@@ -40,6 +40,23 @@ const relationalEngines = new Set([
   'mysql'
 ]);
 
+/**
+ * Validates that a scaffolded project's authentication configuration and wiring are present and correct.
+ *
+ * Performs checks for a user handler, database schema (engine- and ORM-aware), server plugin wiring, and
+ * presence of the `@absolutejs/auth` dependency, then optionally runs shared functional tests and aggregates results.
+ *
+ * @param projectPath - Filesystem path to the project root to validate
+ * @param packageManager - Package manager to use when running functional tests (`bun`, `npm`, `pnpm`, or `yarn`)
+ * @param config - Validator configuration: may include `databaseEngine` (e.g., 'sqlite', 'postgresql', 'mysql', 'mongodb', or 'none'), `orm` (e.g., 'drizzle'), and `authProvider`
+ * @param options - Runtime options to alter test behavior; supports `skipDependencies`, `skipBuild`, and `skipServer` flags
+ * @returns An AuthValidationResult containing:
+ *  - `passed`: `true` if all required checks and (if run) functional tests passed, `false` otherwise;
+ *  - `errors`: list of failure messages observed during validation;
+ *  - `warnings`: list of non-fatal observations or coverage gaps;
+ *  - `functionalTestResults` (optional): aggregated results from the shared functional test suite when executed;
+ *  - `authSpecific`: object with boolean flags `handlerExists`, `schemaIncludesUsers`, `serverUsesAuth`, and `packageHasAuthDependency` indicating individual check outcomes.
+ */
 export async function validateAuthConfiguration(
   projectPath: string,
   packageManager: 'bun' | 'npm' | 'pnpm' | 'yarn' = 'bun',
@@ -272,5 +289,4 @@ if (require.main === module) {
       process.exit(1);
     });
 }
-
 

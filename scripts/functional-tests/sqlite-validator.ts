@@ -20,6 +20,22 @@ export type SQLiteValidationResult = {
   };
 };
 
+/**
+ * Validates a project's SQLite setup, schema, connection, and related handler presence.
+ *
+ * Performs a sequence of checks against the project's db directory:
+ * - Verifies the db directory and (for local SQLite) the database file exist.
+ * - Ensures the expected schema file exists (Drizzle -> schema.ts, otherwise -> schema.sql).
+ * - For local SQLite, runs sqlite3 queries to confirm the database is reachable and required tables
+ *   (users or count_history) are present; for Turso, skips live checks and issues warnings.
+ * - Verifies the appropriate backend handler file exists based on the auth provider.
+ *
+ * @param projectPath - Root path of the project to validate.
+ * @param config.orm - ORM in use; when set to "drizzle" the validator expects db/schema.ts, otherwise db/schema.sql.
+ * @param config.authProvider - Authentication provider; when provided and not "none", the validator expects a `users` table and userHandlers.ts; otherwise it expects a `count_history` table and countHistoryHandlers.ts.
+ * @param config.databaseHost - Database host descriptor; "none" or omitted means local SQLite (expects db/database.sqlite and performs sqlite3 checks); "turso" skips local file and live checks and emits warnings.
+ * @returns The aggregated validation result containing pass/fail status, any errors and warnings, and detailed booleans for database file, schema file, connection, and query checks.
+ */
 export async function validateSQLiteDatabase(
   projectPath: string,
   config: {
@@ -197,4 +213,3 @@ if (require.main === module) {
       process.exit(1);
     });
 }
-

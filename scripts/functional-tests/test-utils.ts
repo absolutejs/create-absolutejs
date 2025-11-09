@@ -1,8 +1,12 @@
 import { existsSync, rmSync } from 'fs';
 
 /**
- * Removes a previously generated project directory if it exists.
- * This prevents scaffolding commands from failing with "directory already exists".
+ * Remove a generated project directory if it exists.
+ *
+ * Attempts to remove `projectPath` recursively and forcibly; if removal fails the error is caught
+ * and a warning is logged containing the path and the error message.
+ *
+ * @param projectPath - Filesystem path of the project directory to remove
  */
 export function cleanupProjectDirectory(projectPath: string): void {
   try {
@@ -17,5 +21,4 @@ export function cleanupProjectDirectory(projectPath: string): void {
     );
   }
 }
-
 

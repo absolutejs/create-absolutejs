@@ -21,6 +21,25 @@ export type HTMLValidationResult = {
   };
 };
 
+/**
+ * Validates an application's HTML frontend and related backend wiring, and aggregates functional test results.
+ *
+ * Performs filesystem checks for required HTML assets, verifies script references when `config.useHTMLScripts` is enabled,
+ * inspects src/backend/server.ts for HTML imports and route configuration, performs basic HTML content checks (doctype, title, CSS link),
+ * and runs the project's functional tests to collect build/server results.
+ *
+ * @param projectPath - Root path of the project to validate
+ * @param packageManager - Package manager to use when running functional tests (`'bun' | 'npm' | 'pnpm' | 'yarn'`)
+ * @param config - Optional project features that affect validation:
+ *   - `useTailwind`: whether Tailwind CSS is expected
+ *   - `useHTMLScripts`: whether HTML pages should reference the TypeScript example script
+ *   - other fields (databaseEngine, orm, authProvider, codeQualityTool, isMultiFrontend) are accepted but only affect contextual checks
+ * @param options - Flags to skip parts of functional testing:
+ *   - `skipDependencies`: skip dependency installation
+ *   - `skipBuild`: skip the build step
+ *   - `skipServer`: skip starting the server
+ * @returns An object describing the validation outcome: `passed` boolean, arrays of `errors` and `warnings`, optional `functionalTestResults`, and `htmlSpecific` flags (`filesExist`, `routesConfigured`, `importsCorrect`)
+ */
 export async function validateHTMLFramework(
   projectPath: string,
   packageManager: 'bun' | 'npm' | 'pnpm' | 'yarn' = 'bun',
@@ -247,4 +266,3 @@ if (require.main === module) {
       process.exit(1);
     });
 }
-

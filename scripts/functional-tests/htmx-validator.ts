@@ -21,6 +21,15 @@ export type HTMXValidationResult = {
   };
 };
 
+/**
+ * Validate that an HTMX example is present and correctly wired in a project and run associated functional tests.
+ *
+ * @param projectPath - Path to the project root to validate
+ * @param packageManager - Package manager to use when running functional tests (`bun`, `npm`, `pnpm`, or `yarn`)
+ * @param config - Optional project configuration hints (databaseEngine, orm, authProvider, useTailwind, codeQualityTool, isMultiFrontend)
+ * @param options - Optional execution flags; use `skipDependencies`, `skipBuild`, or `skipServer` to skip corresponding functional-test phases
+ * @returns An HTMXValidationResult containing overall pass/fail, aggregated `errors` and `warnings`, optional `functionalTestResults`, and HTMX-specific flags (`filesExist`, `routesConfigured`, `importsCorrect`)
+ */
 export async function validateHTMXFramework(
   projectPath: string,
   packageManager: 'bun' | 'npm' | 'pnpm' | 'yarn' = 'bun',
@@ -241,4 +250,3 @@ if (require.main === module) {
       process.exit(1);
     });
 }
-

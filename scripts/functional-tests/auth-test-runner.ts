@@ -32,6 +32,12 @@ type AuthTestResult = {
 
 const SUPPORTED_DATABASE_ENGINES = new Set(['sqlite', 'mongodb']);
 
+/**
+ * Constructs a deterministic, filesystem-safe project name for a scaffolded auth test from a test matrix entry.
+ *
+ * @param config - Configuration entry describing frontend, database engine, ORM, database host, and tailwind usage
+ * @returns A normalized project name of the form `test-auth-<frontend>-<databaseEngine>-<orm>-<databaseHostLabel>-<tw|notw>`
+ */
 function buildProjectName(config: TestMatrixEntry): string {
   const hostLabel = config.databaseHost === 'none' ? 'local' : config.databaseHost;
   const tailwindLabel = config.useTailwind ? 'tw' : 'notw';
@@ -41,6 +47,13 @@ function buildProjectName(config: TestMatrixEntry): string {
     .replace(/-+/g, '-');
 }
 
+/**
+ * Build the Bun CLI argument list to scaffold a project that matches the provided test configuration.
+ *
+ * @param projectName - Target project name used by the scaffold command
+ * @param config - Test matrix entry whose fields determine which CLI flags are appended
+ * @returns An array of command arguments for invoking the scaffold script (base command plus flags that reflect frontend, database engine, ORM, database host, auth provider, code quality tool, Tailwind usage, and directory configuration)
+ */
 function buildScaffoldCommand(
   projectName: string,
   config: TestMatrixEntry
@@ -90,6 +103,12 @@ function buildScaffoldCommand(
   return cmd;
 }
 
+/**
+ * Scaffolds a project for the given test configuration, runs dependency installation and auth validation, and aggregates results.
+ *
+ * @param config - A test matrix entry describing the project configuration to scaffold and validate (frontend, databaseEngine, orm, databaseHost, authProvider, codeQualityTool, useTailwind, directoryConfig).
+ * @returns An AuthTestResult describing the evaluated configuration, whether validation passed, collected error and warning messages, and the total test duration in milliseconds (`testTime`).
+ */
 async function scaffoldAndTestAuth(
   config: TestMatrixEntry
 ): Promise<AuthTestResult> {
@@ -264,6 +283,14 @@ async function scaffoldAndTestAuth(
   }
 }
 
+/**
+ * Runs auth validation across a matrix of test configurations and exits the process with a success or failure code.
+ *
+ * Reads the JSON matrix from `matrixFile`, filters entries to those with an auth provider and a supported database engine, and (optionally) limits the set to the first `testSubset` entries. For each configuration it scaffolds, installs, and validates the project, printing per-config progress and a final summary. If any configuration fails validation, the process exits with code `1`; if all pass, the process exits with code `0`.
+ *
+ * @param matrixFile - Path to the JSON test matrix file (defaults to 'test-matrix.json')
+ * @param testSubset - Optional maximum number of configurations from the filtered set to test
+ */
 async function runAuthTests(
   matrixFile: string = 'test-matrix.json',
   testSubset?: number
@@ -339,5 +366,4 @@ if (require.main === module) {
     process.exit(1);
   });
 }
-
 

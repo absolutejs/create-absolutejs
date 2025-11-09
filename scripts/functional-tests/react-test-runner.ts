@@ -32,6 +32,12 @@ type ReactTestResult = {
 const SUPPORTED_DATABASE_ENGINES = new Set(['none', 'sqlite', 'mongodb']);
 const SUPPORTED_ORMS = new Set(['none', 'drizzle']);
 
+/**
+ * Scaffolds a React test project for the given configuration, installs dependencies (with caching), runs framework validation, cleans up the project directory, and returns the test outcome.
+ *
+ * @param config - Test matrix entry describing the test configuration (frontend, databaseEngine, orm, databaseHost, authProvider, optional codeQualityTool, useTailwind, and directoryConfig)
+ * @returns `ReactTestResult` containing the original `config`, a `passed` boolean, collected `errors` and `warnings`, and `testTime` in milliseconds
+ */
 async function scaffoldAndTestReact(
   config: TestMatrixEntry
 ): Promise<ReactTestResult> {
@@ -252,6 +258,18 @@ async function scaffoldAndTestReact(
   }
 }
 
+/**
+ * Runs React tests described in a test matrix file, executes each matching configuration, and prints a summary.
+ *
+ * Reads and parses the specified test matrix, filters entries for React with supported database engines and ORMs,
+ * optionally limits the number of configurations tested, and runs each configuration through the scaffold-and-test workflow.
+ * Prints per-configuration progress and a final summary of totals, pass/fail counts, and success rate.
+ *
+ * @param matrixFile - Path to the JSON test matrix file (default: "test-matrix.json")
+ * @param maxConcurrent - Maximum number of concurrent tests to run (currently tests run sequentially; defaults to 2)
+ * @param testSubset - Optional limit to the first N matching configurations to test
+ *
+ * Note: This function exits the process with code 0 if all tests pass or 1 if any test fails.
 async function runReactTests(
   matrixFile: string = 'test-matrix.json',
   maxConcurrent: number = 2,
@@ -327,4 +345,3 @@ if (require.main === module) {
     process.exit(1);
   });
 }
-
