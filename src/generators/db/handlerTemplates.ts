@@ -256,10 +256,9 @@ const [result] = await db.query<ResultSetHeader>(
   'INSERT INTO users (auth_sub, metadata) VALUES (?, ?)',
   [authSub, JSON.stringify(userIdentity)]
 );
-const insertId = result.insertId;
 const [rows] = await db.query<UserRow[]>(
-  'SELECT * FROM users WHERE uid = ? LIMIT 1',
-  [insertId]
+  'SELECT * FROM users WHERE auth_sub = ? LIMIT 1',
+  [authSub]
 );
 if (!rows[0]) throw new Error('Failed to create user');
 return rows[0];
@@ -294,40 +293,41 @@ const mysqlHandlerTypes: HandlerType = {
 		created_at: number;
 	}`,
 	UserRow: `RowDataPacket & {
-		uid: number;
 		auth_sub: string;
 		metadata: string;
 	}`
 };
 
 const mysqlDrizzleQueryOperations: QueryOperations = {
-	insertHistory: `const [row] = await db
+	insertHistory: `const insertResult = await db
     .insert(schema.countHistory)
     .values({ count })
-    .$returningId();
+    .execute();
 
-  if (!row) throw new Error('insert failed: no uid returned');
-  const { uid } = row;
+  const insertId =
+    Array.isArray(insertResult)
+      ? (insertResult[0] as { insertId?: number })?.insertId
+      : (insertResult as { insertId?: number }).insertId;
+
+  if (typeof insertId !== 'number') {
+    throw new Error('insert failed: no uid returned');
+  }
 
   const [newHistory] = await db
     .select()
     .from(schema.countHistory)
-    .where(eq(schema.countHistory.uid, uid));
+    .where(eq(schema.countHistory.uid, insertId));
 
   return newHistory;`,
 
-	insertUser: `const [row] = await db
+	insertUser: `await db
     .insert(schema.users)
-    .values({ auth_sub: authSub, metadata: userIdentity })
-    .$returningId();
-
-  if (!row) throw new Error('insert failed: no uid returned');
-  const { uid } = row;
+    .values({ auth_sub: authSub, metadata: userIdentity });
 
   const [newUser] = await db
     .select()
     .from(schema.users)
-    .where(eq(schema.users.uid, uid));
+    .where(eq(schema.users.auth_sub, authSub));
 
   if (!newUser) throw new Error('Failed to create user');
   return newUser;`,
@@ -380,7 +380,7 @@ import { schema, type SchemaType } from '../../../db/schema'`,
 		dbType: 'NodePgDatabase<SchemaType>',
 		importLines: `
 import { eq } from 'drizzle-orm'
-import { BunSQLDatabase } from 'drizzle-orm/bun-sql'
+import { NodePgDatabase } from 'drizzle-orm/node-postgres'
 import { schema, type SchemaType } from '../../../db/schema'`,
 		queries: drizzleQueryOperations
 	},
@@ -393,8 +393,8 @@ import { schema, type SchemaType } from '../../../db/schema'`,
 		queries: drizzleQueryOperations
 	},
 	'postgresql:sql:local': {
-		dbType: 'SQL',
-		importLines: `import { SQL } from 'bun'`,
+		dbType: 'PgSql',
+		importLines: `import type { PgSql } from '../database/createPgSql'`,
 		queries: postgresSqlQueryOperations
 	},
 	'postgresql:sql:neon': {

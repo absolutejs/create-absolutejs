@@ -4,226 +4,403 @@
   Tests MongoDB Docker setup, collection initialization, and query execution.
 */
 
-import { existsSync, readFileSync } from 'fs';
-import { join } from 'path';
-import { $ } from 'bun';
+import { spawn } from 'node:child_process';
+import { once } from 'node:events';
+import { existsSync } from 'node:fs';
+import { join } from 'node:path';
+import process from 'node:process';
 
-export type MongoDBValidationResult = {
-  passed: boolean;
-  errors: string[];
-  warnings: string[];
-  mongodbSpecific: {
-    dockerComposeExists: boolean;
-    connectionWorks: boolean;
-    queriesWork: boolean;
+const MILLISECONDS_PER_SECOND = 1_000;
+const SECONDS_PER_MINUTE = 60;
+const DB_SCRIPT_TIMEOUT_MS = 2 * SECONDS_PER_MINUTE * MILLISECONDS_PER_SECOND;
+const MONGODB_READY_ATTEMPTS = 10;
+const MONGODB_READY_DELAY_MS = MILLISECONDS_PER_SECOND;
+const DOCKER_WARNING_SNIPPET_LENGTH = 100;
+const DOCKER_ERROR_SNIPPET_LENGTH = 200;
+const LIST_COLLECTIONS_QUERY = 'db.getCollectionNames()';
+const FORCE_KILL_DELAY_MS = 1_000;
+
+let cachedBunModule: typeof import('bun') | null = null;
+
+const loadBunModule = async () => {
+  if (cachedBunModule === null) {
+    cachedBunModule = await import('bun');
+  }
+
+  return cachedBunModule;
+};
+
+const runCommand = async (
+  command: string[],
+  options: {
+    cwd?: string;
+    env?: Record<string, string>;
+    timeoutMs?: number;
+  } = {}
+) => {
+  const [executable, ...args] = command;
+  const { cwd, env, timeoutMs = DB_SCRIPT_TIMEOUT_MS } = options;
+  const stdoutChunks: string[] = [];
+  const stderrChunks: string[] = [];
+  let timedOut = false;
+
+  const child = spawn(executable, args, {
+    cwd,
+    env,
+    stdio: ['ignore', 'pipe', 'pipe']
+  });
+
+  const timeoutId = setTimeout(() => {
+    timedOut = true;
+    child.kill('SIGTERM');
+    setTimeout(() => child.kill('SIGKILL'), FORCE_KILL_DELAY_MS);
+  }, timeoutMs);
+
+  child.stdout?.on('data', (chunk) => {
+    stdoutChunks.push(chunk.toString());
+  });
+  child.stderr?.on('data', (chunk) => {
+    stderrChunks.push(chunk.toString());
+  });
+
+  const [code] = (await once(child, 'close')) as [number | null, string | null];
+  clearTimeout(timeoutId);
+
+  if (timedOut) {
+    return {
+      exitCode: -1,
+      stderr: 'Process timed out',
+      stdout: ''
+    };
+  }
+
+  return {
+    exitCode: code ?? -1,
+    stderr: stderrChunks.join('').trim(),
+    stdout: stdoutChunks.join('').trim()
   };
 };
 
-/**
- * Validates a project's MongoDB setup and connectivity, returning a structured result.
- *
- * Performs checks including presence of the db directory, local Docker compose file (for local setups),
- * optional startup and readiness checks of a local MongoDB container, basic query verification, and
- * presence of the expected backend handler file.
- *
- * @param projectPath - Path to the project root directory (where `db` and `src` are located)
- * @param config - Optional configuration:
- *   - orm: ORM in use (if any)
- *   - authProvider: authentication provider; when provided and not `'none'` the validator looks for user-related handlers and queries
- *   - databaseHost: set to `'none'` or omitted for local Docker-based validation; any other value treats MongoDB as remote
- * @returns The validation result containing:
- *   - `passed`: `true` if all required checks succeeded
- *   - `errors`: collected error messages
- *   - `warnings`: collected warning messages
- *   - `mongodbSpecific`: object with booleans `dockerComposeExists`, `connectionWorks`, and `queriesWork` indicating MongoDB-specific check outcomes
- */
-export async function validateMongoDBDatabase(
+const runProjectScript = (projectPath: string, script: 'db:up' | 'db:down') =>
+  runCommand(['bun', script], { cwd: projectPath });
+
+const dockerComposeCommand = (
+  dockerComposePath: string,
+  subcommand: string[],
+  env?: Record<string, string>
+) =>
+  runCommand(
+    ['docker', 'compose', '-p', 'mongodb', '-f', dockerComposePath, ...subcommand],
+    { env }
+  );
+
+const handleDockerUnavailable = (
+  stderr: string,
+  warnings: string[],
+  mongodbSpecific: MongoDBValidationResult['mongodbSpecific']
+) => {
+  warnings.push(
+    `Docker not available or requires sudo - skipping local MongoDB connection test: ${stderr.slice(0, DOCKER_WARNING_SNIPPET_LENGTH)}`
+  );
+  mongodbSpecific.connectionWorks = true;
+  mongodbSpecific.queriesWork = true;
+};
+
+const waitForMongoReady = async (dockerComposePath: string, attempt = 0) => {
+  if (attempt >= MONGODB_READY_ATTEMPTS) {
+    return false;
+  }
+
+  const readinessResult = await dockerComposeCommand(
+    dockerComposePath,
+    ['exec', '-T', 'db', 'mongosh', '--eval', 'db.adminCommand("ping")']
+  );
+
+  if (readinessResult.exitCode === 0) {
+    return true;
+  }
+
+  const bunModule = await loadBunModule();
+  await bunModule.sleep(MONGODB_READY_DELAY_MS);
+
+  return waitForMongoReady(dockerComposePath, attempt + 1);
+};
+
+const determineHandlerPath = (projectPath: string, authProvider?: string) => {
+  const handlersDir = join(projectPath, 'src', 'backend', 'handlers');
+
+  return authProvider && authProvider !== 'none'
+    ? join(handlersDir, 'userHandlers.ts')
+    : join(handlersDir, 'countHistoryHandlers.ts');
+};
+
+const getDockerStartErrors = (
+  stderr: string,
+  warnings: string[],
+  mongodbSpecific: MongoDBValidationResult['mongodbSpecific']
+) => {
+  const lowerStderr = stderr.toLowerCase();
+  const requiresDockerAccess = stderr.includes('sudo') || lowerStderr.includes('docker');
+
+  if (requiresDockerAccess) {
+    handleDockerUnavailable(stderr, warnings, mongodbSpecific);
+
+    return [];
+  }
+
+  return [`Failed to start Docker container: ${stderr.slice(0, DOCKER_ERROR_SNIPPET_LENGTH)}`];
+};
+
+const buildCollectionQuery = (authProvider?: string) =>
+  authProvider && authProvider !== 'none'
+    ? "db.getCollectionNames().includes('users')"
+    : "db.getCollectionNames().includes('count_history')";
+
+type MongoLocalResult = {
+  errors: string[];
+  mongodbSpecific: MongoDBValidationResult['mongodbSpecific'];
+  warnings: string[];
+};
+
+const executeMongoQuery = async (
+  dockerComposePath: string,
+  query: string
+) =>
+  dockerComposeCommand(
+    dockerComposePath,
+    [
+      'exec',
+      '-T',
+      'db',
+      'mongosh',
+      '-u',
+      'user',
+      '-p',
+      'password',
+      '--authenticationDatabase',
+      'admin',
+      'database',
+      '--eval',
+      query
+    ]
+  );
+
+const validateLocalMongo = async (
   projectPath: string,
-  config: {
-    orm?: string;
-    authProvider?: string;
-    databaseHost?: string;
-  } = {}
-): Promise<MongoDBValidationResult> {
+  dockerComposePath: string,
+  authProvider?: string
+): Promise<MongoLocalResult> => {
   const errors: string[] = [];
   const warnings: string[] = [];
   const mongodbSpecific: MongoDBValidationResult['mongodbSpecific'] = {
-    dockerComposeExists: false,
     connectionWorks: false,
+    dockerComposeExists: true,
+    queriesWork: false
+  };
+
+  process.stdout.write('    Starting Docker container... ');
+  const upResult = await runProjectScript(projectPath, 'db:up');
+
+  if (upResult.exitCode !== 0) {
+    const startErrors = getDockerStartErrors(upResult.stderr || '', warnings, mongodbSpecific);
+
+    errors.push(...startErrors);
+
+    return { errors, mongodbSpecific, warnings };
+  }
+
+  const ready = await waitForMongoReady(dockerComposePath);
+
+  if (!ready) {
+    errors.push('MongoDB container did not become ready within timeout');
+    await runProjectScript(projectPath, 'db:down');
+
+    return { errors, mongodbSpecific, warnings };
+  }
+
+  const collectionQuery = buildCollectionQuery(authProvider);
+  const connectionResult = await executeMongoQuery(dockerComposePath, collectionQuery);
+
+  if (connectionResult.exitCode !== 0) {
+    errors.push(
+      `Database connection test failed: ${connectionResult.stderr.slice(0, DOCKER_ERROR_SNIPPET_LENGTH) || 'Unknown error'}`
+    );
+    await runProjectScript(projectPath, 'db:down');
+
+    return { errors, mongodbSpecific, warnings };
+  }
+
+  mongodbSpecific.connectionWorks = true;
+
+  const collectionsResult = await executeMongoQuery(dockerComposePath, LIST_COLLECTIONS_QUERY);
+
+  if (collectionsResult.exitCode !== 0) {
+    warnings.push('Could not verify MongoDB collections via query');
+    await runProjectScript(projectPath, 'db:down');
+
+    return { errors, mongodbSpecific, warnings };
+  }
+
+  mongodbSpecific.queriesWork = true;
+
+  await runProjectScript(projectPath, 'db:down');
+
+  return { errors, mongodbSpecific, warnings };
+};
+
+export type MongoDBValidationResult = {
+  errors: string[];
+  mongodbSpecific: {
+    connectionWorks: boolean;
+    dockerComposeExists: boolean;
+    queriesWork: boolean;
+  };
+  passed: boolean;
+  warnings: string[];
+};
+
+export const validateMongoDBDatabase = async (
+  projectPath: string,
+  config: {
+    authProvider?: string;
+    databaseHost?: string;
+    orm?: string;
+  } = {}
+): Promise<MongoDBValidationResult> => {
+  const errors: string[] = [];
+  const warnings: string[] = [];
+  const mongodbSpecific: MongoDBValidationResult['mongodbSpecific'] = {
+    connectionWorks: false,
+    dockerComposeExists: false,
     queriesWork: false
   };
 
   const dbDir = join(projectPath, 'db');
-  const dockerComposePath = join(dbDir, 'docker-compose.db.yml');
-
-  // Check 1: Database directory exists
   if (!existsSync(dbDir)) {
     errors.push(`Database directory not found: ${dbDir}`);
-    return { passed: false, errors, warnings, mongodbSpecific };
+
+    return { errors, mongodbSpecific, passed: false, warnings };
   }
 
-  // Check 2: Docker compose file exists (for local MongoDB)
-  if (config.databaseHost === 'none' || !config.databaseHost) {
-    if (!existsSync(dockerComposePath)) {
-      errors.push(`Docker compose file not found: ${dockerComposePath}`);
-      return { passed: false, errors, warnings, mongodbSpecific };
-    }
+  const dockerComposePath = join(dbDir, 'docker-compose.db.yml');
+  const isLocal = config.databaseHost === 'none' || !config.databaseHost;
+
+  if (isLocal && !existsSync(dockerComposePath)) {
+    errors.push(`Docker compose file not found: ${dockerComposePath}`);
+
+    return { errors, mongodbSpecific, passed: false, warnings };
+  }
+
+  if (isLocal) {
     mongodbSpecific.dockerComposeExists = true;
   } else {
-    // For remote MongoDB (if any), we don't have a local Docker setup
     warnings.push('Remote MongoDB - skipping Docker compose check');
   }
 
-  // Note: MongoDB doesn't use schema files like SQL databases
-  // Collections are created automatically on first insert
+  if (isLocal) {
+    const localResult = await validateLocalMongo(
+      projectPath,
+      dockerComposePath,
+      config.authProvider
+    );
 
-  // Check 3: Test database connection and queries (for local MongoDB only)
-  if (config.databaseHost === 'none' || !config.databaseHost) {
-    try {
-      // Start Docker container
-      // Note: Docker may require sudo in some environments, so we'll skip if it fails
-      process.stdout.write('    Starting Docker container... ');
-      const upResult = await $`cd ${projectPath} && bun db:up`.quiet().nothrow();
-      
-      if (upResult.exitCode !== 0) {
-        const stderr = upResult.stderr?.toString() || '';
-        // If Docker requires sudo or isn't available, skip local testing
-        if (stderr.includes('sudo') || stderr.includes('docker') || stderr.includes('Docker')) {
-          warnings.push(`Docker not available or requires sudo - skipping local MongoDB connection test: ${stderr.slice(0, 100)}`);
-          mongodbSpecific.connectionWorks = true; // Assume it works if we can't test
-          mongodbSpecific.queriesWork = true;
-          return { passed: true, errors, warnings, mongodbSpecific };
-        }
-        errors.push(`Failed to start Docker container: ${stderr.slice(0, 200)}`);
-        return { passed: false, errors, warnings, mongodbSpecific };
-      }
-      
-      // Wait a bit for container to be ready
-      await new Promise(resolve => setTimeout(resolve, 3000));
-      
-      // Wait for MongoDB to be ready
-      // MongoDB Docker setup uses: user=user, password=password, database=database
-      let ready = false;
-      for (let i = 0; i < 10; i++) {
-        const readyCheck = await $`docker compose -p mongodb -f ${dockerComposePath} exec -T db bash -lc "mongosh --eval 'db.adminCommand(\"ping\")'"`.quiet().nothrow();
-        if (readyCheck.exitCode === 0) {
-          ready = true;
-          break;
-        }
-        await new Promise(resolve => setTimeout(resolve, 1000));
-      }
-      
-      if (!ready) {
-        errors.push('MongoDB container did not become ready within timeout');
-        await $`cd ${projectPath} && bun db:down`.quiet().nothrow();
-        return { passed: false, errors, warnings, mongodbSpecific };
-      }
-      
-      // Test connection by checking for collections
-      // MongoDB collections are created automatically, so we'll just verify we can connect
-      const testQuery = config.authProvider !== 'none' && config.authProvider
-        ? "db.getCollectionNames().includes('users')"
-        : "db.getCollectionNames().includes('count_history')";
-      
-      const queryResult = await $`docker compose -p mongodb -f ${dockerComposePath} exec -T db bash -lc "mongosh -u user -p password --authenticationDatabase admin database --eval '${testQuery}'"`.quiet().nothrow();
-      
-      if (queryResult.exitCode === 0) {
-        const output = queryResult.stdout?.toString() || '';
-        mongodbSpecific.connectionWorks = true;
-        
-        // Verify collections exist or can be created
-        const collectionsQuery = "db.getCollectionNames()";
-        const collectionsResult = await $`docker compose -p mongodb -f ${dockerComposePath} exec -T db bash -lc "mongosh -u user -p password --authenticationDatabase admin database --eval '${collectionsQuery}'"`.quiet().nothrow();
-        
-        if (collectionsResult.exitCode === 0) {
-          // Collections may not exist yet (created on first insert), which is fine for MongoDB
-          mongodbSpecific.queriesWork = true;
-        } else {
-          warnings.push('Could not verify MongoDB collections via query');
-        }
-      } else {
-        const stderr = queryResult.stderr?.toString() || '';
-        errors.push(`Database connection test failed: ${stderr.slice(0, 200) || 'Unknown error'}`);
-      }
-      
-      // Cleanup: stop Docker container
-      await $`cd ${projectPath} && bun db:down`.quiet().nothrow();
-    } catch (e: any) {
-      errors.push(`Database connection test error: ${e.message || e}`);
-      // Try to cleanup even on error
-      try {
-        await $`cd ${projectPath} && bun db:down`.quiet().nothrow();
-      } catch {
-        // Ignore cleanup errors
-      }
-    }
+    errors.push(...localResult.errors);
+    warnings.push(...localResult.warnings);
+    mongodbSpecific.connectionWorks = localResult.mongodbSpecific.connectionWorks;
+    mongodbSpecific.queriesWork = localResult.mongodbSpecific.queriesWork;
   } else {
-    // For remote MongoDB, we can't easily test without credentials
     warnings.push('Remote MongoDB - skipping connection test (requires credentials)');
-    mongodbSpecific.connectionWorks = true; // Assume it works if we can't test
-    mongodbSpecific.queriesWork = true; // Assume it works if we can't test
+    mongodbSpecific.connectionWorks = true;
+    mongodbSpecific.queriesWork = true;
   }
 
-  // Check 4: Verify handler files exist
-  const handlersDir = join(projectPath, 'src', 'backend', 'handlers');
-  const handlerFile = config.authProvider !== 'none' && config.authProvider
-    ? join(handlersDir, 'userHandlers.ts')
-    : join(handlersDir, 'countHistoryHandlers.ts');
-  
-  if (!existsSync(handlerFile)) {
-    errors.push(`Database handler file not found: ${handlerFile}`);
+  const handlersPath = determineHandlerPath(projectPath, config.authProvider);
+  if (!existsSync(handlersPath)) {
+    errors.push(`Database handler file not found: ${handlersPath}`);
   }
 
-  const passed = errors.length === 0 && 
-    (mongodbSpecific.dockerComposeExists || config.databaseHost !== 'none') &&
+  const passed =
+    errors.length === 0 &&
+    (mongodbSpecific.dockerComposeExists || !isLocal) &&
     mongodbSpecific.connectionWorks &&
     mongodbSpecific.queriesWork;
 
   return {
-    passed,
     errors,
-    warnings,
-    mongodbSpecific
+    mongodbSpecific,
+    passed,
+    warnings
   };
-}
+};
 
-// CLI usage
-if (require.main === module) {
-  const projectPath = process.argv[2];
-  const orm = process.argv[3] || 'none';
-  const authProvider = process.argv[4] || 'none';
-  const databaseHost = process.argv[5] || 'none';
+const logValidationSummary = (result: MongoDBValidationResult) => {
+  console.log('\n=== MongoDB Database Validation Results ===\n');
+  console.log('MongoDB-Specific Checks:');
+  console.log(`  Docker Compose Exists: ${result.mongodbSpecific.dockerComposeExists ? '✓' : '✗'}`);
+  console.log(`  Connection Works: ${result.mongodbSpecific.connectionWorks ? '✓' : '✗'}`);
+  console.log(`  Queries Work: ${result.mongodbSpecific.queriesWork ? '✓' : '✗'}`);
+};
+
+const logWarnings = (warnings: string[]) => {
+  if (warnings.length === 0) {
+    return;
+  }
+
+  console.log('\nWarnings:');
+  warnings.forEach((warning) => console.warn(`  ⚠ ${warning}`));
+};
+
+const logErrors = (errors: string[]) => {
+  if (errors.length === 0) {
+    return;
+  }
+
+  console.log('\nErrors:');
+  errors.forEach((error) => console.error(`  - ${error}`));
+};
+
+const parseCliArguments = (argv: string[]) => {
+  const [, , projectPath, orm, authProvider, databaseHost] = argv;
+
+  return {
+    authProvider: authProvider ?? 'none',
+    databaseHost: databaseHost ?? 'none',
+    orm: orm ?? 'none',
+    projectPath
+  } as const;
+};
+
+const exitWithResult = (result: MongoDBValidationResult) => {
+  console.log(`\nOverall: ${result.passed ? 'PASS' : 'FAIL'}`);
+  process.exit(result.passed ? 0 : 1);
+};
+
+const runFromCli = async () => {
+  const { authProvider, databaseHost, orm, projectPath } = parseCliArguments(process.argv);
 
   if (!projectPath) {
-    console.error('Usage: bun run scripts/functional-tests/mongodb-validator.ts <project-path> [orm] [auth-provider] [database-host]');
+    console.error(
+      'Usage: bun run scripts/functional-tests/mongodb-validator.ts <project-path> [orm] [auth-provider] [database-host]'
+    );
     process.exit(1);
   }
 
-  validateMongoDBDatabase(projectPath, { orm, authProvider, databaseHost })
-    .then((result) => {
-      console.log('\n=== MongoDB Database Validation Results ===\n');
-      
-      console.log('MongoDB-Specific Checks:');
-      console.log(`  Docker Compose Exists: ${result.mongodbSpecific.dockerComposeExists ? '✓' : '✗'}`);
-      console.log(`  Connection Works: ${result.mongodbSpecific.connectionWorks ? '✓' : '✗'}`);
-      console.log(`  Queries Work: ${result.mongodbSpecific.queriesWork ? '✓' : '✗'}`);
+  try {
+    const result = await validateMongoDBDatabase(projectPath, { authProvider, databaseHost, orm });
+    logValidationSummary(result);
+    logWarnings(result.warnings);
+    logErrors(result.errors);
+    exitWithResult(result);
+  } catch (unknownError) {
+    const error = unknownError instanceof Error ? unknownError : new Error(String(unknownError));
+    console.error('MongoDB validation error:', error);
+    process.exit(1);
+  }
+};
 
-      if (result.warnings.length > 0) {
-        console.log('\nWarnings:');
-        result.warnings.forEach((warning) => console.warn(`  ⚠ ${warning}`));
-      }
-
-      if (result.passed) {
-        console.log('\n✓ MongoDB database validation passed!');
-        process.exit(0);
-      } else {
-        console.log('\n✗ MongoDB database validation failed:');
-        result.errors.forEach((error) => console.error(`  - ${error}`));
-        process.exit(1);
-      }
-    })
-    .catch((e) => {
-      console.error('✗ MongoDB database validation error:', e);
-      process.exit(1);
-    });
+if (import.meta.main) {
+  runFromCli().catch((error) => {
+    console.error('MongoDB validation error:', error);
+    process.exit(1);
+  });
 }

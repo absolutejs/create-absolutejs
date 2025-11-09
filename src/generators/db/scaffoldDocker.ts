@@ -1,4 +1,5 @@
 import { writeFileSync } from 'fs';
+import process from 'node:process';
 import { join } from 'path';
 import { $ } from 'bun';
 import { AuthProvider, DatabaseEngine } from '../../types';
@@ -34,15 +35,21 @@ export const scaffoldDocker = async ({
 	}
 
 	await checkDockerInstalled();
-	const dbContainer = generateDockerContainer(databaseEngine);
-	writeFileSync(
-		join(projectDatabaseDirectory, 'docker-compose.db.yml'),
-		dbContainer,
-		'utf-8'
-	);
+	const useSharedContainer =
+		process.env.ABSOLUTE_TEST === 'true' &&
+		(databaseEngine === 'postgresql' ||
+			databaseEngine === 'mysql' ||
+			databaseEngine === 'mariadb');
 
-	if (databaseEngine === 'mongodb') {
-	} else {
+	const dbContainer = generateDockerContainer(databaseEngine);
+	const composePath = join(projectDatabaseDirectory, 'docker-compose.db.yml');
+	writeFileSync(composePath, dbContainer, 'utf-8');
+
+	if (databaseEngine !== 'mongodb') {
+		if (useSharedContainer) {
+			return;
+		}
+
 		const { wait, cli } = initTemplates[databaseEngine];
 		const usesAuth = authProvider !== undefined && authProvider !== 'none';
 		const dbCommand = usesAuth

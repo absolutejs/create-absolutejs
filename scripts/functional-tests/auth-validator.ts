@@ -4,206 +4,343 @@
   schema definitions, and runtime wiring exist, then runs core functional tests.
 */
 
-import { existsSync, readFileSync } from 'fs';
-import { join } from 'path';
-import { runFunctionalTests } from './functional-test-runner';
-import type { FunctionalTestResult } from './functional-test-runner';
+import { existsSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import process from 'node:process';
+import { runFunctionalTests, type FunctionalTestResult } from './functional-test-runner';
+
+const relationalEngines = new Set(['sqlite', 'postgresql', 'mysql']);
+const AUTH_HANDLER_FILE = 'userHandlers.ts';
+const USERS_SCHEMA_TOKEN = 'export const users';
+const USERS_TABLE_TOKEN = 'users';
+const SQL_CREATE_TABLE_TOKEN = 'create table';
+const SERVER_AUTH_TOKEN = 'absoluteAuth';
+const AUTH_PACKAGE = '@absolutejs/auth';
+const DEFAULT_PACKAGE_MANAGER = 'bun';
+
+const readFileIfExists = (filePath: string) => {
+  if (!existsSync(filePath)) {
+    return undefined;
+  }
+
+  try {
+    return readFileSync(filePath, 'utf-8');
+  } catch (error) {
+    throw new Error(`Failed to read ${filePath}: ${(error as Error).message}`);
+  }
+};
+
+const parsePackageJson = (packageJsonPath: string) => {
+  const content = readFileIfExists(packageJsonPath);
+
+  if (!content) {
+    return undefined;
+  }
+
+  try {
+    return JSON.parse(content) as {
+      dependencies?: Record<string, string>;
+      devDependencies?: Record<string, string>;
+    };
+  } catch (error) {
+    throw new Error(`Failed to parse package.json: ${(error as Error).message}`);
+  }
+};
 
 type AuthValidationResult = {
-  passed: boolean;
-  errors: string[];
-  warnings: string[];
-  functionalTestResults?: FunctionalTestResult;
   authSpecific: {
     handlerExists: boolean;
+    packageHasAuthDependency: boolean;
     schemaIncludesUsers: boolean;
     serverUsesAuth: boolean;
-    packageHasAuthDependency: boolean;
   };
+  errors: string[];
+  functionalTestResults?: FunctionalTestResult;
+  passed: boolean;
+  warnings: string[];
 };
 
 type ValidatorConfig = {
+  authProvider?: string;
   databaseEngine?: string;
   orm?: string;
-  authProvider?: string;
 };
 
 type ValidatorOptions = {
-  skipDependencies?: boolean;
   skipBuild?: boolean;
+  skipDependencies?: boolean;
   skipServer?: boolean;
 };
 
-const relationalEngines = new Set([
-  'sqlite',
-  'postgresql',
-  'mysql'
-]);
+type SchemaValidationResult = {
+  errors: string[];
+  schemaIncludesUsers?: boolean;
+  warnings?: string[];
+};
 
-/**
- * Validates that a scaffolded project's authentication configuration and wiring are present and correct.
- *
- * Performs checks for a user handler, database schema (engine- and ORM-aware), server plugin wiring, and
- * presence of the `@absolutejs/auth` dependency, then optionally runs shared functional tests and aggregates results.
- *
- * @param projectPath - Filesystem path to the project root to validate
- * @param packageManager - Package manager to use when running functional tests (`bun`, `npm`, `pnpm`, or `yarn`)
- * @param config - Validator configuration: may include `databaseEngine` (e.g., 'sqlite', 'postgresql', 'mysql', 'mongodb', or 'none'), `orm` (e.g., 'drizzle'), and `authProvider`
- * @param options - Runtime options to alter test behavior; supports `skipDependencies`, `skipBuild`, and `skipServer` flags
- * @returns An AuthValidationResult containing:
- *  - `passed`: `true` if all required checks and (if run) functional tests passed, `false` otherwise;
- *  - `errors`: list of failure messages observed during validation;
- *  - `warnings`: list of non-fatal observations or coverage gaps;
- *  - `functionalTestResults` (optional): aggregated results from the shared functional test suite when executed;
- *  - `authSpecific`: object with boolean flags `handlerExists`, `schemaIncludesUsers`, `serverUsesAuth`, and `packageHasAuthDependency` indicating individual check outcomes.
- */
-export async function validateAuthConfiguration(
+const hasUsersInDrizzleSchema = (projectPath: string) => {
+  const schemaPath = join(projectPath, 'db', 'schema.ts');
+  const schemaContent = readFileIfExists(schemaPath);
+
+  if (!schemaContent) {
+    return { errors: [`Drizzle schema file not found at ${schemaPath}`] };
+  }
+
+  if (!schemaContent.includes(USERS_SCHEMA_TOKEN)) {
+    return { errors: ['Drizzle schema does not include `users` table definition.'] };
+  }
+
+  return { errors: [] };
+};
+
+const hasUsersInSqlSchema = (projectPath: string) => {
+  const schemaPath = join(projectPath, 'db', 'schema.sql');
+  const schemaContent = readFileIfExists(schemaPath);
+
+  if (!schemaContent) {
+    return { errors: [`SQL schema file not found at ${schemaPath}`] };
+  }
+
+  const lowerContent = schemaContent.toLowerCase();
+
+  if (!lowerContent.includes(SQL_CREATE_TABLE_TOKEN) || !schemaContent.includes(USERS_TABLE_TOKEN)) {
+    return { errors: ['SQL schema does not include a `users` table definition.'] };
+  }
+
+  return { errors: [] };
+};
+
+const getSchemaValidation = (
   projectPath: string,
-  packageManager: 'bun' | 'npm' | 'pnpm' | 'yarn' = 'bun',
+  engine: string,
+  usingDrizzle: boolean,
+  handlerExists: boolean
+): SchemaValidationResult => {
+  if (relationalEngines.has(engine)) {
+    return usingDrizzle
+      ? hasUsersInDrizzleSchema(projectPath)
+      : hasUsersInSqlSchema(projectPath);
+  }
+
+  if (engine === 'mongodb') {
+    return { errors: [], schemaIncludesUsers: handlerExists };
+  }
+
+  return {
+    errors: [],
+    schemaIncludesUsers: false,
+    warnings: [`Auth validator does not have schema checks for database engine "${engine}".`]
+  };
+};
+
+const getServerValidation = (projectPath: string) => {
+  const serverPath = join(projectPath, 'src', 'backend', 'server.ts');
+  const serverContent = readFileIfExists(serverPath);
+
+  if (!serverContent) {
+    return { errors: [`Server file not found at ${serverPath}`], serverUsesAuth: false };
+  }
+
+  if (!serverContent.includes(SERVER_AUTH_TOKEN)) {
+    return { errors: ['Server does not appear to use absoluteAuth plugin.'], serverUsesAuth: false };
+  }
+
+  return { errors: [], serverUsesAuth: true };
+};
+
+const getPackageValidation = (
+  projectPath: string
+): { errors: string[]; packageHasAuthDependency: boolean } => {
+  const packageJsonPath = join(projectPath, 'package.json');
+  const pkg = parsePackageJson(packageJsonPath);
+
+  if (!pkg) {
+    return { errors: [`package.json not found at ${packageJsonPath}`], packageHasAuthDependency: false };
+  }
+
+  const deps: Record<string, string> = {
+    ...(pkg.dependencies ?? {}),
+    ...(pkg.devDependencies ?? {})
+  };
+
+  if (!deps[AUTH_PACKAGE]) {
+    return { errors: ['`@absolutejs/auth` dependency is missing from package.json.'], packageHasAuthDependency: false };
+  }
+
+  return { errors: [], packageHasAuthDependency: true };
+};
+
+const runFunctionalSuite = async (
+  projectPath: string,
+  packageManager: 'bun' | 'npm' | 'pnpm' | 'yarn',
+  options: ValidatorOptions
+) => {
+  try {
+    return await runFunctionalTests(projectPath, packageManager, options);
+  } catch (error) {
+    throw new Error(`Functional tests failed: ${(error as Error).message}`);
+  }
+};
+
+const processFunctionalResults = (
+  result: FunctionalTestResult | undefined,
+  errors: string[],
+  warnings: string[]
+) => {
+  if (!result) {
+    return;
+  }
+
+  if (!result.passed) {
+    errors.push(...result.errors);
+  }
+
+  if (result.warnings.length > 0) {
+    warnings.push(...result.warnings);
+  }
+};
+
+const buildAuthValidationResult = (
+  authSpecific: AuthValidationResult['authSpecific'],
+  errors: string[],
+  warnings: string[],
+  functionalTestResults?: FunctionalTestResult
+) => ({
+  authSpecific,
+  errors,
+  functionalTestResults,
+  passed:
+    errors.length === 0 &&
+    authSpecific.handlerExists &&
+    authSpecific.schemaIncludesUsers &&
+    authSpecific.serverUsesAuth &&
+    authSpecific.packageHasAuthDependency &&
+    (!functionalTestResults || functionalTestResults.passed),
+  warnings
+} satisfies AuthValidationResult);
+
+export const validateAuthConfiguration = async (
+  projectPath: string,
+  packageManager: 'bun' | 'npm' | 'pnpm' | 'yarn' = DEFAULT_PACKAGE_MANAGER,
   config: ValidatorConfig = {},
   options: ValidatorOptions = {}
-): Promise<AuthValidationResult> {
+) => {
   const errors: string[] = [];
   const warnings: string[] = [];
   const authSpecific: AuthValidationResult['authSpecific'] = {
     handlerExists: false,
+    packageHasAuthDependency: false,
     schemaIncludesUsers: false,
-    serverUsesAuth: false,
-    packageHasAuthDependency: false
+    serverUsesAuth: false
   };
 
-  if (config.authProvider === undefined || config.authProvider === 'none') {
-    errors.push('Auth validator requires a configuration with an auth provider enabled.');
+  if (!config.authProvider || config.authProvider === 'none') {
     return {
+      authSpecific,
+      errors: ['Auth validator requires a configuration with an auth provider enabled.'],
       passed: false,
-      errors,
-      warnings,
-      authSpecific
+      warnings
     };
   }
 
-  // 1. Ensure userHandlers exists
-  const handlerPath = join(projectPath, 'src', 'backend', 'handlers', 'userHandlers.ts');
+  const handlerPath = join(projectPath, 'src', 'backend', 'handlers', AUTH_HANDLER_FILE);
   if (existsSync(handlerPath)) {
     authSpecific.handlerExists = true;
   } else {
     errors.push(`Auth handler not found at ${handlerPath}`);
   }
 
-  // 2. Schema verification (relational engines)
   const engine = config.databaseEngine ?? 'none';
   const usingDrizzle = config.orm === 'drizzle';
-  if (relationalEngines.has(engine)) {
-    if (usingDrizzle) {
-      const schemaPath = join(projectPath, 'db', 'schema.ts');
-      if (existsSync(schemaPath)) {
-        const schemaContent = readFileSync(schemaPath, 'utf-8');
-        if (schemaContent.includes('export const users')) {
-          authSpecific.schemaIncludesUsers = true;
-        } else {
-          errors.push('Drizzle schema does not include `users` table definition.');
-        }
-      } else {
-        errors.push(`Drizzle schema file not found at ${schemaPath}`);
-      }
-    } else {
-      const sqlSchemaPath = join(projectPath, 'db', 'schema.sql');
-      if (existsSync(sqlSchemaPath)) {
-        const schemaContent = readFileSync(sqlSchemaPath, 'utf-8');
-        if (schemaContent.toLowerCase().includes('create table') && schemaContent.includes('users')) {
-          authSpecific.schemaIncludesUsers = true;
-        } else {
-          errors.push('SQL schema does not include a `users` table definition.');
-        }
-      } else {
-        errors.push(`SQL schema file not found at ${sqlSchemaPath}`);
-      }
-    }
-  } else if (engine === 'mongodb') {
-    // MongoDB relies on runtime collection creation; mark as satisfied if handler exists.
-    authSpecific.schemaIncludesUsers = authSpecific.handlerExists;
-  } else {
-    // Unhandled engine - warn so we know coverage gap.
-    warnings.push(`Auth validator does not have schema checks for database engine "${engine}".`);
+  const schemaValidation = getSchemaValidation(projectPath, engine, usingDrizzle, authSpecific.handlerExists);
+
+  errors.push(...(schemaValidation.errors ?? []));
+  if (schemaValidation.warnings) {
+    warnings.push(...schemaValidation.warnings);
   }
 
-  // 3. Server wiring check
-  const serverPath = join(projectPath, 'src', 'backend', 'server.ts');
-  if (existsSync(serverPath)) {
-    const serverContent = readFileSync(serverPath, 'utf-8');
-    if (serverContent.includes('absoluteAuth')) {
-      authSpecific.serverUsesAuth = true;
-    } else {
-      errors.push('Server does not appear to use absoluteAuth plugin.');
-    }
-  } else {
-    errors.push(`Server file not found at ${serverPath}`);
+  if (typeof schemaValidation.schemaIncludesUsers === 'boolean') {
+    authSpecific.schemaIncludesUsers = schemaValidation.schemaIncludesUsers;
+  } else if (errors.length === 0 && relationalEngines.has(engine)) {
+    authSpecific.schemaIncludesUsers = true;
   }
 
-  // 4. Package dependencies
-  const packageJsonPath = join(projectPath, 'package.json');
-  if (existsSync(packageJsonPath)) {
-    try {
-      const pkg = JSON.parse(readFileSync(packageJsonPath, 'utf-8'));
-      const deps = {
-        ...(pkg.dependencies ?? {}),
-        ...(pkg.devDependencies ?? {})
-      };
-      if (deps['@absolutejs/auth']) {
-        authSpecific.packageHasAuthDependency = true;
-      } else {
-        errors.push('`@absolutejs/auth` dependency is missing from package.json.');
-      }
-    } catch (error) {
-      errors.push(`Failed to parse package.json: ${(error as Error).message}`);
-    }
-  } else {
-    errors.push(`package.json not found at ${packageJsonPath}`);
+  const serverValidation = getServerValidation(projectPath);
+  errors.push(...serverValidation.errors);
+  authSpecific.serverUsesAuth = serverValidation.serverUsesAuth;
+
+  const packageValidation = getPackageValidation(projectPath);
+  errors.push(...packageValidation.errors);
+  authSpecific.packageHasAuthDependency = packageValidation.packageHasAuthDependency;
+
+  if (errors.length > 0) {
+    return buildAuthValidationResult(authSpecific, errors, warnings);
   }
 
-  // 5. Run shared functional tests if basic checks passed
   let functionalTestResults: FunctionalTestResult | undefined;
-  if (errors.length === 0) {
-    try {
-      functionalTestResults = await runFunctionalTests(projectPath, packageManager, options);
-      if (!functionalTestResults.passed) {
-        errors.push(...functionalTestResults.errors);
-      }
-      if (functionalTestResults.warnings.length > 0) {
-        warnings.push(...functionalTestResults.warnings);
-      }
-    } catch (error) {
-      errors.push(`Functional tests failed: ${(error as Error).message}`);
-    }
+
+  try {
+    functionalTestResults = await runFunctionalSuite(projectPath, packageManager, options);
+    processFunctionalResults(functionalTestResults, errors, warnings);
+  } catch (error) {
+    errors.push((error as Error).message);
   }
 
-  const passed =
-    errors.length === 0 &&
-    authSpecific.handlerExists &&
-    authSpecific.schemaIncludesUsers &&
-    authSpecific.serverUsesAuth &&
-    authSpecific.packageHasAuthDependency &&
-    (!functionalTestResults || functionalTestResults.passed);
+  return buildAuthValidationResult(authSpecific, errors, warnings, functionalTestResults);
+};
+
+const printFunctionalSummary = (result: FunctionalTestResult) => {
+  console.log('\nFunctional Test Summary:');
+  console.log(`  Passed: ${result.passed ? '✓' : '✗'}`);
+  result.errors.forEach((error) => console.error(`  - ${error}`));
+  result.warnings.forEach((warning) => console.warn(`  ⚠ ${warning}`));
+};
+
+const printValidationResults = (result: AuthValidationResult) => {
+  console.log('\n=== Auth Configuration Validation Results ===\n');
+  console.log('Auth-Specific Checks:');
+  console.log(`  Handler Exists: ${result.authSpecific.handlerExists ? '✓' : '✗'}`);
+  console.log(`  Schema Includes Users: ${result.authSpecific.schemaIncludesUsers ? '✓' : '✗'}`);
+  console.log(`  Server Uses Auth: ${result.authSpecific.serverUsesAuth ? '✓' : '✗'}`);
+  console.log(`  @absolutejs/auth Dependency: ${result.authSpecific.packageHasAuthDependency ? '✓' : '✗'}`);
+
+  if (result.warnings.length > 0) {
+    console.log('\nWarnings:');
+    result.warnings.forEach((warning) => console.warn(`  ⚠ ${warning}`));
+  }
+
+  if (result.errors.length > 0) {
+    console.log('\nErrors:');
+    result.errors.forEach((error) => console.error(`  - ${error}`));
+  }
+
+  if (result.functionalTestResults) {
+    printFunctionalSummary(result.functionalTestResults);
+  }
+
+  console.log(`\nOverall: ${result.passed ? 'PASS' : 'FAIL'}`);
+};
+
+const parseCliArguments = (argv: string[]) => {
+  const [, , projectPath, packageManager, databaseEngine, orm, authProvider] = argv;
 
   return {
-    passed,
-    errors,
-    warnings,
-    functionalTestResults,
-    authSpecific
+    authProvider: authProvider ?? 'none',
+    databaseEngine: databaseEngine ?? 'none',
+    options: {
+      skipBuild: argv.includes('--skip-build'),
+      skipDependencies: argv.includes('--skip-deps'),
+      skipServer: argv.includes('--skip-server')
+    },
+    orm: orm ?? 'none',
+    packageManager: (packageManager as 'bun' | 'npm' | 'pnpm' | 'yarn') ?? DEFAULT_PACKAGE_MANAGER,
+    projectPath
   };
-}
+};
 
-// CLI usage
-if (require.main === module) {
-  const projectPath = process.argv[2];
-  const packageManager = (process.argv[3] as any) || 'bun';
-  const databaseEngine = process.argv[4];
-  const orm = process.argv[5];
-  const authProvider = process.argv[6];
-  const skipDeps = process.argv.includes('--skip-deps');
-  const skipBuild = process.argv.includes('--skip-build');
-  const skipServer = process.argv.includes('--skip-server');
+if (import.meta.main) {
+  const { authProvider, databaseEngine, options, packageManager, projectPath, orm } =
+    parseCliArguments(process.argv);
 
   if (!projectPath) {
     console.error(
@@ -212,80 +349,15 @@ if (require.main === module) {
     process.exit(1);
   }
 
-  validateAuthConfiguration(
-    projectPath,
-    packageManager,
-    { databaseEngine, orm, authProvider },
-    {
-      skipDependencies: skipDeps,
-      skipBuild,
-      skipServer
-    }
-  )
+  validateAuthConfiguration(projectPath, packageManager, { authProvider, databaseEngine, orm }, options)
     .then((result) => {
-      console.log('\n=== Auth Configuration Validation Results ===\n');
+      printValidationResults(result);
+      process.exit(result.passed ? 0 : 1);
 
-      console.log('Auth-Specific Checks:');
-      console.log(`  Handler Exists: ${result.authSpecific.handlerExists ? '✓' : '✗'}`);
-      console.log(
-        `  Schema Includes Users: ${result.authSpecific.schemaIncludesUsers ? '✓' : '✗'}`
-      );
-      console.log(`  Server Uses Auth Plugin: ${result.authSpecific.serverUsesAuth ? '✓' : '✗'}`);
-      console.log(
-        `  package.json has @absolutejs/auth: ${
-          result.authSpecific.packageHasAuthDependency ? '✓' : '✗'
-        }`
-      );
-
-      if (result.functionalTestResults) {
-        console.log('\nFunctional Test Results:');
-        if (result.functionalTestResults.results.structure) {
-          console.log(
-            `  Structure: ${
-              result.functionalTestResults.results.structure.passed ? '✓' : '✗'
-            }`
-          );
-        }
-        if (result.functionalTestResults.results.dependencies) {
-          console.log(
-            `  Dependencies: ${
-              result.functionalTestResults.results.dependencies.passed ? '✓' : '✗'
-            }`
-          );
-        }
-        if (result.functionalTestResults.results.build) {
-          console.log(
-            `  Build: ${result.functionalTestResults.results.build.passed ? '✓' : '✗'}`
-          );
-          if (result.functionalTestResults.results.build.compileTime) {
-            console.log(
-              `    Compile time: ${result.functionalTestResults.results.build.compileTime}ms`
-            );
-          }
-        }
-        if (result.functionalTestResults.results.server) {
-          console.log(
-            `  Server: ${result.functionalTestResults.results.server.passed ? '✓' : '✗'}`
-          );
-        }
-      }
-
-      if (result.warnings.length > 0) {
-        console.log('\nWarnings:');
-        result.warnings.forEach((warning) => console.warn(`  ⚠ ${warning}`));
-      }
-
-      if (result.passed) {
-        console.log('\n✓ Auth configuration validation passed!');
-        process.exit(0);
-      } else {
-        console.log('\n✗ Auth configuration validation failed:');
-        result.errors.forEach((error) => console.error(`  - ${error}`));
-        process.exit(1);
-      }
+      return undefined;
     })
     .catch((error) => {
-      console.error('✗ Auth configuration validation error:', error);
+      console.error('Auth validation error:', error);
       process.exit(1);
     });
 }

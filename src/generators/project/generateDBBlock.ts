@@ -79,6 +79,13 @@ const db = client.db('database')
 `;
 		}
 
+		if (databaseEngine === 'postgresql' && hostKey === 'none') {
+			return `
+const pool = ${hostCfg.expr}
+const db = createPgSql(pool)
+`;
+		}
+
 		return `
 const db = ${hostCfg.expr}
 `;

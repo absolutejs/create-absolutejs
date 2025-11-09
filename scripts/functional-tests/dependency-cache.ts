@@ -4,11 +4,23 @@
   to dramatically speed up testing.
 */
 
-import { existsSync, mkdirSync, readFileSync, writeFileSync, cpSync, statSync } from 'fs';
-import { join, dirname } from 'path';
-import { createHash } from 'crypto';
+import { spawn } from 'node:child_process';
+import { createHash } from 'node:crypto';
+import { once } from 'node:events';
+import {
+  cpSync,
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  readdirSync,
+  rmSync,
+  statSync,
+  writeFileSync
+} from 'node:fs';
+import { dirname, join } from 'node:path';
+import process from 'node:process';
 
-type DependencyFingerprint = {
+export type DependencyFingerprint = {
   frontend: string;
   databaseEngine: string;
   orm: string;
@@ -18,244 +30,284 @@ type DependencyFingerprint = {
   codeQualityTool?: string;
 };
 
-/**
- * Produce a stable fingerprint string for a dependency configuration.
- *
- * @param config - Dependency fields that affect installed packages; fields considered include `frontend`, `databaseEngine`, `orm`, `databaseHost`, `authProvider`, `useTailwind`, and `codeQualityTool`.
- * @param manifestHash - Hash of the scaffolded manifest (package.json + lock files) to guarantee cache invalidation when dependencies change.
- * @returns A 16-character hexadecimal fingerprint identifying the provided dependency configuration.
- */
-function getDependencyFingerprint(config: DependencyFingerprint, manifestHash: string): string {
-  // Normalize the config to create a stable fingerprint
-  const key = JSON.stringify({
-    frontend: config.frontend,
-    databaseEngine: config.databaseEngine,
-    orm: config.orm,
-    databaseHost: config.databaseHost,
-    authProvider: config.authProvider,
-    useTailwind: config.useTailwind,
-    codeQualityTool: config.codeQualityTool || 'none',
-    manifestHash
-  });
-  
-  // Use SHA-256 to create a deterministic hash
-  return createHash('sha256').update(key).digest('hex').substring(0, 16);
-}
-
 const CACHE_DIR = join(process.cwd(), '.test-dependency-cache');
+const LOCK_FILES = ['bun.lockb', 'package-lock.json'];
+const MINUTES_PER_INSTALL_TIMEOUT = 5;
+const SECONDS_PER_MINUTE = 60;
+const MILLISECONDS_PER_SECOND = 1_000;
+const INSTALL_TIMEOUT_MS = MINUTES_PER_INSTALL_TIMEOUT * SECONDS_PER_MINUTE * MILLISECONDS_PER_SECOND;
+const DEFAULT_CACHE_MAX_AGE_DAYS = 7;
+const HOURS_PER_DAY = 24;
+const MINUTES_PER_HOUR = 60;
+const FORCE_KILL_DELAY_MS = 100;
 
-/**
- * Return the cache directory path for a given dependency fingerprint.
- *
- * @param fingerprint - The fingerprint identifying a dependency configuration
- * @returns The filesystem path to the cache directory for `fingerprint`
- */
-function getCachePath(fingerprint: string): string {
-  return join(CACHE_DIR, fingerprint);
-}
+const createFingerprintKey = (config: DependencyFingerprint, manifestHash: string) =>
+  JSON.stringify({
+    authProvider: config.authProvider,
+    codeQualityTool: config.codeQualityTool ?? 'none',
+    databaseEngine: config.databaseEngine,
+    databaseHost: config.databaseHost,
+    frontend: config.frontend,
+    manifestHash,
+    orm: config.orm,
+    useTailwind: config.useTailwind
+  });
 
-/**
- * Compute a manifest hash (package.json + relevant lock files) to ensure dependency caches
- * are invalidated when the scaffolded manifest changes.
- */
-export function computeManifestHash(packageJsonPath: string): string {
+const FINGERPRINT_LENGTH = 16;
+
+const getDependencyFingerprint = (config: DependencyFingerprint, manifestHash: string) =>
+  createHash('sha256')
+    .update(createFingerprintKey(config, manifestHash))
+    .digest('hex')
+    .slice(0, FINGERPRINT_LENGTH);
+
+const getCachePath = (fingerprint: string) => join(CACHE_DIR, fingerprint);
+
+const safeRead = (path: string) => {
+  try {
+    return readFileSync(path);
+  } catch {
+    return null;
+  }
+};
+
+const ensureCacheDir = () => {
+  if (!existsSync(CACHE_DIR)) {
+    mkdirSync(CACHE_DIR, { recursive: true });
+  }
+};
+
+export const computeManifestHash = (packageJsonPath: string) => {
   if (!existsSync(packageJsonPath)) {
     return 'missing';
   }
 
   const hash = createHash('sha256');
+  const packageJsonContents = safeRead(packageJsonPath);
+
+  if (!packageJsonContents) {
+    return 'error:package-json-unreadable';
+  }
+
+  hash.update(packageJsonContents);
+
   const packageDir = dirname(packageJsonPath);
 
-  try {
-    hash.update(readFileSync(packageJsonPath));
-  } catch (error) {
-    // If package.json cannot be read, return a sentinel value so cache usage is skipped.
-    return `error:${(error as Error).message}`;
-  }
-
-  const lockFiles = ['bun.lockb', 'package-lock.json'];
-  for (const lockFile of lockFiles) {
+  LOCK_FILES.forEach((lockFile) => {
     const lockPath = join(packageDir, lockFile);
-    if (existsSync(lockPath)) {
-      try {
-        hash.update(readFileSync(lockPath));
-      } catch {
-        // Ignore lock read errors; they'll be caught on next run.
-      }
+    const contents = safeRead(lockPath);
+
+    if (contents) {
+      hash.update(contents);
     }
-  }
+  });
 
   return hash.digest('hex');
-}
+};
 
-/**
- * Determine whether a cached node_modules directory exists for the given dependency fingerprint.
- *
- * @param config - Dependency fingerprint describing the dependencies and configuration that affect installed packages
- * @param packageJsonPath - Path to the project's package.json whose hash participates in the cache key
- * @param manifestHashOverride - Optional precomputed manifest hash to avoid recomputation
- * @returns `true` if a cached `node_modules` directory exists for the fingerprint, `false` otherwise
- */
-export function hasCachedDependencies(
+const readStoredManifestHash = (cachePath: string) => {
+  const manifestHashPath = join(cachePath, 'manifest.hash');
+
+  if (!existsSync(manifestHashPath)) {
+    return null;
+  }
+
+  try {
+    return readFileSync(manifestHashPath, 'utf-8').trim();
+  } catch {
+    return null;
+  }
+};
+
+const restoreCache = (
+  cachePath: string,
+  projectPath: string,
+  manifestHash: string
+) => {
+  const nodeModulesPath = join(cachePath, 'node_modules');
+  const storedHash = readStoredManifestHash(cachePath);
+
+  if (!storedHash || storedHash !== manifestHash) {
+    return false;
+  }
+
+  if (!existsSync(nodeModulesPath) || !statSync(nodeModulesPath).isDirectory()) {
+    return false;
+  }
+
+  const start = Date.now();
+  cpSync(nodeModulesPath, join(projectPath, 'node_modules'), { recursive: true });
+
+  return Date.now() - start;
+};
+
+const installDependencies = async (projectPath: string) => {
+  const stdoutChunks: string[] = [];
+  const stderrChunks: string[] = [];
+  let timedOut = false;
+
+  const child = spawn('bun', ['install'], {
+    cwd: projectPath,
+    env: {
+      ...process.env,
+      ABSOLUTE_TEST: 'true'
+    },
+    stdio: ['ignore', 'pipe', 'pipe']
+  });
+
+  const timeoutId = setTimeout(() => {
+    timedOut = true;
+    try {
+      child.kill('SIGTERM');
+      setTimeout(() => child.kill('SIGKILL'), FORCE_KILL_DELAY_MS);
+    } catch {
+      // Ignore kill failures – process may already have exited.
+    }
+  }, INSTALL_TIMEOUT_MS);
+
+  child.stdout?.on('data', (chunk) => stdoutChunks.push(chunk.toString()));
+  child.stderr?.on('data', (chunk) => stderrChunks.push(chunk.toString()));
+
+  const [code] = (await once(child, 'close')) as [number | null, string | null];
+  clearTimeout(timeoutId);
+
+  if (timedOut) {
+    throw new Error(`Dependency installation timed out after ${INSTALL_TIMEOUT_MS}ms`);
+  }
+
+  if (code === 0) {
+    return;
+  }
+
+  const combinedOutput = [stderrChunks.join(''), stdoutChunks.join('')]
+    .map((section) => section.trim())
+    .filter(Boolean)
+    .join('\n');
+
+  if (combinedOutput.length > 0) {
+    const ERROR_PREVIEW_LINES = 10;
+    throw new Error(combinedOutput.split('\n').slice(0, ERROR_PREVIEW_LINES).join('\n'));
+  }
+
+  throw new Error(`Dependency installation failed with exit code ${code ?? 'unknown'}`);
+};
+
+const cacheInstalledDependencies = (
+  projectPath: string,
+  cachePath: string,
+  manifestHash: string,
+  packageJsonPath: string
+) => {
+  if (!existsSync(cachePath)) {
+    mkdirSync(cachePath, { recursive: true });
+  }
+
+  cpSync(join(projectPath, 'node_modules'), join(cachePath, 'node_modules'), { recursive: true });
+
+  if (existsSync(packageJsonPath)) {
+    cpSync(packageJsonPath, join(cachePath, 'package.json'));
+  }
+
+  const packageDir = dirname(packageJsonPath);
+
+  LOCK_FILES.forEach((lockFile) => {
+    const lockPath = join(packageDir, lockFile);
+
+    if (existsSync(lockPath)) {
+      cpSync(lockPath, join(cachePath, lockFile));
+    }
+  });
+
+  writeFileSync(join(cachePath, 'manifest.hash'), manifestHash);
+};
+
+export const hasCachedDependencies = (
   config: DependencyFingerprint,
   packageJsonPath: string,
   manifestHashOverride?: string
-): boolean {
+) => {
   if (!existsSync(packageJsonPath)) {
     return false;
   }
 
   const manifestHash = manifestHashOverride ?? computeManifestHash(packageJsonPath);
-  if (!manifestHash || manifestHash.startsWith('error:')) {
+
+  if (manifestHash.startsWith('error:') || manifestHash === 'missing') {
     return false;
   }
 
   const fingerprint = getDependencyFingerprint(config, manifestHash);
   const cachePath = getCachePath(fingerprint);
   const nodeModulesPath = join(cachePath, 'node_modules');
-  
+
   if (!existsSync(nodeModulesPath) || !statSync(nodeModulesPath).isDirectory()) {
     return false;
   }
 
-  const manifestHashPath = join(cachePath, 'manifest.hash');
-  if (!existsSync(manifestHashPath)) {
-    return false;
-  }
+  return readStoredManifestHash(cachePath) === manifestHash;
+};
 
-  try {
-    const storedHash = readFileSync(manifestHashPath, 'utf-8').trim();
-    return storedHash === manifestHash;
-  } catch {
-    return false;
-  }
-}
-
-/**
- * Ensure the project has a populated `node_modules` directory by restoring from a fingerprinted cache when available, otherwise installing dependencies and storing them in the cache.
- *
- * @param projectPath - Filesystem path to the project where `node_modules` will be placed
- * @param config - Dependency fingerprint describing the dependency/configuration set used to derive the cache key
- * @param packageJsonPath - Path to the project's `package.json`; when present it is copied into the cache for reference
- * @param manifestHashOverride - Optional precomputed manifest hash to reuse between checks
- * @returns An object with `cached` set to `true` if dependencies were restored from the cache (otherwise `false`), and `installTime` representing the operation duration in milliseconds
- * @throws Error if dependency installation times out after 300 seconds
- * @throws Error if the dependency installer exits with a non-zero exit code
- */
-export async function getOrInstallDependencies(
+export const getOrInstallDependencies = async (
   projectPath: string,
   config: DependencyFingerprint,
   packageJsonPath: string,
   manifestHashOverride?: string
-): Promise<{ cached: boolean; installTime: number }> {
-  let manifestHash = manifestHashOverride ?? computeManifestHash(packageJsonPath);
-  if (!manifestHash || manifestHash.startsWith('error:')) {
-    // If we failed to hash the manifest, fall back to installing fresh dependencies without caching.
-    manifestHash = `fallback-${Date.now()}`;
-  }
+): Promise<{ cached: boolean; installTime: number }> => {
+  ensureCacheDir();
 
+  const baseManifestHash = manifestHashOverride ?? computeManifestHash(packageJsonPath);
+  const manifestHash = baseManifestHash.startsWith('error:') ? `fallback-${Date.now()}` : baseManifestHash;
   const fingerprint = getDependencyFingerprint(config, manifestHash);
   const cachePath = getCachePath(fingerprint);
-  const nodeModulesPath = join(cachePath, 'node_modules');
-  
-  // Ensure cache directory exists
-  if (!existsSync(CACHE_DIR)) {
-    mkdirSync(CACHE_DIR, { recursive: true });
-  }
-  
-  // If cache exists, copy it
-  if (existsSync(nodeModulesPath) && statSync(nodeModulesPath).isDirectory()) {
-    const manifestHashPath = join(cachePath, 'manifest.hash');
-    if (!existsSync(manifestHashPath)) {
-      // Manifest missing; treat as cache miss.
-    } else {
-      try {
-        const storedHash = readFileSync(manifestHashPath, 'utf-8').trim();
-        if (storedHash === manifestHash) {
-          const startTime = Date.now();
-          cpSync(nodeModulesPath, join(projectPath, 'node_modules'), { recursive: true });
-          return { cached: true, installTime: Date.now() - startTime };
-        }
-      } catch {
-        // Ignore and fall through to install.
-      }
-    }
+
+  const restoredDuration = restoreCache(cachePath, projectPath, manifestHash);
+
+  if (restoredDuration !== false) {
+    return { cached: true, installTime: restoredDuration };
   }
 
-  // Otherwise, install and cache
-  const { $ } = await import('bun');
   const installStart = Date.now();
-
-  // Install dependencies in the project
-  const INSTALL_TIMEOUT = 5 * 60 * 1000; // 5 minutes
-  const installPromise = $`cd ${projectPath} && bun install`.quiet().nothrow();
-  const timeoutPromise = new Promise((_, reject) => {
-    setTimeout(() => reject(new Error('TIMEOUT')), INSTALL_TIMEOUT);
-  });
-
-  let installResult;
-  try {
-    installResult = await Promise.race([installPromise, timeoutPromise]) as Awaited<ReturnType<typeof $>>;
-  } catch (e: any) {
-    if (e.message === 'TIMEOUT') {
-      throw new Error(`Dependency installation timed out after ${INSTALL_TIMEOUT / 1000} seconds`);
-    }
-    throw e;
-  }
-
+  await installDependencies(projectPath);
   const installTime = Date.now() - installStart;
 
-  if (installResult.exitCode !== 0) {
-    throw new Error(`Dependency installation failed with exit code ${installResult.exitCode}`);
-  }
-
-  // Recompute manifest hash after installation in case lockfiles were generated.
-  manifestHash = manifestHashOverride ?? computeManifestHash(packageJsonPath);
-  const finalFingerprint = getDependencyFingerprint(config, manifestHash);
+  const updatedManifestHash = manifestHashOverride ?? computeManifestHash(packageJsonPath);
+  const finalFingerprint = getDependencyFingerprint(config, updatedManifestHash);
   const finalCachePath = getCachePath(finalFingerprint);
-  const finalNodeModulesPath = join(finalCachePath, 'node_modules');
 
-  // Cache the node_modules for future use
-  if (!existsSync(finalCachePath)) {
-    mkdirSync(finalCachePath, { recursive: true });
-  }
-
-  cpSync(join(projectPath, 'node_modules'), finalNodeModulesPath, { recursive: true });
-
-  // Cache package files for reference
-  if (existsSync(packageJsonPath)) {
-    cpSync(packageJsonPath, join(finalCachePath, 'package.json'));
-  }
-
-  const lockFiles = ['bun.lockb', 'package-lock.json'];
-  const packageDir = dirname(packageJsonPath);
-  for (const lockFile of lockFiles) {
-    const lockPath = join(packageDir, lockFile);
-    if (existsSync(lockPath)) {
-      cpSync(lockPath, join(finalCachePath, lockFile));
-    }
-  }
-
-  writeFileSync(join(finalCachePath, 'manifest.hash'), manifestHash);
+  cacheInstalledDependencies(projectPath, finalCachePath, updatedManifestHash, packageJsonPath);
 
   return { cached: false, installTime };
-}
+};
 
-/**
- * Remove cached dependency entries older than the given number of days.
- *
- * This is a placeholder implementation that currently performs no deletions.
- *
- * @param maxAgeDays - Maximum age in days for cache entries before they are removed (default: 7)
- */
-export function cleanupCache(maxAgeDays: number = 7): void {
+export const cleanupCache = (maxAgeDays = DEFAULT_CACHE_MAX_AGE_DAYS) => {
   if (!existsSync(CACHE_DIR)) {
     return;
   }
-  
+
   const now = Date.now();
-  const maxAge = maxAgeDays * 24 * 60 * 60 * 1000;
-  
-  // This would require reading directory entries - simplified for now
-  // In production, you might want to add cache metadata files with timestamps
-}
+  const maxAgeMs =
+    maxAgeDays * HOURS_PER_DAY * MINUTES_PER_HOUR * SECONDS_PER_MINUTE * MILLISECONDS_PER_SECOND;
+
+  try {
+    readdirSync(CACHE_DIR, { withFileTypes: true }).forEach((entry) => {
+      if (!entry.isDirectory()) {
+        return;
+      }
+
+      const entryPath = join(CACHE_DIR, entry.name);
+      const stats = statSync(entryPath);
+
+      if (!stats.isDirectory()) {
+        return;
+      }
+
+      const age = now - stats.mtimeMs;
+
+      if (age > maxAgeMs) {
+        rmSync(entryPath, { force: true, recursive: true });
+      }
+    });
+  } catch {
+    // Ignore cleanup errors; they are non-fatal.
+  }
+};

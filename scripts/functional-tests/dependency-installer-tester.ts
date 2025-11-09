@@ -3,9 +3,11 @@
   Tests that dependencies can be installed successfully in scaffolded projects.
 */
 
-import { $ } from 'bun';
-import { existsSync, readFileSync } from 'fs';
-import { join } from 'path';
+import { spawn } from 'node:child_process';
+import { once } from 'node:events';
+import { existsSync, mkdirSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import process from 'node:process';
 
 export type DependencyInstallResult = {
   passed: boolean;
@@ -13,159 +15,194 @@ export type DependencyInstallResult = {
   installTime?: number;
 };
 
-const INSTALL_TIMEOUT = 120000; /**
- * Tests whether dependencies in a scaffolded project can be installed with the specified package manager.
- *
- * Attempts to parse the project's package.json, skip installation if no dependencies are declared, run the appropriate
- * install command (within a 2-minute timeout), and verify that node_modules is created.
- *
- * @param projectPath - Path to the project directory containing package.json
- * @param packageManager - Package manager to use for installation: 'bun', 'npm', 'pnpm', or 'yarn' (default: 'bun')
- * @returns An object describing the result:
- *          - `passed`: `true` when installation succeeded or no dependencies were present, `false` otherwise.
- *          - `errors`: Array of human-readable error messages collected during checks or installation.
- *          - `installTime` (optional): Time in milliseconds the installation process took when an install was attempted.
- */
+const INSTALL_TIMEOUT_MS = 120_000;
+const MAX_ERROR_PREVIEW_LINES = 10;
+const FORCE_KILL_DELAY_MS = 1_000;
+const INSTALL_TMP_DIR_NAME = '.absolute-tmp';
 
-export async function testDependencyInstallation(
+const ensureInstallTempDir = (projectPath: string) => {
+  const tempDir = join(projectPath, INSTALL_TMP_DIR_NAME);
+
+  if (!existsSync(tempDir)) {
+    mkdirSync(tempDir, { recursive: true });
+  }
+
+  return tempDir;
+};
+
+const INSTALL_COMMANDS: Record<'bun' | 'npm' | 'pnpm' | 'yarn', [string, string[]]> = {
+  bun: ['bun', ['install']],
+  npm: ['npm', ['install']],
+  pnpm: ['pnpm', ['install']],
+  yarn: ['yarn', ['install']]
+};
+
+const hasDependenciesDeclared = (packageJson: {
+  dependencies?: Record<string, string>;
+  devDependencies?: Record<string, string>;
+}) => {
+  const { dependencies = {}, devDependencies = {} } = packageJson;
+
+  return Object.keys(dependencies).length > 0 || Object.keys(devDependencies).length > 0;
+};
+
+const parsePackageJson = (packageJsonPath: string) => {
+  try {
+    const raw = readFileSync(packageJsonPath, 'utf-8');
+
+    return JSON.parse(raw) as { dependencies?: Record<string, string>; devDependencies?: Record<string, string> };
+  } catch (unknownError) {
+    const error = unknownError instanceof Error ? unknownError : new Error(String(unknownError));
+
+    return { error } as const;
+  }
+};
+
+const runInstall = async (projectPath: string, packageManager: 'bun' | 'npm' | 'pnpm' | 'yarn') => {
+  const [executable, args] = INSTALL_COMMANDS[packageManager];
+  const stdoutChunks: string[] = [];
+  const stderrChunks: string[] = [];
+  let timedOut = false;
+  const tempDir = ensureInstallTempDir(projectPath);
+
+  const child = spawn(executable, args, {
+    cwd: projectPath,
+    env: {
+      ...process.env,
+      BUN_INSTALL_TMPDIR: tempDir,
+      TEMP: tempDir,
+      TMP: tempDir,
+      TMPDIR: tempDir
+    },
+    stdio: ['ignore', 'pipe', 'pipe']
+  });
+
+  const timeoutId = setTimeout(() => {
+    timedOut = true;
+    try {
+      child.kill('SIGTERM');
+      setTimeout(() => child.kill('SIGKILL'), FORCE_KILL_DELAY_MS);
+    } catch {
+      // Ignore kill errors
+    }
+  }, INSTALL_TIMEOUT_MS);
+
+  child.stdout?.on('data', (chunk) => stdoutChunks.push(chunk.toString()));
+  child.stderr?.on('data', (chunk) => stderrChunks.push(chunk.toString()));
+
+  const [code] = (await once(child, 'close')) as [number | null, string | null];
+  clearTimeout(timeoutId);
+
+  if (timedOut) {
+    throw new Error(`Dependency installation timed out after ${INSTALL_TIMEOUT_MS}ms`);
+  }
+
+  if (code === 0) {
+    return;
+  }
+
+  const combined = [stderrChunks.join(''), stdoutChunks.join('')]
+    .map((section) => section.trim())
+    .filter(Boolean)
+    .join('\n');
+  const preview = combined
+    .split('\n')
+    .filter((line) => line.trim().length > 0)
+    .slice(0, MAX_ERROR_PREVIEW_LINES)
+    .join('\n');
+
+  throw new Error(preview || `Dependency installation failed with exit code ${code ?? 'unknown'}`);
+};
+
+export const testDependencyInstallation = async (
   projectPath: string,
   packageManager: 'bun' | 'npm' | 'pnpm' | 'yarn' = 'bun'
-): Promise<DependencyInstallResult> {
+): Promise<DependencyInstallResult> => {
   const errors: string[] = [];
   const packageJsonPath = join(projectPath, 'package.json');
-  const nodeModulesPath = join(projectPath, 'node_modules');
 
-  // Check 1: package.json exists
   if (!existsSync(packageJsonPath)) {
     errors.push(`package.json not found: ${projectPath}`);
-    return { passed: false, errors };
+
+    return { errors, passed: false };
   }
 
-  // Check 2: Parse package.json to verify it has dependencies
-  let packageJson: { dependencies?: Record<string, string>; devDependencies?: Record<string, string> };
+  const parsed = parsePackageJson(packageJsonPath);
+
+  if ('error' in parsed) {
+    errors.push(`Failed to parse package.json: ${parsed.error.message}`);
+
+    return { errors, passed: false };
+  }
+
+  if (!hasDependenciesDeclared(parsed)) {
+    return { errors: [], installTime: 0, passed: true };
+  }
+
+  const installStart = Date.now();
+
   try {
-    packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf-8'));
-  } catch (e) {
-    errors.push(`Failed to parse package.json: ${e}`);
-    return { passed: false, errors };
+    await runInstall(projectPath, packageManager);
+  } catch (unknownError) {
+    const error = unknownError instanceof Error ? unknownError : new Error(String(unknownError));
+    errors.push(error.message);
+
+    return { errors, passed: false };
   }
 
-  const hasDependencies = 
-    (packageJson.dependencies && Object.keys(packageJson.dependencies).length > 0) ||
-    (packageJson.devDependencies && Object.keys(packageJson.devDependencies).length > 0);
+  const installTime = Date.now() - installStart;
+  const nodeModulesPath = join(projectPath, 'node_modules');
 
-  if (!hasDependencies) {
-    // No dependencies to install - this is valid for some configurations
-    return { passed: true, errors: [], installTime: 0 };
+  if (!existsSync(nodeModulesPath)) {
+    errors.push('node_modules directory not created after installation');
+
+    return { errors, installTime, passed: false };
   }
 
-  // Check 3: Run dependency installation
-  try {
-    const startTime = Date.now();
+  return { errors: [], installTime, passed: true };
+};
 
-    const installCommands: Record<string, string> = {
-      bun: 'bun install',
-      npm: 'npm install',
-      pnpm: 'pnpm install',
-      yarn: 'yarn install'
-    };
+const parseCliArgs = () => {
+  const [, , projectPath, packageManagerArg] = process.argv;
+  const normalized = packageManagerArg as 'bun' | 'npm' | 'pnpm' | 'yarn' | undefined;
 
-    const installProcess = $`cd ${projectPath} && ${installCommands[packageManager]}`.quiet().nothrow();
-    let timeoutId: ReturnType<typeof setTimeout> | undefined;
+  return { packageManager: normalized ?? 'bun', projectPath } as const;
+};
 
-    const timeoutPromise = new Promise<never>((_, reject) => {
-      timeoutId = setTimeout(() => {
-        try {
-          const killResult = installProcess.kill?.('SIGTERM');
-          if (killResult === false || killResult === undefined) {
-            installProcess.kill?.('SIGKILL');
-          }
-        } catch {
-          // Ignore kill errors; process may have already exited.
-        }
-        reject(new Error('TIMEOUT'));
-      }, INSTALL_TIMEOUT);
-    });
-
-    let result: Awaited<ReturnType<typeof $>>;
-    try {
-      result = await Promise.race([
-        installProcess.finally(() => {
-          if (timeoutId) {
-            clearTimeout(timeoutId);
-            timeoutId = undefined;
-          }
-        }),
-        timeoutPromise
-      ]) as Awaited<ReturnType<typeof $>>;
-    } finally {
-      if (timeoutId) {
-        clearTimeout(timeoutId);
-      }
-    }
-
-    const installTime = Date.now() - startTime;
-
-    if (result.exitCode !== 0) {
-      errors.push(`Dependency installation failed (exit code ${result.exitCode})`);
-      if (result.stderr) {
-        const stderrStr = result.stderr.toString();
-        const errorLines = stderrStr
-          .split('\n')
-          .filter((line) => line.trim().length > 0)
-          .slice(0, 10);
-        if (errorLines.length > 0) {
-          errors.push(`Installation errors:\n${errorLines.join('\n')}`);
-        }
-      }
-      return { passed: false, errors, installTime };
-    }
-
-    // Check 4: Verify node_modules was created (basic check)
-    if (!existsSync(nodeModulesPath)) {
-      errors.push(`node_modules directory not created after installation`);
-      return { passed: false, errors, installTime };
-    }
-
-    return { passed: true, errors: [], installTime };
-  } catch (e: any) {
-    if (e.message === 'TIMEOUT') {
-      errors.push(`Dependency installation timed out after ${INSTALL_TIMEOUT}ms`);
-    } else if (e.signal === 'SIGTERM' || e.signal === 'SIGKILL') {
-      errors.push(`Dependency installation timed out after ${INSTALL_TIMEOUT}ms`);
-    } else {
-      errors.push(`Dependency installation error: ${e.message || e}`);
-    }
-    return { passed: false, errors };
-  }
-}
-
-// CLI usage
-if (require.main === module) {
-  const projectPath = process.argv[2];
-  const packageManager = (process.argv[3] as any) || 'bun';
+const runFromCli = async () => {
+  const { packageManager, projectPath } = parseCliArgs();
 
   if (!projectPath) {
     console.error('Usage: bun run scripts/functional-tests/dependency-installer-tester.ts <project-path> [package-manager]');
     process.exit(1);
   }
 
-  testDependencyInstallation(projectPath, packageManager)
-    .then((result) => {
-      if (result.passed) {
-        console.log(`✓ Dependency installation test passed`);
-        if (result.installTime !== undefined && result.installTime > 0) {
-          console.log(`  Installation time: ${result.installTime}ms`);
-        }
-        process.exit(0);
-      } else {
-        console.error('✗ Dependency installation test failed:');
-        result.errors.forEach((error) => console.error(`  - ${error}`));
-        process.exit(1);
-      }
-    })
-    .catch((e) => {
-      console.error('✗ Dependency installation test error:', e);
-      process.exit(1);
-    });
+  const result = await testDependencyInstallation(projectPath, packageManager).catch((unknownError) => {
+    const error = unknownError instanceof Error ? unknownError : new Error(String(unknownError));
+    console.error('✗ Dependency installation test error:', error);
+    process.exit(1);
+  });
+
+  if (!result) {
+    return;
+  }
+
+  if (!result.passed) {
+    console.error('✗ Dependency installation test failed:');
+    result.errors.forEach((error) => console.error(`  - ${error}`));
+    process.exit(1);
+  }
+
+  console.log('✓ Dependency installation test passed');
+  if (typeof result.installTime === 'number' && result.installTime > 0) {
+    console.log(`  Installation time: ${result.installTime}ms`);
+  }
+  process.exit(0);
+};
+
+if (import.meta.main) {
+  runFromCli().catch((error) => {
+    console.error('✗ Dependency installer tester encountered an unexpected error:', error);
+    process.exit(1);
+  });
 }

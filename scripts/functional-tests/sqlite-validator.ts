@@ -1,215 +1,303 @@
-/*
-  SQLite Database Validator
-  Validates SQLite database connections and functionality across all compatible configurations.
-  Tests SQLite database file creation, schema initialization, and query execution.
-*/
+import { spawn } from 'node:child_process';
+import { once } from 'node:events';
+import { existsSync } from 'node:fs';
+import { join } from 'node:path';
+import process from 'node:process';
 
-import { existsSync, readFileSync } from 'fs';
-import { join } from 'path';
-import { $ } from 'bun';
+const MILLISECONDS_PER_SECOND = 1_000;
+const SQLITE_TIMEOUT_SECONDS = 5;
+const SQLITE_TIMEOUT_MS = SQLITE_TIMEOUT_SECONDS * MILLISECONDS_PER_SECOND;
+const FORCE_KILL_DELAY_MS = 1_000;
 
-export type SQLiteValidationResult = {
-  passed: boolean;
-  errors: string[];
-  warnings: string[];
-  sqliteSpecific: {
-    databaseFileExists: boolean;
-    schemaFileExists: boolean;
-    connectionWorks: boolean;
-    queriesWork: boolean;
+const runSqliteCommand = async (databaseFile: string, query: string) => {
+  const child = spawn('sqlite3', [databaseFile, query], {
+    stdio: ['ignore', 'pipe', 'pipe']
+  });
+
+  const stdoutChunks: string[] = [];
+  const stderrChunks: string[] = [];
+  let timedOut = false;
+
+  const timeoutId = setTimeout(() => {
+    timedOut = true;
+    child.kill('SIGTERM');
+    setTimeout(() => child.kill('SIGKILL'), FORCE_KILL_DELAY_MS);
+  }, SQLITE_TIMEOUT_MS);
+
+  child.stdout?.on('data', (chunk) => stdoutChunks.push(chunk.toString()));
+  child.stderr?.on('data', (chunk) => stderrChunks.push(chunk.toString()));
+
+  const [code] = (await once(child, 'close')) as [number | null, string | null];
+  clearTimeout(timeoutId);
+
+  if (timedOut) {
+    return null;
+  }
+
+  return {
+    exitCode: code ?? -1,
+    stderr: stderrChunks.join('').trim(),
+    stdout: stdoutChunks.join('').trim()
   };
 };
 
-/**
- * Validates a project's SQLite setup, schema, connection, and related handler presence.
- *
- * Performs a sequence of checks against the project's db directory:
- * - Verifies the db directory and (for local SQLite) the database file exist.
- * - Ensures the expected schema file exists (Drizzle -> schema.ts, otherwise -> schema.sql).
- * - For local SQLite, runs sqlite3 queries to confirm the database is reachable and required tables
- *   (users or count_history) are present; for Turso, skips live checks and issues warnings.
- * - Verifies the appropriate backend handler file exists based on the auth provider.
- *
- * @param projectPath - Root path of the project to validate.
- * @param config.orm - ORM in use; when set to "drizzle" the validator expects db/schema.ts, otherwise db/schema.sql.
- * @param config.authProvider - Authentication provider; when provided and not "none", the validator expects a `users` table and userHandlers.ts; otherwise it expects a `count_history` table and countHistoryHandlers.ts.
- * @param config.databaseHost - Database host descriptor; "none" or omitted means local SQLite (expects db/database.sqlite and performs sqlite3 checks); "turso" skips local file and live checks and emits warnings.
- * @returns The aggregated validation result containing pass/fail status, any errors and warnings, and detailed booleans for database file, schema file, connection, and query checks.
- */
-export async function validateSQLiteDatabase(
-  projectPath: string,
-  config: {
-    orm?: string;
-    authProvider?: string;
-    databaseHost?: string;
-  } = {}
-): Promise<SQLiteValidationResult> {
-  const errors: string[] = [];
-  const warnings: string[] = [];
-  const sqliteSpecific: SQLiteValidationResult['sqliteSpecific'] = {
-    databaseFileExists: false,
-    schemaFileExists: false,
-    connectionWorks: false,
-    queriesWork: false
-  };
+const getSchemaPath = (dbDir: string, orm?: string) =>
+  orm === 'drizzle' ? join(dbDir, 'schema.ts') : join(dbDir, 'schema.sql');
 
-  const dbDir = join(projectPath, 'db');
-  const databaseFile = join(dbDir, 'database.sqlite');
+const determineTableName = (authProvider?: string) =>
+  authProvider && authProvider !== 'none' ? 'users' : 'count_history';
 
-  // Check 1: Database directory exists
-  if (!existsSync(dbDir)) {
-    errors.push(`Database directory not found: ${dbDir}`);
-    return { passed: false, errors, warnings, sqliteSpecific };
-  }
-
-  // Check 2: Database file exists (for local SQLite)
-  if (config.databaseHost === 'none' || !config.databaseHost) {
-    if (!existsSync(databaseFile)) {
-      errors.push(`SQLite database file not found: ${databaseFile}`);
-      return { passed: false, errors, warnings, sqliteSpecific };
-    }
-    sqliteSpecific.databaseFileExists = true;
-  } else if (config.databaseHost === 'turso') {
-    // For Turso, we don't have a local file, so we skip this check
-    warnings.push('Turso remote database - skipping local file check');
-  }
-
-  // Check 3: Schema file exists
-  if (config.orm === 'drizzle') {
-    const schemaPath = join(dbDir, 'schema.ts');
-    if (!existsSync(schemaPath)) {
-      errors.push(`Drizzle schema file not found: ${schemaPath}`);
-      return { passed: false, errors, warnings, sqliteSpecific };
-    }
-    sqliteSpecific.schemaFileExists = true;
-  } else {
-    const schemaPath = join(dbDir, 'schema.sql');
-    if (!existsSync(schemaPath)) {
-      errors.push(`SQLite schema file not found: ${schemaPath}`);
-      return { passed: false, errors, warnings, sqliteSpecific };
-    }
-    sqliteSpecific.schemaFileExists = true;
-  }
-
-  // Check 4: Test database connection and queries
-  if (config.databaseHost === 'none' || !config.databaseHost) {
-    try {
-      // Test connection by checking if we can query the database
-      const testQuery = config.authProvider !== 'none' && config.authProvider
-        ? "SELECT name FROM sqlite_master WHERE type='table' AND name='users';"
-        : "SELECT name FROM sqlite_master WHERE type='table' AND name='count_history';";
-      
-      const result = await $`sqlite3 ${databaseFile} "${testQuery}"`.quiet().nothrow();
-      
-      if (result.exitCode === 0) {
-        const output = result.stdout?.toString() || '';
-        if (output.trim() || testQuery.includes('users') || testQuery.includes('count_history')) {
-          sqliteSpecific.connectionWorks = true;
-          
-          // Try a more comprehensive query to verify tables exist
-          const tablesQuery = "SELECT name FROM sqlite_master WHERE type='table';";
-          const tablesResult = await $`sqlite3 ${databaseFile} "${tablesQuery}"`.quiet().nothrow();
-          
-          if (tablesResult.exitCode === 0) {
-            const tablesOutput = tablesResult.stdout?.toString() || '';
-            const hasUsers = tablesOutput.includes('users');
-            const hasCountHistory = tablesOutput.includes('count_history');
-            
-            if (config.authProvider !== 'none' && config.authProvider) {
-              if (hasUsers) {
-                sqliteSpecific.queriesWork = true;
-              } else {
-                errors.push('Users table not found in database');
-              }
-            } else {
-              if (hasCountHistory) {
-                sqliteSpecific.queriesWork = true;
-              } else {
-                errors.push('Count history table not found in database');
-              }
-            }
-          } else {
-            warnings.push('Could not verify table existence via sqlite3 query');
-          }
-        } else {
-          warnings.push('Database connection test returned empty result');
-        }
-      } else {
-        const stderr = result.stderr?.toString() || '';
-        errors.push(`Database connection test failed: ${stderr || 'Unknown error'}`);
-      }
-    } catch (e: any) {
-      errors.push(`Database connection test error: ${e.message || e}`);
-    }
-  } else if (config.databaseHost === 'turso') {
-    // For Turso, we can't easily test without credentials
-    warnings.push('Turso remote database - skipping connection test (requires credentials)');
-    sqliteSpecific.connectionWorks = true; // Assume it works if we can't test
-    sqliteSpecific.queriesWork = true; // Assume it works if we can't test
-  }
-
-  // Check 5: Verify handler files exist
+const getHandlersPath = (projectPath: string, authProvider?: string) => {
   const handlersDir = join(projectPath, 'src', 'backend', 'handlers');
-  const handlerFile = config.authProvider !== 'none' && config.authProvider
+
+  return authProvider && authProvider !== 'none'
     ? join(handlersDir, 'userHandlers.ts')
     : join(handlersDir, 'countHistoryHandlers.ts');
-  
-  if (!existsSync(handlerFile)) {
-    errors.push(`Database handler file not found: ${handlerFile}`);
+};
+
+export type SQLiteValidationResult = {
+  errors: string[];
+  passed: boolean;
+  sqliteSpecific: {
+    connectionWorks: boolean;
+    databaseFileExists: boolean;
+    queriesWork: boolean;
+    schemaFileExists: boolean;
+  };
+  warnings: string[];
+};
+
+type SqliteValidationFlags = SQLiteValidationResult['sqliteSpecific'];
+
+type TableCheckResult = {
+  errors: string[];
+  flags: SqliteValidationFlags;
+  warnings: string[];
+};
+
+const validateLocalDatabase = async (databaseFile: string, authProvider?: string) => {
+  const result = await runSqliteCommand(
+    databaseFile,
+    "SELECT name FROM sqlite_master WHERE type='table';"
+  );
+
+  if (result === null || result.exitCode !== 0) {
+    return { error: 'Could not verify table existence via sqlite3 query' } as const;
   }
 
-  const passed = errors.length === 0 && 
-    sqliteSpecific.schemaFileExists && 
-    (sqliteSpecific.databaseFileExists || config.databaseHost === 'turso') &&
+  const expectedTable = determineTableName(authProvider);
+  const tableFound = result.stdout.includes(expectedTable);
+
+  if (!tableFound) {
+    return { error: `${expectedTable} table not found in database` } as const;
+  }
+
+  return { success: true } as const;
+};
+
+const recordTableValidationError = (
+  errorMessage: string | undefined,
+  errors: string[],
+  warnings: string[]
+) => {
+  if (!errorMessage) {
+    return;
+  }
+
+  if (errorMessage.includes('Could not verify')) {
+    warnings.push(errorMessage);
+  } else {
+    errors.push(errorMessage);
+  }
+};
+
+const INITIAL_FLAGS: SqliteValidationFlags = {
+  connectionWorks: false,
+  databaseFileExists: false,
+  queriesWork: false,
+  schemaFileExists: false
+};
+
+const validateLocalDatabaseTables = async (
+  databaseFile: string,
+  authProvider?: string
+): Promise<TableCheckResult> => {
+  const errors: string[] = [];
+  const warnings: string[] = [];
+  const flags: SqliteValidationFlags = { ...INITIAL_FLAGS };
+
+  if (!existsSync(databaseFile)) {
+    errors.push(`SQLite database file not found: ${databaseFile}`);
+
+    return { errors, flags, warnings };
+  }
+
+  flags.databaseFileExists = true;
+  const tableName = determineTableName(authProvider);
+  const tableResult = await runSqliteCommand(
+    databaseFile,
+    `SELECT name FROM sqlite_master WHERE type='table' AND name='${tableName}';`
+  );
+
+  if (tableResult === null) {
+    errors.push('Database connection test timed out');
+
+    return { errors, flags, warnings };
+  }
+
+  if (tableResult.exitCode !== 0) {
+    errors.push(`Database connection test failed: ${tableResult.stderr || 'Unknown error'}`);
+
+    return { errors, flags, warnings };
+  }
+
+  flags.connectionWorks = true;
+
+  if (tableResult.stdout.trim().length === 0) {
+    warnings.push('Database connection test returned empty result');
+
+    return { errors, flags, warnings };
+  }
+
+  const tableValidation = await validateLocalDatabase(databaseFile, authProvider);
+
+  if (!tableValidation.success) {
+    recordTableValidationError(tableValidation.error, errors, warnings);
+
+    return { errors, flags, warnings };
+  }
+
+  flags.queriesWork = true;
+
+  return { errors, flags, warnings };
+};
+
+export const validateSQLiteDatabase = async (
+  projectPath: string,
+  config: {
+    authProvider?: string;
+    databaseHost?: string;
+    orm?: string;
+  } = {}
+): Promise<SQLiteValidationResult> => {
+  const errors: string[] = [];
+  const warnings: string[] = [];
+  const sqliteSpecific: SqliteValidationFlags = { ...INITIAL_FLAGS };
+
+  const dbDir = join(projectPath, 'db');
+  if (!existsSync(dbDir)) {
+    errors.push(`Database directory not found: ${dbDir}`);
+
+    return { errors, passed: false, sqliteSpecific, warnings };
+  }
+
+  const schemaPath = getSchemaPath(dbDir, config.orm);
+  if (!existsSync(schemaPath)) {
+    errors.push(`SQLite schema file not found: ${schemaPath}`);
+
+    return { errors, passed: false, sqliteSpecific, warnings };
+  }
+
+  sqliteSpecific.schemaFileExists = true;
+
+  const isLocal = config.databaseHost === 'none' || !config.databaseHost;
+  const databaseFile = join(dbDir, 'database.sqlite');
+
+  if (isLocal) {
+    const localResult = await validateLocalDatabaseTables(databaseFile, config.authProvider);
+    errors.push(...localResult.errors);
+    warnings.push(...localResult.warnings);
+    sqliteSpecific.databaseFileExists = localResult.flags.databaseFileExists;
+    sqliteSpecific.connectionWorks = localResult.flags.connectionWorks;
+    sqliteSpecific.queriesWork = localResult.flags.queriesWork;
+  } else if (config.databaseHost === 'turso') {
+    warnings.push('Turso remote database - skipping local file and query checks');
+    sqliteSpecific.connectionWorks = true;
+    sqliteSpecific.queriesWork = true;
+  }
+
+  const handlersPath = getHandlersPath(projectPath, config.authProvider);
+  if (!existsSync(handlersPath)) {
+    errors.push(`Database handler file not found: ${handlersPath}`);
+  }
+
+  const passed =
+    errors.length === 0 &&
+    sqliteSpecific.schemaFileExists &&
+    (sqliteSpecific.databaseFileExists || !isLocal) &&
     sqliteSpecific.connectionWorks &&
     sqliteSpecific.queriesWork;
 
-  return {
-    passed,
-    errors,
-    warnings,
-    sqliteSpecific
-  };
-}
+  return { errors, passed, sqliteSpecific, warnings };
+};
 
-// CLI usage
-if (require.main === module) {
-  const projectPath = process.argv[2];
-  const orm = process.argv[3] || 'none';
-  const authProvider = process.argv[4] || 'none';
-  const databaseHost = process.argv[5] || 'none';
+const logSQLiteSummary = (result: SQLiteValidationResult) => {
+  console.log('\n=== SQLite Database Validation Results ===\n');
+  console.log('SQLite-Specific Checks:');
+  console.log(`  Connection Works: ${result.sqliteSpecific.connectionWorks ? '✓' : '✗'}`);
+  console.log(`  Database File Exists: ${result.sqliteSpecific.databaseFileExists ? '✓' : '✗'}`);
+  console.log(`  Queries Work: ${result.sqliteSpecific.queriesWork ? '✓' : '✗'}`);
+  console.log(`  Schema File Exists: ${result.sqliteSpecific.schemaFileExists ? '✓' : '✗'}`);
+};
+
+const logWarnings = (warnings: string[]) => {
+  if (warnings.length === 0) {
+    return;
+  }
+
+  console.log('\nWarnings:');
+  warnings.forEach((warning) => console.warn(`  ⚠ ${warning}`));
+};
+
+const logErrors = (errors: string[]) => {
+  if (errors.length === 0) {
+    return;
+  }
+
+  console.log('\nErrors:');
+  errors.forEach((error) => console.error(`  - ${error}`));
+};
+
+const parseCliArguments = (argv: string[]) => {
+  const [, , projectPath, orm, authProvider, databaseHost] = argv;
+
+  return {
+    authProvider: authProvider ?? 'none',
+    databaseHost: databaseHost ?? 'none',
+    orm: orm ?? 'none',
+    projectPath
+  } as const;
+};
+
+const exitWithResult = (result: SQLiteValidationResult) => {
+  console.log(`\nOverall: ${result.passed ? 'PASS' : 'FAIL'}`);
+  process.exit(result.passed ? 0 : 1);
+};
+
+const runFromCli = async () => {
+  const { authProvider, databaseHost, orm, projectPath } = parseCliArguments(process.argv);
 
   if (!projectPath) {
     console.error('Usage: bun run scripts/functional-tests/sqlite-validator.ts <project-path> [orm] [auth-provider] [database-host]');
     process.exit(1);
   }
 
-  validateSQLiteDatabase(projectPath, { orm, authProvider, databaseHost })
-    .then((result) => {
-      console.log('\n=== SQLite Database Validation Results ===\n');
-      
-      console.log('SQLite-Specific Checks:');
-      console.log(`  Database File Exists: ${result.sqliteSpecific.databaseFileExists ? '✓' : '✗'}`);
-      console.log(`  Schema File Exists: ${result.sqliteSpecific.schemaFileExists ? '✓' : '✗'}`);
-      console.log(`  Connection Works: ${result.sqliteSpecific.connectionWorks ? '✓' : '✗'}`);
-      console.log(`  Queries Work: ${result.sqliteSpecific.queriesWork ? '✓' : '✗'}`);
+  try {
+    const result = await validateSQLiteDatabase(projectPath, { authProvider, databaseHost, orm });
+    logSQLiteSummary(result);
+    logWarnings(result.warnings);
+    logErrors(result.errors);
+    exitWithResult(result);
+  } catch (unknownError) {
+    const error = unknownError instanceof Error ? unknownError : new Error(String(unknownError));
+    console.error('SQLite validation error:', error);
+    process.exit(1);
+  }
+};
 
-      if (result.warnings.length > 0) {
-        console.log('\nWarnings:');
-        result.warnings.forEach((warning) => console.warn(`  ⚠ ${warning}`));
-      }
-
-      if (result.passed) {
-        console.log('\n✓ SQLite database validation passed!');
-        process.exit(0);
-      } else {
-        console.log('\n✗ SQLite database validation failed:');
-        result.errors.forEach((error) => console.error(`  - ${error}`));
-        process.exit(1);
-      }
-    })
-    .catch((e) => {
-      console.error('✗ SQLite database validation error:', e);
-      process.exit(1);
-    });
+if (import.meta.main) {
+  runFromCli().catch((error) => {
+    console.error('SQLite validation error:', error);
+    process.exit(1);
+  });
 }

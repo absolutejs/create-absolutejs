@@ -150,13 +150,21 @@ export const generateImportsBlock = ({
 		rawImports.push(`import { getEnv } from '@absolutejs/absolute'`);
 	}
 
-	if (noOrm && databaseEngine === 'postgresql')
-		rawImports.push(
-			...(isRemoteHost
-				? connectorImports[databaseHost as 'neon']
-				: [`import { Pool } from 'pg'`]),
-			`import { getEnv } from '@absolutejs/absolute'`
-		);
+	if (noOrm && databaseEngine === 'postgresql') {
+		if (isRemoteHost) {
+			const connectorKey = databaseHost as keyof typeof connectorImports;
+			if (connectorImports[connectorKey]) {
+				rawImports.push(...connectorImports[connectorKey]);
+			}
+		} else {
+			rawImports.push(
+				`import { Pool } from 'pg'`,
+				`import { createPgSql } from './database/createPgSql'`
+			);
+		}
+
+		rawImports.push(`import { getEnv } from '@absolutejs/absolute'`);
+	}
 
 	if (noOrm && databaseEngine === 'mongodb') {
 		rawImports.push(

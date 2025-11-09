@@ -166,6 +166,8 @@ export const createPackageJson = ({
 		databaseEngine === 'postgresql' &&
 		(!databaseHost || databaseHost === 'none')
 	) {
+		dependencies['pg'] = resolveVersion('pg', '8.12.0');
+		devDependencies['@types/pg'] = resolveVersion('@types/pg', '8.11.10');
 		scripts['db:up'] =
 			'sh -c "docker info >/dev/null 2>&1 || sudo service docker start; docker compose -p postgresql -f db/docker-compose.db.yml up -d db"';
 		scripts['db:down'] =

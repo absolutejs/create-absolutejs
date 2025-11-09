@@ -4,370 +4,528 @@
   Uses the test matrix to generate valid entries, filters to supported database engines.
 */
 
-import { readFileSync, existsSync } from 'fs';
-import { join } from 'path';
-import { $ } from 'bun';
+import { existsSync } from 'node:fs';
+import { join } from 'node:path';
+import process from 'node:process';
+
 import { validateAuthConfiguration } from './auth-validator';
-import { hasCachedDependencies, getOrInstallDependencies, computeManifestHash } from './dependency-cache';
+import {
+  computeManifestHash,
+  getOrInstallDependencies,
+  hasCachedDependencies
+} from './dependency-cache';
+import { createMatrix, type MatrixConfig } from './matrix';
 import { cleanupProjectDirectory } from './test-utils';
 
-type TestMatrixEntry = {
-  frontend: string;
-  databaseEngine: string;
-  orm: string;
-  databaseHost: string;
-  authProvider: string;
-  codeQualityTool?: string;
-  useTailwind: boolean;
-  directoryConfig: string;
-};
+type TestMatrixEntry = MatrixConfig;
 
 type AuthTestResult = {
   config: TestMatrixEntry;
-  passed: boolean;
   errors: string[];
-  warnings: string[];
+  passed: boolean;
   testTime?: number;
+  warnings: string[];
+};
+
+type StepOutcome = {
+  elapsedMs: number;
+  errors: string[];
+  success: boolean;
+  warnings: string[];
+};
+
+type DependencyConfig = {
+  authProvider: string;
+  codeQualityTool?: string;
+  databaseEngine: string;
+  databaseHost: string;
+  frontend: string;
+  orm: string;
+  useTailwind: boolean;
 };
 
 const SUPPORTED_DATABASE_ENGINES = new Set(['sqlite', 'mongodb']);
+const MILLISECONDS_PER_SECOND = 1_000;
+const SECONDS_PER_MINUTE = 60;
+const SCAFFOLD_TIMEOUT_MS = 2 * SECONDS_PER_MINUTE * MILLISECONDS_PER_SECOND;
+const HUNDRED_PERCENT = 100;
+const MAX_ERRORS_TO_DISPLAY = 3;
 
-/**
- * Constructs a deterministic, filesystem-safe project name for a scaffolded auth test from a test matrix entry.
- *
- * @param config - Configuration entry describing frontend, database engine, ORM, database host, and tailwind usage
- * @returns A normalized project name of the form `test-auth-<frontend>-<databaseEngine>-<orm>-<databaseHostLabel>-<tw|notw>`
- */
-function buildProjectName(config: TestMatrixEntry): string {
+let cachedBunModule: typeof import('bun') | null = null;
+
+const loadBunModule = async () => {
+  if (cachedBunModule === null) {
+    cachedBunModule = await import('bun');
+  }
+
+  return cachedBunModule;
+};
+
+const buildProjectName = (config: TestMatrixEntry) => {
   const hostLabel = config.databaseHost === 'none' ? 'local' : config.databaseHost;
   const tailwindLabel = config.useTailwind ? 'tw' : 'notw';
 
   return `test-auth-${config.frontend}-${config.databaseEngine}-${config.orm}-${hostLabel}-${tailwindLabel}`
     .replace(/[^a-z0-9-]/gi, '-')
     .replace(/-+/g, '-');
-}
+};
 
-/**
- * Build the Bun CLI argument list to scaffold a project that matches the provided test configuration.
- *
- * @param projectName - Target project name used by the scaffold command
- * @param config - Test matrix entry whose fields determine which CLI flags are appended
- * @returns An array of command arguments for invoking the scaffold script (base command plus flags that reflect frontend, database engine, ORM, database host, auth provider, code quality tool, Tailwind usage, and directory configuration)
- */
-function buildScaffoldCommand(
+const buildScaffoldCommand = (
   projectName: string,
   config: TestMatrixEntry
-): string[] {
-  const cmd = ['bun', 'run', 'src/index.ts', projectName, '--skip'];
+) => {
+  const command = ['bun', 'run', 'src/index.ts', projectName, '--skip'];
 
-  // Frontend flag
-  if (config.frontend && config.frontend !== 'none') {
-    cmd.push(`--${config.frontend}`);
+  if (config.frontend !== 'none') {
+    command.push(`--${config.frontend}`);
   }
 
-  // Database engine
-  if (config.databaseEngine && config.databaseEngine !== 'none') {
-    cmd.push('--db', config.databaseEngine);
+  if (config.databaseEngine !== 'none') {
+    command.push('--db', config.databaseEngine);
   }
 
-  // ORM
-  if (config.orm && config.orm !== 'none') {
-    cmd.push('--orm', config.orm);
+  if (config.orm !== 'none') {
+    command.push('--orm', config.orm);
   }
 
-  // Database host
-  if (config.databaseHost && config.databaseHost !== 'none') {
-    cmd.push('--db-host', config.databaseHost);
+  if (config.databaseHost !== 'none') {
+    command.push('--db-host', config.databaseHost);
   }
 
-  // Auth provider (always present for auth configs)
-  if (config.authProvider && config.authProvider !== 'none') {
-    cmd.push('--auth', config.authProvider);
+  if (config.authProvider !== 'none') {
+    command.push('--auth', config.authProvider);
   }
 
-  // Code quality tool
   if (config.codeQualityTool === 'eslint+prettier') {
-    cmd.push('--eslint+prettier');
+    command.push('--eslint+prettier');
   }
 
-  // Tailwind
   if (config.useTailwind) {
-    cmd.push('--tailwind');
+    command.push('--tailwind');
   }
 
-  // Directory configuration
   if (config.directoryConfig === 'custom') {
-    cmd.push('--directory', 'custom');
+    command.push('--directory', 'custom');
   }
 
-  return cmd;
-}
+  return command;
+};
 
-/**
- * Scaffolds a project for the given test configuration, runs dependency installation and auth validation, and aggregates results.
- *
- * @param config - A test matrix entry describing the project configuration to scaffold and validate (frontend, databaseEngine, orm, databaseHost, authProvider, codeQualityTool, useTailwind, directoryConfig).
- * @returns An AuthTestResult describing the evaluated configuration, whether validation passed, collected error and warning messages, and the total test duration in milliseconds (`testTime`).
- */
-async function scaffoldAndTestAuth(
+const raceWithTimeout = async <T>(
+  promise: Promise<T>,
+  timeoutMs: number,
+  onTimeout: () => void
+) => {
+  const bunModule = await loadBunModule();
+  const timeoutPromise = bunModule.sleep(timeoutMs).then(() => {
+    onTimeout();
+    throw new Error('TIMEOUT');
+  });
+
+  return Promise.race([promise, timeoutPromise]) as Promise<T>;
+};
+
+const runCommand = async (
+  command: string[],
+  options: { cwd?: string; timeoutMs?: number } = {}
+) => {
+  const { cwd, timeoutMs = SCAFFOLD_TIMEOUT_MS } = options;
+  const bunModule = await loadBunModule();
+  const processHandle = bunModule.spawn({
+    cmd: command,
+    cwd,
+    stderr: 'inherit',
+    stdin: 'inherit',
+    stdout: 'inherit'
+  });
+
+  try {
+    const exitCode = await raceWithTimeout(
+      processHandle.exited.then(() => processHandle.exitCode ?? 0),
+      timeoutMs,
+      () => processHandle.kill()
+    );
+
+    return { exitCode };
+  } catch (error) {
+    if ((error as Error).message === 'TIMEOUT') {
+      return null;
+    }
+
+    throw error;
+  }
+};
+
+const recordFailure = (
+  message: string,
+  elapsedMs: number
+): StepOutcome => ({
+  elapsedMs,
+  errors: [message],
+  success: false,
+  warnings: []
+});
+
+const scaffoldProject = async (
+  projectPath: string,
+  command: string[]
+) => {
+  cleanupProjectDirectory(projectPath);
+  process.stdout.write('  → Scaffolding project... ');
+
+  const startMs = Date.now();
+  const commandResult = await runCommand(command);
+  const elapsedMs = Date.now() - startMs;
+
+  if (commandResult === null) {
+    const elapsedSeconds = elapsedMs / MILLISECONDS_PER_SECOND;
+    console.log(`✗ (TIMEOUT after ${elapsedSeconds}s)`);
+
+    return recordFailure(
+      `Scaffold timed out after ${elapsedSeconds} seconds`,
+      elapsedMs
+    );
+  }
+
+  if (commandResult.exitCode !== 0) {
+    console.log(`✗ (${elapsedMs}ms)`);
+
+    return recordFailure(
+      `Scaffold failed with exit code ${commandResult.exitCode}`,
+      elapsedMs
+    );
+  }
+
+  console.log(`✓ (${elapsedMs}ms)`);
+
+  return {
+    elapsedMs,
+    errors: [],
+    success: true,
+    warnings: []
+  } satisfies StepOutcome;
+};
+
+const installDependencies = async (
+  projectPath: string,
+  config: TestMatrixEntry,
+  packageJsonPath: string
+) => {
+  process.stdout.write('  → Installing dependencies... ');
+
+  const manifestHash = computeManifestHash(packageJsonPath);
+  const dependencyConfig: DependencyConfig = {
+    authProvider: config.authProvider,
+    codeQualityTool: config.codeQualityTool,
+    databaseEngine: config.databaseEngine,
+    databaseHost: config.databaseHost,
+    frontend: config.frontend,
+    orm: config.orm,
+    useTailwind: config.useTailwind
+  };
+
+  const cachedDependency = hasCachedDependencies(
+    dependencyConfig,
+    packageJsonPath,
+    manifestHash
+  );
+
+  try {
+    const { cached, installTime } = await getOrInstallDependencies(
+      projectPath,
+      dependencyConfig,
+      packageJsonPath,
+      manifestHash
+    );
+
+    console.log(
+      cached || cachedDependency ? `✓ (cached, ${installTime}ms)` : `✓ (${installTime}ms)`
+    );
+
+    return {
+      elapsedMs: installTime,
+      errors: [],
+      success: true,
+      warnings: []
+    } satisfies StepOutcome;
+  } catch (error) {
+    const { message } = error as Error;
+    console.log(`✗ (${message})`);
+
+    return {
+      elapsedMs: 0,
+      errors: [`Dependency installation failed: ${message}`],
+      success: false,
+      warnings: []
+    } satisfies StepOutcome;
+  }
+};
+
+const validateAuth = async (
+  projectPath: string,
   config: TestMatrixEntry
-): Promise<AuthTestResult> {
+) => {
+  process.stdout.write('  → Running auth validation... ');
+
+  const validateStartMs = Date.now();
+  const validationResult = await validateAuthConfiguration(
+    projectPath,
+    'bun',
+    {
+      authProvider: config.authProvider,
+      databaseEngine: config.databaseEngine,
+      databaseHost: config.databaseHost,
+      orm: config.orm
+    },
+    {
+      skipBuild: false,
+      skipDependencies: true,
+      skipServer: false
+    }
+  );
+  const elapsedMs = Date.now() - validateStartMs;
+
+  console.log(
+    validationResult.passed ? `✓ (${elapsedMs}ms)` : `✗ (${elapsedMs}ms)`
+  );
+
+  return {
+    elapsedMs,
+    errors: [...validationResult.errors],
+    success: validationResult.passed,
+    warnings: [...validationResult.warnings]
+  } satisfies StepOutcome;
+};
+
+const scaffoldAndTestAuth = async (
+  config: TestMatrixEntry
+) => {
   const startTime = Date.now();
+  const projectName = buildProjectName(config);
+  const projectPath = projectName;
   const errors: string[] = [];
   const warnings: string[] = [];
 
-  const projectName = buildProjectName(config);
-  const projectPath = projectName;
+  const scaffoldOutcome = await scaffoldProject(
+    projectPath,
+    buildScaffoldCommand(projectName, config)
+  );
+
+  if (!scaffoldOutcome.success) {
+    errors.push(...scaffoldOutcome.errors);
+
+    return {
+      config,
+      errors,
+      passed: false,
+      testTime: Date.now() - startTime,
+      warnings
+    } satisfies AuthTestResult;
+  }
+
+  const packageJsonPath = join(projectPath, 'package.json');
+  if (!existsSync(packageJsonPath)) {
+    errors.push('package.json not found after scaffolding');
+
+    cleanupProjectDirectory(projectPath);
+
+    return {
+      config,
+      errors,
+      passed: false,
+      testTime: Date.now() - startTime,
+      warnings
+    } satisfies AuthTestResult;
+  }
+
+  const dependencyOutcome = await installDependencies(
+    projectPath,
+    config,
+    packageJsonPath
+  );
+
+  if (!dependencyOutcome.success) {
+    errors.push(...dependencyOutcome.errors);
+
+    cleanupProjectDirectory(projectPath);
+
+    return {
+      config,
+      errors,
+      passed: false,
+      testTime: Date.now() - startTime,
+      warnings
+    } satisfies AuthTestResult;
+  }
+
+  const validationOutcome = await validateAuth(projectPath, config);
+  errors.push(...validationOutcome.errors);
+  warnings.push(...validationOutcome.warnings);
 
   cleanupProjectDirectory(projectPath);
 
-  try {
-    const cmd = buildScaffoldCommand(projectName, config);
+  return {
+    config,
+    errors,
+    passed: validationOutcome.success && errors.length === 0,
+    testTime: Date.now() - startTime,
+    warnings
+  } satisfies AuthTestResult;
+};
 
-    process.stdout.write('  → Scaffolding project... ');
-    const scaffoldStart = Date.now();
+const loadMatrix = (matrixEntriesOverride?: TestMatrixEntry[]) => {
+  const matrixEntries = matrixEntriesOverride ?? createMatrix();
 
-    const SCAFFOLD_TIMEOUT = 2 * 60 * 1000;
-    const scaffoldPromise = $`${cmd}`.quiet().nothrow();
-    const timeoutPromise = new Promise<never>((_, reject) =>
-      setTimeout(() => reject(new Error('TIMEOUT')), SCAFFOLD_TIMEOUT)
-    );
-
-    let scaffoldResult;
-    try {
-      scaffoldResult = (await Promise.race([
-        scaffoldPromise,
-        timeoutPromise
-      ])) as Awaited<ReturnType<typeof $>>;
-    } catch (error) {
-      if ((error as Error).message === 'TIMEOUT') {
-        console.log(`✗ (TIMEOUT after ${SCAFFOLD_TIMEOUT / 1000}s)`);
-        errors.push(`Scaffold timed out after ${SCAFFOLD_TIMEOUT / 1000} seconds`);
-        cleanupProjectDirectory(projectPath);
-        return {
-          config,
-          passed: false,
-          errors,
-          warnings,
-          testTime: Date.now() - startTime
-        };
-      }
-      throw error;
-    }
-
-    const scaffoldTime = Date.now() - scaffoldStart;
-    if (scaffoldResult.exitCode !== 0) {
-      console.log(`✗ (${scaffoldTime}ms)`);
-      errors.push(`Scaffold failed with exit code ${scaffoldResult.exitCode}`);
-      if (scaffoldResult.stderr) {
-        const stderrStr = scaffoldResult.stderr.toString();
-        errors.push(`Scaffold errors: ${stderrStr.slice(0, 200)}`);
-      }
-      cleanupProjectDirectory(projectPath);
-      return {
-        config,
-        passed: false,
-        errors,
-        warnings,
-        testTime: Date.now() - startTime
-      };
-    }
-    console.log(`✓ (${scaffoldTime}ms)`);
-
-    const packageJsonPath = join(projectPath, 'package.json');
-    if (!existsSync(packageJsonPath)) {
-      errors.push('package.json not found after scaffolding');
-      cleanupProjectDirectory(projectPath);
-      return {
-        config,
-        passed: false,
-        errors,
-        warnings,
-        testTime: Date.now() - startTime
-      };
-    }
-
-    process.stdout.write('  → Installing dependencies... ');
-        const manifestHash = computeManifestHash(packageJsonPath);
-        const hasCache = hasCachedDependencies(
-          {
-            frontend: config.frontend,
-            databaseEngine: config.databaseEngine,
-            orm: config.orm,
-            databaseHost: config.databaseHost,
-            authProvider: config.authProvider,
-            useTailwind: config.useTailwind,
-            codeQualityTool: config.codeQualityTool
-          },
-          packageJsonPath,
-          manifestHash
-        );
-
-    try {
-      const { cached, installTime } = await getOrInstallDependencies(
-        projectPath,
-        {
-          frontend: config.frontend,
-          databaseEngine: config.databaseEngine,
-          orm: config.orm,
-          databaseHost: config.databaseHost,
-          authProvider: config.authProvider,
-          useTailwind: config.useTailwind,
-          codeQualityTool: config.codeQualityTool
-        },
-          packageJsonPath,
-          manifestHash
-      );
-
-      if (cached) {
-        console.log(`✓ (cached, ${installTime}ms)`);
-      } else {
-        console.log(`✓ (${installTime}ms)`);
-      }
-    } catch (error) {
-      console.log(`✗ (${(error as Error).message})`);
-      errors.push(`Dependency installation failed: ${(error as Error).message}`);
-      cleanupProjectDirectory(projectPath);
-      return {
-        config,
-        passed: false,
-        errors,
-        warnings,
-        testTime: Date.now() - startTime
-      };
-    }
-
-    process.stdout.write('  → Running auth validation... ');
-    const validateStart = Date.now();
-    const validationResult = await validateAuthConfiguration(
-      projectPath,
-      'bun',
-      {
-        databaseEngine: config.databaseEngine,
-        orm: config.orm,
-        authProvider: config.authProvider
-      },
-      {
-        skipDependencies: true,
-        skipBuild: false,
-        skipServer: false
-      }
-    );
-    const validateTime = Date.now() - validateStart;
-    console.log(validationResult.passed ? `✓ (${validateTime}ms)` : `✗ (${validateTime}ms)`);
-
-    if (!validationResult.passed) {
-      errors.push(...validationResult.errors);
-    }
-    if (validationResult.warnings.length > 0) {
-      warnings.push(...validationResult.warnings);
-    }
-
-    try {
-      await $`rm -rf ${projectPath}`.quiet();
-    } catch {
-      // Ignore cleanup errors
-    }
-
-    return {
-      config,
-      passed: validationResult.passed,
-      errors,
-      warnings,
-      testTime: Date.now() - startTime
-    };
-  } catch (error) {
-    errors.push(`Test execution error: ${(error as Error).message}`);
-    cleanupProjectDirectory(projectPath);
-    return {
-      config,
-      passed: false,
-      errors,
-      warnings,
-      testTime: Date.now() - startTime
-    };
-  }
-}
-
-/**
- * Runs auth validation across a matrix of test configurations and exits the process with a success or failure code.
- *
- * Reads the JSON matrix from `matrixFile`, filters entries to those with an auth provider and a supported database engine, and (optionally) limits the set to the first `testSubset` entries. For each configuration it scaffolds, installs, and validates the project, printing per-config progress and a final summary. If any configuration fails validation, the process exits with code `1`; if all pass, the process exits with code `0`.
- *
- * @param matrixFile - Path to the JSON test matrix file (defaults to 'test-matrix.json')
- * @param testSubset - Optional maximum number of configurations from the filtered set to test
- */
-async function runAuthTests(
-  matrixFile: string = 'test-matrix.json',
-  testSubset?: number
-): Promise<void> {
-  const matrix: TestMatrixEntry[] = JSON.parse(readFileSync(matrixFile, 'utf-8'));
-
-  const authConfigs = matrix.filter(
+  return matrixEntries.filter(
     (entry) =>
       entry.authProvider !== 'none' &&
+      entry.directoryConfig === 'default' &&
       SUPPORTED_DATABASE_ENGINES.has(entry.databaseEngine)
   );
+};
 
-  const configsToTest = testSubset ? authConfigs.slice(0, testSubset) : authConfigs;
+const runSequentially = async (
+  configs: TestMatrixEntry[],
+  handler: (config: TestMatrixEntry, index: number) => Promise<AuthTestResult>
+) =>
+  configs.reduce<Promise<AuthTestResult[]>>(
+    (previousPromise, config, index) =>
+      previousPromise.then(async (accumulated) => {
+        const result = await handler(config, index);
 
-  console.log(`Testing ${configsToTest.length} auth configurations (${authConfigs.length} total auth-enabled entries)...\n`);
+        return [...accumulated, result];
+      }),
+    Promise.resolve([])
+  );
 
-  const results: AuthTestResult[] = [];
-  let passedCount = 0;
-  let failedCount = 0;
+const printSummary = (results: AuthTestResult[]) => {
+  const sortedResults = results.map((result) => ({
+    config: {
+      authProvider: result.config.authProvider,
+      codeQualityTool: result.config.codeQualityTool,
+      databaseEngine: result.config.databaseEngine,
+      databaseHost: result.config.databaseHost,
+      directoryConfig: result.config.directoryConfig,
+      frontend: result.config.frontend,
+      orm: result.config.orm,
+      useTailwind: result.config.useTailwind
+    },
+    errors: [...result.errors],
+    passed: result.passed,
+    testTime: result.testTime,
+    warnings: [...result.warnings]
+  }));
 
-  for (let i = 0; i < configsToTest.length; i++) {
-    const config = configsToTest[i];
+  const passedCount = sortedResults.filter((result) => result.passed).length;
+  const failedResults = sortedResults.filter((result) => !result.passed);
+
+  console.log('\n=== Auth Suite Summary ===\n');
+  console.log(`Total: ${sortedResults.length}`);
+  console.log(`Passed: ${passedCount}`);
+  console.log(`Failed: ${failedResults.length}`);
+  console.log(
+    `Success Rate: ${(
+      (passedCount / Math.max(sortedResults.length, 1)) * HUNDRED_PERCENT
+    ).toFixed(1)}%`
+  );
+
+  if (failedResults.length === 0) {
+    return;
+  }
+
+  console.log('\nFailed Configurations:');
+  failedResults.forEach((result) => {
+    const failureConfig = result.config;
     console.log(
-      `[${i + 1}/${configsToTest.length}] Testing ${config.frontend} + ${config.databaseEngine} + ${config.orm} + ${config.authProvider} + ${config.databaseHost}...`
+      `\n- ${failureConfig.frontend} + ${failureConfig.databaseEngine} + ${failureConfig.orm} + ${failureConfig.authProvider}`
     );
 
-    const result = await scaffoldAndTestAuth(config);
-    results.push(result);
+    result.errors.slice(0, MAX_ERRORS_TO_DISPLAY).forEach((error) => {
+      console.log(`  - ${error}`);
+    });
+  });
+};
 
-    if (result.passed) {
-      passedCount++;
-      console.log(`  ✓ Passed (${result.testTime}ms)`);
-    } else {
-      failedCount++;
-      console.log(`  ✗ Failed (${result.testTime}ms)`);
-      if (result.errors.length > 0) {
-        console.log(`    Errors: ${result.errors.slice(0, 3).join('; ')}`);
-      }
+const parseSubsetFromArgs = (argv: string[]) => {
+  const [, , firstArg, secondArg] = argv;
+  const hasSecondArg = typeof secondArg !== 'undefined';
+
+  if (hasSecondArg && typeof firstArg !== 'undefined') {
+    console.warn('Matrix file arguments are no longer supported; ignoring legacy value.');
+  }
+
+  if (hasSecondArg) {
+    const parsed = Number.parseInt(secondArg, 10);
+
+    if (!Number.isNaN(parsed)) {
+      return parsed;
     }
+
+    console.warn(`Ignoring invalid subset value "${secondArg}".`);
+
+    return undefined;
   }
 
-  console.log('\n=== Auth Test Summary ===\n');
-  console.log(`Total: ${results.length}`);
-  console.log(`Passed: ${passedCount}`);
-  console.log(`Failed: ${failedCount}`);
-  console.log(`Success Rate: ${results.length > 0 ? ((passedCount / results.length) * 100).toFixed(1) : '0.0'}%`);
-
-  if (failedCount > 0) {
-    console.log('\nFailed Configurations:\n');
-    results
-      .filter((result) => !result.passed)
-      .forEach((result) => {
-        console.log(
-          `- ${result.config.frontend} + ${result.config.databaseEngine} + ${result.config.orm} + ${result.config.authProvider} + ${result.config.databaseHost}`
-        );
-        result.errors.slice(0, 5).forEach((error) => console.log(`  - ${error}`));
-        console.log('');
-      });
-    process.exit(1);
-  } else {
-    console.log('\n✓ All auth configurations passed validation!');
-    process.exit(0);
+  if (typeof firstArg === 'undefined') {
+    return undefined;
   }
-}
 
-if (require.main === module) {
-  const matrixFile = process.argv[2] || 'test-matrix.json';
-  const subsetArg = process.argv[3];
-  const subset = subsetArg ? parseInt(subsetArg, 10) : undefined;
+  const parsed = Number.parseInt(firstArg, 10);
 
-  runAuthTests(matrixFile, subset).catch((error) => {
+  if (!Number.isNaN(parsed)) {
+    return parsed;
+  }
+
+  console.warn('Matrix file arguments are no longer supported; ignoring legacy value.');
+
+  return undefined;
+};
+
+export const runAuthTests = async (
+  matrixEntriesOverride?: TestMatrixEntry[],
+  testSubset?: number
+) => {
+  const matrixEntries = loadMatrix(matrixEntriesOverride);
+  const configsToTest = typeof testSubset === 'number'
+    ? matrixEntries.slice(0, testSubset)
+    : matrixEntries;
+
+  console.log(
+    `Testing ${configsToTest.length} auth configurations (${matrixEntries.length} total auth-enabled entries)....\n`
+  );
+
+  const results = await runSequentially(configsToTest, async (config, index) => {
+    const hostLabel = config.databaseHost === 'none' ? 'local' : config.databaseHost;
+    console.log(
+      `[${index + 1}/${configsToTest.length}] Testing ${config.frontend} + ${config.databaseEngine} + ${config.orm} + ${config.authProvider} + ${hostLabel}...`
+    );
+
+    const outcome = await scaffoldAndTestAuth(config);
+
+    if (outcome.passed) {
+      console.log(`  ✓ Passed (${outcome.testTime}ms)`);
+
+      return outcome;
+    }
+
+    console.log(`  ✗ Failed (${outcome.testTime}ms)`);
+    if (outcome.errors.length > 0) {
+      console.log(`    Errors: ${outcome.errors.slice(0, 2).join('; ')}`);
+    }
+
+    return outcome;
+  });
+
+  printSummary(results);
+
+  const hasFailures = results.some((result) => !result.passed);
+  process.exit(hasFailures ? 1 : 0);
+};
+
+if (import.meta.main) {
+  const parsedSubset = parseSubsetFromArgs(process.argv);
+
+  runAuthTests(undefined, parsedSubset).catch((error) => {
     console.error('Auth test runner error:', error);
     process.exit(1);
   });

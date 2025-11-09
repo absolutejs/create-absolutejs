@@ -4,9 +4,11 @@
   For actual server startup testing, we validate compilation and basic structure.
 */
 
-import { $ } from 'bun';
-import { existsSync, readFileSync } from 'fs';
-import { join } from 'path';
+import { spawn } from 'node:child_process';
+import { once } from 'node:events';
+import { existsSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import process from 'node:process';
 
 export type ServerStartupResult = {
   passed: boolean;
@@ -15,167 +17,236 @@ export type ServerStartupResult = {
   compileTime?: number;
 };
 
-const COMPILE_TIMEOUT = 60000; /**
- * Validates that a scaffolded project contains a basic Elysia server structure and, when configured, that TypeScript compiles successfully.
- *
- * Performs these checks: verifies src/backend/server.ts exists and contains an Elysia initialization, ensures package.json exists with a `dev` script, and if tsconfig.json is present runs the project's `typecheck` script via the specified package manager (subject to a timeout).
- *
- * @param projectPath - Filesystem path to the root of the scaffolded project to validate
- * @param packageManager - Package manager to use when invoking the `typecheck` script (`'bun' | 'npm' | 'pnpm' | 'yarn'`)
- * @returns An object with:
- *  - `passed`: `true` when all required checks (and optional compilation) succeed, `false` otherwise.
- *  - `errors`: an array of error messages describing failed checks.
- *  - `warnings`: an array of warning messages (for non-fatal issues such as missing tsconfig.json).
- *  - `compileTime` (optional): compilation duration in milliseconds when a typecheck was performed.
- */
+const COMPILE_TIMEOUT_MS = 60_000;
+const MAX_STDERR_LINES = 5;
+const SERVER_INIT_SNIPPET = 'new Elysia()';
+const FORCE_KILL_DELAY_MS = 1_000;
 
-export async function validateServerStartup(
+const parsePackageJson = (packageJsonPath: string) => {
+  try {
+    const raw = readFileSync(packageJsonPath, 'utf-8');
+
+    return JSON.parse(raw) as { scripts?: Record<string, string> };
+  } catch (unknownError) {
+    const error = unknownError instanceof Error ? unknownError : new Error(String(unknownError));
+
+    return { error } as const;
+  }
+};
+
+const ensureServerStructure = (serverFilePath: string, errors: string[]) => {
+  if (!existsSync(serverFilePath)) {
+    errors.push(`Server file not found: ${serverFilePath}`);
+
+    return false;
+  }
+
+  const serverContent = (() => {
+    try {
+      return readFileSync(serverFilePath, 'utf-8');
+    } catch (unknownError) {
+      const error = unknownError instanceof Error ? unknownError : new Error(String(unknownError));
+      errors.push(`Failed to read server file: ${error.message}`);
+
+      return null;
+    }
+  })();
+
+  if (!serverContent) {
+    return false;
+  }
+
+  if (!serverContent.includes(SERVER_INIT_SNIPPET)) {
+    errors.push('Server file missing Elysia initialization');
+
+    return false;
+  }
+
+  return true;
+};
+
+const ensureDevScript = (packageJsonPath: string, errors: string[]) => {
+  if (!existsSync(packageJsonPath)) {
+    errors.push(`package.json not found: ${packageJsonPath}`);
+
+    return false;
+  }
+
+  const parsed = parsePackageJson(packageJsonPath);
+
+  if ('error' in parsed) {
+    errors.push(`Failed to parse package.json: ${parsed.error.message}`);
+
+    return false;
+  }
+
+  if (!parsed.scripts?.dev) {
+    errors.push("No 'dev' script found in package.json");
+
+    return false;
+  }
+
+  return true;
+};
+
+const runTypecheck = async (
+  projectPath: string,
+  packageManager: 'bun' | 'npm' | 'pnpm' | 'yarn'
+) => {
+  const startTime = Date.now();
+  const args: Record<'bun' | 'npm' | 'pnpm' | 'yarn', string[]> = {
+    bun: ['run', 'typecheck'],
+    npm: ['run', 'typecheck'],
+    pnpm: ['run', 'typecheck'],
+    yarn: ['run', 'typecheck']
+  };
+
+  const stderrChunks: string[] = [];
+  const stdoutChunks: string[] = [];
+  let timedOut = false;
+
+  const child = spawn(packageManager, args[packageManager], {
+    cwd: projectPath,
+    env: process.env,
+    stdio: ['ignore', 'pipe', 'pipe']
+  });
+
+  const timeoutId = setTimeout(() => {
+    timedOut = true;
+    child.kill('SIGTERM');
+    setTimeout(() => child.kill('SIGKILL'), FORCE_KILL_DELAY_MS);
+  }, COMPILE_TIMEOUT_MS);
+
+  child.stdout?.on('data', (chunk) => {
+    stdoutChunks.push(chunk.toString());
+  });
+  child.stderr?.on('data', (chunk) => {
+    stderrChunks.push(chunk.toString());
+  });
+
+  const [code, signal] = (await once(child, 'close')) as [number | null, string | null];
+  clearTimeout(timeoutId);
+
+  const compileTime = Date.now() - startTime;
+  const stderr = stderrChunks.join('').trim();
+  const stdout = stdoutChunks.join('').trim();
+  const previewSource = stderr.length > 0 ? stderr : stdout;
+  const preview = previewSource
+    .split('\n')
+    .filter((line) => line.trim().length > 0)
+    .slice(0, MAX_STDERR_LINES)
+    .join('; ');
+
+  if (timedOut || signal === 'SIGTERM' || signal === 'SIGKILL') {
+    return {
+      compileTime,
+      errors: [`TypeScript compilation timed out after ${COMPILE_TIMEOUT_MS}ms`]
+    };
+  }
+
+  if (code === 0) {
+    return { compileTime, errors: [] };
+  }
+
+  const baseError = `TypeScript compilation failed (exit code ${code ?? 'unknown'})`;
+  const errors = preview.length > 0 ? [baseError, `Compilation output: ${preview}`] : [baseError];
+
+  return { compileTime, errors };
+};
+
+export const validateServerStartup = async (
   projectPath: string,
   packageManager: 'bun' | 'npm' | 'pnpm' | 'yarn' = 'bun'
-): Promise<ServerStartupResult> {
+): Promise<ServerStartupResult> => {
   const errors: string[] = [];
   const warnings: string[] = [];
   const serverFilePath = join(projectPath, 'src', 'backend', 'server.ts');
   const packageJsonPath = join(projectPath, 'package.json');
   const tsconfigPath = join(projectPath, 'tsconfig.json');
 
-  // Check 1: Server file exists
-  if (!existsSync(serverFilePath)) {
-    errors.push(`Server file not found: ${serverFilePath}`);
-    return { passed: false, errors, warnings: [] };
+  if (!ensureServerStructure(serverFilePath, errors)) {
+    return { errors, passed: false, warnings };
   }
 
-  // Check 2: package.json exists and has dev script
-  if (!existsSync(packageJsonPath)) {
-    errors.push(`package.json not found: ${projectPath}`);
-    return { passed: false, errors, warnings: [] };
+  if (!ensureDevScript(packageJsonPath, errors)) {
+    return { errors, passed: false, warnings };
   }
 
-  let packageJson: { scripts?: Record<string, string> };
-  try {
-    packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf-8'));
-  } catch (e) {
-    errors.push(`Failed to parse package.json: ${e}`);
-    return { passed: false, errors, warnings: [] };
-  }
-
-  if (!packageJson.scripts || !packageJson.scripts.dev) {
-    errors.push(`No 'dev' script found in package.json`);
-    return { passed: false, errors, warnings: [] };
-  }
-
-  // Check 3: Server file has valid structure (basic syntax check)
-  try {
-    const serverContent = readFileSync(serverFilePath, 'utf-8');
-    if (!serverContent.includes('new Elysia()')) {
-      errors.push(`Server file missing Elysia initialization`);
-      return { passed: false, errors, warnings: [] };
-    }
-    // Elysia servers may or may not have .listen() - it depends on how AbsoluteJS sets it up
-    // We'll check compilation instead
-  } catch (e) {
-    errors.push(`Failed to read server file: ${e}`);
-    return { passed: false, errors, warnings: [] };
-  }
-
-  // Check 4: TypeScript compilation (most important functional check)
   if (!existsSync(tsconfigPath)) {
-    warnings.push(`tsconfig.json not found - skipping compilation check`);
-  } else {
-    try {
-      const startTime = Date.now();
-      
-      const compileProcess = $`cd ${projectPath} && ${packageManager} run typecheck`.quiet().nothrow();
-      let timeoutId: ReturnType<typeof setTimeout> | undefined;
+    warnings.push('tsconfig.json not found - skipping compilation check');
 
-      const timeoutPromise = new Promise<never>((_, reject) => {
-        timeoutId = setTimeout(() => {
-          try {
-            const killed = compileProcess.kill?.('SIGTERM');
-            if (killed === false || killed === undefined) {
-              compileProcess.kill?.('SIGKILL');
-            }
-          } catch {
-            // Ignore kill errors (process may have already exited)
-          }
-          reject(new Error('TIMEOUT'));
-        }, COMPILE_TIMEOUT);
-      });
-
-      let result: Awaited<ReturnType<typeof $>>;
-      try {
-        result = await Promise.race([
-          compileProcess.finally(() => {
-            if (timeoutId) {
-              clearTimeout(timeoutId);
-              timeoutId = undefined;
-            }
-          }),
-          timeoutPromise
-        ]) as Awaited<ReturnType<typeof $>>;
-      } finally {
-        if (timeoutId) {
-          clearTimeout(timeoutId);
-        }
-      }
-
-      const compileTime = Date.now() - startTime;
-
-      if (result.exitCode !== 0) {
-        errors.push(`TypeScript compilation failed (exit code ${result.exitCode})`);
-        if (result.stderr) {
-          const stderrLines = result.stderr.toString().split('\n').slice(0, 5);
-          errors.push(`Compilation errors: ${stderrLines.join('; ')}`);
-        }
-        return { passed: false, errors, warnings, compileTime };
-      }
-    } catch (e: any) {
-      if (e.message === 'TIMEOUT') {
-        errors.push(`TypeScript compilation timed out after ${COMPILE_TIMEOUT}ms`);
-      } else if (e.signal === 'SIGTERM' || e.signal === 'SIGKILL') {
-        errors.push(`TypeScript compilation timed out after ${COMPILE_TIMEOUT}ms`);
-      } else {
-        errors.push(`TypeScript compilation error: ${e.message || e}`);
-      }
-      return { passed: false, errors, warnings };
-    }
+    return {
+      compileTime: undefined,
+      errors,
+      passed: errors.length === 0,
+      warnings
+    };
   }
 
-  return { passed: true, errors: [], warnings };
-}
+  const { compileTime, errors: typecheckErrors } = await runTypecheck(projectPath, packageManager);
 
-// CLI usage
-if (require.main === module) {
-  const projectPath = process.argv[2];
-  const packageManager = (process.argv[3] as any) || 'bun';
+  if (typecheckErrors.length > 0) {
+    errors.push(...typecheckErrors);
+  }
+
+  return {
+    compileTime,
+    errors,
+    passed: errors.length === 0,
+    warnings
+  };
+};
+
+const parseCliArguments = () => {
+  const [, , projectPath, packageManagerArg] = process.argv;
+  const normalized = packageManagerArg as 'bun' | 'npm' | 'pnpm' | 'yarn' | undefined;
+
+  return {
+    packageManager: normalized ?? 'bun',
+    projectPath
+  } as const;
+};
+
+const exitWithUsage = () => {
+  console.error('Usage: bun run scripts/functional-tests/server-startup-validator.ts <project-path> [package-manager]');
+  process.exit(1);
+};
+
+const runFromCli = async () => {
+  const { packageManager, projectPath } = parseCliArguments();
 
   if (!projectPath) {
-    console.error('Usage: bun run scripts/functional-tests/server-startup-validator.ts <project-path> [package-manager]');
+    exitWithUsage();
+  }
+
+  const result = await validateServerStartup(projectPath, packageManager).catch((unknownError) => {
+    const error = unknownError instanceof Error ? unknownError : new Error(String(unknownError));
+    console.error('✗ Server startup validation error:', error);
+    process.exit(1);
+  });
+
+  if (!result) {
+    return;
+  }
+
+  if (!result.passed) {
+    console.error('✗ Server startup validation failed:');
+    result.errors.forEach((error) => console.error(`  - ${error}`));
+    result.warnings.forEach((warning) => console.warn(`  ⚠ ${warning}`));
     process.exit(1);
   }
 
-  validateServerStartup(projectPath, packageManager)
-    .then((result) => {
-      if (result.passed) {
-        console.log(`✓ Server startup validation passed`);
-        if (result.compileTime) {
-          console.log(`  Compilation time: ${result.compileTime}ms`);
-        }
-        if (result.warnings.length > 0) {
-          result.warnings.forEach((warning) => console.warn(`  ⚠ ${warning}`));
-        }
-        process.exit(0);
-      } else {
-        console.error('✗ Server startup validation failed:');
-        result.errors.forEach((error) => console.error(`  - ${error}`));
-        if (result.warnings.length > 0) {
-          result.warnings.forEach((warning) => console.warn(`  ⚠ ${warning}`));
-        }
-        process.exit(1);
-      }
-    })
-    .catch((e) => {
-      console.error('✗ Server startup validation error:', e);
-      process.exit(1);
-    });
+  console.log('✓ Server startup validation passed');
+  if (typeof result.compileTime === 'number') {
+    console.log(`  Compilation time: ${result.compileTime}ms`);
+  }
+  result.warnings.forEach((warning) => console.warn(`  ⚠ ${warning}`));
+  process.exit(0);
+};
+
+if (import.meta.main) {
+  runFromCli().catch((error) => {
+    console.error('✗ Server startup validator encountered an unexpected error:', error);
+    process.exit(1);
+  });
 }
