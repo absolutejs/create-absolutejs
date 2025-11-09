@@ -9,7 +9,7 @@ import { join } from 'path';
 import { validateMongoDBDatabase } from './mongodb-validator';
 import { runFunctionalTests } from './functional-test-runner';
 import type { FunctionalTestResult } from './functional-test-runner';
-import { hasCachedDependencies, getOrInstallDependencies } from './dependency-cache';
+import { hasCachedDependencies, getOrInstallDependencies, computeManifestHash } from './dependency-cache';
 import { cleanupProjectDirectory } from './test-utils';
 
 type TestMatrixEntry = {
@@ -173,15 +173,20 @@ async function scaffoldAndTestMongoDB(
     }
 
     process.stdout.write('  → Installing dependencies... ');
-    const hasCache = hasCachedDependencies({
-      frontend: config.frontend,
-      databaseEngine: config.databaseEngine,
-      orm: config.orm,
-      databaseHost: config.databaseHost,
-      authProvider: config.authProvider,
-      useTailwind: config.useTailwind,
-      codeQualityTool: config.codeQualityTool
-    });
+    const manifestHash = computeManifestHash(packageJsonPath);
+    const hasCache = hasCachedDependencies(
+      {
+        frontend: config.frontend,
+        databaseEngine: config.databaseEngine,
+        orm: config.orm,
+        databaseHost: config.databaseHost,
+        authProvider: config.authProvider,
+        useTailwind: config.useTailwind,
+        codeQualityTool: config.codeQualityTool
+      },
+      packageJsonPath,
+      manifestHash
+    );
 
     try {
       const { cached, installTime } = await getOrInstallDependencies(
@@ -195,7 +200,8 @@ async function scaffoldAndTestMongoDB(
           useTailwind: config.useTailwind,
           codeQualityTool: config.codeQualityTool
         },
-        packageJsonPath
+        packageJsonPath,
+        manifestHash
       );
       
       if (cached) {

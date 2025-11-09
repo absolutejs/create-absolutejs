@@ -146,8 +146,8 @@ export async function validateAuthConfiguration(
     try {
       const pkg = JSON.parse(readFileSync(packageJsonPath, 'utf-8'));
       const deps = {
-        ...pkg.dependencies,
-        ...pkg.devDependencies
+        ...(pkg.dependencies ?? {}),
+        ...(pkg.devDependencies ?? {})
       };
       if (deps['@absolutejs/auth']) {
         authSpecific.packageHasAuthDependency = true;

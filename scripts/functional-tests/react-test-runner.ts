@@ -7,7 +7,7 @@
 import { readFileSync, existsSync } from 'fs';
 import { join } from 'path';
 import { validateReactFramework } from './react-validator';
-import { hasCachedDependencies, getOrInstallDependencies } from './dependency-cache';
+import { hasCachedDependencies, getOrInstallDependencies, computeManifestHash } from './dependency-cache';
 import { cleanupProjectDirectory } from './test-utils';
 
 type TestMatrixEntry = {
@@ -159,15 +159,20 @@ async function scaffoldAndTestReact(
     }
 
     process.stdout.write('  → Installing dependencies... ');
-    const hasCache = hasCachedDependencies({
-      frontend: config.frontend,
-      databaseEngine: config.databaseEngine,
-      orm: config.orm,
-      databaseHost: config.databaseHost,
-      authProvider: config.authProvider,
-      useTailwind: config.useTailwind,
-      codeQualityTool: config.codeQualityTool
-    });
+    const manifestHash = computeManifestHash(packageJsonPath);
+    const hasCache = hasCachedDependencies(
+      {
+        frontend: config.frontend,
+        databaseEngine: config.databaseEngine,
+        orm: config.orm,
+        databaseHost: config.databaseHost,
+        authProvider: config.authProvider,
+        useTailwind: config.useTailwind,
+        codeQualityTool: config.codeQualityTool
+      },
+      packageJsonPath,
+      manifestHash
+    );
 
     try {
       const { cached, installTime } = await getOrInstallDependencies(
@@ -181,7 +186,8 @@ async function scaffoldAndTestReact(
           useTailwind: config.useTailwind,
           codeQualityTool: config.codeQualityTool
         },
-        packageJsonPath
+        packageJsonPath,
+        manifestHash
       );
       
       if (cached) {
@@ -270,6 +276,7 @@ async function scaffoldAndTestReact(
  * @param testSubset - Optional limit to the first N matching configurations to test
  *
  * Note: This function exits the process with code 0 if all tests pass or 1 if any test fails.
+ */
 async function runReactTests(
   matrixFile: string = 'test-matrix.json',
   maxConcurrent: number = 2,

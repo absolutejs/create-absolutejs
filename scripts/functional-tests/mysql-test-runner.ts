@@ -8,7 +8,7 @@ import { readFileSync, existsSync } from 'fs';
 import { join } from 'path';
 import { validateMySQLDatabase } from './mysql-validator';
 import { runFunctionalTests } from './functional-test-runner';
-import { hasCachedDependencies, getOrInstallDependencies } from './dependency-cache';
+import { hasCachedDependencies, getOrInstallDependencies, computeManifestHash } from './dependency-cache';
 import { cleanupProjectDirectory } from './test-utils';
 
 type TestMatrixEntry = {
@@ -172,15 +172,20 @@ async function scaffoldAndTestMySQL(
     }
 
     process.stdout.write('  → Installing dependencies... ');
-    const hasCache = hasCachedDependencies({
-      frontend: config.frontend,
-      databaseEngine: config.databaseEngine,
-      orm: config.orm,
-      databaseHost: config.databaseHost,
-      authProvider: config.authProvider,
-      useTailwind: config.useTailwind,
-      codeQualityTool: config.codeQualityTool
-    });
+    const manifestHash = computeManifestHash(packageJsonPath);
+    const hasCache = hasCachedDependencies(
+      {
+        frontend: config.frontend,
+        databaseEngine: config.databaseEngine,
+        orm: config.orm,
+        databaseHost: config.databaseHost,
+        authProvider: config.authProvider,
+        useTailwind: config.useTailwind,
+        codeQualityTool: config.codeQualityTool
+      },
+      packageJsonPath,
+      manifestHash
+    );
 
     try {
       const { cached, installTime } = await getOrInstallDependencies(
@@ -194,7 +199,8 @@ async function scaffoldAndTestMySQL(
           useTailwind: config.useTailwind,
           codeQualityTool: config.codeQualityTool
         },
-        packageJsonPath
+        packageJsonPath,
+        manifestHash
       );
       
       if (cached) {
