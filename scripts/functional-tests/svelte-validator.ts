@@ -21,6 +21,17 @@ export type SvelteValidationResult = {
   };
 };
 
+/**
+ * Validates that a backend project is correctly configured to serve a Svelte frontend and runs related functional tests.
+ *
+ * Performs checks for expected Svelte files, server route and import configuration, presence of Svelte in package.json, and delegates build/server checks to the functional test runner. Aggregates findings into errors, warnings, functional test results, and Svelte-specific flags.
+ *
+ * @param projectPath - Path to the root of the project to validate
+ * @param packageManager - Package manager used to run functional tests and scripts (`bun`, `npm`, `pnpm`, or `yarn`)
+ * @param config - Optional Svelte-related configuration hints (databaseEngine, orm, authProvider, useTailwind, codeQualityTool, isMultiFrontend)
+ * @param options - Optional flags to skip parts of the validation: `skipDependencies`, `skipBuild`, `skipServer`
+ * @returns An object describing whether validation passed, collected `errors` and `warnings`, optional `functionalTestResults`, and `svelteSpecific` flags (`filesExist`, `routesConfigured`, `importsCorrect`)
+ */
 export async function validateSvelteFramework(
   projectPath: string,
   packageManager: 'bun' | 'npm' | 'pnpm' | 'yarn' = 'bun',
@@ -222,4 +233,3 @@ if (require.main === module) {
       process.exit(1);
     });
 }
-

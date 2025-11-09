@@ -23,6 +23,26 @@ export type CloudProviderValidationResult = {
   };
 };
 
+/**
+ * Validates a project's cloud database provider setup (Neon, PlanetScale, or Turso), verifies provider-specific code, imports and dependencies, checks environment configuration and Docker usage, and runs functional tests.
+ *
+ * @param projectPath - Path to the project root being validated.
+ * @param packageManager - Package manager to use when running functional tests (`bun` | `npm` | `pnpm` | `yarn`).
+ * @param config - Optional configuration that influences validation:
+ *   - `databaseHost`: provider identifier (`neon`, `planetscale`, or `turso`) used to select provider-specific checks.
+ *   - `orm`: ORM in use (e.g., `drizzle`) which adjusts Neon connection/import expectations.
+ *   - `databaseEngine` and `authProvider` are accepted but not required for provider selection.
+ * @param options - Execution options forwarded to the functional test runner:
+ *   - `skipDependencies`: skip dependency installation step.
+ *   - `skipBuild`: skip build step.
+ *   - `skipServer`: skip starting the server for runtime checks.
+ * @returns The CloudProviderValidationResult containing:
+ *   - `passed`: whether the validation succeeded,
+ *   - `errors`: array of error messages,
+ *   - `warnings`: array of warnings,
+ *   - `functionalTestResults` (when available),
+ *   - `cloudSpecific`: detailed booleans for connection code, imports, dependencies, Docker presence, and env configuration.
+ */
 export async function validateCloudProvider(
   projectPath: string,
   packageManager: 'bun' | 'npm' | 'pnpm' | 'yarn' = 'bun',
@@ -301,4 +321,3 @@ if (require.main === module) {
       process.exit(1);
     });
 }
-

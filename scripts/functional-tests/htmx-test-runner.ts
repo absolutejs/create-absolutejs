@@ -32,6 +32,12 @@ type HTMXTestResult = {
 const SUPPORTED_DATABASE_ENGINES = new Set(['none', 'sqlite', 'mongodb']);
 const SUPPORTED_ORMS = new Set(['none', 'drizzle']);
 
+/**
+ * Scaffolds a project for the given HTMX test configuration, installs dependencies, runs HTMX validation, and returns the aggregated test result.
+ *
+ * @param config - Test matrix entry describing the project configuration (frontend, databaseEngine, orm, databaseHost, authProvider, optional codeQualityTool, useTailwind, directoryConfig)
+ * @returns HTMXTestResult containing the supplied `config`, a `passed` flag indicating whether validation succeeded, collected `errors` and `warnings`, and the total `testTime` in milliseconds
+ */
 async function scaffoldAndTestHTMX(
   config: TestMatrixEntry
 ): Promise<HTMXTestResult> {
@@ -251,6 +257,15 @@ async function scaffoldAndTestHTMX(
   }
 }
 
+/**
+ * Orchestrates HTMX configuration tests defined in a matrix JSON file and exits the process with a status code reflecting overall success.
+ *
+ * Reads and parses the specified matrix file, filters entries for HTMX-compatible configurations, and runs scaffold-and-validate tests for each selected configuration (currently sequential). After all tests complete, prints a summary with totals, pass/fail counts, and a success rate; if any test fails the process exits with code 1, otherwise exits with code 0.
+ *
+ * @param matrixFile - Path to the JSON test matrix file (an array of TestMatrixEntry objects)
+ * @param maxConcurrent - Maximum number of concurrent tests to run (reserved for future parallel execution; currently tests run sequentially)
+ * @param testSubset - Optional limit to the number of HTMX configurations to test (takes the first N eligible entries)
+ */
 async function runHTMXTests(
   matrixFile: string = 'test-matrix.json',
   maxConcurrent: number = 2,
@@ -326,4 +341,3 @@ if (require.main === module) {
     process.exit(1);
   });
 }
-

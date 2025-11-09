@@ -30,6 +30,12 @@ type SQLiteTestResult = {
   testTime?: number;
 };
 
+/**
+ * Scaffolds a project for the given test configuration, installs dependencies (with caching), runs functional tests and SQLite-specific validation, and returns an aggregated test result.
+ *
+ * @param config - Test matrix entry that controls scaffold options (frontend, ORM, auth, database host, Tailwind, code-quality tool, and directory layout)
+ * @returns An object describing the test outcome: `config` (the input configuration), `passed` (`true` if SQLite validation and — when run — functional tests passed, `false` otherwise), `errors` (collected error messages), `warnings` (collected warnings), and `testTime` (total elapsed time in milliseconds)
+ */
 async function scaffoldAndTestSQLite(
   config: TestMatrixEntry
 ): Promise<SQLiteTestResult> {
@@ -274,6 +280,15 @@ async function scaffoldAndTestSQLite(
   }
 }
 
+/**
+ * Run SQLite-focused tests defined in a test matrix file, print progress and a summary, and exit with status 0 on success or 1 on failure.
+ *
+ * Reads the JSON test matrix from `matrixFile`, filters entries where `databaseEngine` is `'sqlite'`, optionally limits to the first `testSubset` entries, runs the scaffold-and-test routine for each configuration sequentially, and prints per-test results and an overall summary to stdout before exiting the process with a non-zero code if any tests failed.
+ *
+ * @param matrixFile - Path to the JSON test matrix file (defaults to `"test-matrix.json"`).
+ * @param maxConcurrent - Maximum number of concurrent test runs (present for compatibility; this runner executes tests sequentially).
+ * @param testSubset - If provided, limits execution to the first `testSubset` SQLite configurations from the matrix.
+ */
 async function runSQLiteTests(
   matrixFile: string = 'test-matrix.json',
   maxConcurrent: number = 2,
@@ -345,4 +360,3 @@ if (require.main === module) {
     process.exit(1);
   });
 }
-

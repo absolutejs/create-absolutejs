@@ -19,8 +19,10 @@ type DependencyFingerprint = {
 };
 
 /**
- * Generate a unique cache key based on dependencies
- * Configs with same dependencies will share the same cache
+ * Produce a stable fingerprint string for a dependency configuration.
+ *
+ * @param config - Dependency fields that affect installed packages; fields considered include `frontend`, `databaseEngine`, `orm`, `databaseHost`, `authProvider`, `useTailwind`, and `codeQualityTool`.
+ * @returns A 16-character hexadecimal fingerprint identifying the provided dependency configuration.
  */
 function getDependencyFingerprint(config: DependencyFingerprint): string {
   // Normalize the config to create a stable fingerprint
@@ -41,14 +43,20 @@ function getDependencyFingerprint(config: DependencyFingerprint): string {
 const CACHE_DIR = join(process.cwd(), '.test-dependency-cache');
 
 /**
- * Get the cache path for a dependency fingerprint
+ * Return the cache directory path for a given dependency fingerprint.
+ *
+ * @param fingerprint - The fingerprint identifying a dependency configuration
+ * @returns The filesystem path to the cache directory for `fingerprint`
  */
 function getCachePath(fingerprint: string): string {
   return join(CACHE_DIR, fingerprint);
 }
 
 /**
- * Check if a cached node_modules exists for this fingerprint
+ * Determine whether a cached node_modules directory exists for the given dependency fingerprint.
+ *
+ * @param config - Dependency fingerprint describing the dependencies and configuration that affect installed packages
+ * @returns `true` if a cached `node_modules` directory exists for the fingerprint, `false` otherwise
  */
 export function hasCachedDependencies(config: DependencyFingerprint): boolean {
   const fingerprint = getDependencyFingerprint(config);
@@ -59,7 +67,14 @@ export function hasCachedDependencies(config: DependencyFingerprint): boolean {
 }
 
 /**
- * Get cached node_modules or install and cache them
+ * Ensure the project has a populated `node_modules` directory by restoring from a fingerprinted cache when available, otherwise installing dependencies and storing them in the cache.
+ *
+ * @param projectPath - Filesystem path to the project where `node_modules` will be placed
+ * @param config - Dependency fingerprint describing the dependency/configuration set used to derive the cache key
+ * @param packageJsonPath - Path to the project's `package.json`; when present it is copied into the cache for reference
+ * @returns An object with `cached` set to `true` if dependencies were restored from the cache (otherwise `false`), and `installTime` representing the operation duration in milliseconds
+ * @throws Error if dependency installation times out after 300 seconds
+ * @throws Error if the dependency installer exits with a non-zero exit code
  */
 export async function getOrInstallDependencies(
   projectPath: string,
@@ -126,7 +141,11 @@ export async function getOrInstallDependencies(
 }
 
 /**
- * Clean up old cache entries (optional - can be called periodically)
+ * Remove cached dependency entries older than the given number of days.
+ *
+ * This is a placeholder implementation that currently performs no deletions.
+ *
+ * @param maxAgeDays - Maximum age in days for cache entries before they are removed (default: 7)
  */
 export function cleanupCache(maxAgeDays: number = 7): void {
   if (!existsSync(CACHE_DIR)) {
@@ -139,4 +158,3 @@ export function cleanupCache(maxAgeDays: number = 7): void {
   // This would require reading directory entries - simplified for now
   // In production, you might want to add cache metadata files with timestamps
 }
-

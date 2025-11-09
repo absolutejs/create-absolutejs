@@ -13,7 +13,19 @@ export type DependencyInstallResult = {
   installTime?: number;
 };
 
-const INSTALL_TIMEOUT = 120000; // 2 minutes for dependency installation
+const INSTALL_TIMEOUT = 120000; /**
+ * Tests whether dependencies in a scaffolded project can be installed with the specified package manager.
+ *
+ * Attempts to parse the project's package.json, skip installation if no dependencies are declared, run the appropriate
+ * install command (within a 2-minute timeout), and verify that node_modules is created.
+ *
+ * @param projectPath - Path to the project directory containing package.json
+ * @param packageManager - Package manager to use for installation: 'bun', 'npm', 'pnpm', or 'yarn' (default: 'bun')
+ * @returns An object describing the result:
+ *          - `passed`: `true` when installation succeeded or no dependencies were present, `false` otherwise.
+ *          - `errors`: Array of human-readable error messages collected during checks or installation.
+ *          - `installTime` (optional): Time in milliseconds the installation process took when an install was attempted.
+ */
 
 export async function testDependencyInstallation(
   projectPath: string,
@@ -157,4 +169,3 @@ if (require.main === module) {
       process.exit(1);
     });
 }
-

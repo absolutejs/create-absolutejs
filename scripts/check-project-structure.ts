@@ -14,6 +14,12 @@ type CheckResult = {
   errors: string[];
 };
 
+/**
+ * Validate that a scaffolded project path exists, is a directory, and contains a file named `package.json`.
+ *
+ * @param projectPath - Filesystem path to the project directory to validate
+ * @returns A `CheckResult` where `passed` is `true` if all checks succeed; otherwise `passed` is `false` and `errors` contains descriptive failure messages
+ */
 export function checkProjectStructure(projectPath: string): CheckResult {
   const errors: string[] = [];
 
@@ -79,4 +85,3 @@ if (require.main === module) {
     process.exit(1);
   }
 }
-

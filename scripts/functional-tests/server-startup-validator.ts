@@ -15,7 +15,19 @@ export type ServerStartupResult = {
   compileTime?: number;
 };
 
-const COMPILE_TIMEOUT = 60000; // 60 seconds for TypeScript compilation
+const COMPILE_TIMEOUT = 60000; /**
+ * Validates that a scaffolded project contains a basic Elysia server structure and, when configured, that TypeScript compiles successfully.
+ *
+ * Performs these checks: verifies src/backend/server.ts exists and contains an Elysia initialization, ensures package.json exists with a `dev` script, and if tsconfig.json is present runs the project's `typecheck` script via the specified package manager (subject to a timeout).
+ *
+ * @param projectPath - Filesystem path to the root of the scaffolded project to validate
+ * @param packageManager - Package manager to use when invoking the `typecheck` script (`'bun' | 'npm' | 'pnpm' | 'yarn'`)
+ * @returns An object with:
+ *  - `passed`: `true` when all required checks (and optional compilation) succeed, `false` otherwise.
+ *  - `errors`: an array of error messages describing failed checks.
+ *  - `warnings`: an array of warning messages (for non-fatal issues such as missing tsconfig.json).
+ *  - `compileTime` (optional): compilation duration in milliseconds when a typecheck was performed.
+ */
 
 export async function validateServerStartup(
   projectPath: string,
@@ -167,4 +179,3 @@ if (require.main === module) {
       process.exit(1);
     });
 }
-

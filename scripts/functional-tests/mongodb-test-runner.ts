@@ -31,6 +31,12 @@ type MongoDBTestResult = {
   testTime?: number;
 };
 
+/**
+ * Scaffolds a project from the provided test-matrix configuration, runs dependency installation, executes functional tests and MongoDB-specific validation, and returns the aggregated results.
+ *
+ * @param config - Test matrix entry specifying frontend, ORM, database host, auth provider, and other options used to generate and run the test project
+ * @returns An object describing the test outcome: `config` (the input configuration), `passed` (`true` if MongoDB validation passed and functional tests passed when present, `false` otherwise), `errors` (collected error messages), `warnings` (collected warnings), and `testTime` (total elapsed time in milliseconds for the entire operation)
+ */
 async function scaffoldAndTestMongoDB(
   config: TestMatrixEntry
 ): Promise<MongoDBTestResult> {
@@ -294,6 +300,16 @@ async function scaffoldAndTestMongoDB(
   }
 }
 
+/**
+ * Run MongoDB-focused functional tests for configurations defined in a test matrix.
+ *
+ * Reads the JSON test matrix from `matrixFile`, filters entries where `databaseEngine` is `"mongodb"`,
+ * and executes scaffold + functional test + MongoDB validation for each selected configuration.
+ * Results are summarized to the console and the process exits with code `1` if any configuration fails.
+ *
+ * @param matrixFile - Path to the JSON test matrix (defaults to "test-matrix.json")
+ * @param testSubset - If provided, limit testing to the first `testSubset` MongoDB configurations
+ */
 async function runMongoDBTests(
   matrixFile: string = 'test-matrix.json',
   maxConcurrent: number = 2,
@@ -376,4 +392,3 @@ if (require.main === module) {
     process.exit(1);
   });
 }
-

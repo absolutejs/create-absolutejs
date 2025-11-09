@@ -52,6 +52,17 @@ const hostConstraints: Record<Exclude<DatabaseHost, 'none'>, DatabaseEngine[] | 
   planetscale: ['postgresql', 'mysql'] // planetscale supports postgres or mysql
 };
 
+/**
+ * Determine whether a CLI configuration satisfies supported database, ORM, and host constraints.
+ *
+ * The following compatibility rules are enforced:
+ * - If `orm` is `'drizzle'`, `databaseEngine` must be one of the engines listed in `drizzleCompatible`.
+ * - If `databaseEngine` is `'none'`, then `orm` must be `'none'` and `databaseHost` must be `'none'`.
+ * - If `databaseHost` is not `'none'`, the host's allowed engines (from `hostConstraints`) must include `databaseEngine`.
+ *
+ * @param config - The configuration to validate
+ * @returns `true` if the configuration satisfies all compatibility rules, `false` otherwise.
+ */
 function isValid(config: Config): boolean {
   const { databaseEngine, orm, databaseHost } = config;
 
@@ -77,6 +88,11 @@ function isValid(config: Config): boolean {
   return true;
 }
 
+/**
+ * Generate all possible CLI configuration combinations and filter them by the compatibility rules.
+ *
+ * @returns An array of `Config` objects representing every valid configuration combination produced from the Cartesian product of available options and filtered by `isValid`
+ */
 function generate(): Config[] {
   const results: Config[] = [];
   for (const frontend of frontends) {
@@ -109,6 +125,12 @@ function generate(): Config[] {
   return results;
 }
 
+/**
+ * Build the matrix of valid CLI configurations, write it to test-matrix.json, and log the result.
+ *
+ * Writes a pretty-printed JSON file named `test-matrix.json` containing all valid configurations
+ * and prints the number of combinations generated and the save path to stdout.
+ */
 function main() {
   const matrix = generate();
   const outputPath = 'test-matrix.json';
@@ -119,5 +141,4 @@ function main() {
 }
 
 main();
-
 

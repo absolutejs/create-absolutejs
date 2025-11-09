@@ -21,6 +21,21 @@ export type VueValidationResult = {
   };
 };
 
+/**
+ * Validates that a project at the given path is configured to use Vue and runs related functional tests.
+ *
+ * Performs file presence checks for key Vue files and assets, inspects server.ts for Vue imports and route configuration,
+ * verifies that package.json lists Vue as a dependency, and executes functional tests to validate build/server behavior.
+ *
+ * @param projectPath - Path to the project root to validate
+ * @param packageManager - Package manager to use when running functional tests (`bun`, `npm`, `pnpm`, or `yarn`)
+ * @param config - Optional project configuration hints; recognized keys: `databaseEngine`, `orm`, `authProvider`, `useTailwind`, `codeQualityTool`, `isMultiFrontend`
+ * @param options - Optional execution flags:
+ *   - `skipDependencies` — skip dependency installation during functional tests
+ *   - `skipBuild` — skip the build step during functional tests
+ *   - `skipServer` — skip starting the server during functional tests
+ * @returns A VueValidationResult describing whether validation passed, arrays of `errors` and `warnings`, any `functionalTestResults`, and `vueSpecific` boolean flags for `filesExist`, `routesConfigured`, and `importsCorrect`
+ */
 export async function validateVueFramework(
   projectPath: string,
   packageManager: 'bun' | 'npm' | 'pnpm' | 'yarn' = 'bun',
@@ -220,4 +235,3 @@ if (require.main === module) {
       process.exit(1);
     });
 }
-

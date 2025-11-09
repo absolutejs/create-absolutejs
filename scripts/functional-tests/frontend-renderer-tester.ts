@@ -15,6 +15,15 @@ export type FrontendRendererResult = {
   warnings: string[];
 };
 
+/**
+ * Runs a placeholder frontend rendering test for the specified project and collects warnings about unimplemented checks.
+ *
+ * @param projectPath - Path to the project's root directory to inspect and test
+ * @param serverUrl - Base URL of the running application to target (defaults to `http://localhost:3000`)
+ * @param config - Optional configuration for the test
+ * @param config.frontends - Optional list of frontend frameworks (e.g., `['react','vue']`) to focus testing on
+ * @returns A FrontendRendererResult where `passed` is `true` if no errors were recorded, `errors` contains error messages, and `warnings` contains informational warnings about incomplete or skipped checks
+ */
 export async function testFrontendRendering(
   projectPath: string,
   serverUrl: string = 'http://localhost:3000',
@@ -76,4 +85,3 @@ if (require.main === module) {
       process.exit(1);
     });
 }
-

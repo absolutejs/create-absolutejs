@@ -17,6 +17,23 @@ export type DatabaseConnectionResult = {
   warnings: string[];
 };
 
+/**
+ * Performs basic checks to validate a project's database setup and returns structured results.
+ *
+ * The function verifies whether a database is configured, checks for a `db` directory under the project path,
+ * and performs an ORM-specific check for a Drizzle schema (`db/schema.ts`). It also emits warnings that the
+ * connection tests are not fully implemented and may require Docker or cloud credentials.
+ *
+ * @param projectPath - Filesystem path to the project root where the `db` directory is expected
+ * @param config - Optional configuration for the check:
+ *   - `databaseEngine`: name of the configured database engine or `'none'` to indicate no DB
+ *   - `databaseHost`: hostname for the database (unused by this basic tester)
+ *   - `orm`: ORM in use; when `'drizzle'`, the presence of `db/schema.ts` is validated
+ * @returns An object with:
+ *   - `passed`: `true` if checks completed without errors, `false` if one or more errors were found
+ *   - `errors`: list of error messages describing failing checks
+ *   - `warnings`: list of informational warnings (for example, when database testing is not implemented or when no DB is configured)
+ */
 export async function testDatabaseConnection(
   projectPath: string,
   config: {
@@ -95,4 +112,3 @@ if (require.main === module) {
       process.exit(1);
     });
 }
-

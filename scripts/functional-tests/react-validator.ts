@@ -21,6 +21,23 @@ export type ReactValidationResult = {
   };
 };
 
+/**
+ * Validates a project's React integration and runs functional tests to assess React-specific readiness.
+ *
+ * Performs checks for required React files, server route and import configuration, presence of React dependencies,
+ * and executes the functional test suite; aggregates errors, warnings, functional test results, and React-specific flags.
+ *
+ * @param projectPath - Filesystem path to the root of the project to validate
+ * @param packageManager - Package manager to use when running functional tests (`bun`, `npm`, `pnpm`, or `yarn`)
+ * @param config - Optional project configuration hints (databaseEngine, orm, authProvider, useTailwind, codeQualityTool, isMultiFrontend)
+ * @param options - Execution options to skip steps: `skipDependencies`, `skipBuild`, `skipServer`
+ * @returns The validation result containing:
+ * - `passed`: `true` if no errors were found and all React-specific checks (filesExist, routesConfigured, importsCorrect) passed, `false` otherwise.
+ * - `errors`: array of error messages discovered during validation.
+ * - `warnings`: array of non-fatal issues or parse/read warnings.
+ * - `functionalTestResults`: optional detailed results from the functional test runner.
+ * - `reactSpecific`: object with boolean flags `filesExist`, `routesConfigured`, and `importsCorrect`.
+ */
 export async function validateReactFramework(
   projectPath: string,
   packageManager: 'bun' | 'npm' | 'pnpm' | 'yarn' = 'bun',
@@ -200,4 +217,3 @@ if (require.main === module) {
       process.exit(1);
     });
 }
-
