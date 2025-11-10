@@ -54,9 +54,10 @@ export const scaffoldDocker = async ({
 	const dbCommand = usesAuth
 		? userTables[databaseEngine]
 		: countHistoryTables[databaseEngine];
+	const escapedDbCommand = dbCommand.replace(/\$/g, '\\$');
 
 	await $`bun db:up`.cwd(projectName);
 	await $`docker compose -p ${databaseEngine} -f db/docker-compose.db.yml exec -T db \
-  bash -lc '${wait} && ${cli} "${dbCommand}"'`.cwd(projectName);
+  bash -lc '${wait} && ${cli} "${escapedDbCommand}"'`.cwd(projectName);
 	await $`bun db:down`.cwd(projectName);
 };

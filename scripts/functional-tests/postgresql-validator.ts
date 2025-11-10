@@ -179,10 +179,8 @@ const ensureSharedComposeFile = (sourceComposePath: string) => {
   const targetDir = DOCKER_CACHE_DIR;
   const targetPath = join(targetDir, DOCKER_COMPOSE_FILENAME);
 
-  if (!existsSync(targetPath)) {
-    mkdirSync(targetDir, { recursive: true });
-    copyFileSync(sourceComposePath, targetPath);
-  }
+  mkdirSync(targetDir, { recursive: true });
+  copyFileSync(sourceComposePath, targetPath);
 
   dockerState.composePath = targetPath;
 

@@ -26,7 +26,7 @@ const mongodbUsers =
 	"const admin = db.getSiblingDB('admin'); admin.auth('user', 'password'); const database = db.getSiblingDB('database'); database.users.updateOne({ auth_sub: 'seed-user' }, { $setOnInsert: { auth_sub: 'seed-user', created_at: new Date(), metadata: {} } }, { upsert: true });";
 
 const mongodbCountHistory =
-	"const admin = db.getSiblingDB('admin'); admin.auth('user', 'password'); const database = db.getSiblingDB('database'); if (!database.count_history.findOne({})) { database.count_history.insertOne({ count: 0, created_at: new Date() }); }";
+	"const admin = db.getSiblingDB('admin'); admin.auth('user', 'password'); const database = db.getSiblingDB('database'); if (!database.count_history.findOne({ uid: 1 })) { database.count_history.insertOne({ uid: 1, count: 0, created_at: new Date() }); }";
 
 const mariadbUsers = `CREATE TABLE IF NOT EXISTS users (
   auth_sub   VARCHAR(255) PRIMARY KEY,
