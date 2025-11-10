@@ -205,9 +205,39 @@ const isContainerRunning = async (composePath: string) => {
     .some((line) => line === 'db');
 };
 
+const runPostgresSeedScripts = async (
+  seeds: readonly string[],
+  executeSeed: (seed: string) => Promise<CommandResult>,
+  errors: string[]
+) => {
+  let resultPromise = Promise.resolve(true);
+
+  seeds.forEach((seed) => {
+    resultPromise = resultPromise.then(async (previousSucceeded) => {
+      if (!previousSucceeded) {
+        return false;
+      }
+
+      const seedResult = await executeSeed(seed);
+
+      if (seedResult.exitCode !== 0) {
+        errors.push(
+          `Failed to initialise PostgreSQL schema: ${seedResult.stderr.slice(0, DOCKER_ERROR_SNIPPET_LENGTH) || 'Unknown error'}`
+        );
+
+        return false;
+      }
+
+      return true;
+    });
+  });
+
+  return resultPromise;
+};
+
 const startDockerContainer = async (
   composePath: string,
-  authProvider: string | undefined,
+  _authProvider: string | undefined,
   warnings: string[],
   postgresqlSpecific: PostgreSQLValidationResult['postgresqlSpecific'],
   errors: string[]
@@ -224,25 +254,21 @@ const startDockerContainer = async (
 
   const { wait, cli } = initTemplates.postgresql;
 
-  const usesAuth = authProvider !== undefined && authProvider !== 'none';
-  const seedCommand = usesAuth
-    ? userTables.postgresql
-    : countHistoryTables.postgresql;
+  const seeds = [userTables.postgresql, countHistoryTables.postgresql] as const;
 
-  const seedResult = await dockerComposeCommand(composePath, [
-    'exec',
-    '-T',
-    'db',
-    'bash',
-    '-lc',
-    `${wait} && ${cli} "${seedCommand}"`
-  ]);
+  const executeSeed = async (seed: string) =>
+    dockerComposeCommand(composePath, [
+      'exec',
+      '-T',
+      'db',
+      'bash',
+      '-lc',
+      `${wait} && ${cli} "${seed}"`
+    ]);
 
-  if (seedResult.exitCode !== 0) {
-    errors.push(
-      `Failed to initialise PostgreSQL schema: ${seedResult.stderr.slice(0, DOCKER_ERROR_SNIPPET_LENGTH) || 'Unknown error'}`
-    );
+  const seeded = await runPostgresSeedScripts(seeds, executeSeed, errors);
 
+  if (!seeded) {
     await dockerComposeCommand(composePath, ['down']).catch(() => undefined);
 
     return false;
