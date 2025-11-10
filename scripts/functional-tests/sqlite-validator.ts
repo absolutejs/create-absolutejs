@@ -3,39 +3,76 @@ import { once } from 'node:events';
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import process from 'node:process';
+import { setTimeout as delay } from 'node:timers/promises';
 
 const MILLISECONDS_PER_SECOND = 1_000;
 const SQLITE_TIMEOUT_SECONDS = 5;
 const SQLITE_TIMEOUT_MS = SQLITE_TIMEOUT_SECONDS * MILLISECONDS_PER_SECOND;
 const FORCE_KILL_DELAY_MS = 1_000;
 
+const terminateChildProcess = (child: ReturnType<typeof spawn>) => {
+  try {
+    child.kill('SIGTERM');
+    setTimeout(() => child.kill('SIGKILL'), FORCE_KILL_DELAY_MS);
+  } catch {
+    // Ignore kill errors; the process may already have exited.
+  }
+};
+
 const runSqliteCommand = async (databaseFile: string, query: string) => {
-  const child = spawn('sqlite3', [databaseFile, query], {
-    stdio: ['ignore', 'pipe', 'pipe']
-  });
+  let child: ReturnType<typeof spawn>;
+
+  try {
+    child = spawn('sqlite3', [databaseFile, query], {
+      stdio: ['ignore', 'pipe', 'pipe']
+    });
+  } catch (unknownError) {
+    const error = unknownError instanceof Error ? unknownError : new Error(String(unknownError));
+
+    return {
+      exitCode: -1,
+      failedToSpawn: true,
+      stderr: error.message,
+      stdout: ''
+    };
+  }
 
   const stdoutChunks: string[] = [];
   const stderrChunks: string[] = [];
-  let timedOut = false;
-
-  const timeoutId = setTimeout(() => {
-    timedOut = true;
-    child.kill('SIGTERM');
-    setTimeout(() => child.kill('SIGKILL'), FORCE_KILL_DELAY_MS);
-  }, SQLITE_TIMEOUT_MS);
-
   child.stdout?.on('data', (chunk) => stdoutChunks.push(chunk.toString()));
   child.stderr?.on('data', (chunk) => stderrChunks.push(chunk.toString()));
 
-  const [code] = (await once(child, 'close')) as [number | null, string | null];
-  clearTimeout(timeoutId);
+  const closePromise = once(child, 'close') as Promise<[number | null, string | null]>;
+  const errorPromise = once(child, 'error').then(([error]) => ({
+    error: error instanceof Error ? error : new Error(String(error)),
+    kind: 'error' as const
+  }));
+  const timeoutPromise = delay(SQLITE_TIMEOUT_MS).then(() => ({ kind: 'timeout' as const }));
 
-  if (timedOut) {
+  const outcome = await Promise.race([
+    closePromise.then(([code]) => ({ code, kind: 'close' as const })),
+    errorPromise,
+    timeoutPromise
+  ]);
+
+  if (outcome.kind === 'timeout') {
+    terminateChildProcess(child);
+    await closePromise.catch(() => undefined);
+
     return null;
   }
 
+  if (outcome.kind === 'error') {
+    return {
+      exitCode: -1,
+      failedToSpawn: true,
+      stderr: outcome.error.message,
+      stdout: ''
+    };
+  }
+
   return {
-    exitCode: code ?? -1,
+    exitCode: outcome.code ?? -1,
     stderr: stderrChunks.join('').trim(),
     stdout: stdoutChunks.join('').trim()
   };
@@ -81,7 +118,17 @@ const validateLocalDatabase = async (databaseFile: string, authProvider?: string
     "SELECT name FROM sqlite_master WHERE type='table';"
   );
 
-  if (result === null || result.exitCode !== 0) {
+  if (result === null) {
+    return { error: 'Could not verify table existence via sqlite3 query (command timed out)' } as const;
+  }
+
+  if (result.failedToSpawn) {
+    return {
+      error: `sqlite3 command unavailable: ${result.stderr || 'Executable not found'}`
+    } as const;
+  }
+
+  if (result.exitCode !== 0) {
     return { error: 'Could not verify table existence via sqlite3 query' } as const;
   }
 
@@ -141,6 +188,14 @@ const validateLocalDatabaseTables = async (
 
   if (tableResult === null) {
     errors.push('Database connection test timed out');
+
+    return { errors, flags, warnings };
+  }
+
+  if (tableResult.failedToSpawn) {
+    errors.push(
+      `sqlite3 command unavailable: ${tableResult.stderr || 'Executable not found'}`
+    );
 
     return { errors, flags, warnings };
   }

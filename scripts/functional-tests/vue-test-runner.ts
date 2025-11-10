@@ -1,3 +1,9 @@
+/*
+  Vue Test Runner
+  Tests Vue framework across all compatible backend combinations.
+  Uses the test matrix to generate valid Vue + backend combinations.
+*/
+
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import process from 'node:process';
@@ -7,13 +13,13 @@ import {
   getOrInstallDependencies,
   hasCachedDependencies
 } from './dependency-cache';
-import { validateHTMXFramework } from './htmx-validator';
 import { createMatrix, type MatrixConfig } from './matrix';
 import { cleanupProjectDirectory } from './test-utils';
+import { validateVueFramework } from './vue-validator';
 
 type TestMatrixEntry = MatrixConfig;
 
-type HtmxTestResult = {
+type VueTestResult = {
   config: TestMatrixEntry;
   errors: string[];
   passed: boolean;
@@ -40,8 +46,8 @@ type DependencyConfig = {
 
 const SUPPORTED_DATABASE_ENGINES = new Set(['none', 'sqlite', 'mongodb']);
 const SUPPORTED_ORMS = new Set(['none', 'drizzle']);
-const MILLISECONDS_PER_SECOND = 1_000;
 const SECONDS_PER_MINUTE = 60;
+const MILLISECONDS_PER_SECOND = 1_000;
 const SCAFFOLD_TIMEOUT_MS = 2 * SECONDS_PER_MINUTE * MILLISECONDS_PER_SECOND;
 const HUNDRED_PERCENT = 100;
 const MAX_ERRORS_TO_DISPLAY = 3;
@@ -57,40 +63,51 @@ const loadBunModule = async () => {
 };
 
 const createProjectName = (config: TestMatrixEntry) =>
-  `test-htmx-${config.databaseEngine}-${config.orm}-${config.authProvider === 'none' ? 'noauth' : 'auth'}-${
-    config.useTailwind ? 'tw' : 'notw'
-  }`
+  `test-vue-${config.databaseEngine}-${config.orm}-${config.authProvider}-${config.useTailwind ? 'tw' : 'notw'}`
     .replace(/[^a-z0-9-]/g, '-')
     .toLowerCase();
+
+const getFrontendFlag = (frontend: string) => {
+  if (frontend === 'none') {
+    return null;
+  }
+
+  return `--${frontend}`;
+};
 
 const buildScaffoldCommand = (
   projectName: string,
   config: TestMatrixEntry
 ) => {
-  const command = ['bun', 'run', 'src/index.ts', projectName, '--skip', '--htmx'];
+  const command = ['bun', 'run', 'src/index.ts', projectName, '--skip'];
+  const frontendFlag = getFrontendFlag(config.frontend);
 
-  if (config.databaseEngine !== 'none') {
-    command.push('--db', config.databaseEngine);
+  if (frontendFlag) {
+    command.push(frontendFlag);
   }
 
-  if (config.orm !== 'none') {
-    command.push('--orm', config.orm);
-  }
-
-  if (config.databaseHost !== 'none') {
-    command.push('--db-host', config.databaseHost);
-  }
-
-  if (config.authProvider !== 'none') {
-    command.push('--auth', config.authProvider);
+  if (config.useTailwind) {
+    command.push('--tailwind');
   }
 
   if (config.codeQualityTool === 'eslint+prettier') {
     command.push('--eslint+prettier');
   }
 
-  if (config.useTailwind) {
-    command.push('--tailwind');
+  if (config.databaseEngine !== 'none') {
+    command.push('--db', config.databaseEngine);
+  }
+
+  if (config.databaseHost !== 'none') {
+    command.push('--db-host', config.databaseHost);
+  }
+
+  if (config.orm !== 'none') {
+    command.push('--orm', config.orm);
+  }
+
+  if (config.authProvider !== 'none') {
+    command.push('--auth', config.authProvider);
   }
 
   if (config.directoryConfig === 'custom') {
@@ -114,10 +131,15 @@ const raceWithTimeout = async <T>(
   return Promise.race([promise, timeoutPromise]) as Promise<T>;
 };
 
-const runCommand = async (command: string[]) => {
+const runCommand = async (
+  command: string[],
+  options: { cwd?: string; timeoutMs?: number } = {}
+) => {
+  const { cwd, timeoutMs = SCAFFOLD_TIMEOUT_MS } = options;
   const bunModule = await loadBunModule();
   const processHandle = bunModule.spawn({
     cmd: command,
+    cwd,
     stderr: 'inherit',
     stdin: 'inherit',
     stdout: 'inherit'
@@ -126,7 +148,7 @@ const runCommand = async (command: string[]) => {
   try {
     const exitCode = await raceWithTimeout(
       processHandle.exited.then(() => processHandle.exitCode ?? 0),
-      SCAFFOLD_TIMEOUT_MS,
+      timeoutMs,
       () => processHandle.kill()
     );
 
@@ -245,30 +267,19 @@ const installDependencies = async (
   }
 };
 
-const validateProject = async (
-  projectPath: string,
-  config: TestMatrixEntry
-) => {
-  process.stdout.write('  → Running validation tests... ');
+const validateProject = async (projectPath: string, config: TestMatrixEntry) => {
+  process.stdout.write('  → Running Vue validator... ');
 
-  const validateStartMs = Date.now();
-  const validationResult = await validateHTMXFramework(
-    projectPath,
-    'bun',
-    {
-      authProvider: config.authProvider,
-      codeQualityTool: config.codeQualityTool,
-      databaseEngine: config.databaseEngine,
-      orm: config.orm,
-      useTailwind: config.useTailwind
-    },
-    {
-      skipBuild: false,
-      skipDependencies: true,
-      skipServer: false
-    }
-  );
-  const elapsedMs = Date.now() - validateStartMs;
+  const validationStartMs = Date.now();
+  const validationResult = await validateVueFramework(projectPath, 'bun', {
+    authProvider: config.authProvider,
+    codeQualityTool: config.codeQualityTool,
+    databaseEngine: config.databaseEngine,
+    isMultiFrontend: config.directoryConfig === 'custom',
+    orm: config.orm,
+    useTailwind: config.useTailwind
+  });
+  const elapsedMs = Date.now() - validationStartMs;
 
   console.log(
     validationResult.passed ? `✓ (${elapsedMs}ms)` : `✗ (${elapsedMs}ms)`
@@ -282,18 +293,17 @@ const validateProject = async (
   } satisfies StepOutcome;
 };
 
-const scaffoldAndTestHtmx = async (
+const validateProjectWithCleanup = async (
+  projectPath: string,
   config: TestMatrixEntry
 ) => {
   const startTime = Date.now();
-  const projectName = createProjectName(config);
-  const projectPath = projectName;
   const errors: string[] = [];
   const warnings: string[] = [];
 
   const scaffoldOutcome = await scaffoldProject(
     projectPath,
-    buildScaffoldCommand(projectName, config)
+    buildScaffoldCommand(projectPath, config)
   );
 
   if (!scaffoldOutcome.success) {
@@ -305,7 +315,7 @@ const scaffoldAndTestHtmx = async (
       passed: false,
       testTime: Date.now() - startTime,
       warnings
-    } satisfies HtmxTestResult;
+    } satisfies VueTestResult;
   }
 
   const packageJsonPath = join(projectPath, 'package.json');
@@ -320,7 +330,7 @@ const scaffoldAndTestHtmx = async (
       passed: false,
       testTime: Date.now() - startTime,
       warnings
-    } satisfies HtmxTestResult;
+    } satisfies VueTestResult;
   }
 
   const dependencyOutcome = await installDependencies(
@@ -340,7 +350,7 @@ const scaffoldAndTestHtmx = async (
       passed: false,
       testTime: Date.now() - startTime,
       warnings
-    } satisfies HtmxTestResult;
+    } satisfies VueTestResult;
   }
 
   const validationOutcome = await validateProject(projectPath, config);
@@ -355,7 +365,7 @@ const scaffoldAndTestHtmx = async (
     passed: validationOutcome.success && errors.length === 0,
     testTime: Date.now() - startTime,
     warnings
-  } satisfies HtmxTestResult;
+  } satisfies VueTestResult;
 };
 
 const loadMatrix = (matrixEntriesOverride?: TestMatrixEntry[]) => {
@@ -363,7 +373,7 @@ const loadMatrix = (matrixEntriesOverride?: TestMatrixEntry[]) => {
 
   return matrixEntries.filter(
     (entry) =>
-      entry.frontend === 'htmx' &&
+      entry.frontend === 'vue' &&
       entry.directoryConfig === 'default' &&
       SUPPORTED_DATABASE_ENGINES.has(entry.databaseEngine) &&
       SUPPORTED_ORMS.has(entry.orm)
@@ -372,9 +382,9 @@ const loadMatrix = (matrixEntriesOverride?: TestMatrixEntry[]) => {
 
 const runSequentially = async (
   configs: TestMatrixEntry[],
-  handler: (config: TestMatrixEntry, index: number) => Promise<HtmxTestResult>
+  handler: (config: TestMatrixEntry, index: number) => Promise<VueTestResult>
 ) =>
-  configs.reduce<Promise<HtmxTestResult[]>>(
+  configs.reduce<Promise<VueTestResult[]>>(
     (previousPromise, config, index) =>
       previousPromise.then(async (accumulated) => {
         const result = await handler(config, index);
@@ -384,7 +394,7 @@ const runSequentially = async (
     Promise.resolve([])
   );
 
-const printSummary = (results: HtmxTestResult[]) => {
+const printSummary = (results: VueTestResult[]) => {
   const sortedResults = results.map((result) => ({
     config: {
       authProvider: result.config.authProvider,
@@ -405,7 +415,7 @@ const printSummary = (results: HtmxTestResult[]) => {
   const passedCount = sortedResults.filter((result) => result.passed).length;
   const failedResults = sortedResults.filter((result) => !result.passed);
 
-  console.log('\n=== HTMX Test Summary ===\n');
+  console.log('\n=== Vue Test Summary ===\n');
   console.log(`Total: ${sortedResults.length}`);
   console.log(`Passed: ${passedCount}`);
   console.log(`Failed: ${failedResults.length}`);
@@ -423,7 +433,7 @@ const printSummary = (results: HtmxTestResult[]) => {
   failedResults.forEach((result) => {
     const failureConfig = result.config;
     console.log(
-      `\n- HTMX + ${failureConfig.databaseEngine} + ${failureConfig.orm} + ${failureConfig.authProvider}`
+      `\n- Vue + ${failureConfig.databaseEngine} + ${failureConfig.orm} + ${failureConfig.authProvider}`
     );
 
     result.errors.slice(0, MAX_ERRORS_TO_DISPLAY).forEach((error) => {
@@ -467,31 +477,26 @@ const parseSubsetFromArgs = (argv: string[]) => {
   return undefined;
 };
 
-type HtmxTestRunResult = {
-  passed: boolean;
-  results: HtmxTestResult[];
-};
-
-export const runHtmxTests = async (
+export const runVueTests = async (
   matrixEntriesOverride?: TestMatrixEntry[],
   testSubset?: number
-): Promise<HtmxTestRunResult> => {
+) => {
   const matrixEntries = loadMatrix(matrixEntriesOverride);
   const configsToTest = typeof testSubset === 'number'
     ? matrixEntries.slice(0, testSubset)
     : matrixEntries;
 
   console.log(
-    `Testing ${configsToTest.length} HTMX configurations (${matrixEntries.length} total in matrix)...\n`
+    `Testing ${configsToTest.length} Vue configurations (${matrixEntries.length} total in matrix)...\n`
   );
 
   const results = await runSequentially(configsToTest, async (config, index) => {
     const authLabel = config.authProvider === 'none' ? 'no auth' : 'auth';
     console.log(
-      `[${index + 1}/${configsToTest.length}] Testing HTMX + ${config.databaseEngine} + ${config.orm} + ${authLabel}...`
+      `[${index + 1}/${configsToTest.length}] Testing Vue + ${config.databaseEngine} + ${config.orm} + ${authLabel}...`
     );
 
-    const outcome = await scaffoldAndTestHtmx(config);
+    const outcome = await validateProjectWithCleanup(createProjectName(config), config);
 
     if (outcome.passed) {
       console.log(`  ✓ Passed (${outcome.testTime}ms)`);
@@ -520,10 +525,11 @@ export const runHtmxTests = async (
 if (import.meta.main) {
   const parsedSubset = parseSubsetFromArgs(process.argv);
 
-  runHtmxTests(undefined, parsedSubset)
+  runVueTests(undefined, parsedSubset)
     .then((outcome) => process.exit(outcome.passed ? 0 : 1))
     .catch((error) => {
-      console.error('HTMX test runner error:', error);
+      console.error('Vue test runner error:', error);
       process.exit(1);
     });
 }
+

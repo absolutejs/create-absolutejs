@@ -38,24 +38,18 @@ const parsePackageJson = (packageJsonPath: string) => {
   }
 };
 
-const ensureTypecheckScript = (packageJsonPath: string, errors: string[]) => {
+const getTypecheckScriptStatus = (packageJsonPath: string, errors: string[]) => {
   const parsed = parsePackageJson(packageJsonPath);
 
   if ('error' in parsed) {
     errors.push(`Failed to parse package.json: ${parsed.error.message}`);
 
-    return false;
+    return 'error';
   }
 
   const hasScript = parsed.scripts?.[TYPECHECK_SCRIPT];
 
-  if (!hasScript) {
-    errors.push(`No '${TYPECHECK_SCRIPT}' script found in package.json`);
-
-    return false;
-  }
-
-  return true;
+  return hasScript ? 'present' : 'missing';
 };
 
 const runTypecheck = async (
@@ -104,10 +98,166 @@ const extractErrorOutput = (output: string) => {
   return lines.slice(0, OUTPUT_PREVIEW_LINES).join('\n');
 };
 
-export const validateBuild = async (
+const TSC_MISSING_EXIT_CODE = 127;
+const STDOUT_WARNING_LINES = 3;
+
+const runTscFallback = async (projectPath: string) => {
+  const bunModule = await loadBunModule();
+  const { $: bunDollar, sleep } = bunModule;
+  const command = bunDollar`cd ${projectPath} && tsc --noEmit`.quiet().nothrow();
+
+  const startTime = Date.now();
+  const timeoutResult = sleep(COMPILE_TIMEOUT_MS).then(() => null as const);
+  const result = await Promise.race([command, timeoutResult]);
+
+  if (result === null) {
+    command.kill();
+
+    return {
+      compileTime: Date.now() - startTime,
+      status: 'timedOut' as const
+    };
+  }
+
+  const compileTime = Date.now() - startTime;
+  const exitCode = result.exitCode ?? -1;
+  const stdout = result.stdout?.toString() ?? '';
+  const stderr = result.stderr?.toString() ?? '';
+  const combinedOutput = `${stdout}\n${stderr}`.trim();
+  const lowerCombined = combinedOutput.toLowerCase();
+
+  if (exitCode === 0) {
+    return { compileTime, status: 'success' as const };
+  }
+
+  if (
+    exitCode === TSC_MISSING_EXIT_CODE ||
+    lowerCombined.includes('command not found') ||
+    lowerCombined.includes('not recognized') ||
+    lowerCombined.includes('enoent')
+  ) {
+    const warning =
+      combinedOutput.length > 0
+        ? combinedOutput.split('\n').slice(0, STDOUT_WARNING_LINES).join('\n')
+        : 'The TypeScript compiler (tsc) was not found on PATH.';
+
+    return { message: warning, status: 'missing' as const };
+  }
+
+  return {
+    compileTime,
+    exitCode,
+    status: 'failure' as const,
+    stderr,
+    stdout
+  };
+};
+
+const runPackageTypecheck = async (
   projectPath: string,
-  packageManager: 'bun' | 'npm' | 'pnpm' | 'yarn' = 'bun'
-): Promise<BuildResult> => {
+  packageManager: 'bun' | 'npm' | 'pnpm' | 'yarn'
+) => {
+  const startTime = Date.now();
+  const execution = await runTypecheck(projectPath, packageManager);
+  const compileTime = Date.now() - startTime;
+
+  if ('timedOut' in execution) {
+    return {
+      compileTime,
+      error: `TypeScript compilation timed out after ${COMPILE_TIMEOUT_MS}ms`,
+      passed: false
+    };
+  }
+
+  const { result } = execution;
+
+  if (result.exitCode === 0) {
+    return { compileTime, passed: true };
+  }
+
+  const output = [result.stdout?.toString() ?? '', result.stderr?.toString() ?? '']
+    .filter(Boolean)
+    .join('\n');
+  const errorMessage =
+    output.length > 0
+      ? `Compilation errors:\n${extractErrorOutput(output)}`
+      : `TypeScript compilation failed (exit code ${result.exitCode})`;
+
+  return {
+    compileTime,
+    error: errorMessage,
+    passed: false
+  };
+};
+
+const applyFallbackResult = (
+  fallback:
+    | { compileTime: number; passed: true; status: 'success' }
+    | { compileTime: number; error: string; passed: false; status: 'timedOut' }
+    | { message: string; status: 'missing' }
+    | {
+        compileTime: number;
+        exitCode: number;
+        status: 'failure';
+        stderr: string;
+        stdout: string;
+      }
+    | { status: 'missing'; message: string },
+  errors: string[]
+) => {
+  if (fallback.status === 'success') {
+    return { compileTime: fallback.compileTime, errors, passed: true };
+  }
+
+  if (fallback.status === 'timedOut') {
+    errors.push(`TypeScript compilation timed out after ${COMPILE_TIMEOUT_MS}ms`);
+
+    return { compileTime: fallback.compileTime, errors, passed: false };
+  }
+
+  if (fallback.status === 'missing') {
+    console.warn(
+      `⚠ TypeScript compiler not found; skipping typecheck step. (${fallback.message})`
+    );
+
+    return { errors, passed: true };
+  }
+
+  if (fallback.status === 'failure') {
+    const output = [fallback.stdout, fallback.stderr].filter(Boolean).join('\n');
+    const errorMessage =
+      output.length > 0
+        ? `Compilation errors:\n${extractErrorOutput(output)}`
+        : `TypeScript compilation failed (exit code ${fallback.exitCode})`;
+
+    errors.push(errorMessage);
+
+    return { compileTime: fallback.compileTime, errors, passed: false };
+  }
+
+  errors.push('Unknown error while running TypeScript compilation fallback.');
+
+  return { errors, passed: false };
+};
+
+const applyScriptTypecheckResult = (
+  typecheckResult:
+    | { compileTime?: number; error: string; passed: false }
+    | { compileTime?: number; passed: true; error?: string },
+  errors: string[]
+) => {
+  if (!typecheckResult.passed && typecheckResult.error) {
+    errors.push(typecheckResult.error);
+  }
+
+  return {
+    compileTime: typecheckResult.compileTime,
+    errors,
+    passed: typecheckResult.passed
+  };
+};
+
+export const validateBuild = async (projectPath: string, packageManager: 'bun' | 'npm' | 'pnpm' | 'yarn' = 'bun') => {
   const errors: string[] = [];
   const tsconfigPath = join(projectPath, 'tsconfig.json');
   const packageJsonPath = join(projectPath, 'package.json');
@@ -124,37 +274,24 @@ export const validateBuild = async (
     return { errors, passed: false };
   }
 
-  if (!ensureTypecheckScript(packageJsonPath, errors)) {
+  const scriptStatus = getTypecheckScriptStatus(packageJsonPath, errors);
+
+  if (scriptStatus === 'error') {
     return { errors, passed: false };
   }
 
-  const startTime = Date.now();
-  const execution = await runTypecheck(projectPath, packageManager);
-  const compileTime = Date.now() - startTime;
+  if (scriptStatus === 'present') {
+    const typecheckResult = await runPackageTypecheck(projectPath, packageManager);
 
-  if ('timedOut' in execution) {
-    errors.push(`TypeScript compilation timed out after ${COMPILE_TIMEOUT_MS}ms`);
-
-    return { compileTime, errors, passed: false };
+    return applyScriptTypecheckResult(typecheckResult, errors);
   }
 
-  const { result } = execution;
+  console.warn(
+    `⚠ No '${TYPECHECK_SCRIPT}' script found in package.json – falling back to 'tsc --noEmit'.`
+  );
+  const fallback = await runTscFallback(projectPath);
 
-  if (result.exitCode === 0) {
-    return { compileTime, errors, passed: true };
-  }
-
-  const output = [result.stdout?.toString() ?? '', result.stderr?.toString() ?? '']
-    .filter(Boolean)
-    .join('\n');
-  const errorMessage =
-    output.length > 0
-      ? `Compilation errors:\n${extractErrorOutput(output)}`
-      : `TypeScript compilation failed (exit code ${result.exitCode})`;
-
-  errors.push(errorMessage);
-
-  return { compileTime, errors, passed: false };
+  return applyFallbackResult(fallback, errors);
 };
 
 const parseCliArgs = () => {

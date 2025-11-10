@@ -22,6 +22,12 @@ const mysqlCountHistory = `CREATE TABLE IF NOT EXISTS count_history (
   created_at  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );`;
 
+const mongodbUsers =
+	"const admin = db.getSiblingDB('admin'); admin.auth('user', 'password'); const database = db.getSiblingDB('database'); database.users.updateOne({ auth_sub: 'seed-user' }, { \\$setOnInsert: { auth_sub: 'seed-user', created_at: new Date(), metadata: {} } }, { upsert: true });";
+
+const mongodbCountHistory =
+	"const admin = db.getSiblingDB('admin'); admin.auth('user', 'password'); const database = db.getSiblingDB('database'); database.count_history.updateOne({ uid: 1 }, { \\$setOnInsert: { uid: 1, count: 0, created_at: new Date() } }, { upsert: true });";
+
 const mariadbUsers = `CREATE TABLE IF NOT EXISTS users (
   auth_sub   VARCHAR(255) PRIMARY KEY,
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -94,6 +100,7 @@ export const userTables = {
 	mariadb: mariadbUsers,
 	mssql: mssqlUsers,
 	mysql: mysqlUsers,
+	mongodb: mongodbUsers,
 	postgresql: postgresqlUsers,
 	singlestore: singlestoreUsers
 } as const;
@@ -104,6 +111,7 @@ export const countHistoryTables = {
 	mariadb: mariadbCountHistory,
 	mssql: mssqlCountHistory,
 	mysql: mysqlCountHistory,
+	mongodb: mongodbCountHistory,
 	postgresql: postgresqlCountHistory,
 	singlestore: singlestoreCountHistory
 } as const;
@@ -124,6 +132,10 @@ export const initTemplates = {
 	mssql: {
 		cli: '/opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P sapassword -Q',
 		wait: 'until /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P sapassword -Q "SELECT 1" >/dev/null 2>&1; do sleep 1; done'
+	},
+	mongodb: {
+		cli: 'mongosh "mongodb://user:password@127.0.0.1:27017" --quiet --eval',
+		wait: 'until mongosh "mongodb://user:password@127.0.0.1:27017" --quiet --eval "db.runCommand({ ping: 1 })" >/dev/null 2>&1; do sleep 1; done'
 	},
 	mysql: {
 		cli: 'MYSQL_PWD=userpassword mysql -h127.0.0.1 -u user database -e',

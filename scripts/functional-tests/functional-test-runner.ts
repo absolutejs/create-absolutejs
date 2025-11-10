@@ -208,8 +208,29 @@ const printCliSummary = (result: FunctionalTestResult) => {
   }
 };
 
+const ALLOWED_PACKAGE_MANAGERS = new Set(['bun', 'npm', 'pnpm', 'yarn'] as const);
+
+type PackageManager = 'bun' | 'npm' | 'pnpm' | 'yarn';
+
+const normalizePackageManager = (input: string | undefined, remaining: string[]) => {
+  if (!input) {
+    return { packageManager: 'bun' as PackageManager, rest: remaining };
+  }
+
+  if (ALLOWED_PACKAGE_MANAGERS.has(input as PackageManager)) {
+    return { packageManager: input as PackageManager, rest: remaining };
+  }
+
+  if (input.startsWith('-')) {
+    return { packageManager: 'bun' as PackageManager, rest: [input, ...remaining] };
+  }
+
+  return { packageManager: 'bun' as PackageManager, rest: [input, ...remaining] };
+};
+
 const parseCliArguments = (argv: string[]) => {
-  const [, , projectPath, packageManager, ...rest] = argv;
+  const [, , projectPath, packageManagerCandidate, ...rest] = argv;
+  const { packageManager, rest: remaining } = normalizePackageManager(packageManagerCandidate, rest);
 
   return {
     options: {
@@ -217,9 +238,9 @@ const parseCliArguments = (argv: string[]) => {
       skipDependencies: argv.includes('--skip-deps'),
       skipServer: argv.includes('--skip-server')
     },
-    packageManager: (packageManager as 'bun' | 'npm' | 'pnpm' | 'yarn') ?? 'bun',
+    packageManager,
     projectPath,
-    remaining: rest
+    remaining
   } as const;
 };
 

@@ -120,28 +120,18 @@ const dockerComposeCommand = (
     { env }
   );
 
-const handleDockerUnavailable = (
-  stderr: string,
-  warnings: string[],
-  postgresqlSpecific: PostgreSQLValidationResult['postgresqlSpecific']
-) => {
+const handleDockerUnavailable = (stderr: string, warnings: string[]) => {
   warnings.push(
-    `Docker not available or requires sudo - skipping local PostgreSQL connection test: ${stderr.slice(0, DOCKER_WARNING_SNIPPET_LENGTH)}`
+    `Docker not available or requires elevated permissions; local PostgreSQL connection tests were skipped: ${stderr.slice(0, DOCKER_WARNING_SNIPPET_LENGTH)}`
   );
-  postgresqlSpecific.connectionWorks = true;
-  postgresqlSpecific.queriesWork = true;
 };
 
-const getDockerStartErrors = (
-  stderr: string,
-  warnings: string[],
-  postgresqlSpecific: PostgreSQLValidationResult['postgresqlSpecific']
-) => {
+const getDockerStartErrors = (stderr: string, warnings: string[]) => {
   const lowerStderr = stderr.toLowerCase();
   const requiresDockerAccess = stderr.includes('sudo') || lowerStderr.includes('docker');
 
   if (requiresDockerAccess) {
-    handleDockerUnavailable(stderr, warnings, postgresqlSpecific);
+    handleDockerUnavailable(stderr, warnings);
 
     return [];
   }
@@ -225,11 +215,7 @@ const startDockerContainer = async (
   const upResult = await dockerComposeCommand(composePath, ['up', '-d', 'db']);
 
   if (upResult.exitCode !== 0) {
-    const startErrors = getDockerStartErrors(
-      upResult.stderr || '',
-      warnings,
-      postgresqlSpecific
-    );
+    const startErrors = getDockerStartErrors(upResult.stderr || '', warnings);
 
     errors.push(...startErrors);
 

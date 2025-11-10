@@ -31,7 +31,7 @@ export type DependencyFingerprint = {
 };
 
 const CACHE_DIR = join(process.cwd(), '.test-dependency-cache');
-const LOCK_FILES = ['bun.lockb', 'package-lock.json'];
+const LOCK_FILES = ['bun.lockb', 'package-lock.json', 'pnpm-lock.yaml', 'yarn.lock'];
 const MINUTES_PER_INSTALL_TIMEOUT = 5;
 const SECONDS_PER_MINUTE = 60;
 const MILLISECONDS_PER_SECOND = 1_000;
