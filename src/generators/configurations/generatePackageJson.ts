@@ -126,11 +126,21 @@ export const createPackageJson = ({
 			'0.1.1'
 		);
 	}
-
 	if (orm === 'drizzle') {
 		dependencies['drizzle-orm'] = resolveVersion('drizzle-orm', '0.41.0');
+		devDependencies['drizzle-kit'] = resolveVersion('drizzle-kit', '0.30.6');
 	}
-
+	if (orm === 'prisma') {
+		dependencies['@prisma/client'] = resolveVersion('@prisma/client', '6.2.0');
+		devDependencies['prisma'] = resolveVersion('prisma', '6.2.0');
+	}
+	if (orm === 'prisma' && (databaseHost === 'neon' || databaseHost === 'planetscale')) {
+		dependencies['@prisma/extension-accelerate'] = resolveVersion(
+			'@prisma/extension-accelerate',
+			'1.2.1'
+		);
+	}
+	if (orm === 'drizzle') {
 	switch (databaseHost) {
 		case 'neon':
 			dependencies['@neondatabase/serverless'] = resolveVersion(
@@ -151,6 +161,7 @@ export const createPackageJson = ({
 			);
 			break;
 	}
+}
 
 	if (latest) s.stop(green('Package versions resolved'));
 
@@ -208,6 +219,17 @@ export const createPackageJson = ({
 	) {
 		scripts['db:sqlite'] = 'sqlite3 db/database.sqlite';
 		scripts['db:init'] = 'sqlite3 db/database.sqlite < db/init.sql';
+	}
+
+	if (orm === 'prisma') {
+  			scripts['postinstall'] = 'prisma generate';
+  			scripts['db:generate'] = 'prisma generate';
+  			scripts['db:push'] = 'prisma db push';
+  			scripts['db:studio'] = 'prisma studio';
+  			scripts['db:migrate'] = 'prisma migrate dev';
+  			scripts['db:migrate:deploy'] = 'prisma migrate deploy';
+  			scripts['db:migrate:reset'] = 'prisma migrate reset';
+
 	}
 
 	const packageJson: PackageJson = {
