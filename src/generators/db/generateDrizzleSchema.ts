@@ -95,6 +95,14 @@ export const generateDrizzleSchema = ({
 	} else if (databaseHost === 'turso') {
 		dbImport = `import { LibSQLDatabase } from 'drizzle-orm/libsql';`;
 		dbTypeLine = 'export type DatabaseType = LibSQLDatabase<SchemaType>;';
+	} else if (
+		databaseEngine === 'postgresql' &&
+		(databaseHost === undefined ||
+			databaseHost === 'none' ||
+			databaseHost === 'local')
+	) {
+		dbImport = `import { NodePgDatabase } from 'drizzle-orm/node-postgres';`;
+		dbTypeLine = 'export type DatabaseType = NodePgDatabase<SchemaType>;';
 	}
 
 	let uidColumn: string;

@@ -16,12 +16,16 @@ export const formatProject = async ({
 	packageManager,
 	installDependenciesNow
 }: FormatProjectProps) => {
+	// Skip formatting in non-interactive mode (when dependencies aren't installed)
+	// This prevents hanging on bunx/npx prettier commands
+	if (!installDependenciesNow) {
+		return;
+	}
+
 	const spin = spinner();
 
 	try {
-		const fmt = installDependenciesNow
-			? formatCommands[packageManager]
-			: formatNoInstallCommands[packageManager];
+		const fmt = formatCommands[packageManager];
 
 		spin.start('Formatting files…');
 		await $`sh -c ${fmt}`.cwd(projectName).quiet();

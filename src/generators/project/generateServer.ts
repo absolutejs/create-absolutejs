@@ -1,6 +1,7 @@
 import { writeFileSync, mkdirSync } from 'fs';
 import { join } from 'path';
 import type { CreateConfiguration } from '../../types';
+import { ensurePostgresSqlAdapter } from '../db/ensurePostgresSqlAdapter';
 import { collectDependencies } from './collectDependencies';
 import { computeFlags } from './computeFlags';
 import { generateBuildBlock } from './generateBuildBlock';
@@ -38,6 +39,14 @@ export const generateServerFile = ({
 }: CreateServerFileProps) => {
 	const serverFilePath = join(backendDirectory, 'server.ts');
 
+	if (
+		databaseEngine === 'postgresql' &&
+		(orm === undefined || orm === 'none') &&
+		(databaseHost === undefined || databaseHost === 'none')
+	) {
+		ensurePostgresSqlAdapter(backendDirectory);
+	}
+
 	const flags = computeFlags(frontendDirectories);
 	const deps = collectDependencies({ authProvider, flags, plugins });
 
@@ -73,7 +82,8 @@ export const generateServerFile = ({
 		authProvider,
 		buildDirectory,
 		flags,
-		frontendDirectories
+		frontendDirectories,
+		databaseEngine
 	});
 
 	const content = `${importsBlock}

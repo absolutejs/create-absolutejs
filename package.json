@@ -42,6 +42,8 @@
 		"dev": "if [ -f absolutejs-project/package.json ] && grep -q '\"db:reset\"' absolutejs-project/package.json; then cd absolutejs-project && bun run db:reset && cd ..; fi && rm -rf absolutejs-project && bun run src/index.ts",
 		"format": "prettier --write \"./**/*.{js,jsx,ts,tsx,css,json,mjs,md,svelte,html,vue}\"",
 		"lint": "eslint ./",
+		"test:behavioural": "bun test",
+		"test:cli": "bun run scripts/functional-tests/test-cli.ts",
 		"release": "bun run format && bun run build && bun publish",
 		"test": "bash -c 'trap \"exit 0\" INT; cd absolutejs-project && bun dev'",
 		"typecheck": "bun run tsc --noEmit"

@@ -37,7 +37,7 @@ const templates = {
 			MONGO_INITDB_ROOT_USERNAME: 'user'
 		},
 		image: 'mongo:7.0',
-		port: '27017:27017',
+		port: '27018:27017',
 		volumePath: '/data/db'
 	},
 	mssql: {
@@ -68,7 +68,7 @@ const templates = {
 			POSTGRES_USER: 'user'
 		},
 		image: 'postgres:15',
-		port: '5432:5432',
+		port: '5433:5432',
 		volumePath: '/var/lib/postgresql/data'
 	},
 	singlestore: {

@@ -1,0 +1,33 @@
+{
+  "dependencies": {
+    "@absolutejs/absolute": "0.12.3",
+    "@elysiajs/static": "1.4.0",
+    "elysia": "1.4.9",
+    "react": "19.2.0",
+    "pg": "8.12.0"
+  },
+  "devDependencies": {
+    "eslint": "9.27.0",
+    "prettier": "3.5.3",
+    "@types/react": "19.2.0",
+    "@types/pg": "8.11.10"
+  },
+  "name": "test-cli-project",
+  "scripts": {
+    "dev": "bash -c 'trap \"exit 0\" INT; bun run --watch src/backend/server.ts'",
+    "format": "prettier --write \"./**/*.{js,ts,css,json,mjs,md,jsx,tsx}\"",
+    "lint": "eslint ./src",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "typecheck": "bun run tsc --noEmit",
+    "db:up": "sh -c \"docker info >/dev/null 2>&1 || sudo service docker start; docker compose -p postgresql -f db/docker-compose.db.yml up -d db\"",
+    "db:down": "docker compose -p postgresql -f db/docker-compose.db.yml down",
+    "db:reset": "docker compose -p postgresql -f db/docker-compose.db.yml down -v",
+    "db:psql": "docker compose -p postgresql -f db/docker-compose.db.yml exec db bash -lc 'until pg_isready -U user -h localhost --quiet; do sleep 1; done; exec psql -h localhost -U user -d database'",
+    "predev": "bun db:up",
+    "predb:psql": "bun db:up",
+    "postdev": "bun db:down",
+    "postdb:psql": "bun db:down"
+  },
+  "type": "module",
+  "version": "0.0.0"
+}

@@ -20,7 +20,10 @@ export const generateDBHandlers = ({
 
 	const host =
 		databaseHost && databaseHost !== 'none' ? databaseHost : 'local';
-	const ormKey = orm === 'drizzle' ? 'drizzle' : 'sql';
+	// MongoDB uses 'native' instead of 'sql' when no ORM is selected
+	const ormKey = databaseEngine === 'mongodb' && orm === 'none' 
+		? 'native' 
+		: (orm === 'drizzle' ? 'drizzle' : 'sql');
 	const key = `${databaseEngine}:${ormKey}:${host}` as const;
 
 	// @ts-expect-error - TODO: Finish the other templates

@@ -221,6 +221,15 @@ export default defineConfig([
 		}
 	},
 	{
+		files: ['tests/**/*.{ts,tsx}'],
+		languageOptions: {
+			globals: globals.node
+		},
+		rules: {
+			'import/no-unused-modules': 'off'
+		}
+	},
+	{
 		files: [
 			'eslint.config.mjs',
 			'src/templates/configurations/*',

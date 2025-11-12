@@ -14,7 +14,7 @@ const connectionMap: Record<string, Record<string, DBExpr>> = {
 		none: { expr: 'createPool(getEnv("DATABASE_URL"))' }
 	},
 	mongodb: {
-		none: { expr: 'new MongoClient(getEnv("DATABASE_URL") })' }
+		none: { expr: 'new MongoClient(getEnv("DATABASE_URL"))' }
 	},
 	mssql: {
 		none: { expr: 'await connect(getEnv("DATABASE_URL"))' }
@@ -25,7 +25,7 @@ const connectionMap: Record<string, Record<string, DBExpr>> = {
 	},
 	postgresql: {
 		neon: {
-			expr: 'new Pool({ connectionString: getEnv("DATABASE_URL") })'
+			expr: 'neon(getEnv("DATABASE_URL"))'
 		},
 		none: { expr: 'new Pool({ connectionString: getEnv("DATABASE_URL") })' }
 	},
@@ -70,14 +70,40 @@ export const generateDBBlock = ({
 		const hostCfg = engineGroup[hostKey];
 		if (!hostCfg) return '';
 
+		// MongoDB needs special handling: connect and get database
+		if (databaseEngine === 'mongodb') {
+			return `
+const client = ${hostCfg.expr}
+await client.connect()
+const db = client.db('database')
+`;
+		}
+
+		if (databaseEngine === 'postgresql' && hostKey === 'none') {
+			return `
+const connectionString = ${hostCfg.expr.replace('new Pool({ connectionString: getEnv("DATABASE_URL") })', 'getEnv("DATABASE_URL")')}
+if (process.env.ABSOLUTE_TEST_VERBOSE === '1') {
+  console.log('Server runtime env: DATABASE_URL=' + connectionString)
+  console.log('Server runtime env: PGHOST=' + (process.env.PGHOST ?? 'undefined'))
+  console.log('Server runtime env: PGPORT=' + (process.env.PGPORT ?? 'undefined'))
+}
+const pool = new Pool({ connectionString })
+const db = createPgSql(pool)
+`;
+		}
+
 		return `
-const pool = ${hostCfg.expr}
+const db = ${hostCfg.expr}
 `;
 	}
 
 	if (!drizzleDialectSet.has(databaseEngine)) return '';
 
-	const expr = engineGroup[hostKey]?.expr ?? remoteDrizzleInit[hostKey];
+	// For Drizzle with remote hosts, use remoteDrizzleInit; otherwise use connectionMap
+	const isRemoteHost = hostKey !== 'none' && hostKey in remoteDrizzleInit;
+	const expr = isRemoteHost 
+		? (remoteDrizzleInit[hostKey] ?? engineGroup[hostKey]?.expr)
+		: (engineGroup[hostKey]?.expr ?? remoteDrizzleInit[hostKey]);
 	if (!expr) return '';
 
 	if (databaseEngine === 'mysql') {

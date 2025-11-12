@@ -7,13 +7,15 @@ type GenerateRoutesBlockProps = {
 	frontendDirectories: FrontendDirectories;
 	authProvider: AuthProvider;
 	buildDirectory: string;
+	databaseEngine?: string;
 };
 
 export const generateRoutesBlock = ({
 	flags,
 	frontendDirectories,
 	authProvider,
-	buildDirectory
+	buildDirectory,
+	databaseEngine
 }: GenerateRoutesBlockProps) => {
 	const routes: string[] = [];
 
@@ -51,8 +53,7 @@ export const generateRoutesBlock = ({
             cssPath: asset(manifest, 'VueExampleCSS'),
             title: 'AbsoluteJS + Vue',
             description: 'A Vue.js example with AbsoluteJS'
-          }),
-          { initialCount: 0 }
+          })
         )`
 				: `handleVuePageRequest(
           VueExample,
@@ -62,8 +63,7 @@ export const generateRoutesBlock = ({
             cssPath: asset(manifest, 'VueExampleCSS'),
             title: 'AbsoluteJS + Vue',
             description: 'A Vue.js example with AbsoluteJS'
-          }),
-          { initialCount: 0 }
+          })
         )`;
 
 		return '';
@@ -91,7 +91,8 @@ export const generateRoutesBlock = ({
 		}
 	);
 
-	if (authProvider === undefined || authProvider === 'none') {
+	const hasDatabase = databaseEngine !== undefined && databaseEngine !== 'none';
+	if (hasDatabase && (authProvider === undefined || authProvider === 'none')) {
 		routes.push(
 			`.get('/count/:uid', ({ params: { uid } }) => getCountHistory(db, uid), {
     params: t.Object({

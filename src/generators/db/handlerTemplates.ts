@@ -18,7 +18,7 @@ const buildSqlAuthTemplate = ({
 	dbType,
 	queries
 }: AuthTemplateOptions) => `
-import { isValidProviderOption, providers } from 'citra'
+import { isValidProviderOption, providers } from '@absolutejs/auth'
 ${importLines}
 ${handlerTypes?.UserRow ? `\ntype UserRow = ${handlerTypes.UserRow}` : ''}
 type UserHandlerProps = {
@@ -29,14 +29,26 @@ type UserHandlerProps = {
 
 export const getUser = async ({ authProvider, db, userIdentity }: UserHandlerProps) => {
   if (!isValidProviderOption(authProvider)) throw new Error(\`Invalid auth provider: \${authProvider}\`)
-  const subject = providers[authProvider].extractSubjectFromIdentity(userIdentity)
+  const provider = providers[authProvider as keyof typeof providers]
+  const identity = userIdentity as Record<string, unknown>
+  const subject =
+    (provider as any).extractSubjectFromIdentity?.(identity) ??
+    (identity.sub as string | undefined) ??
+    (identity.id as string | undefined) ??
+    String(identity.sub || identity.id || 'unknown')
   const authSub = \`\${authProvider.toUpperCase()}|\${subject}\`
   ${queries.selectUser}
 }
 
 export const createUser = async ({ authProvider, db, userIdentity }: UserHandlerProps) => {
   if (!isValidProviderOption(authProvider)) throw new Error(\`Invalid auth provider: \${authProvider}\`)
-  const subject = providers[authProvider].extractSubjectFromIdentity(userIdentity)
+  const provider = providers[authProvider as keyof typeof providers]
+  const identity = userIdentity as Record<string, unknown>
+  const subject =
+    (provider as any).extractSubjectFromIdentity?.(identity) ??
+    (identity.sub as string | undefined) ??
+    (identity.id as string | undefined) ??
+    String(identity.sub || identity.id || 'unknown')
   const authSub = \`\${authProvider.toUpperCase()}|\${subject}\`
   ${queries.insertUser}
 }
@@ -138,16 +150,57 @@ const postgresSqlQueryOperations: QueryOperations = {
 };
 
 const mongodbQueryOperations: QueryOperations = {
-	insertHistory: `const { insertedId } = await db.collection('count_history').insertOne({ count })
-  const newHistory = await db.collection('count_history').findOne({ _id: insertedId })
-  return newHistory`,
-	insertUser: `const { insertedId } = await db.collection('users').insertOne({ auth_sub: authSub, metadata: userIdentity })
-  const newUser = await db.collection('users').findOne({ _id: insertedId })
-  if (!newUser) throw new Error('Failed to create user')
-  return newUser`,
-	selectHistory: `const history = await db.collection('count_history').findOne({ uid })
+	insertHistory: `const entries = await db
+  .collection('count_history')
+  .find({}, { projection: { uid: 1 } })
+  .sort({ uid: -1 })
+  .limit(1)
+  .toArray()
+
+  const nextUid = (entries[0]?.uid ?? 0) + 1
+  const record = {
+    created_at: new Date(),
+    count,
+    uid: nextUid
+  }
+
+  await db.collection('count_history').insertOne(record)
+
+  const { _id: _unused, ...history } = record
+  return history`,
+	insertUser: `const record = {
+    auth_sub: authSub,
+    created_at: new Date(),
+    metadata: userIdentity
+  }
+
+  await db.collection('users').updateOne(
+    { auth_sub: authSub },
+    { $set: record },
+    { upsert: true }
+  )
+
+  const user = await db
+    .collection('users')
+    .findOne({ auth_sub: authSub }, { projection: { _id: 0 } })
+
+  if (!user) throw new Error('Failed to create user')
+  return user`,
+	selectHistory: `const history = await db
+  .collection('count_history')
+  .findOne(
+    { uid },
+    { projection: { _id: 0 } }
+  )
+
   return history ?? null`,
-	selectUser: `const user = await db.collection('users').findOne({ auth_sub: authSub })
+	selectUser: `const user = await db
+  .collection('users')
+  .findOne(
+    { auth_sub: authSub },
+    { projection: { _id: 0 } }
+  )
+
   return user ?? null`
 };
 
@@ -244,10 +297,9 @@ const [result] = await db.query<ResultSetHeader>(
   'INSERT INTO users (auth_sub, metadata) VALUES (?, ?)',
   [authSub, JSON.stringify(userIdentity)]
 );
-const insertId = result.insertId;
 const [rows] = await db.query<UserRow[]>(
-  'SELECT * FROM users WHERE uid = ? LIMIT 1',
-  [insertId]
+  'SELECT * FROM users WHERE auth_sub = ? LIMIT 1',
+  [authSub]
 );
 if (!rows[0]) throw new Error('Failed to create user');
 return rows[0];
@@ -282,40 +334,41 @@ const mysqlHandlerTypes: HandlerType = {
 		created_at: number;
 	}`,
 	UserRow: `RowDataPacket & {
-		uid: number;
 		auth_sub: string;
 		metadata: string;
 	}`
 };
 
 const mysqlDrizzleQueryOperations: QueryOperations = {
-	insertHistory: `const [row] = await db
+	insertHistory: `const insertResult = await db
     .insert(schema.countHistory)
     .values({ count })
-    .$returningId();
+    .execute();
 
-  if (!row) throw new Error('insert failed: no uid returned');
-  const { uid } = row;
+  const insertId =
+    Array.isArray(insertResult)
+      ? (insertResult[0] as { insertId?: number })?.insertId
+      : (insertResult as { insertId?: number }).insertId;
+
+  if (typeof insertId !== 'number') {
+    throw new Error('insert failed: no uid returned');
+  }
 
   const [newHistory] = await db
     .select()
     .from(schema.countHistory)
-    .where(eq(schema.countHistory.uid, uid));
+    .where(eq(schema.countHistory.uid, insertId));
 
   return newHistory;`,
 
-	insertUser: `const [row] = await db
+	insertUser: `await db
     .insert(schema.users)
-    .values({ auth_sub: authSub, metadata: userIdentity })
-    .$returningId();
-
-  if (!row) throw new Error('insert failed: no uid returned');
-  const { uid } = row;
+    .values({ auth_sub: authSub, metadata: userIdentity });
 
   const [newUser] = await db
     .select()
     .from(schema.users)
-    .where(eq(schema.users.uid, uid));
+    .where(eq(schema.users.auth_sub, authSub));
 
   if (!newUser) throw new Error('Failed to create user');
   return newUser;`,
@@ -368,7 +421,7 @@ import { schema, type SchemaType } from '../../../db/schema'`,
 		dbType: 'NodePgDatabase<SchemaType>',
 		importLines: `
 import { eq } from 'drizzle-orm'
-import { BunSQLDatabase } from 'drizzle-orm/bun-sql'
+import { NodePgDatabase } from 'drizzle-orm/node-postgres'
 import { schema, type SchemaType } from '../../../db/schema'`,
 		queries: drizzleQueryOperations
 	},
@@ -381,8 +434,8 @@ import { schema, type SchemaType } from '../../../db/schema'`,
 		queries: drizzleQueryOperations
 	},
 	'postgresql:sql:local': {
-		dbType: 'SQL',
-		importLines: `import { SQL } from 'bun'`,
+		dbType: 'PgSql',
+		importLines: `import type { PgSql } from '../database/createPgSql'`,
 		queries: postgresSqlQueryOperations
 	},
 	'postgresql:sql:neon': {

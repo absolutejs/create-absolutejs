@@ -1,4 +1,5 @@
 import { writeFileSync } from 'fs';
+import process from 'node:process';
 import { join } from 'path';
 import { $ } from 'bun';
 import { AuthProvider, DatabaseEngine } from '../../types';
@@ -34,23 +35,29 @@ export const scaffoldDocker = async ({
 	}
 
 	await checkDockerInstalled();
-	const dbContainer = generateDockerContainer(databaseEngine);
-	writeFileSync(
-		join(projectDatabaseDirectory, 'docker-compose.db.yml'),
-		dbContainer,
-		'utf-8'
-	);
+	const useSharedContainer =
+		process.env.ABSOLUTE_TEST === 'true' &&
+		(databaseEngine === 'postgresql' ||
+			databaseEngine === 'mysql' ||
+			databaseEngine === 'mariadb');
 
-	if (databaseEngine === 'mongodb') {
-	} else {
-		const { wait, cli } = initTemplates[databaseEngine];
-		const usesAuth = authProvider !== undefined && authProvider !== 'none';
-		const dbCommand = usesAuth
-			? userTables[databaseEngine]
-			: countHistoryTables[databaseEngine];
-		await $`bun db:up`.cwd(projectName);
-		await $`docker compose -p ${databaseEngine} -f db/docker-compose.db.yml exec -T db \
-  bash -lc '${wait} && ${cli} "${dbCommand}"'`.cwd(projectName);
-		await $`bun db:down`.cwd(projectName);
+	const dbContainer = generateDockerContainer(databaseEngine);
+	const composePath = join(projectDatabaseDirectory, 'docker-compose.db.yml');
+	writeFileSync(composePath, dbContainer, 'utf-8');
+
+	if (useSharedContainer) {
+		return;
 	}
+
+	const { wait, cli } = initTemplates[databaseEngine];
+	const usesAuth = authProvider !== undefined && authProvider !== 'none';
+	const dbCommand = usesAuth
+		? userTables[databaseEngine]
+		: countHistoryTables[databaseEngine];
+	const escapedDbCommand = dbCommand.replace(/\$/g, '\\$');
+
+	await $`bun db:up`.cwd(projectName);
+	await $`docker compose -p ${databaseEngine} -f db/docker-compose.db.yml exec -T db \
+  bash -lc '${wait} && ${cli} "${escapedDbCommand}"'`.cwd(projectName);
+	await $`bun db:down`.cwd(projectName);
 };

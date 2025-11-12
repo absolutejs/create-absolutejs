@@ -79,8 +79,16 @@ export const generateImportsBlock = ({
 			`import VueExample from '${buildExamplePath(vueDir, 'VueExample.vue')}'`
 		);
 
+	// Neon requires different imports based on whether ORM is used
+	const getNeonImport = () => {
+		if (orm === 'drizzle') {
+			return [`import { Pool } from '@neondatabase/serverless'`];
+		}
+		return [`import { neon } from '@neondatabase/serverless'`];
+	};
+
 	const connectorImports = {
-		neon: [`import { Pool } from '@neondatabase/serverless'`],
+		neon: getNeonImport(),
 		planetscale: [`import { connect } from '@planetscale/database'`],
 		turso: [`import { createClient } from '@libsql/client'`]
 	} as const;
@@ -142,13 +150,28 @@ export const generateImportsBlock = ({
 		rawImports.push(`import { getEnv } from '@absolutejs/absolute'`);
 	}
 
-	if (noOrm && databaseEngine === 'postgresql')
+	if (noOrm && databaseEngine === 'postgresql') {
+		if (isRemoteHost) {
+			const connectorKey = databaseHost as keyof typeof connectorImports;
+			if (connectorImports[connectorKey]) {
+				rawImports.push(...connectorImports[connectorKey]);
+			}
+		} else {
+			rawImports.push(
+				`import { Pool } from 'pg'`,
+				`import { createPgSql } from './database/createPgSql'`
+			);
+		}
+
+		rawImports.push(`import { getEnv } from '@absolutejs/absolute'`);
+	}
+
+	if (noOrm && databaseEngine === 'mongodb') {
 		rawImports.push(
-			...(isRemoteHost
-				? connectorImports[databaseHost as 'neon']
-				: [`import { Pool } from 'pg'`]),
+			`import { MongoClient } from 'mongodb'`,
 			`import { getEnv } from '@absolutejs/absolute'`
 		);
+	}
 
 	if (orm === 'drizzle') {
 		rawImports.push(
