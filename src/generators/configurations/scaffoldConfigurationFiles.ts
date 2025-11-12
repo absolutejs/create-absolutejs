@@ -4,6 +4,7 @@ import { dim, yellow } from 'picocolors';
 import type { CreateConfiguration } from '../../types';
 import { generateEnv } from './generateEnv';
 import { generatePrettierrc } from './generatePrettierrc';
+import { generateBiomeConfig } from './generateBiomeConfig';
 
 type AddConfigurationProps = Pick<
 	CreateConfiguration,
@@ -63,20 +64,19 @@ export const scaffoldConfigurationFiles = ({
 		const prettierrc = generatePrettierrc(frontends);
 		writeFileSync(join(projectName, '.prettierrc.json'), prettierrc);
 	} else if (codeQualityTool === 'biome') {
-		// Biome configuration
-		copyFileSync(
-			join(templatesDirectory, 'configurations', 'biome.json'),
-			join(projectName, 'biome.json')
-		);
+		// Generate biome.json dynamically based on selected frontends
+		const biomeJson = generateBiomeConfig({ frontends });
+		writeFileSync(join(projectName, 'biome.json'), biomeJson, 'utf8');
+
+		// Optional: copy a shared .biomeignore template if you keep one in templates
 		copyFileSync(
 			join(templatesDirectory, 'configurations', '.biomeignore'),
 			join(projectName, '.biomeignore')
 		);
-	} else {
+	} else
 		console.warn(
-			`${dim('│')}\n${yellow('▲')}  No code-quality tool selected or unsupported tool`
+			`${dim('│')}\n${yellow('▲')}  Biome support not implemented yet`
 		);
-	}
 
 	generateEnv({
 		databaseEngine,

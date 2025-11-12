@@ -5,6 +5,7 @@
 	},
 	"dependencies": {
 		"@clack/prompts": "0.11.0",
+		"npm": "^11.6.2",
 		"picocolors": "1.1.1"
 	},
 	"description": "A CLI tool to create a new AbsoluteJS project",
