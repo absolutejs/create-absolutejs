@@ -225,7 +225,6 @@ export const createPackageJson = ({
 		scripts.format = 'biome format . --write';
 		scripts.lint = 'biome lint .';
 		scripts.check = 'biome check .';
-		scripts['ci:biome'] = 'biome ci .';
 	}
 
 	const packageJson: PackageJson = {

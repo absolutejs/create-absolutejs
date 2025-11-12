@@ -12,3 +12,5 @@ out
 pnpm-lock.yaml
 yarn.lock
 .DS_Store
+tsconfig.json
+tsconfig.*.json

@@ -28,7 +28,12 @@
     "enabled": true,
     "rules": {
       "recommended": true,
-      "a11y": { "recommended": true },
+      "a11y": {
+        "recommended": true,
+        "useHtmlLang": "off",
+        "noBlankTarget": "off",
+        "useButtonType": "off"
+      },
       "performance": { "recommended": true },
       "security": { "recommended": true },
       "correctness": { "noUnusedVariables": "warn" },
@@ -36,17 +41,12 @@
       "style": {
         "useBlockStatements": "error",
         "noVar": "error",
-        "noParameterAssign": "warn"
+        "noParameterAssign": "warn",
+        "organizeImports": "off"
       }
     }
   },
   "javascript": {
-    "formatter": {
-      "quoteStyle": "single",
-      "semicolons": "always"
-    }
-  },
-  "typescript": {
     "formatter": {
       "quoteStyle": "single",
       "semicolons": "always"
@@ -57,6 +57,11 @@
     {
       "include": ["**/*.md", "**/*.mdx"],
       "formatter": { "lineWidth": 80 }
+    },
+    {
+      "include": ["tsconfig.json", "tsconfig.*.json"],
+      "formatter": { "enabled": false },
+      "linter": { "enabled": false }
     },
     {
       "include": ["**/*.{yml,yaml}"],
