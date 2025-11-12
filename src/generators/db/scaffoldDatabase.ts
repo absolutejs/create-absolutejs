@@ -141,4 +141,3 @@ if (orm === 'prisma') {
 	}
 	return;
 };
-
