@@ -4,6 +4,7 @@ import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { generateBiomeConfig } from '../src/generators/configurations/generateBiomeConfig.js';
 
+
 const combos = [
 	[], // vanilla
 	['react'],
