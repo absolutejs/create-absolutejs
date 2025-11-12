@@ -246,3 +246,4 @@ export const createPackageJson = ({
 		JSON.stringify(packageJson, null, 2)
 	);
 };
+
