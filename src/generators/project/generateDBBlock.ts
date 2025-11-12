@@ -1,4 +1,4 @@
-import { availableDrizzleDialects } from '../../data';
+import { availableDrizzleDialects, availablePrismaDialects } from '../../data';
 import type { CreateConfiguration } from '../../types';
 
 type DBExpr = { expr: string };
@@ -45,6 +45,7 @@ const remoteDrizzleInit: Record<string, string> = {
 };
 
 const drizzleDialectSet = new Set<string>([...availableDrizzleDialects]);
+const prismaDialectSet = new Set<string>([...availablePrismaDialects]);
 
 type GenerateDBBlockProps = Pick<
 	CreateConfiguration,
@@ -66,21 +67,19 @@ export const generateDBBlock = ({
 	const engineGroup = connectionMap[databaseEngine];
 	if (!engineGroup) return '';
 
-	if (orm !== 'drizzle') {
+	if (orm !== 'drizzle' && orm !== 'prisma') {
 		const hostCfg = engineGroup[hostKey];
 		if (!hostCfg) return '';
 
-		return `
-const pool = ${hostCfg.expr}
-`;
+		return `const pool = ${hostCfg.expr}`;
 	}
+	if (orm === 'drizzle') {
+		if (!drizzleDialectSet.has(databaseEngine)) return '';
 
-	if (!drizzleDialectSet.has(databaseEngine)) return '';
+		const expr = engineGroup[hostKey]?.expr ?? remoteDrizzleInit[hostKey];
+		if (!expr) return '';
 
-	const expr = engineGroup[hostKey]?.expr ?? remoteDrizzleInit[hostKey];
-	if (!expr) return '';
-
-	if (databaseEngine === 'mysql') {
+		if (databaseEngine === 'mysql') {
 		const mode = databaseHost === 'planetscale' ? 'planetscale' : 'default';
 
 		return `
@@ -100,4 +99,12 @@ const db = drizzle(pool, { schema })
 const pool = ${expr}
 const db = drizzle(pool, { schema })
 `;
+}
+if (orm === 'prisma') {
+		if (!prismaDialectSet.has(databaseEngine)) return '';
+
+		return `const prisma = (await import('../../db/client')).default`;
+	}
+
+	return '';
 };
