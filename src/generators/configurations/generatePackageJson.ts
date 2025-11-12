@@ -84,7 +84,7 @@ export const createPackageJson = ({
 			);
 		});
 	}
-	// ✅ Biome: only add the devDependency here (scripts come later after scripts is initialized)
+	//  Biome: add devDependency here (scripts come later after scripts is initialized)
 	else if (codeQualityTool === 'biome') {
 		devDependencies['@biomejs/biome'] = resolveVersion(
 			'@biomejs/biome',
@@ -220,11 +220,11 @@ export const createPackageJson = ({
 		scripts['db:init'] = 'sqlite3 db/database.sqlite < db/init.sql';
 	}
 
-	//If Biome is the selected tool, override the code-quality scripts here
+	//  If Biome is the selected tool, override the code-quality scripts here
 	if (codeQualityTool === 'biome') {
-		scripts.format = 'biome format . --write';
-		scripts.lint = 'biome lint .';
-		scripts.check = 'biome check .';
+		scripts.format = 'npx @biomejs/biome format . --write';
+		scripts.lint = 'npx @biomejs/biome lint .';
+		scripts.check = 'npx @biomejs/biome check .';
 	}
 
 	const packageJson: PackageJson = {

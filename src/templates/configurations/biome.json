@@ -1,79 +1,84 @@
 {
-  "$schema": "https://biomejs.dev/schemas/1.7.0/schema.json",
-  "files": {
-    "include": ["**/*"],
-    "ignore": [
-      "node_modules",
-      "dist",
-      "build",
-      "coverage",
-      ".next",
-      ".turbo",
-      ".vercel",
-      ".cache",
-      ".output",
-      "tmp",
-      "out",
-      "pnpm-lock.yaml",
-      "yarn.lock"
-    ]
-  },
-  "formatter": {
-    "enabled": true,
-    "indentStyle": "tab",
-    "indentWidth": 4,
-    "lineWidth": 80
-  },
-  "linter": {
-    "enabled": true,
-    "rules": {
-      "recommended": true,
-      "a11y": {
-        "recommended": true,
-        "useHtmlLang": "off",
-        "noBlankTarget": "off",
-        "useButtonType": "off"
-      },
-      "performance": { "recommended": true },
-      "security": { "recommended": true },
-      "correctness": { "noUnusedVariables": "warn" },
-      "complexity": { "noUselessCatch": "warn" },
-      "style": {
-        "useBlockStatements": "error",
-        "noVar": "error",
-        "noParameterAssign": "warn",
-        "organizeImports": "off"
-      }
-    }
-  },
-  "javascript": {
-    "formatter": {
-      "quoteStyle": "single",
-      "semicolons": "always"
-    }
-  },
-  "organizeImports": { "enabled": true },
-  "overrides": [
-    {
-      "include": ["**/*.md", "**/*.mdx"],
-      "formatter": { "lineWidth": 80 }
-    },
-    {
-      "include": ["tsconfig.json", "tsconfig.*.json"],
-      "formatter": { "enabled": false },
-      "linter": { "enabled": false }
-    },
-    {
-      "include": ["**/*.{yml,yaml}"],
-      "formatter": { "indentStyle": "space", "indentWidth": 2 }
-    },
-    {
-      "include": ["**/*.json", "**/*.jsonc", "**/*.json5"],
-      "formatter": { "indentStyle": "space", "indentWidth": 2 }
-    },
-    {
-      "include": ["**/*.{config,cfg}.{js,ts,mjs,cjs}"],
-      "linter": { "rules": { "complexity": { "recommended": false } } }
-    }
-  ]
+	"$schema": "https://biomejs.dev/schemas/1.7.0/schema.json",
+	"files": {
+		"include": ["**/*"],
+		"ignore": [
+			"node_modules",
+			"dist",
+			"build",
+			"coverage",
+			".next",
+			".turbo",
+			".vercel",
+			".cache",
+			".output",
+			"tmp",
+			"out",
+			"pnpm-lock.yaml",
+			"yarn.lock"
+		]
+	},
+	"formatter": {
+		"enabled": true,
+		"indentStyle": "tab",
+		"indentWidth": 4,
+		"lineWidth": 80
+	},
+	"linter": {
+		"enabled": true,
+		"rules": {
+			"recommended": true,
+			"a11y": {
+				"recommended": true,
+				"useHtmlLang": "off",
+				"noBlankTarget": "off",
+				"useButtonType": "off"
+			},
+			"performance": { "recommended": true },
+			"security": { "recommended": true },
+			"correctness": { "noUnusedVariables": "warn" },
+			"complexity": { "noUselessCatch": "warn" },
+			"style": {
+				"useBlockStatements": "error",
+				"noVar": "error",
+				"noParameterAssign": "warn"
+			}
+		}
+	},
+	"javascript": {
+		"formatter": {
+			"quoteStyle": "single",
+			"semicolons": "always"
+		}
+	},
+	"organizeImports": { "enabled": true },
+	"overrides": [
+		{
+			"include": ["**/*.md", "**/*.mdx"],
+			"formatter": { "lineWidth": 80 }
+		},
+		{
+			"include": ["**/*.{yml,yaml}"],
+			"formatter": { "indentStyle": "space", "indentWidth": 2 }
+		},
+		{
+			"include": [
+				"**/*.json",
+				"**/*.jsonc",
+				"**/*.json5",
+				"tsconfig.json",
+				"tsconfig.*.json"
+			],
+			"formatter": {
+				"indentStyle": "space",
+				"indentWidth": 2,
+				"enabled": false
+			},
+			"linter": { "enabled": false }
+		},
+		{
+			"include": ["**/*.{config,cfg}.{js,ts,mjs,cjs}"],
+			"linter": { "rules": { "complexity": { "recommended": false } } }
+		}
+	]
 }

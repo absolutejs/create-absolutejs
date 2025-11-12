@@ -63,7 +63,6 @@ export const scaffoldConfigurationFiles = ({
 		const prettierrc = generatePrettierrc(frontends);
 		writeFileSync(join(projectName, '.prettierrc.json'), prettierrc);
 	} else if (codeQualityTool === 'biome') {
-		// Biome configuration
 		copyFileSync(
 			join(templatesDirectory, 'configurations', 'biome.json'),
 			join(projectName, 'biome.json')
