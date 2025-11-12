@@ -23,7 +23,6 @@ export const availablePrismaDialects = [
 	'mysql',
 	'postgresql',
 	'sqlite',
-	'mongodb',
 	'mariadb',
 	'cockroachdb',
 	'mssql'
@@ -117,6 +116,24 @@ export const eslintAndPrettierDependencies: AvailableDependency[] = [
 	{
 		latestVersion: '3.5.3',
 		value: 'prettier'
+	}
+];
+
+export const prismaRuntimeDependencies: AvailableDependency[] = [
+	{
+		latestVersion: '6.2.0',
+		value: '@prisma/client'
+	}
+];
+
+export const prismaDevDependencies: AvailableDependency[] = [
+	{
+		latestVersion: '6.2.0',
+		value: 'prisma'
+	},
+	{
+		latestVersion: '1.2.1',
+		value: '@prisma/extension-accelerate'
 	}
 ];
 

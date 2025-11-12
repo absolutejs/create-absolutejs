@@ -103,7 +103,7 @@ export const scaffoldDatabase = async ({
 		return;
 	}
 
-if (orm === 'prisma') {
+	if (orm === 'prisma') {
 		if (!isPrismaDialect(databaseEngine)) {
 			throw new Error('Internal type error: Expected a Prisma dialect');
 		}
@@ -113,30 +113,41 @@ if (orm === 'prisma') {
 			databaseEngine,
 			databaseHost
 		});
-		writeFileSync(
-			join(projectDatabaseDirectory, 'schema.prisma'),
-			prismaSchema
-		);
+
+		const schemaPath = join(projectDatabaseDirectory, 'schema.prisma');
+		writeFileSync(schemaPath, prismaSchema);
+
 		generatePrismaClient({
-			databaseEngine,
 			databaseHost,
 			databaseDirectory,
 			projectName
 		});
+
+		const schemaArg = `${databaseDirectory}/schema.prisma`;
+		const projectCwd = join(projectName);
+
 		try {
-			await $`npx prisma generate --schema ${databaseDirectory}/schema.prisma`.cwd(join(projectName));
+			await $`npx prisma generate --schema ${schemaArg}`.cwd(projectCwd);
 		} catch (error) {
 			console.error('Error generating Prisma client:', error);
 		}
+
 		const isLocalDatabase = !databaseHost || databaseHost === 'none';
-		if (isLocalDatabase && databaseEngine !== 'sqlite') {
+
+		if (isLocalDatabase) {
 			try {
-				await $`npx prisma migrate dev --name init --skip-generate --schema ${databaseDirectory}/schema.prisma`.cwd(projectName);
+				if (databaseEngine === 'sqlite') {
+					await $`npx prisma db push --schema ${schemaArg}`.cwd(
+						projectCwd
+					);
+				} else {
+					await $`npx prisma migrate dev --name init --skip-generate --schema ${schemaArg}`.cwd(
+						projectCwd
+					);
+				}
 			} catch (error) {
-				console.error('Error running Prisma migration:', error);
+				console.error('Error running Prisma migrations:', error);
 			}
-		} else if (isLocalDatabase) {
-			console.log('Skipping initial Prisma migration for SQLite database.');
 		}
 	}
 	return;

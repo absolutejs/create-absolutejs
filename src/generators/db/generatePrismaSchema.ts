@@ -1,135 +1,98 @@
-import { AuthProvider, AvailablePrismaDialect, DatabaseHost } from "../../types";
+import type {
+	AuthProvider,
+	AvailablePrismaDialect,
+	DatabaseHost
+} from '../../types';
 
-const DIALECTS = { 
-    cockroachdb: {
-        provider: 'cockroachdb',
-        autoIncrement: '@default(sequence())',
-        stringType: 'String',
-        jsonType: 'Json',
-        intType: 'Int',
-        dateTimeType: 'DateTime'
-    },
-    mariadb: {
-        provider: 'mysql',
-        autoIncrement: '@default(autoincrement())',
-        stringType: 'String',
-        jsonType: 'Json',
-        intType: 'Int',
-        dateTimeType: 'DateTime'
-    },
-    mongodb: {
-        provider: 'mongodb',
-        autoIncrement: '@default(auto()) @map("_id") @db.ObjectId',
-        stringType: 'String',
-        jsonType: 'Json',
-        intType: 'Int',
-        dateTimeType: 'DateTime'
-    },
-    mssql: {  // ← ADD THIS
-        provider: 'sqlserver',
-        autoIncrement: '@default(autoincrement())',
-        stringType: 'String',
-        jsonType: 'Json',
-        intType: 'Int',
-        dateTimeType: 'DateTime'
-    },
-    mysql: {
-        provider: 'mysql',
-        autoIncrement: '@default(autoincrement())',
-        stringType: 'String',
-        jsonType: 'Json',
-        intType: 'Int',
-        dateTimeType: 'DateTime'
-    },
-    postgresql: {
-        provider: 'postgresql',
-        autoIncrement: '@default(autoincrement())',
-        stringType: 'String',
-        jsonType: 'Json',
-        intType: 'Int',
-        dateTimeType: 'DateTime'
-    },
-    sqlite: {
-        provider: 'sqlite',
-        autoIncrement: '@default(autoincrement())',
-        stringType: 'String',
-        jsonType: 'Json',
-        intType: 'Int',
-        dateTimeType: 'DateTime'
-    },
-} as const;
+type DialectConfig = {
+	provider: string;
+	countHistoryId: string;
+};
+
+const DIALECTS: Record<AvailablePrismaDialect, DialectConfig> = {
+	cockroachdb: {
+		provider: 'cockroachdb',
+		countHistoryId: 'Int @id @default(sequence())'
+	},
+	mariadb: {
+		provider: 'mysql',
+		countHistoryId: 'Int @id @default(autoincrement())'
+	},
+	mssql: {
+		provider: 'sqlserver',
+		countHistoryId: 'Int @id @default(autoincrement())'
+	},
+	mysql: {
+		provider: 'mysql',
+		countHistoryId: 'Int @id @default(autoincrement())'
+	},
+	postgresql: {
+		provider: 'postgresql',
+		countHistoryId: 'Int @id @default(autoincrement())'
+	},
+	sqlite: {
+		provider: 'sqlite',
+		countHistoryId: 'Int @id @default(autoincrement())'
+	}
+};
 
 type GeneratePrismaSchemaProps = {
-    databaseEngine: AvailablePrismaDialect;
-    databaseHost: DatabaseHost;
-    authProvider: AuthProvider;
+	databaseEngine: AvailablePrismaDialect;
+	databaseHost: DatabaseHost;
+	authProvider: AuthProvider;
 };
 
-const getDatabaseUrl = (databaseEngine: AvailablePrismaDialect, databaseHost: DatabaseHost): string => {
-    if (databaseHost === 'neon') {
-        return 'env("DATABASE_URL")';
-    }
-    if (databaseHost === 'planetscale') {
-        return 'env("DATABASE_URL")';
-    }
-    if (databaseHost === 'turso') {
-        return 'env("DATABASE_URL")';
-    }
-    switch (databaseEngine) {
-        case 'postgresql':
-            return '"postgresql://user:password@localhost:5432/database"';
-        case 'mysql':
-        case 'mariadb':
-            return '"mysql://user:userpassword@localhost:3306/database"';
-        case 'sqlite':
-            return '"file:./database.sqlite"';
-        case 'cockroachdb':
-            return '"postgresql://root@localhost:26257/database?sslmode=disable"';
-        case 'mssql':
-            return '"sqlserver://localhost:1433;database=database;user=sa;password=Strong_Passw0rd;encrypt=true;trustServerCertificate=true"';
-        case 'mongodb':
-            return '"mongodb://user:password@localhost:27017/database"';
-        default:
-            return 'env("DATABASE_URL")';
-    }
+const buildGeneratorBlock = (databaseHost: DatabaseHost) => {
+	const needsDriverAdapters =
+		databaseHost === 'neon' || databaseHost === 'planetscale';
+	const previewFeatures = needsDriverAdapters
+		? '\n  previewFeatures = ["driverAdapters"]'
+		: '';
+
+	return `generator client {
+  provider = "prisma-client-js"${previewFeatures}
+}`;
 };
+
+const buildDatasourceBlock = (cfg: DialectConfig) => `datasource db {
+  provider = "${cfg.provider}"
+  url      = env("DATABASE_URL")
+}`;
+
+const buildUserModel = (cfg: DialectConfig) => `model User {
+  auth_sub   String @id
+  metadata   Json
+  created_at DateTime @default(now())
+
+  @@map("users")
+}`;
+
+const buildCountHistoryModel = (cfg: DialectConfig) => `model CountHistory {
+  uid        ${cfg.countHistoryId}
+  count      Int
+  created_at DateTime @default(now())
+
+  @@map("count_history")
+}`;
 
 export const generatePrismaSchema = ({
-    databaseEngine,
-    databaseHost,
-    authProvider
+	databaseEngine,
+	databaseHost,
+	authProvider
 }: GeneratePrismaSchemaProps): string => {
-    const cfg = DIALECTS[databaseEngine];
-    const databaseUrl = getDatabaseUrl(databaseEngine, databaseHost);
-    
-    const generatorBlock = `generator client {
-  provider = "prisma-client-js"
-}
-`;
-    
-    const datasourceBlock = `datasource db {
-  provider = "${cfg.provider}"
-  url      = ${databaseUrl}
-}
-`;
+	const cfg = DIALECTS[databaseEngine];
+	if (!cfg) {
+		throw new Error(
+			`Unsupported Prisma dialect "${databaseEngine}" encountered while generating schema.`
+		);
+	}
 
-    const modelBlock = authProvider === 'absoluteAuth' 
-        ? `model User {
-  auth_sub   ${cfg.stringType} @id @db.VarChar(255)
-  created_at ${cfg.dateTimeType} @default(now())
-  metadata   ${cfg.jsonType}    @default("{}")
-  
-  @@map("users")
-}
-`
-        : `model CountHistory {
-  uid        ${cfg.intType} @id ${cfg.autoIncrement}
-  count      ${cfg.intType}
-  created_at ${cfg.dateTimeType} @default(now())
-  
-  @@map("count_history")
-}
-`;
-    
-    return `${generatorBlock}\n${datasourceBlock}\n${modelBlock}`;
+	const generatorBlock = buildGeneratorBlock(databaseHost);
+	const datasourceBlock = buildDatasourceBlock(cfg);
+	const modelBlock =
+		authProvider === 'absoluteAuth'
+			? buildUserModel(cfg)
+			: buildCountHistoryModel(cfg);
+
+	return [generatorBlock, datasourceBlock, modelBlock].join('\n\n');
 };

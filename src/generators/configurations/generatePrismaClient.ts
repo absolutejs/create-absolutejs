@@ -1,45 +1,58 @@
 import { writeFileSync } from 'fs';
 import { join } from 'path';
-import type { AvailablePrismaDialect, DatabaseHost } from '../../types';
+import type { DatabaseHost } from '../../types';
 
-type GeneratePrismaCleintProps = {
-    databaseEngine: AvailablePrismaDialect;
-    databaseHost: DatabaseHost;
-    databaseDirectory: string;
-    projectName: string;
+type GeneratePrismaClientProps = {
+	databaseHost: DatabaseHost;
+	databaseDirectory: string;
+	projectName: string;
 };
 
-const getPrismaClientImport = (databaseHost: DatabaseHost): string => {
-    switch (databaseHost) {
-        case 'neon':
-            return `import { createClient } from '@neondatabase/serverless';`;
-        case 'planetscale':
-            return `import { createClient } from '@planetscale/database';`;
-        case 'turso':
-            return `import { createClient } from '@turso/client';`;
-        default:
-            return `import { PrismaClient } from '@prisma/client';`;
+const buildClientModule = (databaseHost: DatabaseHost) => {
+	const usesAccelerate =
+		databaseHost === 'neon' || databaseHost === 'planetscale';
+	const clientImport = usesAccelerate
+		? `import { PrismaClient } from '@prisma/client/edge'`
+		: `import { PrismaClient } from '@prisma/client'`;
+	const accelerateImport = usesAccelerate
+		? `import { withAccelerate } from '@prisma/extension-accelerate'\n`
+		: '';
+
+	const instantiate = usesAccelerate
+		? `const prisma =
+  globalForPrisma.prisma ??
+  new PrismaClient({
+    datasources: {
+      db: { url: process.env.DATABASE_URL }
     }
-};
+  }).$extends(withAccelerate())`
+		: `const prisma = globalForPrisma.prisma ?? new PrismaClient()`;
 
-export const generatePrismaClient = ({
-    databaseEngine,
-    databaseHost,
-    databaseDirectory,
-    projectName
-}: GeneratePrismaCleintProps) => {
-    const prismaClientImport = getPrismaClientImport(databaseHost);
-    const prismaClientContent = `${prismaClientImport}
-    const globalForPrisma = globalThis as unknown as {
+	return `${clientImport}
+${accelerateImport}const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined
 }
 
-export const prisma = globalForPrisma.prisma ?? new PrismaClient()
+${instantiate}
 
-if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma
+if (process.env.NODE_ENV !== 'production') {
+  globalForPrisma.prisma = prisma
+}
 
-export default prisma
+export const prismaClient = prisma
+export default prismaClient
 `;
+};
 
-    writeFileSync(join(projectName, databaseDirectory, 'prisma-client.ts'), prismaClientContent);
+export const generatePrismaClient = ({
+	databaseHost,
+	databaseDirectory,
+	projectName
+}: GeneratePrismaClientProps) => {
+	const contents = buildClientModule(databaseHost);
+	writeFileSync(
+		join(projectName, databaseDirectory, 'client.ts'),
+		contents,
+		'utf-8'
+	);
 };

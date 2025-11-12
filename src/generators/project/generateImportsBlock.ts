@@ -103,11 +103,11 @@ export const generateImportsBlock = ({
 		rawImports.push(...connectorImports[key], ...dialectImports[key]);
 	}
 	if (orm === 'prisma') {
-		if (databaseEngine !== 'sqlite' || isRemoteHost) {
-			rawImports.push(`import { getEnv } from '@absolutejs/absolute'`);
+		rawImports.push(`import type { Elysia } from 'elysia'`);
+		rawImports.push(`import type { PrismaClient } from '@prisma/client'`);
+		if (authProvider === 'absoluteAuth') {
+			rawImports.push(`import type { User } from '@prisma/client'`);
 		}
-	
-	rawImports.push(`import type { Elysia } from 'elysia'`, authProvider === 'absoluteAuth' ? `import type { User } from '@prisma/client'` : ``);
 	}
 	if (orm === 'drizzle' && !isRemoteHost && databaseEngine === 'postgresql')
 		rawImports.push(

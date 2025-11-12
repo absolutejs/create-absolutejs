@@ -7,7 +7,9 @@ import {
 	availablePlugins,
 	defaultDependencies,
 	defaultPlugins,
-	eslintAndPrettierDependencies
+	eslintAndPrettierDependencies,
+	prismaDevDependencies,
+	prismaRuntimeDependencies
 } from '../../data';
 import type { CreateConfiguration, PackageJson } from '../../types';
 import { getPackageVersion } from '../../utils/getPackageVersion';
@@ -130,15 +132,23 @@ export const createPackageJson = ({
 		dependencies['drizzle-orm'] = resolveVersion('drizzle-orm', '0.41.0');
 		devDependencies['drizzle-kit'] = resolveVersion('drizzle-kit', '0.30.6');
 	}
+	const usesAccelerate =
+		orm === 'prisma' &&
+		(databaseHost === 'neon' || databaseHost === 'planetscale');
+
 	if (orm === 'prisma') {
-		dependencies['@prisma/client'] = resolveVersion('@prisma/client', '6.2.0');
-		devDependencies['prisma'] = resolveVersion('prisma', '6.2.0');
-	}
-	if (orm === 'prisma' && (databaseHost === 'neon' || databaseHost === 'planetscale')) {
-		dependencies['@prisma/extension-accelerate'] = resolveVersion(
-			'@prisma/extension-accelerate',
-			'1.2.1'
-		);
+		for (const dep of prismaRuntimeDependencies) {
+			dependencies[dep.value] = resolveVersion(dep.value, dep.latestVersion);
+		}
+
+		for (const dep of prismaDevDependencies) {
+			if (dep.value === '@prisma/extension-accelerate' && !usesAccelerate)
+				continue;
+			devDependencies[dep.value] = resolveVersion(
+				dep.value,
+				dep.latestVersion
+			);
+		}
 	}
 	if (orm === 'drizzle') {
 	switch (databaseHost) {

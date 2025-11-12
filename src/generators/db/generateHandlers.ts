@@ -1,6 +1,4 @@
-import { CreateConfiguration } from '../../types';
-import { getAuthTemplate, getCountTemplate } from './handlerTemplates';
-import { CreateConfiguration } from '../../types';
+import type { CreateConfiguration } from '../../types';
 import { getAuthTemplate, getCountTemplate } from './handlerTemplates';
 
 type GenerateDBHandlersProps = Pick<
@@ -22,7 +20,8 @@ export const generateDBHandlers = ({
 
 	const host =
 		databaseHost && databaseHost !== 'none' ? databaseHost : 'local';
-	const ormKey = orm === 'drizzle' ? 'drizzle' : orm === 'prisma' ? 'prisma' : 'sql';
+	const ormKey =
+		orm === 'drizzle' ? 'drizzle' : orm === 'prisma' ? 'prisma' : 'sql';
 	const key = `${databaseEngine}:${ormKey}:${host}` as const;
 
 	// @ts-expect-error - TODO: Finish the other templates

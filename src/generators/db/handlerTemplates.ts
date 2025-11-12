@@ -271,10 +271,24 @@ return rows[0] ?? null;
 };
 
 const prismaQueryOperations: QueryOperations = {
-	selectUser: `const user = await db.users.findUnique({ where: { auth_sub: authSub } })`,
-	insertUser: `const newUser = await db.users.create({ data: { auth_sub: authSub, metadata: userIdentity } }) if (!newUser) throw new Error('Failed to create user') return newUser`,
-	selectHistory: `const history = await db.countHistory.findUnique({ where: { uid: uid } }) return history`,
-	insertHistory: `const newHistory = await db.countHistory.create({ data: { count: count } }) return newHistory`
+	selectUser: `const user = await db.user.findUnique({
+  where: { auth_sub: authSub }
+})
+  return user`,
+	insertUser: `const newUser = await db.user.upsert({
+  where: { auth_sub: authSub },
+  update: { metadata: userIdentity },
+  create: { auth_sub: authSub, metadata: userIdentity }
+})
+  return newUser`,
+	selectHistory: `const history = await db.countHistory.findUnique({
+  where: { uid }
+})
+  return history`,
+	insertHistory: `const newHistory = await db.countHistory.create({
+  data: { count }
+})
+  return newHistory`
 };
 
 type HandlerType = {
@@ -438,52 +452,47 @@ import { schema, type SchemaType } from '../../../db/schema'`,
 	},
 	'postgresql:prisma:neon': {
 		dbType: 'PrismaClient',
-		importLines: `import { PrismaClient } from '@prisma/client/edge'`,
+		importLines: `import type { PrismaClient } from '@prisma/client'`,
 		queries: prismaQueryOperations
 	},
 	'postgresql:prisma:local': {
 		dbType: 'PrismaClient',
-		importLines: `import { PrismaClient } from '@prisma/client'`,
+		importLines: `import type { PrismaClient } from '@prisma/client'`,
 		queries: prismaQueryOperations
 	},
 	'mysql:prisma:planetscale': {
 		dbType: 'PrismaClient',
-		importLines: `import { PrismaClient } from '@prisma/client/edge'`,
+		importLines: `import type { PrismaClient } from '@prisma/client'`,
 		queries: prismaQueryOperations
 	},
 	'mysql:prisma:local': {
 		dbType: 'PrismaClient',
-		importLines: `import { PrismaClient } from '@prisma/client'`,
+		importLines: `import type { PrismaClient } from '@prisma/client'`,
 		queries: prismaQueryOperations
 	},
 	'sqlite:prisma:turso': {
 		dbType: 'PrismaClient',
-		importLines: `import { PrismaClient } from '@prisma/client/edge'`,
+		importLines: `import type { PrismaClient } from '@prisma/client'`,
 		queries: prismaQueryOperations
 	},
 	'sqlite:prisma:local': {
 		dbType: 'PrismaClient',
-		importLines: `import { PrismaClient } from '@prisma/client'`,
+		importLines: `import type { PrismaClient } from '@prisma/client'`,
 		queries: prismaQueryOperations
 	},
 	'mariadb:prisma:local': {
 		dbType: 'PrismaClient',
-		importLines: `import { PrismaClient } from '@prisma/client'`,
-		queries: prismaQueryOperations
-	},
-	'mongodb:prisma:local': {
-		dbType: 'PrismaClient',
-		importLines: `import { PrismaClient } from '@prisma/client'`,
+		importLines: `import type { PrismaClient } from '@prisma/client'`,
 		queries: prismaQueryOperations
 	},
 	'cockroachdb:prisma:local': {
 		dbType: 'PrismaClient',
-		importLines: `import { PrismaClient } from '@prisma/client'`,
+		importLines: `import type { PrismaClient } from '@prisma/client'`,
 		queries: prismaQueryOperations
 	},
 	'mssql:prisma:local': {
 		dbType: 'PrismaClient',
-		importLines: `import { PrismaClient } from '@prisma/client'`,
+		importLines: `import type { PrismaClient } from '@prisma/client'`,
 		queries: prismaQueryOperations
 	}
 } as const;
