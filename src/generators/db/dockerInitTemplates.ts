@@ -98,9 +98,9 @@ export const userTables = {
 	cockroachdb: cockroachdbUsers,
 	gel: gelUsers,
 	mariadb: mariadbUsers,
+	mongodb: mongodbUsers,
 	mssql: mssqlUsers,
 	mysql: mysqlUsers,
-	mongodb: mongodbUsers,
 	postgresql: postgresqlUsers,
 	singlestore: singlestoreUsers
 } as const;
@@ -109,9 +109,9 @@ export const countHistoryTables = {
 	cockroachdb: cockroachdbCountHistory,
 	gel: gelCountHistory,
 	mariadb: mariadbCountHistory,
+	mongodb: mongodbCountHistory,
 	mssql: mssqlCountHistory,
 	mysql: mysqlCountHistory,
-	mongodb: mongodbCountHistory,
 	postgresql: postgresqlCountHistory,
 	singlestore: singlestoreCountHistory
 } as const;
@@ -129,13 +129,13 @@ export const initTemplates = {
 		cli: 'MYSQL_PWD=userpassword mariadb -h127.0.0.1 -u user -e',
 		wait: 'until mysqladmin ping -h127.0.0.1 --silent; do sleep 1; done'
 	},
-	mssql: {
-		cli: '/opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P sapassword -Q',
-		wait: 'until /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P sapassword -Q "SELECT 1" >/dev/null 2>&1; do sleep 1; done'
-	},
 	mongodb: {
 		cli: 'mongosh "mongodb://user:password@127.0.0.1:27017" --quiet --eval',
 		wait: 'until mongosh "mongodb://user:password@127.0.0.1:27017" --quiet --eval "db.runCommand({ ping: 1 })" >/dev/null 2>&1; do sleep 1; done'
+	},
+	mssql: {
+		cli: '/opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P sapassword -Q',
+		wait: 'until /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P sapassword -Q "SELECT 1" >/dev/null 2>&1; do sleep 1; done'
 	},
 	mysql: {
 		cli: 'MYSQL_PWD=userpassword mysql -h127.0.0.1 -u user database -e',

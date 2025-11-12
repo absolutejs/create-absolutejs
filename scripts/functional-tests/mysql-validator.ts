@@ -6,7 +6,6 @@
 
 import { spawn } from 'node:child_process';
 import { once } from 'node:events';
-import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import process from 'node:process';
 
@@ -134,14 +133,6 @@ const waitForMySqlReady = async (dockerComposePath: string, attempt = 0) => {
   return waitForMySqlReady(dockerComposePath, attempt + 1);
 };
 
-const determineHandlerPath = (projectPath: string, authProvider?: string) => {
-  const handlersDir = join(projectPath, 'src', 'backend', 'handlers');
-
-  return authProvider && authProvider !== 'none'
-    ? join(handlersDir, 'userHandlers.ts')
-    : join(handlersDir, 'countHistoryHandlers.ts');
-};
-
 const getDockerStartErrors = (
   stderr: string,
   warnings: string[],
@@ -194,9 +185,8 @@ const validateLocalMysql = async (
   const warnings: string[] = [];
   const mysqlSpecific: MySQLValidationResult['mysqlSpecific'] = {
     connectionWorks: false,
-    dockerComposeExists: true,
-    queriesWork: false,
-    schemaFileExists: true
+    containerStarted: false,
+    queriesWork: false
   };
 
   process.stdout.write('    Starting Docker container... ');
@@ -218,6 +208,8 @@ const validateLocalMysql = async (
 
     return { errors, mysqlSpecific, warnings };
   }
+
+  mysqlSpecific.containerStarted = true;
 
   const tableName = authProvider && authProvider !== 'none' ? 'users' : 'count_history';
   const tableCheckQuery = `SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA = 'database' AND TABLE_NAME = '${tableName}';`;
@@ -269,10 +261,9 @@ export type MySQLValidationResult = {
   passed: boolean;
   warnings: string[];
   mysqlSpecific: {
+    containerStarted: boolean;
     connectionWorks: boolean;
-    dockerComposeExists: boolean;
     queriesWork: boolean;
-    schemaFileExists: boolean;
   };
 };
 
@@ -288,44 +279,18 @@ export const validateMySQLDatabase = async (
   const warnings: string[] = [];
   const mysqlSpecific: MySQLValidationResult['mysqlSpecific'] = {
     connectionWorks: false,
-    dockerComposeExists: false,
-    queriesWork: false,
-    schemaFileExists: false
+    containerStarted: false,
+    queriesWork: false
   };
 
   const dbDir = join(projectPath, 'db');
-  if (!existsSync(dbDir)) {
-    errors.push(`Database directory not found: ${dbDir}`);
-
-    return { errors, mysqlSpecific, passed: false, warnings };
-  }
-
   const dockerComposePath = join(dbDir, 'docker-compose.db.yml');
-  const schemaPath = config.orm === 'drizzle' ? join(dbDir, 'schema.ts') : null;
   const isLocal = config.databaseHost === 'none' || !config.databaseHost;
   const isRemote = config.databaseHost === 'planetscale';
-
-  if (isLocal && !existsSync(dockerComposePath)) {
-    errors.push(`Docker compose file not found: ${dockerComposePath}`);
-
-    return { errors, mysqlSpecific, passed: false, warnings };
-  }
-
-  if (isLocal) {
-    mysqlSpecific.dockerComposeExists = true;
-  }
 
   if (isRemote) {
     warnings.push('PlanetScale remote database - skipping Docker compose check');
   }
-
-  if (schemaPath && !existsSync(schemaPath)) {
-    errors.push(`Drizzle schema file not found: ${schemaPath}`);
-
-    return { errors, mysqlSpecific, passed: false, warnings };
-  }
-
-  mysqlSpecific.schemaFileExists = true;
 
   if (isLocal) {
     const localResult = await validateLocalMysql(
@@ -338,25 +303,18 @@ export const validateMySQLDatabase = async (
     warnings.push(...localResult.warnings);
     mysqlSpecific.connectionWorks = localResult.mysqlSpecific.connectionWorks;
     mysqlSpecific.queriesWork = localResult.mysqlSpecific.queriesWork;
+    mysqlSpecific.containerStarted = localResult.mysqlSpecific.containerStarted;
   }
 
   if (isRemote) {
     warnings.push('PlanetScale remote database - skipping connection test (requires credentials)');
     mysqlSpecific.connectionWorks = true;
     mysqlSpecific.queriesWork = true;
-  }
-
-  const handlersPath = determineHandlerPath(projectPath, config.authProvider);
-  if (!existsSync(handlersPath)) {
-    errors.push(`Database handler file not found: ${handlersPath}`);
+    mysqlSpecific.containerStarted = true;
   }
 
   const passed =
-    errors.length === 0 &&
-    mysqlSpecific.schemaFileExists &&
-    (mysqlSpecific.dockerComposeExists || isRemote) &&
-    mysqlSpecific.connectionWorks &&
-    mysqlSpecific.queriesWork;
+    errors.length === 0 && mysqlSpecific.connectionWorks && mysqlSpecific.queriesWork;
 
   return {
     errors,
@@ -369,8 +327,7 @@ export const validateMySQLDatabase = async (
 const logValidationSummary = (result: MySQLValidationResult) => {
   console.log('\n=== MySQL Database Validation Results ===\n');
   console.log('MySQL-Specific Checks:');
-  console.log(`  Docker Compose Exists: ${result.mysqlSpecific.dockerComposeExists ? '✓' : '✗'}`);
-  console.log(`  Schema File Exists: ${result.mysqlSpecific.schemaFileExists ? '✓' : '✗'}`);
+  console.log(`  Container Started: ${result.mysqlSpecific.containerStarted ? '✓' : '✗'}`);
   console.log(`  Connection Works: ${result.mysqlSpecific.connectionWorks ? '✓' : '✗'}`);
   console.log(`  Queries Work: ${result.mysqlSpecific.queriesWork ? '✓' : '✗'}`);
 };

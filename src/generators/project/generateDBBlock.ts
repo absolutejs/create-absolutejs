@@ -81,7 +81,13 @@ const db = client.db('database')
 
 		if (databaseEngine === 'postgresql' && hostKey === 'none') {
 			return `
-const pool = ${hostCfg.expr}
+const connectionString = ${hostCfg.expr.replace('new Pool({ connectionString: getEnv("DATABASE_URL") })', 'getEnv("DATABASE_URL")')}
+if (process.env.ABSOLUTE_TEST_VERBOSE === '1') {
+  console.log('Server runtime env: DATABASE_URL=' + connectionString)
+  console.log('Server runtime env: PGHOST=' + (process.env.PGHOST ?? 'undefined'))
+  console.log('Server runtime env: PGPORT=' + (process.env.PGPORT ?? 'undefined'))
+}
+const pool = new Pool({ connectionString })
 const db = createPgSql(pool)
 `;
 		}

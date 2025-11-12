@@ -150,16 +150,57 @@ const postgresSqlQueryOperations: QueryOperations = {
 };
 
 const mongodbQueryOperations: QueryOperations = {
-	insertHistory: `const { insertedId } = await db.collection('count_history').insertOne({ count })
-  const newHistory = await db.collection('count_history').findOne({ _id: insertedId })
-  return newHistory`,
-	insertUser: `const { insertedId } = await db.collection('users').insertOne({ auth_sub: authSub, metadata: userIdentity })
-  const newUser = await db.collection('users').findOne({ _id: insertedId })
-  if (!newUser) throw new Error('Failed to create user')
-  return newUser`,
-	selectHistory: `const history = await db.collection('count_history').findOne({ uid })
+	insertHistory: `const entries = await db
+  .collection('count_history')
+  .find({}, { projection: { uid: 1 } })
+  .sort({ uid: -1 })
+  .limit(1)
+  .toArray()
+
+  const nextUid = (entries[0]?.uid ?? 0) + 1
+  const record = {
+    created_at: new Date(),
+    count,
+    uid: nextUid
+  }
+
+  await db.collection('count_history').insertOne(record)
+
+  const { _id: _unused, ...history } = record
+  return history`,
+	insertUser: `const record = {
+    auth_sub: authSub,
+    created_at: new Date(),
+    metadata: userIdentity
+  }
+
+  await db.collection('users').updateOne(
+    { auth_sub: authSub },
+    { $set: record },
+    { upsert: true }
+  )
+
+  const user = await db
+    .collection('users')
+    .findOne({ auth_sub: authSub }, { projection: { _id: 0 } })
+
+  if (!user) throw new Error('Failed to create user')
+  return user`,
+	selectHistory: `const history = await db
+  .collection('count_history')
+  .findOne(
+    { uid },
+    { projection: { _id: 0 } }
+  )
+
   return history ?? null`,
-	selectUser: `const user = await db.collection('users').findOne({ auth_sub: authSub })
+	selectUser: `const user = await db
+  .collection('users')
+  .findOne(
+    { auth_sub: authSub },
+    { projection: { _id: 0 } }
+  )
+
   return user ?? null`
 };
 

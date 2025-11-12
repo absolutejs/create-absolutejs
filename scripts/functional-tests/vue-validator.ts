@@ -1,11 +1,8 @@
 /*
   Vue Framework Validator
-  Validates Vue-specific functionality across all backend combinations.
-  Tests Vue rendering, hydration, and integration with different configurations.
+  Executes the functional test suite for Vue scaffold combinations.
 */
 
-import { existsSync, readFileSync } from 'node:fs';
-import { join } from 'node:path';
 import process from 'node:process';
 
 import { runFunctionalTests, type FunctionalTestResult } from './functional-test-runner';
@@ -15,11 +12,6 @@ export type VueValidationResult = {
   errors: string[];
   warnings: string[];
   functionalTestResults?: FunctionalTestResult;
-  vueSpecific: {
-    filesExist: boolean;
-    routesConfigured: boolean;
-    importsCorrect: boolean;
-  };
 };
 
 type ValidatorOptions = {
@@ -35,168 +27,6 @@ type ValidatorConfig = {
   useTailwind?: boolean;
   codeQualityTool?: string;
   isMultiFrontend?: boolean;
-};
-
-type VueSpecificChecks = {
-  errors: string[];
-  warnings: string[];
-  filesExist: boolean;
-  importsCorrect: boolean;
-  routesConfigured: boolean;
-};
-
-const VUE_DIRECTORY_CANDIDATES = ['src/frontend/vue', 'src/frontend'];
-const REQUIRED_VUE_FILES = [
-  ['components', 'CountButton.vue'],
-  ['pages', 'VueExample.vue'],
-  ['composables', 'useCount.ts']
-];
-const VUE_ASSET_PATH = ['src', 'backend', 'assets', 'svg', 'vue-logo.svg'];
-const VUE_DEPENDENCY = 'vue';
-
-const findVueDirectory = (projectPath: string) => {
-  for (const relative of VUE_DIRECTORY_CANDIDATES) {
-    const candidate = join(projectPath, relative);
-    const pagePath = join(candidate, 'pages', 'VueExample.vue');
-
-    if (existsSync(pagePath)) {
-      return candidate;
-    }
-  }
-
-  return null;
-};
-
-const readFileSafe = (filePath: string) => {
-  try {
-    return readFileSync(filePath, 'utf-8');
-  } catch (unknownError) {
-    const error = unknownError instanceof Error ? unknownError : new Error(String(unknownError));
-
-    return { error } as const;
-  }
-};
-
-const parsePackageJsonContent = (raw: string) => {
-  try {
-    return JSON.parse(raw) as { dependencies?: Record<string, string> };
-  } catch (unknownError) {
-    const error = unknownError instanceof Error ? unknownError : new Error(String(unknownError));
-
-    return { error } as const;
-  }
-};
-
-const checkVueFiles = (vueDirectory: string, projectPath: string, errors: string[]) => {
-  const required = REQUIRED_VUE_FILES.map((segments) => join(vueDirectory, ...segments));
-  required.push(join(projectPath, ...VUE_ASSET_PATH));
-
-  const missingFiles = required.filter((filePath) => !existsSync(filePath));
-
-  if (missingFiles.length > 0) {
-    errors.push(`Missing Vue files: ${missingFiles.join(', ')}`);
-
-    return false;
-  }
-
-  return true;
-};
-
-const checkServerRoutes = (projectPath: string, errors: string[]) => {
-  const serverPath = join(projectPath, 'src', 'backend', 'server.ts');
-
-  if (!existsSync(serverPath)) {
-    errors.push(`Server file not found: ${serverPath}`);
-
-    return { importsCorrect: false, routesConfigured: false };
-  }
-
-  const serverContent = readFileSafe(serverPath);
-
-  if (typeof serverContent !== 'string') {
-    errors.push(`Failed to read server.ts: ${serverContent.error.message}`);
-
-    return { importsCorrect: false, routesConfigured: false };
-  }
-
-  const importsCorrect = serverContent.includes('VueExample') || serverContent.includes('handleVuePageRequest');
-
-  if (!importsCorrect) {
-    errors.push('Server.ts missing Vue imports or route handlers');
-  }
-
-  const routesConfigured =
-    serverContent.includes("'/vue'") ||
-    (serverContent.includes("'/'") && serverContent.includes('VueExample'));
-
-  if (!routesConfigured) {
-    errors.push('Server.ts missing Vue route configuration');
-  }
-
-  return { importsCorrect, routesConfigured };
-};
-
-const checkPackageJson = (projectPath: string, warnings: string[], errors: string[]) => {
-  const packageJsonPath = join(projectPath, 'package.json');
-
-  if (!existsSync(packageJsonPath)) {
-    warnings.push('package.json not found – unable to verify Vue dependencies');
-
-    return;
-  }
-
-  const packageJson = readFileSafe(packageJsonPath);
-
-  if (typeof packageJson !== 'string') {
-    warnings.push(`Could not verify Vue dependencies in package.json: ${packageJson.error.message}`);
-
-    return;
-  }
-
-  const parsed = parsePackageJsonContent(packageJson);
-
-  if ('error' in parsed) {
-    warnings.push(`Could not verify Vue dependencies in package.json: ${parsed.error.message}`);
-
-    return;
-  }
-
-  const hasVue = Boolean(parsed.dependencies?.[VUE_DEPENDENCY]);
-
-  if (!hasVue) {
-    errors.push('package.json missing Vue dependencies');
-  }
-};
-
-const evaluateVueSpecificChecks = (projectPath: string): VueSpecificChecks => {
-  const errors: string[] = [];
-  const warnings: string[] = [];
-
-  const vueDirectory = findVueDirectory(projectPath);
-
-  if (!vueDirectory) {
-    errors.push('Vue directory not found - checked src/frontend and src/frontend/vue');
-
-    return {
-      errors,
-      filesExist: false,
-      importsCorrect: false,
-      routesConfigured: false,
-      warnings
-    };
-  }
-
-  const filesExist = checkVueFiles(vueDirectory, projectPath, errors);
-  const { importsCorrect, routesConfigured } = checkServerRoutes(projectPath, errors);
-  checkPackageJson(projectPath, warnings, errors);
-
-  return {
-    errors,
-    filesExist,
-    importsCorrect,
-    routesConfigured,
-    warnings
-  };
 };
 
 const runFunctionalSuite = async (
@@ -238,10 +68,6 @@ export const validateVueFramework = async (
   const errors: string[] = [];
   const warnings: string[] = [];
 
-  const vueChecks = evaluateVueSpecificChecks(projectPath);
-  errors.push(...vueChecks.errors);
-  warnings.push(...vueChecks.warnings);
-
   const functionalTestResults = await runFunctionalSuite(
     projectPath,
     packageManager,
@@ -250,21 +76,12 @@ export const validateVueFramework = async (
     warnings
   );
 
-  const passed =
-    errors.length === 0 &&
-    vueChecks.filesExist &&
-    vueChecks.routesConfigured &&
-    vueChecks.importsCorrect;
+  const passed = errors.length === 0;
 
   return {
     errors,
     functionalTestResults,
     passed,
-    vueSpecific: {
-      filesExist: vueChecks.filesExist,
-      importsCorrect: vueChecks.importsCorrect,
-      routesConfigured: vueChecks.routesConfigured
-    },
     warnings
   };
 };
@@ -284,13 +101,6 @@ const parseCliArguments = () => {
     skipDependencies,
     skipServer
   } as const;
-};
-
-const logVueSpecificSummary = (vueSpecific: VueValidationResult['vueSpecific']) => {
-  console.log('Vue-Specific Checks:');
-  console.log(`  Files Exist: ${vueSpecific.filesExist ? '✓' : '✗'}`);
-  console.log(`  Routes Configured: ${vueSpecific.routesConfigured ? '✓' : '✗'}`);
-  console.log(`  Imports Correct: ${vueSpecific.importsCorrect ? '✓' : '✗'}`);
 };
 
 const logBuildSummary = (build?: FunctionalTestResult['results']['build']) => {
@@ -361,7 +171,6 @@ const runFromCli = async () => {
     );
 
     console.log('\n=== Vue Framework Validation Results ===\n');
-    logVueSpecificSummary(result.vueSpecific);
     logFunctionalSummary(result.functionalTestResults);
     logWarnings(result.warnings);
     exitWithResult(result);

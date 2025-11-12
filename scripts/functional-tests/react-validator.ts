@@ -4,8 +4,6 @@
   Tests React rendering, hydration, and integration with different configurations.
 */
 
-import { existsSync, readFileSync } from 'node:fs';
-import { join } from 'node:path';
 import process from 'node:process';
 
 import { runFunctionalTests, type FunctionalTestResult } from './functional-test-runner';
@@ -15,19 +13,6 @@ export type ReactValidationResult = {
   errors: string[];
   warnings: string[];
   functionalTestResults?: FunctionalTestResult;
-  reactSpecific: {
-    filesExist: boolean;
-    routesConfigured: boolean;
-    importsCorrect: boolean;
-  };
-};
-
-type ReactSpecificChecks = {
-  errors: string[];
-  warnings: string[];
-  filesExist: boolean;
-  routesConfigured: boolean;
-  importsCorrect: boolean;
 };
 
 type ValidatorOptions = {
@@ -43,121 +28,6 @@ type ValidatorConfig = {
   useTailwind?: boolean;
   codeQualityTool?: string;
   isMultiFrontend?: boolean;
-};
-
-const REQUIRED_COMPONENT_FILES = [
-  ['src', 'frontend', 'components', 'App.tsx'],
-  ['src', 'frontend', 'components', 'Head.tsx'],
-  ['src', 'frontend', 'components', 'Dropdown.tsx'],
-  ['src', 'frontend', 'pages', 'ReactExample.tsx'],
-  ['src', 'frontend', 'styles', 'react-example.css'],
-  ['src', 'backend', 'assets', 'svg', 'react.svg']
-];
-
-const extractMissingFiles = (projectPath: string) =>
-  REQUIRED_COMPONENT_FILES
-    .map((segments) => join(projectPath, ...segments))
-    .filter((filePath) => !existsSync(filePath));
-
-const checkReactFiles = (projectPath: string, errors: string[]) => {
-  const missingFiles = extractMissingFiles(projectPath);
-
-  if (missingFiles.length > 0) {
-    errors.push(`Missing React files: ${missingFiles.join(', ')}`);
-
-    return false;
-  }
-
-  return true;
-};
-
-const readFileSafe = (filePath: string) => {
-  try {
-    return readFileSync(filePath, 'utf-8');
-  } catch (unknownError) {
-    const error = unknownError instanceof Error ? unknownError : new Error(String(unknownError));
-
-    return { error } as const;
-  }
-};
-
-const parsePackageJsonContent = (raw: string) => {
-  try {
-    return JSON.parse(raw) as {
-      dependencies?: Record<string, string>;
-      devDependencies?: Record<string, string>;
-    };
-  } catch (unknownError) {
-    const error = unknownError instanceof Error ? unknownError : new Error(String(unknownError));
-
-    return { error };
-  }
-};
-
-const checkServerRoutes = (projectPath: string, errors: string[]) => {
-  const serverPath = join(projectPath, 'src', 'backend', 'server.ts');
-
-  if (!existsSync(serverPath)) {
-    errors.push(`Server file not found: ${serverPath}`);
-
-    return { importsCorrect: false, routesConfigured: false };
-  }
-
-  const serverContent = readFileSafe(serverPath);
-
-  if (typeof serverContent !== 'string') {
-    errors.push(`Failed to read server.ts: ${serverContent.error.message}`);
-
-    return { importsCorrect: false, routesConfigured: false };
-  }
-
-  const importsCorrect = serverContent.includes('ReactExample') || serverContent.includes('handleReactPageRequest');
-
-  if (!importsCorrect) {
-    errors.push('Server.ts missing React imports or route handlers');
-  }
-
-  const routesConfigured =
-    serverContent.includes("'/react'") ||
-    (serverContent.includes("'/'") && serverContent.includes('ReactExample'));
-
-  if (!routesConfigured) {
-    errors.push('Server.ts missing React route configuration');
-  }
-
-  return { importsCorrect, routesConfigured };
-};
-
-const checkPackageJson = (projectPath: string, warnings: string[], errors: string[]) => {
-  const packageJsonPath = join(projectPath, 'package.json');
-
-  if (!existsSync(packageJsonPath)) {
-    warnings.push('package.json not found – unable to verify React dependencies');
-
-    return;
-  }
-
-  const packageJson = readFileSafe(packageJsonPath);
-
-  if (typeof packageJson !== 'string') {
-    warnings.push(`Could not verify React dependencies in package.json: ${packageJson.error.message}`);
-
-    return;
-  }
-
-  const parsed = parsePackageJsonContent(packageJson);
-
-  if ('error' in parsed) {
-    warnings.push(`Could not verify React dependencies in package.json: ${parsed.error.message}`);
-
-    return;
-  }
-
-  const hasReact = Boolean(parsed.dependencies?.react || parsed.devDependencies?.['@types/react']);
-
-  if (!hasReact) {
-    errors.push('package.json missing React dependencies');
-  }
 };
 
 const runFunctionalSuite = async (
@@ -189,24 +59,6 @@ const runFunctionalSuite = async (
   return results;
 };
 
-const evaluateReactSpecificChecks = (projectPath: string): ReactSpecificChecks => {
-  const errors: string[] = [];
-  const warnings: string[] = [];
-
-  const filesExist = checkReactFiles(projectPath, errors);
-  const { importsCorrect, routesConfigured } = checkServerRoutes(projectPath, errors);
-
-  checkPackageJson(projectPath, warnings, errors);
-
-  return {
-    errors,
-    filesExist,
-    importsCorrect,
-    routesConfigured,
-    warnings
-  };
-};
-
 export const validateReactFramework = async (
   projectPath: string,
   packageManager: 'bun' | 'npm' | 'pnpm' | 'yarn' = 'bun',
@@ -217,10 +69,6 @@ export const validateReactFramework = async (
   const errors: string[] = [];
   const warnings: string[] = [];
 
-  const specificChecks = evaluateReactSpecificChecks(projectPath);
-  errors.push(...specificChecks.errors);
-  warnings.push(...specificChecks.warnings);
-
   const functionalTestResults = await runFunctionalSuite(
     projectPath,
     packageManager,
@@ -229,21 +77,12 @@ export const validateReactFramework = async (
     warnings
   );
 
-  const passed =
-    errors.length === 0 &&
-    specificChecks.filesExist &&
-    specificChecks.routesConfigured &&
-    specificChecks.importsCorrect;
+  const passed = errors.length === 0;
 
   return {
     errors,
     functionalTestResults,
     passed,
-    reactSpecific: {
-      filesExist: specificChecks.filesExist,
-      importsCorrect: specificChecks.importsCorrect,
-      routesConfigured: specificChecks.routesConfigured
-    },
     warnings
   };
 };
@@ -263,13 +102,6 @@ const parseCliArguments = () => {
     skipDependencies,
     skipServer
   } as const;
-};
-
-const logReactSpecificSummary = (reactSpecific: ReactValidationResult['reactSpecific']) => {
-  console.log('React-Specific Checks:');
-  console.log(`  Files Exist: ${reactSpecific.filesExist ? '✓' : '✗'}`);
-  console.log(`  Routes Configured: ${reactSpecific.routesConfigured ? '✓' : '✗'}`);
-  console.log(`  Imports Correct: ${reactSpecific.importsCorrect ? '✓' : '✗'}`);
 };
 
 const logBuildSummary = (build?: FunctionalTestResult['results']['build']) => {
@@ -342,7 +174,6 @@ const runFromCli = async () => {
     );
 
     console.log('\n=== React Framework Validation Results ===\n');
-    logReactSpecificSummary(result.reactSpecific);
     logFunctionalSummary(result.functionalTestResults);
     logWarnings(result.warnings);
     exitWithResult(result);

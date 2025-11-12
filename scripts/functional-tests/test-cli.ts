@@ -1,21 +1,15 @@
 import { existsSync, rmSync } from 'node:fs';
 import process from 'node:process';
 import { cleanupCache } from './dependency-cache';
+import {
+  KNOWN_DATABASES,
+  KNOWN_FRAMEWORKS,
+  KNOWN_PROVIDERS,
+  SUITE_MAP,
+  SUITE_REGISTRY,
+  type SuiteDefinition
+} from './test-cli-registry';
 import { cleanupProjectDirectory } from './test-utils';
-
-type SuiteGroup = 'core' | 'framework' | 'database' | 'cloud' | 'auth';
-
-type SuiteDefinition = {
-  args?: string[];
-  databases?: string[];
-  description: string;
-  frameworks?: string[];
-  group: SuiteGroup;
-  label: string;
-  name: string;
-  providers?: string[];
-  script: string;
-};
 
 type CliOptions = {
   all: boolean;
@@ -29,6 +23,8 @@ type CliOptions = {
   includeCloud: boolean;
   list: boolean;
   providers: string[];
+  runBehavioural: boolean;
+  runFunctional: boolean;
   suites: string[];
 };
 
@@ -39,137 +35,23 @@ type CommandOptions = {
   stdout?: 'inherit' | 'pipe';
 };
 
+type SuiteRunMode = 'functional' | 'behavioural';
+
+type SuiteExecutionPlan = {
+  mode: SuiteRunMode;
+  skipReason?: string;
+  suite: SuiteDefinition;
+};
+
 type SuiteExecution = {
   duration: number;
   exitCode: number;
   label: string;
+  mode: SuiteRunMode;
   name: string;
+  skipReason?: string;
+  skipped: boolean;
 };
-
-const SUITE_DEFINITIONS: SuiteDefinition[] = [
-  {
-    description: 'Runs dependency, build, and server validators sequentially.',
-    group: 'core',
-    label: 'Functional core',
-    name: 'functional',
-    script: 'scripts/functional-tests/functional-test-runner.ts'
-  },
-  {
-    description: 'Validates the scaffolded server boots successfully.',
-    group: 'core',
-    label: 'Server validator',
-    name: 'server',
-    script: 'scripts/functional-tests/server-startup-validator.ts'
-  },
-  {
-    description: 'Checks the build pipeline compiles without errors.',
-    group: 'core',
-    label: 'Build validator',
-    name: 'build',
-    script: 'scripts/functional-tests/build-validator.ts'
-  },
-  {
-    description: 'Ensures dependency installation succeeds.',
-    group: 'core',
-    label: 'Dependency installer',
-    name: 'deps',
-    script: 'scripts/functional-tests/dependency-installer-tester.ts'
-  },
-  {
-    description: 'Runs the full React matrix.',
-    frameworks: ['react'],
-    group: 'framework',
-    label: 'React suite',
-    name: 'react',
-    script: 'scripts/functional-tests/react-test-runner.ts'
-  },
-  {
-    description: 'Runs the full Vue matrix.',
-    frameworks: ['vue'],
-    group: 'framework',
-    label: 'Vue suite',
-    name: 'vue',
-    script: 'scripts/functional-tests/vue-test-runner.ts'
-  },
-  {
-    description: 'Runs the full Svelte matrix.',
-    frameworks: ['svelte'],
-    group: 'framework',
-    label: 'Svelte suite',
-    name: 'svelte',
-    script: 'scripts/functional-tests/svelte-test-runner.ts'
-  },
-  {
-    description: 'Runs the HTML framework matrix.',
-    frameworks: ['html'],
-    group: 'framework',
-    label: 'HTML suite',
-    name: 'html',
-    script: 'scripts/functional-tests/html-test-runner.ts'
-  },
-  {
-    description: 'Runs the HTMX framework matrix.',
-    frameworks: ['htmx'],
-    group: 'framework',
-    label: 'HTMX suite',
-    name: 'htmx',
-    script: 'scripts/functional-tests/htmx-test-runner.ts'
-  },
-  {
-    databases: ['sqlite'],
-    description: 'Runs SQLite database validations (local + Turso).',
-    group: 'database',
-    label: 'SQLite suite',
-    name: 'sqlite',
-    script: 'scripts/functional-tests/sqlite-test-runner.ts'
-  },
-  {
-    databases: ['postgresql'],
-    description: 'Runs PostgreSQL database validations (Neon/local).',
-    group: 'database',
-    label: 'PostgreSQL suite',
-    name: 'postgresql',
-    script: 'scripts/functional-tests/postgresql-test-runner.ts'
-  },
-  {
-    databases: ['mysql'],
-    description: 'Runs MySQL database validations (PlanetScale/local).',
-    group: 'database',
-    label: 'MySQL suite',
-    name: 'mysql',
-    script: 'scripts/functional-tests/mysql-test-runner.ts'
-  },
-  {
-    databases: ['mongodb'],
-    description: 'Runs MongoDB database validations.',
-    group: 'database',
-    label: 'MongoDB suite',
-    name: 'mongodb',
-    script: 'scripts/functional-tests/mongodb-test-runner.ts'
-  },
-  {
-    description: 'Runs supported cloud provider combinations.',
-    group: 'cloud',
-    label: 'Cloud providers',
-    name: 'cloud',
-    providers: ['neon', 'turso'],
-    script: 'scripts/functional-tests/cloud-provider-test-runner.ts'
-  },
-  {
-    description: 'Runs absoluteAuth matrix validations.',
-    group: 'auth',
-    label: 'Auth suite',
-    name: 'auth',
-    script: 'scripts/functional-tests/auth-test-runner.ts'
-  }
-];
-
-const SUITE_MAP = new Map<string, SuiteDefinition>(
-  SUITE_DEFINITIONS.map((definition) => [definition.name, definition])
-);
-
-const VALID_FRAMEWORKS = new Set(['react', 'vue', 'svelte', 'html', 'htmx']);
-const VALID_DATABASES = new Set(['sqlite', 'postgresql', 'mysql', 'mongodb']);
 
 let cachedBunModule: typeof import('bun') | null = null;
 
@@ -217,6 +99,8 @@ Options:
       --database <name>   Filter or add database suites (sqlite, postgresql, mysql, mongodb)
       --auth              Include the absoluteAuth suite
       --cloud             Include cloud provider suites
+  --behavioural       Run behavioural specs for selected suites (disables functional unless --functional is also set)
+  --functional        Run functional harnesses (default behaviour)
       --provider <name>   Filter cloud providers (neon, turso). Implies --cloud
       --all               Run every available suite
       --clean             Run cleanup tasks and exit
@@ -232,7 +116,7 @@ Notes:
 const printSuites = () => {
   console.log('Available suites:\n');
 
-  SUITE_DEFINITIONS.forEach((suite) => {
+  SUITE_REGISTRY.forEach((suite) => {
     const extras: string[] = [];
 
     if (suite.frameworks) {
@@ -301,6 +185,8 @@ export const parseArgs = (argv: string[]) => {
     includeCloud: false,
     list: false,
     providers: [],
+    runBehavioural: false,
+    runFunctional: true,
     suites: []
   };
 
@@ -333,6 +219,13 @@ export const parseArgs = (argv: string[]) => {
       case '--cloud':
         options.includeCloud = true;
         break;
+      case '--behavioural':
+        options.runBehavioural = true;
+        options.runFunctional = false;
+        break;
+      case '--functional':
+        options.runFunctional = true;
+        break;
       case '--suite':
         index = applyListOption(argv, index, '--suite', options.suites);
         break;
@@ -351,6 +244,14 @@ export const parseArgs = (argv: string[]) => {
         throw new Error(`Unknown option: ${arg}`);
     }
   }
+
+  options.providers.forEach((provider) => {
+    const normalisedProvider = provider.toLowerCase();
+
+    if (!KNOWN_PROVIDERS.has(normalisedProvider)) {
+      throw new Error(`Unknown provider: ${provider}`);
+    }
+  });
 
   return options;
 };
@@ -395,7 +296,7 @@ export const buildSuiteQueue = (options: CliOptions) => {
   };
 
   if (options.all) {
-    SUITE_DEFINITIONS.forEach((suite) => addSuite(suite.name));
+    SUITE_REGISTRY.forEach((suite) => addSuite(suite.name));
   }
 
   options.suites.forEach(addSuite);
@@ -403,11 +304,11 @@ export const buildSuiteQueue = (options: CliOptions) => {
   options.frameworkFilters.forEach((framework) => {
     const name = normaliseValue(framework);
 
-    if (!VALID_FRAMEWORKS.has(name)) {
+    if (!KNOWN_FRAMEWORKS.has(name)) {
       throw new Error(`Unknown framework: ${framework}`);
     }
 
-    const suite = SUITE_DEFINITIONS.find(
+    const suite = SUITE_REGISTRY.find(
       (definition) => definition.group === 'framework' && definition.frameworks?.includes(name)
     );
 
@@ -419,11 +320,11 @@ export const buildSuiteQueue = (options: CliOptions) => {
   options.databaseFilters.forEach((database) => {
     const name = normaliseValue(database);
 
-    if (!VALID_DATABASES.has(name)) {
+    if (!KNOWN_DATABASES.has(name)) {
       throw new Error(`Unknown database: ${database}`);
     }
 
-    const suite = SUITE_DEFINITIONS.find(
+    const suite = SUITE_REGISTRY.find(
       (definition) => definition.group === 'database' && definition.databases?.includes(name)
     );
 
@@ -440,7 +341,7 @@ export const buildSuiteQueue = (options: CliOptions) => {
     addSuite('cloud');
   }
 
-  if (!options.all && orderedSuites.length === 0) {
+  if (!options.all && orderedSuites.length === 0 && options.runFunctional) {
     addSuite('functional');
   }
 
@@ -453,6 +354,36 @@ export const buildSuiteQueue = (options: CliOptions) => {
     return shouldIncludeSuite(suite, frameworkFilterSet, databaseFilterSet);
   });
 };
+
+const buildExecutionPlan = (suiteNames: string[], options: CliOptions) =>
+  suiteNames.flatMap((suiteName) => {
+    const suite = SUITE_MAP.get(suiteName);
+
+    if (!suite) {
+      return [];
+    }
+
+    const runs: SuiteExecutionPlan[] = [];
+
+    if (options.runFunctional) {
+      runs.push({ mode: 'functional', suite });
+    }
+
+    if (options.runBehavioural) {
+      const { behavioural } = suite.runners;
+      runs.push(
+        behavioural
+          ? { mode: 'behavioural', suite }
+          : {
+              mode: 'behavioural',
+              skipReason: 'Behavioural runner not defined for this suite.',
+              suite
+            }
+      );
+    }
+
+    return runs;
+  });
 
 const removePath = (targetPath: string) => {
   if (existsSync(targetPath)) {
@@ -468,78 +399,146 @@ const runCleanup = () => {
   console.log('Cleanup complete.');
 };
 
-const formatDryRunCommand = (suite: SuiteDefinition, providerEnv?: string) => {
-  const args = suite.args?.length ? ` ${suite.args.join(' ')}` : '';
-  const envNote = suite.name === 'cloud' && providerEnv ? ` (ABSOLUTE_CLOUD_PROVIDERS=${providerEnv})` : '';
+const formatRunLabel = (suite: SuiteDefinition, mode: SuiteRunMode) =>
+  `${suite.label} [${mode}]`;
 
-  return `• bun run ${suite.script}${args}${envNote}`;
+const formatDryRunCommand = (plan: SuiteExecutionPlan, providerEnv?: string) => {
+  const label = formatRunLabel(plan.suite, plan.mode);
+
+  if (plan.skipReason) {
+    return `• (skip) ${label} – ${plan.skipReason}`;
+  }
+
+  if (plan.mode === 'functional') {
+    const args = plan.suite.runners.functional.args?.length
+      ? ` ${plan.suite.runners.functional.args.join(' ')}`
+      : '';
+    const runnerType = plan.suite.runners.functional.runnerType ?? 'bun-run';
+    const envNote =
+      plan.suite.name === 'cloud' && providerEnv
+        ? ` (ABSOLUTE_CLOUD_PROVIDERS=${providerEnv})`
+        : '';
+
+    const commandPrefix = runnerType === 'bun-test' ? 'bun test' : 'bun run';
+
+    return `• ${commandPrefix} ${plan.suite.runners.functional.script}${args}${envNote}`;
+  }
+
+  const { behavioural } = plan.suite.runners;
+  if (!behavioural || behavioural.testFiles.length === 0) {
+    return `• (skip) ${label} – behavioural runner not configured`;
+  }
+
+  const { testFiles } = behavioural;
+  const files = testFiles.join(' ');
+  const envNote =
+    plan.suite.name === 'cloud' && providerEnv
+      ? ` (ABSOLUTE_CLOUD_PROVIDERS=${providerEnv})`
+      : '';
+
+  return `• bun test ${files}${envNote}`;
 };
 
-const printDryRun = (suiteNames: string[], providerEnv?: string) => {
+const printDryRun = (plan: SuiteExecutionPlan[], providerEnv?: string) => {
   console.log('Dry run — commands to execute:\n');
-  suiteNames
-    .map((name) => SUITE_MAP.get(name))
-    .filter((suite): suite is SuiteDefinition => Boolean(suite))
-    .forEach((suite) => console.log(formatDryRunCommand(suite, providerEnv)));
+  plan.forEach((planItem) => console.log(formatDryRunCommand(planItem, providerEnv)));
   console.log('\nNo commands were executed.');
 };
 
 export const runSuites = async (suiteNames: string[], options: CliOptions) => {
-  if (suiteNames.length === 0) {
-    console.log('No suites selected; nothing to run.');
+  const executionPlan = buildExecutionPlan(suiteNames, options);
+  if (executionPlan.length === 0) {
+    console.log('No suite runs selected; nothing to run.');
 
     return 0;
   }
 
+  const planCount = executionPlan.length;
   const providerFilter = options.providers.map(normaliseValue);
   const providerEnv = providerFilter.length > 0 ? providerFilter.join(',') : undefined;
 
   if (options.dryRun) {
-    printDryRun(suiteNames, providerEnv);
+    printDryRun(executionPlan, providerEnv);
 
     return 0;
   }
 
   const results: SuiteExecution[] = [];
   let overallExitCode = 0;
-  const suiteCount = suiteNames.length;
-
-  await suiteNames.reduce(async (chain, suiteName, index) => {
+  await executionPlan.reduce(async (chain, planItem, index) => {
     await chain;
-    const result = await executeSuite(suiteName, index, suiteCount, options, providerEnv);
+    const result = await executeSuitePlan(planItem, index, planCount, options, providerEnv);
     results.push(result);
-    overallExitCode = result.exitCode !== 0 ? result.exitCode : overallExitCode;
+    overallExitCode =
+      !result.skipped && result.exitCode !== 0 ? result.exitCode : overallExitCode;
   }, Promise.resolve());
 
-  const passedCount = results.filter((result) => result.exitCode === 0).length;
-  const failedCount = results.length - passedCount;
+  const passedCount = results.filter((result) => !result.skipped && result.exitCode === 0).length;
+  const skippedCount = results.filter((result) => result.skipped).length;
+  const failedCount = results.length - passedCount - skippedCount;
 
   console.log('\n=== Summary ===\n');
   results.forEach((result) => {
-    const status = result.exitCode === 0 ? 'passed' : `failed (exit ${result.exitCode})`;
-    console.log(`• ${result.label} – ${status} (${result.duration}ms)`);
+    if (result.skipped) {
+      console.log(
+        `⚠ ${result.label} – skipped${result.skipReason ? ` (${result.skipReason})` : ''}`
+      );
+    } else {
+      const status = result.exitCode === 0 ? 'passed' : `failed (exit ${result.exitCode})`;
+      console.log(`• ${result.label} – ${status} (${result.duration}ms)`);
+    }
   });
   console.log(`\nTotal suites: ${results.length}`);
   console.log(`Passed: ${passedCount}`);
   console.log(`Failed: ${failedCount}`);
+  console.log(`Skipped: ${skippedCount}`);
 
   return overallExitCode;
 };
 
-const executeSuite = async (
-  suiteName: string,
+const executeSuitePlan = async (
+  plan: SuiteExecutionPlan,
   index: number,
   total: number,
   options: CliOptions,
   providerEnv?: string
-) => {
-  const suite = SUITE_MAP.get(suiteName);
+): Promise<SuiteExecution> => {
+  const { suite, mode } = plan;
+  const label = formatRunLabel(suite, mode);
+  const ordinal = `[${index + 1}/${total}]`;
 
-  if (!suite) {
-    throw new Error(`Unknown suite: ${suiteName}`);
+  if (plan.skipReason) {
+    console.log(`${ordinal} ⚠ Skipping ${suite.label} (${suite.name}) [${mode}] – ${plan.skipReason}`);
+
+    return {
+      duration: 0,
+      exitCode: 0,
+      label,
+      mode,
+      name: suite.name,
+      skipped: true,
+      skipReason: plan.skipReason
+    };
   }
 
-  console.log(`[${index + 1}/${total}] Running ${suite.label} (${suite.name})`);
+  const behaviouralRunner = suite.runners.behavioural;
+
+  if (mode === 'behavioural' && (!behaviouralRunner || behaviouralRunner.testFiles.length === 0)) {
+    const reason = 'Behavioural runner configuration missing.';
+    console.log(`${ordinal} ⚠ Skipping ${suite.label} (${suite.name}) [behavioural] – ${reason}`);
+
+    return {
+      duration: 0,
+      exitCode: 0,
+      label,
+      mode,
+      name: suite.name,
+      skipped: true,
+      skipReason: reason
+    };
+  }
+
+  console.log(`${ordinal} Running ${suite.label} (${suite.name}) [${mode}]`);
   const start = Date.now();
   const env: Record<string, string> = { ...process.env } as Record<string, string>;
 
@@ -552,24 +551,42 @@ const executeSuite = async (
     env.ABSOLUTE_CLOUD_PROVIDERS = providerEnv;
   }
 
-  const commandResult = await runCommand(
-    ['bun', 'run', suite.script, ...(suite.args ?? [])],
-    { env }
-  );
+  if (plan.mode === 'behavioural' && suite.group === 'database') {
+    env.ABSOLUTE_BEHAVIOURAL_DATABASE_FILTER = suite.name.toLowerCase();
+  }
+
+  let command: string[];
+
+  if (mode !== 'functional') {
+    env.ABSOLUTE_BEHAVIOURAL_MODE = '1';
+    const { testFiles } = behaviouralRunner!;
+    command = ['bun', 'test', ...testFiles];
+  } else {
+    env.ABSOLUTE_BEHAVIOURAL_MODE = env.ABSOLUTE_BEHAVIOURAL_MODE ?? '0';
+    const runnerType = suite.runners.functional.runnerType ?? 'bun-run';
+    command =
+      runnerType === 'bun-test'
+        ? ['bun', 'test', suite.runners.functional.script, ...(suite.runners.functional.args ?? [])]
+        : ['bun', 'run', suite.runners.functional.script, ...(suite.runners.functional.args ?? [])];
+  }
+
+  const commandResult = await runCommand(command, { env });
   const duration = Date.now() - start;
 
   if (commandResult.exitCode === 0) {
-    console.log(`✓ ${suite.label} passed (${duration}ms)`);
+    console.log(`✓ ${label} passed (${duration}ms)`);
   } else {
-    console.log(`✗ ${suite.label} failed (exit code ${commandResult.exitCode}, ${duration}ms)`);
+    console.log(`✗ ${label} failed (exit code ${commandResult.exitCode}, ${duration}ms)`);
   }
 
   return {
     duration,
     exitCode: commandResult.exitCode,
-    label: suite.label,
-    name: suite.name
-  } satisfies SuiteExecution;
+    label,
+    mode,
+    name: suite.name,
+    skipped: false
+  };
 };
 
 const main = async () => {

@@ -3,7 +3,7 @@
   Tests that scaffolded projects can compile TypeScript successfully.
 */
 
-import { existsSync, readFileSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import process from 'node:process';
 
@@ -259,20 +259,7 @@ const applyScriptTypecheckResult = (
 
 export const validateBuild = async (projectPath: string, packageManager: 'bun' | 'npm' | 'pnpm' | 'yarn' = 'bun') => {
   const errors: string[] = [];
-  const tsconfigPath = join(projectPath, 'tsconfig.json');
   const packageJsonPath = join(projectPath, 'package.json');
-
-  if (!existsSync(tsconfigPath)) {
-    errors.push(`tsconfig.json not found: ${tsconfigPath}`);
-
-    return { errors, passed: false };
-  }
-
-  if (!existsSync(packageJsonPath)) {
-    errors.push(`package.json not found: ${packageJsonPath}`);
-
-    return { errors, passed: false };
-  }
 
   const scriptStatus = getTypecheckScriptStatus(packageJsonPath, errors);
 

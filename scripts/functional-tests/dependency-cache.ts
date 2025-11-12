@@ -141,7 +141,7 @@ const restoreCache = (
   return Date.now() - start;
 };
 
-const installDependencies = async (projectPath: string) => {
+const installDependencies = async (projectPath: string, env?: Record<string, string | undefined>) => {
   const stdoutChunks: string[] = [];
   const stderrChunks: string[] = [];
   let timedOut = false;
@@ -150,6 +150,7 @@ const installDependencies = async (projectPath: string) => {
     cwd: projectPath,
     env: {
       ...process.env,
+      ...(env ?? {}),
       ABSOLUTE_TEST: 'true'
     },
     stdio: ['ignore', 'pipe', 'pipe']
@@ -251,7 +252,8 @@ export const getOrInstallDependencies = async (
   projectPath: string,
   config: DependencyFingerprint,
   packageJsonPath: string,
-  manifestHashOverride?: string
+  manifestHashOverride?: string,
+  env?: Record<string, string | undefined>
 ): Promise<{ cached: boolean; installTime: number }> => {
   ensureCacheDir();
 
@@ -267,7 +269,7 @@ export const getOrInstallDependencies = async (
   }
 
   const installStart = Date.now();
-  await installDependencies(projectPath);
+  await installDependencies(projectPath, env);
   const installTime = Date.now() - installStart;
 
   const updatedManifestHash = manifestHashOverride ?? computeManifestHash(packageJsonPath);

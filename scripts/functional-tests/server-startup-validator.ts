@@ -6,8 +6,6 @@
 
 import { spawn } from 'node:child_process';
 import { once } from 'node:events';
-import { existsSync, readFileSync } from 'node:fs';
-import { join } from 'node:path';
 import process from 'node:process';
 
 export type ServerStartupResult = {
@@ -19,75 +17,7 @@ export type ServerStartupResult = {
 
 const COMPILE_TIMEOUT_MS = 60_000;
 const MAX_STDERR_LINES = 5;
-const SERVER_INIT_SNIPPET = 'new Elysia()';
 const FORCE_KILL_DELAY_MS = 1_000;
-
-const parsePackageJson = (packageJsonPath: string) => {
-  try {
-    const raw = readFileSync(packageJsonPath, 'utf-8');
-
-    return JSON.parse(raw) as { scripts?: Record<string, string> };
-  } catch (unknownError) {
-    const error = unknownError instanceof Error ? unknownError : new Error(String(unknownError));
-
-    return { error } as const;
-  }
-};
-
-const ensureServerStructure = (serverFilePath: string, errors: string[]) => {
-  if (!existsSync(serverFilePath)) {
-    errors.push(`Server file not found: ${serverFilePath}`);
-
-    return false;
-  }
-
-  const serverContent = (() => {
-    try {
-      return readFileSync(serverFilePath, 'utf-8');
-    } catch (unknownError) {
-      const error = unknownError instanceof Error ? unknownError : new Error(String(unknownError));
-      errors.push(`Failed to read server file: ${error.message}`);
-
-      return null;
-    }
-  })();
-
-  if (!serverContent) {
-    return false;
-  }
-
-  if (!serverContent.includes(SERVER_INIT_SNIPPET)) {
-    errors.push('Server file missing Elysia initialization');
-
-    return false;
-  }
-
-  return true;
-};
-
-const ensureDevScript = (packageJsonPath: string, errors: string[]) => {
-  if (!existsSync(packageJsonPath)) {
-    errors.push(`package.json not found: ${packageJsonPath}`);
-
-    return false;
-  }
-
-  const parsed = parsePackageJson(packageJsonPath);
-
-  if ('error' in parsed) {
-    errors.push(`Failed to parse package.json: ${parsed.error.message}`);
-
-    return false;
-  }
-
-  if (!parsed.scripts?.dev) {
-    errors.push("No 'dev' script found in package.json");
-
-    return false;
-  }
-
-  return true;
-};
 
 const runTypecheck = async (
   projectPath: string,
@@ -160,28 +90,6 @@ export const validateServerStartup = async (
 ): Promise<ServerStartupResult> => {
   const errors: string[] = [];
   const warnings: string[] = [];
-  const serverFilePath = join(projectPath, 'src', 'backend', 'server.ts');
-  const packageJsonPath = join(projectPath, 'package.json');
-  const tsconfigPath = join(projectPath, 'tsconfig.json');
-
-  if (!ensureServerStructure(serverFilePath, errors)) {
-    return { errors, passed: false, warnings };
-  }
-
-  if (!ensureDevScript(packageJsonPath, errors)) {
-    return { errors, passed: false, warnings };
-  }
-
-  if (!existsSync(tsconfigPath)) {
-    warnings.push('tsconfig.json not found - skipping compilation check');
-
-    return {
-      compileTime: undefined,
-      errors,
-      passed: errors.length === 0,
-      warnings
-    };
-  }
 
   const { compileTime, errors: typecheckErrors } = await runTypecheck(projectPath, packageManager);
 

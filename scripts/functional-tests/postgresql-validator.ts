@@ -6,7 +6,7 @@
 
 import { spawn } from 'node:child_process';
 import { once } from 'node:events';
-import { copyFileSync, existsSync, mkdirSync } from 'node:fs';
+import { copyFileSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import process from 'node:process';
 import {
@@ -99,17 +99,6 @@ const runCommand = async (
   };
 };
 
-const getSchemaPath = (dbDir: string, orm?: string) =>
-  orm === 'drizzle' ? join(dbDir, 'schema.ts') : null;
-
-const determineHandlerPath = (projectPath: string, authProvider?: string) => {
-  const handlersDir = join(projectPath, 'src', 'backend', 'handlers');
-
-  return authProvider && authProvider !== 'none'
-    ? join(handlersDir, 'userHandlers.ts')
-    : join(handlersDir, 'countHistoryHandlers.ts');
-};
-
 const dockerComposeCommand = (
   dockerComposePath: string,
   subcommand: string[],
@@ -161,7 +150,8 @@ const waitForPostgresReady = async (dockerComposePath: string, attempt = 0) => {
 
 type PostgresLocalResult = {
   errors: string[];
-  postgresqlSpecific: PostgreSQLValidationResult['postgresqlSpecific'];
+  connectionWorks: boolean;
+  queriesWork: boolean;
   warnings: string[];
 };
 
@@ -235,9 +225,7 @@ const runPostgresSeedScripts = async (
 
 const startDockerContainer = async (
   composePath: string,
-  _authProvider: string | undefined,
   warnings: string[],
-  postgresqlSpecific: PostgreSQLValidationResult['postgresqlSpecific'],
   errors: string[]
 ) => {
   const upResult = await dockerComposeCommand(composePath, ['up', '-d', 'db']);
@@ -314,12 +302,8 @@ const validateLocalPostgres = async (
 ): Promise<PostgresLocalResult> => {
   const errors: string[] = [];
   const warnings: string[] = [];
-  const postgresqlSpecific: PostgreSQLValidationResult['postgresqlSpecific'] = {
-    connectionWorks: false,
-    dockerComposeExists: true,
-    queriesWork: false,
-    schemaFileExists: true
-  };
+  let connectionWorks = false;
+  let queriesWork = false;
 
   const sharedComposePath = ensureSharedComposeFile(dockerComposePath);
   let usingExistingContainer = dockerState.active;
@@ -336,11 +320,11 @@ const validateLocalPostgres = async (
 
   if (
     !usingExistingContainer &&
-    !(await startDockerContainer(sharedComposePath, authProvider, warnings, postgresqlSpecific, errors))
+    !(await startDockerContainer(sharedComposePath, warnings, errors))
   ) {
     console.log('✗');
 
-    return { errors, postgresqlSpecific, warnings };
+    return { connectionWorks, errors, queriesWork, warnings };
   }
 
   const ready = await waitForPostgresReady(sharedComposePath);
@@ -357,7 +341,7 @@ const validateLocalPostgres = async (
 
     await stopAction().catch(() => undefined);
 
-    return { errors, postgresqlSpecific, warnings };
+    return { connectionWorks, errors, queriesWork, warnings };
   }
 
   const elapsedMs = Date.now() - startTime;
@@ -371,10 +355,10 @@ const validateLocalPostgres = async (
     );
     await stopManagedPostgresContainerInternal().catch(() => undefined);
 
-    return { errors, postgresqlSpecific, warnings };
+    return { connectionWorks, errors, queriesWork, warnings };
   }
 
-  postgresqlSpecific.connectionWorks = true;
+  connectionWorks = true;
   dockerState.active = true;
 
   const tablesOutput = connectionResult.stdout;
@@ -387,77 +371,44 @@ const validateLocalPostgres = async (
     const requiredTable = expectsUsers ? 'users' : 'count_history';
     errors.push(`${requiredTable} table not found in database`);
   } else {
-    postgresqlSpecific.queriesWork = true;
+    queriesWork = true;
   }
 
-  return { errors, postgresqlSpecific, warnings };
+  return { connectionWorks, errors, queriesWork, warnings };
 };
 
 export type PostgreSQLValidationResult = {
+  connectionWorks: boolean;
   errors: string[];
   passed: boolean;
-  postgresqlSpecific: {
-    connectionWorks: boolean;
-    dockerComposeExists: boolean;
-    queriesWork: boolean;
-    schemaFileExists: boolean;
-  };
+  queriesWork: boolean;
   warnings: string[];
 };
 
 export const validatePostgreSQLDatabase = async (
   projectPath: string,
-  config: {
-    authProvider?: string;
-    databaseHost?: string;
-    orm?: string;
-  } = {}
-): Promise<PostgreSQLValidationResult> => {
-  const errors: string[] = [];
-  const warnings: string[] = [];
-  const postgresqlSpecific: PostgreSQLValidationResult['postgresqlSpecific'] = {
-    connectionWorks: false,
-    dockerComposeExists: false,
-    queriesWork: false,
-    schemaFileExists: false
-  };
-
-  const dbDir = join(projectPath, 'db');
-  if (!existsSync(dbDir)) {
-    errors.push(`Database directory not found: ${dbDir}`);
-
-    return { errors, passed: false, postgresqlSpecific, warnings };
-  }
-
-  const dockerComposePath = join(dbDir, 'docker-compose.db.yml');
-  const schemaPath = getSchemaPath(dbDir, config.orm);
-
-  const isLocal = config.databaseHost === 'none' || !config.databaseHost;
-  const isNeon = config.databaseHost === 'neon';
-
-  if (isLocal && !existsSync(dockerComposePath)) {
-    errors.push(`Docker compose file not found: ${dockerComposePath}`);
-
-    return { errors, passed: false, postgresqlSpecific, warnings };
-  }
-
-  if (isLocal) {
-    postgresqlSpecific.dockerComposeExists = true;
-  }
-
-  if (isNeon) {
-    warnings.push('Neon remote database - skipping Docker compose check');
-  }
-
-  if (schemaPath && !existsSync(schemaPath)) {
-    errors.push(`Drizzle schema file not found: ${schemaPath}`);
-
-    return { errors, passed: false, postgresqlSpecific, warnings };
-  }
-
-  postgresqlSpecific.schemaFileExists = true;
-
-  if (isLocal) {
+   config: {
+     authProvider?: string;
+     databaseHost?: string;
+     orm?: string;
+   } = {}
+ ): Promise<PostgreSQLValidationResult> => {
+   const errors: string[] = [];
+   const warnings: string[] = [];
+   let connectionWorks = false;
+   let queriesWork = false;
+ 
+   const dbDir = join(projectPath, 'db');
+   const dockerComposePath = join(dbDir, 'docker-compose.db.yml');
+ 
+   const isLocal = config.databaseHost === 'none' || !config.databaseHost;
+   const isNeon = config.databaseHost === 'neon';
+ 
+   if (isNeon) {
+     warnings.push('Neon remote database - skipping Docker compose check');
+   }
+ 
+   if (isLocal) {
     const localResult = await validateLocalPostgres(
       projectPath,
       dockerComposePath,
@@ -466,27 +417,17 @@ export const validatePostgreSQLDatabase = async (
 
     errors.push(...localResult.errors);
     warnings.push(...localResult.warnings);
-    postgresqlSpecific.connectionWorks = localResult.postgresqlSpecific.connectionWorks;
-    postgresqlSpecific.queriesWork = localResult.postgresqlSpecific.queriesWork;
+    connectionWorks ||= localResult.connectionWorks;
+    queriesWork ||= localResult.queriesWork;
   }
-
-  if (isNeon) {
-    warnings.push('Neon remote database - skipping connection test (requires credentials)');
-    postgresqlSpecific.connectionWorks = true;
-    postgresqlSpecific.queriesWork = true;
-  }
-
-  const handlersPath = determineHandlerPath(projectPath, config.authProvider);
-  if (!existsSync(handlersPath)) {
-    errors.push(`Database handler file not found: ${handlersPath}`);
-  }
-
-  const passed =
-    errors.length === 0 &&
-    postgresqlSpecific.schemaFileExists &&
-    (postgresqlSpecific.dockerComposeExists || config.databaseHost === 'neon') &&
-    postgresqlSpecific.connectionWorks &&
-    postgresqlSpecific.queriesWork;
-
-  return { errors, passed, postgresqlSpecific, warnings };
-};
+ 
+   if (isNeon) {
+     warnings.push('Neon remote database - skipping connection test (requires credentials)');
+     connectionWorks = true;
+     queriesWork = true;
+   }
+ 
+   const passed = errors.length === 0 && connectionWorks && queriesWork;
+ 
+   return { connectionWorks, errors, passed, queriesWork, warnings };
+ };

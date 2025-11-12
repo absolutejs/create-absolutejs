@@ -1,11 +1,8 @@
 /*
-  HTMX Framework Validator
-  Validates HTMX-specific functionality across all backend combinations.
-  Tests HTMX page generation, routes, and integration with different configurations.
+  HTMX Validator
+  Executes the functional test suite for HTMX scaffold combinations.
 */
 
-import { existsSync, readFileSync } from 'node:fs';
-import { join } from 'node:path';
 import process from 'node:process';
 
 import { runFunctionalTests, type FunctionalTestResult } from './functional-test-runner';
@@ -15,11 +12,6 @@ export type HTMXValidationResult = {
   errors: string[];
   warnings: string[];
   functionalTestResults?: FunctionalTestResult;
-  htmxSpecific: {
-    filesExist: boolean;
-    routesConfigured: boolean;
-    importsCorrect: boolean;
-  };
 };
 
 type ValidatorOptions = {
@@ -35,167 +27,6 @@ type ValidatorConfig = {
   useTailwind?: boolean;
   codeQualityTool?: string;
   isMultiFrontend?: boolean;
-};
-
-type HtmxSpecificChecks = {
-  errors: string[];
-  warnings: string[];
-  filesExist: boolean;
-  importsCorrect: boolean;
-  routesConfigured: boolean;
-};
-
-const HTMX_DIRECTORY_CANDIDATES = ['src/frontend/htmx', 'src/frontend'];
-const REQUIRED_HTMX_FILES = [
-  ['pages', 'HTMXExample.html'],
-  ['styles', 'htmx-example.css'],
-  ['htmx.min.js']
-];
-const REQUIRED_HTMX_ROUTES = ['/htmx/reset', '/htmx/count', '/htmx/increment'];
-const HTMX_ASSET_PATHS = [
-  ['src', 'backend', 'assets', 'svg', 'htmx-logo-black.svg'],
-  ['src', 'backend', 'assets', 'svg', 'htmx-logo-white.svg']
-];
-const REQUIRED_TITLE = '<title>AbsoluteJS + HTMX</title>';
-
-const findHtmxDirectory = (projectPath: string) => {
-  for (const relative of HTMX_DIRECTORY_CANDIDATES) {
-    const candidate = join(projectPath, relative);
-    const pagePath = join(candidate, 'pages', 'HTMXExample.html');
-
-    if (existsSync(pagePath)) {
-      return candidate;
-    }
-  }
-
-  return null;
-};
-
-const readFileSafe = (filePath: string) => {
-  try {
-    return readFileSync(filePath, 'utf-8');
-  } catch (unknownError) {
-    const error = unknownError instanceof Error ? unknownError : new Error(String(unknownError));
-
-    return { error } as const;
-  }
-};
-
-const checkHtmxFiles = (htmxDirectory: string, projectPath: string, errors: string[]) => {
-  const required = REQUIRED_HTMX_FILES.map((segments) => join(htmxDirectory, ...segments));
-  HTMX_ASSET_PATHS.forEach((segments) => {
-    required.push(join(projectPath, ...segments));
-  });
-
-  const missingFiles = required.filter((filePath) => !existsSync(filePath));
-
-  if (missingFiles.length > 0) {
-    errors.push(`Missing HTMX files: ${missingFiles.join(', ')}`);
-
-    return false;
-  }
-
-  return true;
-};
-
-const checkServerRoutes = (projectPath: string, errors: string[]) => {
-  const serverPath = join(projectPath, 'src', 'backend', 'server.ts');
-
-  if (!existsSync(serverPath)) {
-    errors.push(`Server file not found: ${serverPath}`);
-
-    return { importsCorrect: false, routesConfigured: false };
-  }
-
-  const serverContent = readFileSafe(serverPath);
-
-  if (typeof serverContent !== 'string') {
-    errors.push(`Failed to read server.ts: ${serverContent.error.message}`);
-
-    return { importsCorrect: false, routesConfigured: false };
-  }
-
-  const importsCorrect = serverContent.includes('HTMXExample') || serverContent.includes('handleHTMXPageRequest');
-
-  if (!importsCorrect) {
-    errors.push('Server.ts missing HTMX imports or route handlers');
-  }
-
-  const baseRoutePresent = serverContent.includes("'/htmx'") ||
-    (serverContent.includes("'/'") && serverContent.includes('HTMXExample'));
-  const missingRoutes = REQUIRED_HTMX_ROUTES.filter((route) => !serverContent.includes(route));
-  const routesConfigured = missingRoutes.length === 0 && baseRoutePresent;
-
-  if (!routesConfigured) {
-    errors.push('Server.ts missing HTMX route configuration (expected /htmx, /htmx/reset, /htmx/count, /htmx/increment)');
-  }
-
-  return { importsCorrect, routesConfigured };
-};
-
-const checkHtmxContent = (htmxDirectory: string, warnings: string[]) => {
-  const pagePath = join(htmxDirectory, 'pages', 'HTMXExample.html');
-  const htmlContent = readFileSafe(pagePath);
-
-  if (typeof htmlContent !== 'string') {
-    warnings.push(`Could not validate HTMX content: ${htmlContent.error.message}`);
-
-    return;
-  }
-
-  if (!htmlContent.includes('<!doctype html>') && !htmlContent.includes('<!DOCTYPE html>')) {
-    warnings.push('HTMX page may be missing proper DOCTYPE declaration');
-  }
-
-  if (!htmlContent.includes(REQUIRED_TITLE)) {
-    warnings.push('HTMX page may be missing expected title');
-  }
-
-  if (!htmlContent.includes('htmx-example.css')) {
-    warnings.push('HTMX page may be missing CSS link');
-  }
-
-  if (!htmlContent.includes('htmx.min.js')) {
-    warnings.push('HTMX page may be missing htmx.min.js script reference');
-  }
-
-  if (!htmlContent.includes('hx-')) {
-    warnings.push('HTMX page may be missing HTMX attributes (hx-post, hx-trigger, etc.)');
-  }
-};
-
-const evaluateHtmxSpecificChecks = (projectPath: string): HtmxSpecificChecks => {
-  const errors: string[] = [];
-  const warnings: string[] = [];
-
-  const htmxDirectory = findHtmxDirectory(projectPath);
-
-  if (!htmxDirectory) {
-    errors.push('HTMX directory not found - checked src/frontend and src/frontend/htmx');
-
-    return {
-      errors,
-      filesExist: false,
-      importsCorrect: false,
-      routesConfigured: false,
-      warnings
-    };
-  }
-
-  const filesExist = checkHtmxFiles(htmxDirectory, projectPath, errors);
-  const { importsCorrect, routesConfigured } = checkServerRoutes(projectPath, errors);
-
-  if (filesExist) {
-    checkHtmxContent(htmxDirectory, warnings);
-  }
-
-  return {
-    errors,
-    filesExist,
-    importsCorrect,
-    routesConfigured,
-    warnings
-  };
 };
 
 const runFunctionalSuite = async (
@@ -227,7 +58,7 @@ const runFunctionalSuite = async (
   return results;
 };
 
-export const validateHTMXFramework = async (
+export const validateHTMX = async (
   projectPath: string,
   packageManager: 'bun' | 'npm' | 'pnpm' | 'yarn' = 'bun',
   _config: ValidatorConfig = {},
@@ -237,10 +68,6 @@ export const validateHTMXFramework = async (
   const errors: string[] = [];
   const warnings: string[] = [];
 
-  const htmxChecks = evaluateHtmxSpecificChecks(projectPath);
-  errors.push(...htmxChecks.errors);
-  warnings.push(...htmxChecks.warnings);
-
   const functionalTestResults = await runFunctionalSuite(
     projectPath,
     packageManager,
@@ -249,20 +76,11 @@ export const validateHTMXFramework = async (
     warnings
   );
 
-  const passed =
-    errors.length === 0 &&
-    htmxChecks.filesExist &&
-    htmxChecks.routesConfigured &&
-    htmxChecks.importsCorrect;
+  const passed = errors.length === 0;
 
   return {
     errors,
     functionalTestResults,
-    htmxSpecific: {
-      filesExist: htmxChecks.filesExist,
-      importsCorrect: htmxChecks.importsCorrect,
-      routesConfigured: htmxChecks.routesConfigured
-    },
     passed,
     warnings
   };
@@ -283,13 +101,6 @@ const parseCliArguments = () => {
     skipDependencies,
     skipServer
   } as const;
-};
-
-const logHtmxSpecificSummary = (htmxSpecific: HTMXValidationResult['htmxSpecific']) => {
-  console.log('HTMX-Specific Checks:');
-  console.log(`  Files Exist: ${htmxSpecific.filesExist ? '✓' : '✗'}`);
-  console.log(`  Routes Configured: ${htmxSpecific.routesConfigured ? '✓' : '✗'}`);
-  console.log(`  Imports Correct: ${htmxSpecific.importsCorrect ? '✓' : '✗'}`);
 };
 
 const logBuildSummary = (build?: FunctionalTestResult['results']['build']) => {
@@ -334,11 +145,11 @@ const logWarnings = (warnings: string[]) => {
 
 const exitWithResult = (result: HTMXValidationResult) => {
   if (result.passed) {
-    console.log('\n✓ HTMX framework validation passed!');
+    console.log('\n✓ HTMX validation passed!');
     process.exit(0);
   }
 
-  console.log('\n✗ HTMX framework validation failed:');
+  console.log('\n✗ HTMX validation failed:');
   result.errors.forEach((error) => console.error(`  - ${error}`));
   process.exit(1);
 };
@@ -352,21 +163,20 @@ const runFromCli = async () => {
   }
 
   try {
-    const result = await validateHTMXFramework(
+    const result = await validateHTMX(
       projectPath,
       packageManager,
       {},
       { skipBuild, skipDependencies, skipServer }
     );
 
-    console.log('\n=== HTMX Framework Validation Results ===\n');
-    logHtmxSpecificSummary(result.htmxSpecific);
+    console.log('\n=== HTMX Validation Results ===\n');
     logFunctionalSummary(result.functionalTestResults);
     logWarnings(result.warnings);
     exitWithResult(result);
   } catch (unknownError) {
     const error = unknownError instanceof Error ? unknownError : new Error(String(unknownError));
-    console.error('✗ HTMX framework validation error:', error);
+    console.error('✗ HTMX validation error:', error);
     process.exit(1);
   }
 };

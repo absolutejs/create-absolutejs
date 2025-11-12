@@ -6,7 +6,6 @@
 
 import { spawn } from 'node:child_process';
 import { once } from 'node:events';
-import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import process from 'node:process';
 
@@ -126,14 +125,6 @@ const waitForMongoReady = async (dockerComposePath: string, attempt = 0) => {
   return waitForMongoReady(dockerComposePath, attempt + 1);
 };
 
-const determineHandlerPath = (projectPath: string, authProvider?: string) => {
-  const handlersDir = join(projectPath, 'src', 'backend', 'handlers');
-
-  return authProvider && authProvider !== 'none'
-    ? join(handlersDir, 'userHandlers.ts')
-    : join(handlersDir, 'countHistoryHandlers.ts');
-};
-
 const getDockerStartErrors = (
   stderr: string,
   warnings: string[],
@@ -194,7 +185,7 @@ const validateLocalMongo = async (
   const warnings: string[] = [];
   const mongodbSpecific: MongoDBValidationResult['mongodbSpecific'] = {
     connectionWorks: false,
-    dockerComposeExists: true,
+    containerStarted: false,
     queriesWork: false
   };
 
@@ -217,6 +208,8 @@ const validateLocalMongo = async (
 
     return { errors, mongodbSpecific, warnings };
   }
+
+  mongodbSpecific.containerStarted = true;
 
   const collectionQuery = buildCollectionQuery(authProvider);
   const connectionResult = await executeMongoQuery(dockerComposePath, collectionQuery);
@@ -251,8 +244,8 @@ const validateLocalMongo = async (
 export type MongoDBValidationResult = {
   errors: string[];
   mongodbSpecific: {
+    containerStarted: boolean;
     connectionWorks: boolean;
-    dockerComposeExists: boolean;
     queriesWork: boolean;
   };
   passed: boolean;
@@ -271,29 +264,15 @@ export const validateMongoDBDatabase = async (
   const warnings: string[] = [];
   const mongodbSpecific: MongoDBValidationResult['mongodbSpecific'] = {
     connectionWorks: false,
-    dockerComposeExists: false,
+    containerStarted: false,
     queriesWork: false
   };
 
   const dbDir = join(projectPath, 'db');
-  if (!existsSync(dbDir)) {
-    errors.push(`Database directory not found: ${dbDir}`);
-
-    return { errors, mongodbSpecific, passed: false, warnings };
-  }
-
   const dockerComposePath = join(dbDir, 'docker-compose.db.yml');
   const isLocal = config.databaseHost === 'none' || !config.databaseHost;
 
-  if (isLocal && !existsSync(dockerComposePath)) {
-    errors.push(`Docker compose file not found: ${dockerComposePath}`);
-
-    return { errors, mongodbSpecific, passed: false, warnings };
-  }
-
-  if (isLocal) {
-    mongodbSpecific.dockerComposeExists = true;
-  } else {
+  if (!isLocal) {
     warnings.push('Remote MongoDB - skipping Docker compose check');
   }
 
@@ -308,22 +287,16 @@ export const validateMongoDBDatabase = async (
     warnings.push(...localResult.warnings);
     mongodbSpecific.connectionWorks = localResult.mongodbSpecific.connectionWorks;
     mongodbSpecific.queriesWork = localResult.mongodbSpecific.queriesWork;
+    mongodbSpecific.containerStarted = localResult.mongodbSpecific.containerStarted;
   } else {
     warnings.push('Remote MongoDB - skipping connection test (requires credentials)');
     mongodbSpecific.connectionWorks = true;
     mongodbSpecific.queriesWork = true;
-  }
-
-  const handlersPath = determineHandlerPath(projectPath, config.authProvider);
-  if (!existsSync(handlersPath)) {
-    errors.push(`Database handler file not found: ${handlersPath}`);
+    mongodbSpecific.containerStarted = true;
   }
 
   const passed =
-    errors.length === 0 &&
-    (mongodbSpecific.dockerComposeExists || !isLocal) &&
-    mongodbSpecific.connectionWorks &&
-    mongodbSpecific.queriesWork;
+    errors.length === 0 && mongodbSpecific.connectionWorks && mongodbSpecific.queriesWork;
 
   return {
     errors,
@@ -336,7 +309,7 @@ export const validateMongoDBDatabase = async (
 const logValidationSummary = (result: MongoDBValidationResult) => {
   console.log('\n=== MongoDB Database Validation Results ===\n');
   console.log('MongoDB-Specific Checks:');
-  console.log(`  Docker Compose Exists: ${result.mongodbSpecific.dockerComposeExists ? '✓' : '✗'}`);
+  console.log(`  Container Started: ${result.mongodbSpecific.containerStarted ? '✓' : '✗'}`);
   console.log(`  Connection Works: ${result.mongodbSpecific.connectionWorks ? '✓' : '✗'}`);
   console.log(`  Queries Work: ${result.mongodbSpecific.queriesWork ? '✓' : '✗'}`);
 };

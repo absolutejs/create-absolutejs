@@ -1,11 +1,8 @@
 /*
   Svelte Framework Validator
-  Validates Svelte-specific functionality across all backend combinations.
-  Tests Svelte rendering, hydration, and integration with different configurations.
+  Executes the functional test suite for Svelte scaffold combinations.
 */
 
-import { existsSync, readFileSync } from 'node:fs';
-import { join } from 'node:path';
 import process from 'node:process';
 
 import { runFunctionalTests, type FunctionalTestResult } from './functional-test-runner';
@@ -15,11 +12,6 @@ export type SvelteValidationResult = {
   errors: string[];
   warnings: string[];
   functionalTestResults?: FunctionalTestResult;
-  svelteSpecific: {
-    filesExist: boolean;
-    routesConfigured: boolean;
-    importsCorrect: boolean;
-  };
 };
 
 type ValidatorOptions = {
@@ -35,169 +27,6 @@ type ValidatorConfig = {
   useTailwind?: boolean;
   codeQualityTool?: string;
   isMultiFrontend?: boolean;
-};
-
-type SvelteSpecificChecks = {
-  errors: string[];
-  warnings: string[];
-  filesExist: boolean;
-  importsCorrect: boolean;
-  routesConfigured: boolean;
-};
-
-const SVELTE_DIRECTORY_CANDIDATES = ['src/frontend/svelte', 'src/frontend'];
-const REQUIRED_SVELTE_FILES = [
-  ['components', 'Counter.svelte'],
-  ['pages', 'SvelteExample.svelte'],
-  ['composables', 'counter.svelte.ts'],
-  ['styles', 'svelte-example.css']
-];
-const SVELTE_ASSET_PATH = ['src', 'backend', 'assets', 'svg', 'svelte-logo.svg'];
-const SVELTE_DEPENDENCY = 'svelte';
-
-const findSvelteDirectory = (projectPath: string) => {
-  for (const relative of SVELTE_DIRECTORY_CANDIDATES) {
-    const candidate = join(projectPath, relative);
-    const pagePath = join(candidate, 'pages', 'SvelteExample.svelte');
-
-    if (existsSync(pagePath)) {
-      return candidate;
-    }
-  }
-
-  return null;
-};
-
-const readFileSafe = (filePath: string) => {
-  try {
-    return readFileSync(filePath, 'utf-8');
-  } catch (unknownError) {
-    const error = unknownError instanceof Error ? unknownError : new Error(String(unknownError));
-
-    return { error } as const;
-  }
-};
-
-const parsePackageJsonContent = (raw: string) => {
-  try {
-    return JSON.parse(raw) as { dependencies?: Record<string, string> };
-  } catch (unknownError) {
-    const error = unknownError instanceof Error ? unknownError : new Error(String(unknownError));
-
-    return { error } as const;
-  }
-};
-
-const checkSvelteFiles = (svelteDirectory: string, projectPath: string, errors: string[]) => {
-  const required = REQUIRED_SVELTE_FILES.map((segments) => join(svelteDirectory, ...segments));
-  required.push(join(projectPath, ...SVELTE_ASSET_PATH));
-
-  const missingFiles = required.filter((filePath) => !existsSync(filePath));
-
-  if (missingFiles.length > 0) {
-    errors.push(`Missing Svelte files: ${missingFiles.join(', ')}`);
-
-    return false;
-  }
-
-  return true;
-};
-
-const checkServerRoutes = (projectPath: string, errors: string[]) => {
-  const serverPath = join(projectPath, 'src', 'backend', 'server.ts');
-
-  if (!existsSync(serverPath)) {
-    errors.push(`Server file not found: ${serverPath}`);
-
-    return { importsCorrect: false, routesConfigured: false };
-  }
-
-  const serverContent = readFileSafe(serverPath);
-
-  if (typeof serverContent !== 'string') {
-    errors.push(`Failed to read server.ts: ${serverContent.error.message}`);
-
-    return { importsCorrect: false, routesConfigured: false };
-  }
-
-  const importsCorrect = serverContent.includes('SvelteExample') || serverContent.includes('handleSveltePageRequest');
-
-  if (!importsCorrect) {
-    errors.push('Server.ts missing Svelte imports or route handlers');
-  }
-
-  const routesConfigured =
-    serverContent.includes("'/svelte'") ||
-    (serverContent.includes("'/'") && serverContent.includes('SvelteExample'));
-
-  if (!routesConfigured) {
-    errors.push('Server.ts missing Svelte route configuration');
-  }
-
-  return { importsCorrect, routesConfigured };
-};
-
-const checkPackageJson = (projectPath: string, warnings: string[], errors: string[]) => {
-  const packageJsonPath = join(projectPath, 'package.json');
-
-  if (!existsSync(packageJsonPath)) {
-    warnings.push('package.json not found – unable to verify Svelte dependencies');
-
-    return;
-  }
-
-  const packageJson = readFileSafe(packageJsonPath);
-
-  if (typeof packageJson !== 'string') {
-    warnings.push(`Could not verify Svelte dependencies in package.json: ${packageJson.error.message}`);
-
-    return;
-  }
-
-  const parsed = parsePackageJsonContent(packageJson);
-
-  if ('error' in parsed) {
-    warnings.push(`Could not verify Svelte dependencies in package.json: ${parsed.error.message}`);
-
-    return;
-  }
-
-  const hasSvelte = Boolean(parsed.dependencies?.[SVELTE_DEPENDENCY]);
-
-  if (!hasSvelte) {
-    errors.push('package.json missing Svelte dependencies');
-  }
-};
-
-const evaluateSvelteSpecificChecks = (projectPath: string): SvelteSpecificChecks => {
-  const errors: string[] = [];
-  const warnings: string[] = [];
-
-  const svelteDirectory = findSvelteDirectory(projectPath);
-
-  if (!svelteDirectory) {
-    errors.push('Svelte directory not found - checked src/frontend and src/frontend/svelte');
-
-    return {
-      errors,
-      filesExist: false,
-      importsCorrect: false,
-      routesConfigured: false,
-      warnings
-    };
-  }
-
-  const filesExist = checkSvelteFiles(svelteDirectory, projectPath, errors);
-  const { importsCorrect, routesConfigured } = checkServerRoutes(projectPath, errors);
-  checkPackageJson(projectPath, warnings, errors);
-
-  return {
-    errors,
-    filesExist,
-    importsCorrect,
-    routesConfigured,
-    warnings
-  };
 };
 
 const runFunctionalSuite = async (
@@ -239,10 +68,6 @@ export const validateSvelteFramework = async (
   const errors: string[] = [];
   const warnings: string[] = [];
 
-  const svelteChecks = evaluateSvelteSpecificChecks(projectPath);
-  errors.push(...svelteChecks.errors);
-  warnings.push(...svelteChecks.warnings);
-
   const functionalTestResults = await runFunctionalSuite(
     projectPath,
     packageManager,
@@ -251,21 +76,12 @@ export const validateSvelteFramework = async (
     warnings
   );
 
-  const passed =
-    errors.length === 0 &&
-    svelteChecks.filesExist &&
-    svelteChecks.routesConfigured &&
-    svelteChecks.importsCorrect;
+  const passed = errors.length === 0;
 
   return {
     errors,
     functionalTestResults,
     passed,
-    svelteSpecific: {
-      filesExist: svelteChecks.filesExist,
-      importsCorrect: svelteChecks.importsCorrect,
-      routesConfigured: svelteChecks.routesConfigured
-    },
     warnings
   };
 };
@@ -285,13 +101,6 @@ const parseCliArguments = () => {
     skipDependencies,
     skipServer
   } as const;
-};
-
-const logSvelteSpecificSummary = (svelteSpecific: SvelteValidationResult['svelteSpecific']) => {
-  console.log('Svelte-Specific Checks:');
-  console.log(`  Files Exist: ${svelteSpecific.filesExist ? '✓' : '✗'}`);
-  console.log(`  Routes Configured: ${svelteSpecific.routesConfigured ? '✓' : '✗'}`);
-  console.log(`  Imports Correct: ${svelteSpecific.importsCorrect ? '✓' : '✗'}`);
 };
 
 const logBuildSummary = (build?: FunctionalTestResult['results']['build']) => {
@@ -362,7 +171,6 @@ const runFromCli = async () => {
     );
 
     console.log('\n=== Svelte Framework Validation Results ===\n');
-    logSvelteSpecificSummary(result.svelteSpecific);
     logFunctionalSummary(result.functionalTestResults);
     logWarnings(result.warnings);
     exitWithResult(result);

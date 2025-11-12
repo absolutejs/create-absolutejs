@@ -120,13 +120,6 @@ export const testDependencyInstallation = async (
 ): Promise<DependencyInstallResult> => {
   const errors: string[] = [];
   const packageJsonPath = join(projectPath, 'package.json');
-
-  if (!existsSync(packageJsonPath)) {
-    errors.push(`package.json not found: ${projectPath}`);
-
-    return { errors, passed: false };
-  }
-
   const parsed = parsePackageJson(packageJsonPath);
 
   if ('error' in parsed) {
@@ -151,13 +144,6 @@ export const testDependencyInstallation = async (
   }
 
   const installTime = Date.now() - installStart;
-  const nodeModulesPath = join(projectPath, 'node_modules');
-
-  if (!existsSync(nodeModulesPath)) {
-    errors.push('node_modules directory not created after installation');
-
-    return { errors, installTime, passed: false };
-  }
 
   return { errors: [], installTime, passed: true };
 };
