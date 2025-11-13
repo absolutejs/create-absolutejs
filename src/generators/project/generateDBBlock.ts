@@ -103,7 +103,8 @@ const db = drizzle(pool, { schema })
 	if (orm === 'prisma') {
 		if (!prismaDialectSet.has(databaseEngine)) return '';
 
-		return `const prisma = (await import('../../db/client')).default`;
+		return `const prisma = (await import('../../db/client')).default
+const db = prisma`;
 	}
 
 	return '';

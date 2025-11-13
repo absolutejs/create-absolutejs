@@ -76,6 +76,22 @@ export const generateServerFile = ({
 		frontendDirectories
 	});
 
+	let lifecycleCleanup = '';
+	if (orm === 'prisma' && databaseEngine && databaseEngine !== 'none') {
+		lifecycleCleanup = `
+// Graceful shutdown for Prisma
+process.on('SIGINT', async () => {
+  await prisma.$disconnect()
+  process.exit(0)
+})
+
+process.on('SIGTERM', async () => {
+  await prisma.$disconnect()
+  process.exit(0)
+})
+`;
+	}
+
 	const content = `${importsBlock}
 
 ${manifestBlock}
@@ -87,7 +103,7 @@ ${useBlock}
     const { request } = err
     console.error(\`Server error on \${request.method} \${request.url}: \${err.message}\`)
   });
-`;
+${lifecycleCleanup}`;
 
 	mkdirSync(backendDirectory, { recursive: true });
 	writeFileSync(serverFilePath, content);
