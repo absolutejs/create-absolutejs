@@ -1,7 +1,6 @@
-import { exit } from 'process';
 import { spinner } from '@clack/prompts';
 import { $ } from 'bun';
-import { green, red } from 'picocolors';
+import { green, yellow } from 'picocolors';
 import { PackageManager } from '../types';
 import { formatCommands, formatNoInstallCommands } from '../utils/commandMaps';
 
@@ -26,7 +25,7 @@ export const formatProject = async ({
 		spin.start('Formatting files…');
 		await $`sh -c ${fmt}`.cwd(projectName).quiet().nothrow();
 		spin.stop(green('Files formatted'));
-	} catch (err) {
+	} catch {
 		spin.stop(yellow('Formatting skipped - continuing...'), 0);
 	}
 };

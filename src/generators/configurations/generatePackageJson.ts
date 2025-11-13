@@ -137,18 +137,17 @@ export const createPackageJson = ({
 		(databaseHost === 'neon' || databaseHost === 'planetscale');
 
 	if (orm === 'prisma') {
-		for (const dep of prismaRuntimeDependencies) {
+		prismaRuntimeDependencies.forEach((dep) => {
 			dependencies[dep.value] = resolveVersion(dep.value, dep.latestVersion);
-		}
+		});
 
-		for (const dep of prismaDevDependencies) {
-			if (dep.value === '@prisma/extension-accelerate' && !usesAccelerate)
-				continue;
+		prismaDevDependencies.forEach((dep) => {
+			if (dep.value === '@prisma/extension-accelerate' && !usesAccelerate) return;
 			devDependencies[dep.value] = resolveVersion(
 				dep.value,
 				dep.latestVersion
 			);
-		}
+		});
 	}
 	if (orm === 'drizzle') {
 	switch (databaseHost) {

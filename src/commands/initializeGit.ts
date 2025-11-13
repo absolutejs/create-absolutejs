@@ -18,15 +18,15 @@ const initializeRepository = async (projectName: string, spin: ReturnType<typeof
 export const initializeGit = async (projectName: string) => {
 	const spin = spinner();
 
-	try {
-		spin.start('Checking git availability...');
-		const isGitInstalled = await checkGitInstalled();
-		
-		if (!isGitInstalled) {
-			spin.stop(red('Git is not installed. Please install git before proceeding.'), 1);
-			abort();
-		}
+	spin.start('Checking git availability...');
+	const isGitInstalled = await checkGitInstalled();
+	
+	if (!isGitInstalled) {
+		spin.stop(red('Git is not installed. Please install git before proceeding.'), 1);
+		abort();
+	}
 
+	try {
 		await initializeRepository(projectName, spin);
 	} catch (err) {
 		spin.stop(red('Failed to initialize git'), 1);

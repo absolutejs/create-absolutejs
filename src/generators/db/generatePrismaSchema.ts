@@ -11,28 +11,22 @@ type DialectConfig = {
 
 const DIALECTS: Record<AvailablePrismaDialect, DialectConfig> = {
 	cockroachdb: {
-		provider: 'cockroachdb',
-		countHistoryId: 'Int @id @default(sequence())'
+		countHistoryId: 'Int @id @default(sequence())', provider: 'cockroachdb'
 	},
 	mariadb: {
-		provider: 'mysql',
-		countHistoryId: 'Int @id @default(autoincrement())'
+		countHistoryId: 'Int @id @default(autoincrement())', provider: 'mysql'
 	},
 	mssql: {
-		provider: 'sqlserver',
-		countHistoryId: 'Int @id @default(autoincrement())'
+		countHistoryId: 'Int @id @default(autoincrement())', provider: 'sqlserver'
 	},
 	mysql: {
-		provider: 'mysql',
-		countHistoryId: 'Int @id @default(autoincrement())'
+		countHistoryId: 'Int @id @default(autoincrement())', provider: 'mysql'
 	},
 	postgresql: {
-		provider: 'postgresql',
-		countHistoryId: 'Int @id @default(autoincrement())'
+		countHistoryId: 'Int @id @default(autoincrement())', provider: 'postgresql'
 	},
 	sqlite: {
-		provider: 'sqlite',
-		countHistoryId: 'Int @id @default(autoincrement())'
+		countHistoryId: 'Int @id @default(autoincrement())', provider: 'sqlite'
 	}
 };
 
@@ -59,7 +53,7 @@ const buildDatasourceBlock = (cfg: DialectConfig) => `datasource db {
   url      = env("DATABASE_URL")
 }`;
 
-const buildUserModel = (cfg: DialectConfig) => `model User {
+const buildUserModel = () => `model User {
   auth_sub   String @id
   metadata   Json
   created_at DateTime @default(now())
@@ -79,7 +73,7 @@ export const generatePrismaSchema = ({
 	databaseEngine,
 	databaseHost,
 	authProvider
-}: GeneratePrismaSchemaProps): string => {
+}: GeneratePrismaSchemaProps) => {
 	const cfg = DIALECTS[databaseEngine];
 	if (!cfg) {
 		throw new Error(

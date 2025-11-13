@@ -105,9 +105,7 @@ export const generateImportsBlock = ({
 	if (orm === 'prisma') {
 		rawImports.push(`import type { Elysia } from 'elysia'`);
 		rawImports.push(`import type { PrismaClient } from '@prisma/client'`);
-		if (authProvider === 'absoluteAuth') {
-			rawImports.push(`import type { User } from '@prisma/client'`);
-		}
+		if (authProvider === 'absoluteAuth') rawImports.push(`import type { User } from '@prisma/client'`);
 	}
 	if (orm === 'drizzle' && !isRemoteHost && databaseEngine === 'postgresql')
 		rawImports.push(

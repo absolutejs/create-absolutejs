@@ -271,24 +271,21 @@ return rows[0] ?? null;
 };
 
 const prismaQueryOperations: QueryOperations = {
-	selectUser: `const user = await db.user.findUnique({
-  where: { auth_sub: authSub }
+	insertHistory: `const newHistory = await db.countHistory.create({
+  data: { count }
 })
-  return user`,
-	insertUser: `const newUser = await db.user.upsert({
+  return newHistory`, insertUser: `const newUser = await db.user.upsert({
   where: { auth_sub: authSub },
   update: { metadata: userIdentity },
   create: { auth_sub: authSub, metadata: userIdentity }
 })
-  return newUser`,
-	selectHistory: `const history = await db.countHistory.findUnique({
+  return newUser`, selectHistory: `const history = await db.countHistory.findUnique({
   where: { uid }
 })
-  return history`,
-	insertHistory: `const newHistory = await db.countHistory.create({
-  data: { count }
+  return history`, selectUser: `const user = await db.user.findUnique({
+  where: { auth_sub: authSub }
 })
-  return newHistory`
+  return user`
 };
 
 type HandlerType = {
@@ -346,154 +343,129 @@ const mysqlDrizzleQueryOperations: QueryOperations = {
 };
 
 const driverConfigurations = {
-	'cockroachdb:sql:local': {
+	'cockroachdb:prisma:local': {
+		dbType: 'PrismaClient',
+		importLines: `import type { PrismaClient } from '@prisma/client'`,
+		queries: prismaQueryOperations
+	}, 'cockroachdb:sql:local': {
 		dbType: 'Pool',
 		importLines: `import { Pool } from 'pg'`,
 		queries: cockroachdbPoolQueryOperations
-	},
-	'gel:sql:local': {
+	}, 'gel:sql:local': {
 		dbType: 'GelClient',
 		importLines: `import { GelClient } from 'gel'`,
 		queries: gelSqlQueryOperations
-	},
-	'mariadb:sql:local': {
+	}, 'mariadb:prisma:local': {
+		dbType: 'PrismaClient',
+		importLines: `import type { PrismaClient } from '@prisma/client'`,
+		queries: prismaQueryOperations
+	}, 'mariadb:sql:local': {
 		dbType: 'Pool',
 		importLines: `import { Pool } from 'mariadb'`,
 		queries: mariadbSqlQueryOperations
-	},
-	'mongodb:native:local': {
+	}, 'mongodb:native:local': {
 		dbType: 'Db',
 		importLines: `import { Db } from 'mongodb'`,
 		queries: mongodbQueryOperations
-	},
-	'mssql:sql:local': {
+	}, 'mssql:prisma:local': {
+		dbType: 'PrismaClient',
+		importLines: `import type { PrismaClient } from '@prisma/client'`,
+		queries: prismaQueryOperations
+	}, 'mssql:sql:local': {
 		dbType: 'ConnectionPool',
 		importLines: `import { ConnectionPool } from 'mssql'`,
 		queries: mssqlSqlQueryOperations
-	},
-	'mysql:drizzle:local': {
+	}, 'mysql:drizzle:local': {
 		dbType: 'MySql2Database<SchemaType>',
 		importLines: `
 import { eq } from 'drizzle-orm'
 import { MySql2Database } from 'drizzle-orm/mysql2'
 import { schema, type SchemaType } from '../../../db/schema'`,
 		queries: mysqlDrizzleQueryOperations
-	},
-	'mysql:sql:local': {
+	}, 'mysql:prisma:local': {
+		dbType: 'PrismaClient',
+		importLines: `import type { PrismaClient } from '@prisma/client'`,
+		queries: prismaQueryOperations
+	}, 'mysql:prisma:planetscale': {
+		dbType: 'PrismaClient',
+		importLines: `import type { PrismaClient } from '@prisma/client'`,
+		queries: prismaQueryOperations
+	}, 'mysql:sql:local': {
 		dbType: 'Pool',
 		handlerTypes: mysqlHandlerTypes,
 		importLines: `import { Pool, ResultSetHeader, RowDataPacket } from 'mysql2/promise'`,
 		queries: mysqlSqlQueryOperations
-	},
-	'postgresql:drizzle:local': {
+	}, 'postgresql:drizzle:local': {
 		dbType: 'NodePgDatabase<SchemaType>',
 		importLines: `
 import { eq } from 'drizzle-orm'
 import { BunSQLDatabase } from 'drizzle-orm/bun-sql'
 import { schema, type SchemaType } from '../../../db/schema'`,
 		queries: drizzleQueryOperations
-	},
-	'postgresql:drizzle:neon': {
+	}, 'postgresql:drizzle:neon': {
 		dbType: 'NeonDatabase<SchemaType>',
 		importLines: `
 import { eq } from 'drizzle-orm'
 import { NeonDatabase } from 'drizzle-orm/neon-serverless'
 import { schema, type SchemaType } from '../../../db/schema'`,
 		queries: drizzleQueryOperations
-	},
-	'postgresql:sql:local': {
-		dbType: 'SQL',
-		importLines: `import { SQL } from 'bun'`,
-		queries: postgresSqlQueryOperations
-	},
-	'postgresql:sql:neon': {
-		dbType: 'NeonQueryFunction<false, false>',
-		importLines: `import { NeonQueryFunction } from '@neondatabase/serverless'`,
-		queries: postgresSqlQueryOperations
-	},
-	'postgresql:drizzle:planetscale': {
+	}, 'postgresql:drizzle:planetscale': {
   dbType: 'PlanetScaleDatabase<SchemaType>',
   importLines: `
 import { eq } from 'drizzle-orm'
 import { PlanetScaleDatabase } from 'drizzle-orm/planetscale-serverless'
 import { schema, type SchemaType } from '../../../db/schema'`,
   queries: drizzleQueryOperations
-},
-	'singlestore:sql:local': {
+}, 'postgresql:prisma:local': {
+		dbType: 'PrismaClient',
+		importLines: `import type { PrismaClient } from '@prisma/client'`,
+		queries: prismaQueryOperations
+	}, 'postgresql:prisma:neon': {
+		dbType: 'PrismaClient',
+		importLines: `import type { PrismaClient } from '@prisma/client'`,
+		queries: prismaQueryOperations
+	}, 'postgresql:sql:local': {
+		dbType: 'SQL',
+		importLines: `import { SQL } from 'bun'`,
+		queries: postgresSqlQueryOperations
+	}, 'postgresql:sql:neon': {
+		dbType: 'NeonQueryFunction<false, false>',
+		importLines: `import { NeonQueryFunction } from '@neondatabase/serverless'`,
+		queries: postgresSqlQueryOperations
+	}, 'singlestore:sql:local': {
 		dbType: 'Connection',
 		importLines: `import { Connection } from '@singlestore/db-client'`,
 		queries: singlestoreSqlQueryOperations
-	},
-	'sqlite:drizzle:local': {
+	}, 'sqlite:drizzle:local': {
 		dbType: 'BunSQLiteDatabase<SchemaType>',
 		importLines: `
 import { eq } from 'drizzle-orm'
 import { BunSQLiteDatabase } from 'drizzle-orm/bun-sqlite'
 import { schema, type SchemaType } from '../../../db/schema'`,
 		queries: drizzleQueryOperations
-	},
-	'sqlite:drizzle:turso': {
+	}, 'sqlite:drizzle:turso': {
 		dbType: 'LibSQLDatabase<SchemaType>',
 		importLines: `
 import { eq } from 'drizzle-orm'
 import { LibSQLDatabase } from 'drizzle-orm/libsql'
 import { schema, type SchemaType } from '../../../db/schema'`,
 		queries: drizzleQueryOperations
-	},
-	'sqlite:sql:local': {
+	}, 'sqlite:prisma:local': {
+		dbType: 'PrismaClient',
+		importLines: `import type { PrismaClient } from '@prisma/client'`,
+		queries: prismaQueryOperations
+	}, 'sqlite:prisma:turso': {
+		dbType: 'PrismaClient',
+		importLines: `import type { PrismaClient } from '@prisma/client'`,
+		queries: prismaQueryOperations
+	}, 'sqlite:sql:local': {
 		dbType: 'Database',
 		importLines: `import { Database } from 'bun:sqlite'`,
 		queries: bunSqliteQueryOperations
-	},
-	'sqlite:sql:turso': {
+	}, 'sqlite:sql:turso': {
 		dbType: 'Client',
 		importLines: `import { Client } from '@libsql/client'`,
 		queries: libsqlQueryOperations
-	},
-	'postgresql:prisma:neon': {
-		dbType: 'PrismaClient',
-		importLines: `import type { PrismaClient } from '@prisma/client'`,
-		queries: prismaQueryOperations
-	},
-	'postgresql:prisma:local': {
-		dbType: 'PrismaClient',
-		importLines: `import type { PrismaClient } from '@prisma/client'`,
-		queries: prismaQueryOperations
-	},
-	'mysql:prisma:planetscale': {
-		dbType: 'PrismaClient',
-		importLines: `import type { PrismaClient } from '@prisma/client'`,
-		queries: prismaQueryOperations
-	},
-	'mysql:prisma:local': {
-		dbType: 'PrismaClient',
-		importLines: `import type { PrismaClient } from '@prisma/client'`,
-		queries: prismaQueryOperations
-	},
-	'sqlite:prisma:turso': {
-		dbType: 'PrismaClient',
-		importLines: `import type { PrismaClient } from '@prisma/client'`,
-		queries: prismaQueryOperations
-	},
-	'sqlite:prisma:local': {
-		dbType: 'PrismaClient',
-		importLines: `import type { PrismaClient } from '@prisma/client'`,
-		queries: prismaQueryOperations
-	},
-	'mariadb:prisma:local': {
-		dbType: 'PrismaClient',
-		importLines: `import type { PrismaClient } from '@prisma/client'`,
-		queries: prismaQueryOperations
-	},
-	'cockroachdb:prisma:local': {
-		dbType: 'PrismaClient',
-		importLines: `import type { PrismaClient } from '@prisma/client'`,
-		queries: prismaQueryOperations
-	},
-	'mssql:prisma:local': {
-		dbType: 'PrismaClient',
-		importLines: `import type { PrismaClient } from '@prisma/client'`,
-		queries: prismaQueryOperations
 	}
 } as const;
 

@@ -110,13 +110,13 @@ const hasDeps = (pkgPath: string, deps: string[]) => {
 
   try {
     const pkg = JSON.parse(readFileSync(pkgPath, 'utf-8'));
-    const allDeps = { ...pkg.dependencies, ...pkg.devDependencies };
+    const allDeps: Record<string, string> = { ...pkg.dependencies, ...pkg.devDependencies };
     const missing = deps.filter(dep => !allDeps[dep]);
 
     return missing.length === 0 
       ? { msg: `All ${deps.length} deps present`, ok: true } as const
       : { msg: `Missing deps: ${missing.join(', ')}`, ok: false } as const;
-  } catch (err) {
+  } catch (err: unknown) {
     return { msg: `Failed to parse package.json: ${err}`, ok: false } as const;
   }
 }
@@ -163,7 +163,7 @@ const scaffold = async () => {
   success(`Project created: ${PROJECT_NAME}`);
 };
 
-const validate = async (): Promise<void> => {
+const validate = async () => {
   phase('VALIDATE');
   
   const allChecks = [
@@ -177,7 +177,7 @@ const validate = async (): Promise<void> => {
   runChecks('Validation', checks);
 };
 
-const install = async (): Promise<void> => {
+const install = async () => {
   phase('INSTALL');
   const result = await exec('bun', ['install'], OUTPUT_PATH, TIMEOUTS.install);
   

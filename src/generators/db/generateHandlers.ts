@@ -20,8 +20,9 @@ export const generateDBHandlers = ({
 
 	const host =
 		databaseHost && databaseHost !== 'none' ? databaseHost : 'local';
-	const ormKey =
-		orm === 'drizzle' ? 'drizzle' : orm === 'prisma' ? 'prisma' : 'sql';
+	let ormKey = 'sql';
+	if (orm === 'drizzle') ormKey = 'drizzle';
+	else if (orm === 'prisma') ormKey = 'prisma';
 	const key = `${databaseEngine}:${ormKey}:${host}` as const;
 
 	// @ts-expect-error - TODO: Finish the other templates

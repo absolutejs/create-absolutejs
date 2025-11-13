@@ -73,33 +73,35 @@ export const generateDBBlock = ({
 
 		return `const pool = ${hostCfg.expr}`;
 	}
+	
 	if (orm === 'drizzle') {
 		if (!drizzleDialectSet.has(databaseEngine)) return '';
 
 		const expr = engineGroup[hostKey]?.expr ?? remoteDrizzleInit[hostKey];
 		if (!expr) return '';
+		
+		const mysqlMode = databaseHost === 'planetscale' ? 'planetscale' : 'default';
 
 		if (databaseEngine === 'mysql') {
-		const mode = databaseHost === 'planetscale' ? 'planetscale' : 'default';
-
-		return `
+			return `
 const pool = ${expr}
-const db = drizzle(pool, { schema, mode: '${mode}' })
+const db = drizzle(pool, { schema, mode: '${mysqlMode}' })
 `;
-	}
+		}
 
-	if (databaseEngine === 'sqlite') {
+		if (databaseEngine === 'sqlite') {
+			return `
+const pool = ${expr}
+const db = drizzle(pool, { schema })
+`;
+		}
+
 		return `
 const pool = ${expr}
 const db = drizzle(pool, { schema })
 `;
 	}
-
-	return `
-const pool = ${expr}
-const db = drizzle(pool, { schema })
-`;
-}
+	
 	if (orm === 'prisma') {
 		if (!prismaDialectSet.has(databaseEngine)) return '';
 

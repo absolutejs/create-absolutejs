@@ -33,10 +33,10 @@ const TIMEOUT = TIMEOUT_MINUTES * MS_PER_MINUTE;
 
 interface TestResult { name: string; passed: boolean; }
 
-const testHost = async (host: HostConfig): Promise<TestResult> => {
+const testHost = async (host: HostConfig) => {
   const projectName = `test-${host.name}`;
-  const fail = () => ({ name: host.name, passed: false });
-  const success = () => ({ name: host.name, passed: true });
+  const failResult: TestResult = { name: host.name, passed: false };
+  const successResult: TestResult = { name: host.name, passed: true };
 
   console.log(`Testing: ${host.name.toUpperCase()}`);
   cleanup(projectName);
@@ -96,8 +96,8 @@ const testHost = async (host: HostConfig): Promise<TestResult> => {
     return false;
   };
 
-  if (!checkTimeout()) return fail();
-  if (!await checkExitCode()) return fail();
+  if (!checkTimeout()) return failResult;
+  if (!await checkExitCode()) return failResult;
   console.log('CLI completed successfully');
 
   console.log('\n Step 2 - Checking project folder: ');
@@ -114,7 +114,7 @@ const testHost = async (host: HostConfig): Promise<TestResult> => {
   if (!existsSync(pkgPath)) {
     console.log('Failed: No package.json');
 
-    return fail();
+    return failResult;
   }
 
   const pkgContent = readFileSync(pkgPath, 'utf-8');
@@ -128,7 +128,7 @@ const testHost = async (host: HostConfig): Promise<TestResult> => {
     console.log(`Failed: Missing ${host.package}`);
     console.log('Available packages:', Object.keys(allDeps).filter(packageName => packageName.includes('data')));
 
-    return fail();
+    return failResult;
   }
   console.log(`Has ${host.package}`);
 
@@ -138,7 +138,7 @@ const testHost = async (host: HostConfig): Promise<TestResult> => {
     console.log(`Failed: .env file should NOT exist for hosted database (${host.name})`);
     console.log('Hosted databases expect DATABASE_URL to be provided by the user');
 
-    return fail();
+    return failResult;
   }
   console.log('Correctly no .env file for hosted database');
 
@@ -147,14 +147,14 @@ const testHost = async (host: HostConfig): Promise<TestResult> => {
   if (!existsSync(drizzlePath)) {
     console.log('Failed: No drizzle.config.ts');
 
-    return fail();
+    return failResult;
   }
 
   const drizzleContent = readFileSync(drizzlePath, 'utf-8');
   if (!drizzleContent.includes('DATABASE_URL')) {
     console.log('Failed: drizzle.config.ts missing DATABASE_URL reference');
 
-    return fail();
+    return failResult;
   }
 
   if (!drizzleContent.includes('env.DATABASE_URL')) {
@@ -167,7 +167,7 @@ const testHost = async (host: HostConfig): Promise<TestResult> => {
   if (!existsSync(schemaPath)) {
     console.log(' Failed: No db/schema.ts');
 
-    return fail();
+    return failResult;
   }
   console.log(' db/schema.ts exists');
 
@@ -176,7 +176,7 @@ const testHost = async (host: HostConfig): Promise<TestResult> => {
   if (!existsSync(serverPath)) {
     console.log(' Failed: No server.ts');
 
-    return fail();
+    return failResult;
   }
 
   const serverContent = readFileSync(serverPath, 'utf-8');
@@ -193,13 +193,13 @@ const testHost = async (host: HostConfig): Promise<TestResult> => {
   if (!hasCorrectImport) {
     console.log(` Failed: server.ts missing ${host.package} import`);
 
-    return fail();
+    return failResult;
   }
   console.log(' server.ts has correct database import');
 
   console.log(`${host.name.toUpperCase()} - ALL CHECKS PASSED`);
   
-  return success();
+  return successResult;
 }
 
 const cleanup = (projectName: string) => {
@@ -217,15 +217,12 @@ const runAllTests = async () => {
   console.log('production environment. Tests verify configuration files are');
   console.log('set up to expect DATABASE_URL from the environment.\n');
   
-  const runTestForHost = async (host: HostConfig): Promise<TestResult> =>
-    testHost(host);
-
-  const results: TestResult[] = await Promise.all(HOSTS.map(runTestForHost));
+  const results: TestResult[] = await Promise.all(HOSTS.map(testHost));
   
   console.log('TEST SUMMARY');
   
   const PAD_WIDTH = 15;
-  const DEFAULT_COUNTS = { failed: 0, passed: 0 };
+  const DEFAULT_COUNTS: { failed: number; passed: number } = { failed: 0, passed: 0 };
 
   const summary = results.reduce((acc, result) => ({
     failed: acc.failed + (result.passed ? 0 : 1),
