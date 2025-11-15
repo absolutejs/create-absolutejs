@@ -142,6 +142,11 @@ export const generateImportsBlock = ({
 		rawImports.push(`import { getEnv } from '@absolutejs/absolute'`);
 	}
 
+	if (databaseEngine === 'mariadb' && !isRemoteHost) {
+		rawImports.push(`import { createPool } from 'mariadb'`);
+		rawImports.push(`import { getEnv } from '@absolutejs/absolute'`);
+	}
+
 	if (noOrm && databaseEngine === 'postgresql')
 		rawImports.push(
 			...(isRemoteHost
