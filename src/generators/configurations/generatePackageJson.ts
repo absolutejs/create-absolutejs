@@ -162,6 +162,11 @@ export const createPackageJson = ({
 		typecheck: 'bun run tsc --noEmit'
 	};
 
+	if (databaseEngine === 'postgresql') {
+		dependencies['pg'] = resolveVersion('pg', '8.11.0');
+		dependencies['@types/pg'] = resolveVersion('@types/pg', '8.11.0');
+	}
+
 	if (
 		databaseEngine === 'postgresql' &&
 		(!databaseHost || databaseHost === 'none')
