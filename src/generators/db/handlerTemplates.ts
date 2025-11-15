@@ -110,31 +110,31 @@ const bunSqliteQueryOperations: QueryOperations = {
 };
 
 const postgresSqlQueryOperations: QueryOperations = {
-	insertHistory: `const [newHistory] = await db\`
+	insertHistory: `const newHistory = await db.query(\`
     INSERT INTO count_history (count)
     VALUES (\${count})
     RETURNING *
-  \`
-  return newHistory`,
-	insertUser: `const [newUser] = await db\`
+  \`)
+  return newHistory.rows[0]`,
+	insertUser: `const newUser = await db.query(\`
     INSERT INTO users (auth_sub, metadata)
     VALUES (\${authSub}, \${userIdentity})
     RETURNING *
-  \`
+  \`)
   if (!newUser) throw new Error('Failed to create user')
-  return newUser`,
-	selectHistory: `const [history] = await db\`
+  return newUser.rows[0]`,
+	selectHistory: `const history = await db.query(\`
     SELECT * FROM count_history
     WHERE uid = \${uid}
     LIMIT 1
-  \`
-  return history ?? null`,
-	selectUser: `const [user] = await db\`
+  \`)
+  return history.rows[0] ?? null`,
+	selectUser: `const user = await db.query(\`
     SELECT * FROM users
     WHERE auth_sub = \${authSub}
     LIMIT 1
-  \`
-  return user ?? null`
+  \`)
+  return user.rows[0] ?? null`
 };
 
 const mongodbQueryOperations: QueryOperations = {
@@ -381,13 +381,13 @@ import { schema, type SchemaType } from '../../../db/schema'`,
 		queries: drizzleQueryOperations
 	},
 	'postgresql:sql:local': {
-		dbType: 'SQL',
-		importLines: `import { SQL } from 'bun'`,
+		dbType: 'Pool',
+		importLines: `import { Pool } from 'pg'`,
 		queries: postgresSqlQueryOperations
 	},
 	'postgresql:sql:neon': {
-		dbType: 'NeonQueryFunction<false, false>',
-		importLines: `import { NeonQueryFunction } from '@neondatabase/serverless'`,
+		dbType: 'Pool',
+		importLines: `import { Pool } from '@neondatabase/serverless'`,
 		queries: postgresSqlQueryOperations
 	},
 	'singlestore:sql:local': {
