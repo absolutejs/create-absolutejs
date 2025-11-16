@@ -368,7 +368,7 @@ import { schema, type SchemaType } from '../../../db/schema'`,
 		dbType: 'NodePgDatabase<SchemaType>',
 		importLines: `
 import { eq } from 'drizzle-orm'
-import { BunSQLDatabase } from 'drizzle-orm/bun-sql'
+import { NodePgDatabase } from 'drizzle-orm/postgres'
 import { schema, type SchemaType } from '../../../db/schema'`,
 		queries: drizzleQueryOperations
 	},
