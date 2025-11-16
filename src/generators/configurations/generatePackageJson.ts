@@ -164,7 +164,7 @@ export const createPackageJson = ({
 
 	if (databaseEngine === 'postgresql') {
 		dependencies['pg'] = resolveVersion('pg', '8.11.0');
-		dependencies['@types/pg'] = resolveVersion('@types/pg', '8.11.0');
+		devDependencies['@types/pg'] = resolveVersion('@types/pg', '8.11.0');
 	}
 
 	if (

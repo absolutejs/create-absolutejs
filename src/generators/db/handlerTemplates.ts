@@ -110,31 +110,28 @@ const bunSqliteQueryOperations: QueryOperations = {
 };
 
 const postgresSqlQueryOperations: QueryOperations = {
-	insertHistory: `const newHistory = await db.query(\`
-    INSERT INTO count_history (count)
-    VALUES (\${count})
-    RETURNING *
-  \`)
-  return newHistory.rows[0]`,
-	insertUser: `const newUser = await db.query(\`
-    INSERT INTO users (auth_sub, metadata)
-    VALUES (\${authSub}, \${userIdentity})
-    RETURNING *
-  \`)
+  insertHistory: `const { rows } = await db.query(
+    'INSERT INTO count_history (count) VALUES ($1) RETURNING *',
+    [count]
+  )
+  return rows[0]`,
+  insertUser: `const { rows } = await db.query(
+    'INSERT INTO users (auth_sub, metadata) VALUES ($1, $2) RETURNING *',
+    [authSub, userIdentity]
+  )
+  const newUser = rows[0]
   if (!newUser) throw new Error('Failed to create user')
-  return newUser.rows[0]`,
-	selectHistory: `const history = await db.query(\`
-    SELECT * FROM count_history
-    WHERE uid = \${uid}
-    LIMIT 1
-  \`)
-  return history.rows[0] ?? null`,
-	selectUser: `const user = await db.query(\`
-    SELECT * FROM users
-    WHERE auth_sub = \${authSub}
-    LIMIT 1
-  \`)
-  return user.rows[0] ?? null`
+  return newUser`,
+  selectHistory: `const { rows } = await db.query(
+    'SELECT * FROM count_history WHERE uid = $1 LIMIT 1',
+    [uid]
+  )
+  return rows[0] ?? null`,
+  selectUser: `const { rows } = await db.query(
+    'SELECT * FROM users WHERE auth_sub = $1 LIMIT 1',
+    [authSub]
+  )
+  return rows[0] ?? null`
 };
 
 const mongodbQueryOperations: QueryOperations = {
