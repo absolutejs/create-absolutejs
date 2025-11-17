@@ -67,7 +67,7 @@ export const generateDBBlock = ({
 	if (!engineGroup) return '';
 
 	if (orm !== 'drizzle') {
-		if (databaseEngine === 'postgresql' && !databaseHost) {
+		if (databaseEngine === 'postgresql' && (!databaseHost || databaseHost === 'none')) {
 			return `
 const db = new SQL(getEnv("DATABASE_URL"))
 `;
