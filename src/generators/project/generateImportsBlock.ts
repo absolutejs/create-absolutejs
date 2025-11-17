@@ -146,7 +146,7 @@ export const generateImportsBlock = ({
 		rawImports.push(
 			...(isRemoteHost
 				? connectorImports[databaseHost as 'neon']
-				: [`import { Pool } from 'pg'`]),
+				: [`import { SQL } from 'bun'`]),
 			`import { getEnv } from '@absolutejs/absolute'`
 		);
 
