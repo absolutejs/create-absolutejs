@@ -162,11 +162,6 @@ export const createPackageJson = ({
 		typecheck: 'bun run tsc --noEmit'
 	};
 
-	if (databaseEngine === 'postgresql' && orm === 'drizzle' && (!databaseHost || databaseHost === 'none')) {
-		dependencies['pg'] = resolveVersion('pg', '8.11.0');
-		devDependencies['@types/pg'] = resolveVersion('@types/pg', '8.11.0');
-	}
-
 	if (
 		databaseEngine === 'postgresql' &&
 		(!databaseHost || databaseHost === 'none')

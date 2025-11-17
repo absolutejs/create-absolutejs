@@ -390,10 +390,10 @@ import { schema, type SchemaType } from '../../../db/schema'`,
 		queries: mysqlSqlQueryOperations
 	},
 	'postgresql:drizzle:local': {
-		dbType: 'NodePgDatabase<SchemaType>',
+		dbType: 'BunSQLDatabase<SchemaType>',
 		importLines: `
 import { eq } from 'drizzle-orm'
-import { NodePgDatabase } from 'drizzle-orm/node-postgres'
+import { BunSQLDatabase } from 'drizzle-orm/bun-sql'
 import { schema, type SchemaType } from '../../../db/schema'`,
 		queries: drizzleQueryOperations
 	},

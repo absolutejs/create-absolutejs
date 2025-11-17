@@ -27,7 +27,7 @@ const connectionMap: Record<string, Record<string, DBExpr>> = {
 		neon: {
 			expr: 'new Pool({ connectionString: getEnv("DATABASE_URL") })'
 		},
-		none: { expr: 'new Pool({ connectionString: getEnv("DATABASE_URL") })' }
+		none: { expr: 'new SQL(getEnv("DATABASE_URL"))' }
 	},
 	singlestore: {
 		none: { expr: 'createClient({ url: getEnv("DATABASE_URL") })' }
@@ -67,12 +67,6 @@ export const generateDBBlock = ({
 	if (!engineGroup) return '';
 
 	if (orm !== 'drizzle') {
-		if (databaseEngine === 'postgresql' && (!databaseHost || databaseHost === 'none')) {
-			return `
-const db = new SQL(getEnv("DATABASE_URL"))
-`;
-		}
-
 		const hostCfg = engineGroup[hostKey];
 		if (!hostCfg) return '';
 
