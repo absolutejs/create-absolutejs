@@ -23,6 +23,7 @@ export const availablePrismaDialects = [
 	'mysql',
 	'postgresql',
 	'sqlite',
+	'mongodb',
 	'mariadb',
 	'cockroachdb',
 	'mssql'

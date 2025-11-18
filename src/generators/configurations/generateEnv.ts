@@ -29,12 +29,15 @@ export const generateEnv = ({
 	const vars = [...envVariables];
 
 	if (
-		databaseEngine !== 'sqlite' &&
 		databaseEngine !== 'none' &&
 		databaseEngine !== undefined &&
 		(databaseHost === 'none' || databaseHost === undefined)
 	) {
-		vars.push(`DATABASE_URL=${databaseURLS[databaseEngine]}`);
+		if (databaseEngine === 'sqlite') {
+			vars.push('DATABASE_URL=file:./db/database.sqlite');
+		} else {
+			vars.push(`DATABASE_URL=${databaseURLS[databaseEngine]}`);
+		}
 	}
 
 	if (vars.length === 0) return;

@@ -25,6 +25,7 @@ type CreatePackageJsonProps = Pick<
 	| 'orm'
 	| 'frontendDirectories'
 	| 'codeQualityTool'
+	| 'databaseDirectory'
 > & {
 	projectName: string;
 	latest: boolean;
@@ -40,7 +41,8 @@ export const createPackageJson = ({
 	useTailwind,
 	latest,
 	frontendDirectories,
-	codeQualityTool
+	codeQualityTool,
+	databaseDirectory
 }: CreatePackageJsonProps) => {
 	const s = spinner();
 	if (latest) s.start('Resolving package versions…');
@@ -231,14 +233,14 @@ export const createPackageJson = ({
 	}
 
 	if (orm === 'prisma') {
-  			scripts['postinstall'] = 'prisma generate';
-  			scripts['db:generate'] = 'prisma generate';
-  			scripts['db:push'] = 'prisma db push';
-  			scripts['db:studio'] = 'prisma studio';
-  			scripts['db:migrate'] = 'prisma migrate dev';
-  			scripts['db:migrate:deploy'] = 'prisma migrate deploy';
-  			scripts['db:migrate:reset'] = 'prisma migrate reset';
-
+		const schemaPath = databaseDirectory ? `${databaseDirectory}/schema.prisma` : 'db/schema.prisma';
+		scripts['postinstall'] = `prisma generate --schema ${schemaPath}`;
+		scripts['db:generate'] = `prisma generate --schema ${schemaPath}`;
+		scripts['db:push'] = `prisma db push --schema ${schemaPath}`;
+		scripts['db:studio'] = `prisma studio --schema ${schemaPath}`;
+		scripts['db:migrate'] = `prisma migrate dev --schema ${schemaPath}`;
+		scripts['db:migrate:deploy'] = `prisma migrate deploy --schema ${schemaPath}`;
+		scripts['db:migrate:reset'] = `prisma migrate reset --schema ${schemaPath}`;
 	}
 
 	const packageJson: PackageJson = {

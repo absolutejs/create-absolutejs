@@ -4,8 +4,10 @@ import { $ } from 'bun';
 import { isDrizzleDialect, isPrismaDialect } from '../../typeGuards';
 import type { CreateConfiguration } from '../../types';
 import { checkSqliteInstalled } from '../../utils/checkSqliteInstalled';
+import { checkDockerInstalled } from '../../utils/checkDockerInstalled';
 import { createDrizzleConfig } from '../configurations/generateDrizzleConfig';
 import { generatePrismaClient } from '../configurations/generatePrismaClient';
+import { generateDockerContainer } from './generateDockerContainer';
 import { generateDrizzleSchema } from './generateDrizzleSchema';
 import { generateDBHandlers } from './generateHandlers';
 import { generatePrismaSchema } from './generatePrismaSchema';
@@ -69,18 +71,31 @@ export const scaffoldDatabase = async ({
 	)}"`.cwd(projectName);
 }
 
+	// For Prisma, we need to create the docker-compose file but skip schema initialization
+	// For Drizzle and no ORM, we use scaffoldDocker which handles schema initialization
 	if (
 		(databaseHost === 'none' || databaseHost === undefined) &&
 		databaseEngine !== 'sqlite' &&
 		databaseEngine !== undefined &&
 		databaseEngine !== 'none'
 	) {
-		await scaffoldDocker({
-			authProvider,
-			databaseEngine,
-			projectDatabaseDirectory,
-			projectName
-		});
+		if (orm === 'prisma') {
+			// For Prisma, just create the docker-compose file without initializing schema
+			await checkDockerInstalled();
+			const dbContainer = generateDockerContainer(databaseEngine);
+			writeFileSync(
+				join(projectDatabaseDirectory, 'docker-compose.db.yml'),
+				dbContainer,
+				'utf-8'
+			);
+		} else {
+			await scaffoldDocker({
+				authProvider,
+				databaseEngine,
+				projectDatabaseDirectory,
+				projectName
+			});
+		}
 	}
 
 	if (orm === 'drizzle') {
@@ -132,6 +147,26 @@ export const scaffoldDatabase = async ({
 
 	const isLocalDatabase = !databaseHost || databaseHost === 'none';
 	if (!isLocalDatabase) return;
+
+	// For non-SQLite databases, ensure Docker container is running before migrations
+	if (databaseEngine !== 'sqlite') {
+		try {
+			await $`bun db:up`.cwd(projectCwd);
+			// Wait for database to be ready using appropriate wait command
+			const { initTemplates } = await import('./dockerInitTemplates');
+			if (databaseEngine in initTemplates) {
+				const waitCommand = initTemplates[databaseEngine as keyof typeof initTemplates]?.wait;
+				if (waitCommand) {
+					await $`docker compose -p ${databaseEngine} -f ${databaseDirectory}/docker-compose.db.yml exec -T db bash -lc '${waitCommand}'`.cwd(projectCwd).nothrow();
+				}
+			} else {
+				// Fallback for databases not in initTemplates (e.g., MongoDB): wait 5 seconds
+				await new Promise(resolve => setTimeout(resolve, 5000));
+			}
+		} catch (error) {
+			console.error('Error starting database container:', error);
+		}
+	}
 
 	if (databaseEngine === 'sqlite') {
 		const result = await $`npx prisma db push --schema ${schemaArg}`.cwd(projectCwd).nothrow();

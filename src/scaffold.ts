@@ -71,6 +71,7 @@ export const scaffold = async ({
 		codeQualityTool,
 		databaseEngine,
 		databaseHost,
+		databaseDirectory,
 		frontendDirectories,
 		latest,
 		orm,

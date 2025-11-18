@@ -10,30 +10,33 @@ type DialectConfig = {
 };
 
 const DIALECTS: Record<AvailablePrismaDialect, DialectConfig> = {
-	cockroachdb: {
+    cockroachdb: {
 		countHistoryId: 'Int @id @default(sequence())', provider: 'cockroachdb'
-	},
-	mariadb: {
+    },
+    mariadb: {
 		countHistoryId: 'Int @id @default(autoincrement())', provider: 'mysql'
-	},
+    },
+    mongodb: {
+		countHistoryId: 'String @id @default(auto()) @map("_id") @db.ObjectId', provider: 'mongodb'
+    },
 	mssql: {
 		countHistoryId: 'Int @id @default(autoincrement())', provider: 'sqlserver'
-	},
-	mysql: {
+    },
+    mysql: {
 		countHistoryId: 'Int @id @default(autoincrement())', provider: 'mysql'
-	},
-	postgresql: {
+    },
+    postgresql: {
 		countHistoryId: 'Int @id @default(autoincrement())', provider: 'postgresql'
-	},
-	sqlite: {
+    },
+    sqlite: {
 		countHistoryId: 'Int @id @default(autoincrement())', provider: 'sqlite'
 	}
 };
 
 type GeneratePrismaSchemaProps = {
-	databaseEngine: AvailablePrismaDialect;
-	databaseHost: DatabaseHost;
-	authProvider: AuthProvider;
+    databaseEngine: AvailablePrismaDialect;
+    databaseHost: DatabaseHost;
+    authProvider: AuthProvider;
 };
 
 const buildGeneratorBlock = (databaseHost: DatabaseHost) => {
@@ -47,7 +50,7 @@ const buildGeneratorBlock = (databaseHost: DatabaseHost) => {
   provider = "prisma-client-js"${previewFeatures}
 }`;
 };
-
+    
 const buildDatasourceBlock = (cfg: DialectConfig) => `datasource db {
   provider = "${cfg.provider}"
   url      = env("DATABASE_URL")
@@ -57,7 +60,7 @@ const buildUserModel = () => `model User {
   auth_sub   String @id
   metadata   Json
   created_at DateTime @default(now())
-
+  
   @@map("users")
 }`;
 
@@ -65,7 +68,7 @@ const buildCountHistoryModel = (cfg: DialectConfig) => `model CountHistory {
   uid        ${cfg.countHistoryId}
   count      Int
   created_at DateTime @default(now())
-
+  
   @@map("count_history")
 }`;
 
@@ -85,7 +88,7 @@ export const generatePrismaSchema = ({
 	const datasourceBlock = buildDatasourceBlock(cfg);
 	const modelBlock =
 		authProvider === 'absoluteAuth'
-			? buildUserModel(cfg)
+			? buildUserModel()
 			: buildCountHistoryModel(cfg);
 
 	return [generatorBlock, datasourceBlock, modelBlock].join('\n\n');
