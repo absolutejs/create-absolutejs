@@ -44,6 +44,14 @@ const DIALECTS = {
 		string: 'text()',
 		table: 'sqliteTable',
 		time: "integer({ mode: 'timestamp' })"
+	},
+	mariadb: {
+		builders: ['json', 'mysqlTable', 'timestamp', 'varchar', 'int'],
+		json: 'json()',
+		pkg: 'mysql-core',
+		string: 'varchar({ length: 255 })',
+		table: 'mysqlTable',
+		time: 'timestamp()'
 	}
 } as const;
 
@@ -62,7 +70,7 @@ export const generateDrizzleSchema = ({
 }: GenerateSchemaProps) => {
 	const cfg = DIALECTS[databaseEngine];
 	const intBuilder =
-		databaseEngine === 'mysql' || databaseEngine === 'singlestore'
+		databaseEngine === 'mysql' || databaseEngine === 'singlestore' || databaseEngine === 'mariadb'
 			? 'int'
 			: 'integer';
 	const timeBuilder = builder(cfg.time);
@@ -98,7 +106,7 @@ export const generateDrizzleSchema = ({
 	}
 
 	let uidColumn: string;
-	if (databaseEngine === 'mysql' || databaseEngine === 'singlestore') {
+	if (databaseEngine === 'mysql' || databaseEngine === 'singlestore' || databaseEngine === 'mariadb') {
 		uidColumn = `${intBuilder}('uid').primaryKey().autoincrement()`;
 	} else if (databaseEngine === 'sqlite') {
 		uidColumn = `integer('uid').primaryKey({ autoIncrement: true })`;

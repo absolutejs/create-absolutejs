@@ -180,7 +180,7 @@ export const createPackageJson = ({
 		scripts['postdb:psql'] = 'bun db:down';
 	}
 
-	if (databaseEngine === 'mysql') {
+	if ((databaseEngine === 'mysql' || databaseEngine === 'mariadb') && orm === 'drizzle') {
 		dependencies['mysql2'] = resolveVersion('mysql2', '3.14.2');
 	}
 
@@ -200,10 +200,6 @@ export const createPackageJson = ({
 		scripts['predb:mysql'] = 'bun db:up';
 		scripts['postdev'] = 'bun db:down';
 		scripts['postdb:mysql'] = 'bun db:down';
-	}
-
-	if (databaseEngine === 'mariadb') {
-		dependencies['mariadb'] = resolveVersion('mariadb', '3.4.5');
 	}
 
 	if (

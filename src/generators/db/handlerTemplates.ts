@@ -317,6 +317,14 @@ const driverConfigurations = {
 		importLines: `import { SQL } from 'bun'`,
 		queries: mysqlSqlQueryOperations
 	},
+  'mariadb:drizzle:local': {
+    dbType: 'MySql2Database<SchemaType>',
+    importLines: `
+import { eq } from 'drizzle-orm'
+import { MySql2Database } from 'drizzle-orm/mysql2'
+import { schema, type SchemaType } from '../../../db/schema'`,
+    queries: mysqlDrizzleQueryOperations
+  },
 	'mongodb:native:local': {
 		dbType: 'Db',
 		importLines: `import { Db } from 'mongodb'`,

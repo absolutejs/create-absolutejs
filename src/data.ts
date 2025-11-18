@@ -16,7 +16,8 @@ export const availableDrizzleDialects = [
 	'mysql',
 	'postgresql',
 	'sqlite',
-	'singlestore'
+	'singlestore',
+	'mariadb'
 ] as const;
 
 export const availablePrismaDialects = [

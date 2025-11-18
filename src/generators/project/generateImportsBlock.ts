@@ -134,7 +134,7 @@ export const generateImportsBlock = ({
 		rawImports.push(`import { SQL } from 'bun'`);
 	}
 
-	if (databaseEngine === 'mysql' && orm === 'drizzle') {
+	if ((databaseEngine === 'mysql' || databaseEngine === 'mariadb') && orm === 'drizzle') {
 		rawImports.push(
 			`import { drizzle } from 'drizzle-orm/mysql2'`,
 			`import { createPool } from 'mysql2/promise'`

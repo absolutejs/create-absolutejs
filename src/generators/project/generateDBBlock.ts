@@ -85,8 +85,11 @@ const db = ${hostCfg.expr}
 	const expr = engineGroup[hostKey]?.expr ?? remoteDrizzleInit[hostKey];
 	if (!expr) return '';
 
-	if (databaseEngine === 'mysql') {
-		const mode = databaseHost === 'planetscale' ? 'planetscale' : 'default';
+	if (databaseEngine === 'mysql' || databaseEngine === 'mariadb') {
+		const mode =
+			databaseHost === 'planetscale' && databaseEngine === 'mysql'
+				? 'planetscale'
+				: 'default';
 
 		return `
 const pool = ${expr}
