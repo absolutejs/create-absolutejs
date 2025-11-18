@@ -67,6 +67,11 @@ export const generateDBBlock = ({
 	if (!engineGroup) return '';
 
 	if (orm !== 'drizzle') {
+		if (databaseEngine === 'mysql' || databaseEngine === 'mariadb') {
+			return `
+const db = new SQL(getEnv("DATABASE_URL"))
+`;
+		}
 		const hostCfg = engineGroup[hostKey];
 		if (!hostCfg) return '';
 

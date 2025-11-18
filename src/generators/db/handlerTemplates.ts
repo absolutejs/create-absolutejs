@@ -9,18 +9,15 @@ type AuthTemplateOptions = {
 	importLines: string;
 	dbType: string;
 	queries: QueryOperations;
-	handlerTypes?: HandlerType;
 };
 
 const buildSqlAuthTemplate = ({
 	importLines,
-	handlerTypes,
 	dbType,
 	queries
 }: AuthTemplateOptions) => `
 import { isValidProviderOption, providers } from 'citra'
 ${importLines}
-${handlerTypes?.UserRow ? `\ntype UserRow = ${handlerTypes.UserRow}` : ''}
 type UserHandlerProps = {
   authProvider: string
   db: ${dbType}
@@ -46,17 +43,14 @@ type CountTemplateOptions = {
 	importLines: string;
 	dbType: string;
 	queries: QueryOperations;
-	handlerTypes?: HandlerType;
 };
 
 const buildSqlCountTemplate = ({
 	importLines,
-	handlerTypes,
 	dbType,
 	queries
 }: CountTemplateOptions) => `
 ${importLines}
-${handlerTypes?.CountHistoryRow ? `\ntype CountHistoryRow = ${handlerTypes.CountHistoryRow}\n` : ''}
 export const getCountHistory = async (db: ${dbType}, uid: number) => {
   ${queries.selectHistory}
 }
@@ -151,21 +145,6 @@ const mongodbQueryOperations: QueryOperations = {
   return user ?? null`
 };
 
-const mariadbSqlQueryOperations: QueryOperations = {
-	insertHistory: `await db.query('INSERT INTO count_history (count) VALUES (?)', [count])
-  const rows = await db.query('SELECT * FROM count_history ORDER BY uid DESC LIMIT 1')
-  return rows[0]`,
-	insertUser: `await db.query('INSERT INTO users (auth_sub, metadata) VALUES (?, ?)', [authSub, JSON.stringify(userIdentity)])
-  const rows = await db.query('SELECT * FROM users WHERE auth_sub = ? LIMIT 1', [authSub])
-  const newUser = rows[0]
-  if (!newUser) throw new Error('Failed to create user')
-  return newUser`,
-	selectHistory: `const rows = await db.query('SELECT * FROM count_history WHERE uid = ? LIMIT 1', [uid])
-  return rows[0] ?? null`,
-	selectUser: `const rows = await db.query('SELECT * FROM users WHERE auth_sub = ? LIMIT 1', [authSub])
-  return rows[0] ?? null`
-};
-
 const gelSqlQueryOperations: QueryOperations = {
 	insertHistory: `await db.query('INSERT INTO count_history (count) VALUES (?)', [count])
   const [rows] = await db.query('SELECT * FROM count_history ORDER BY uid DESC LIMIT 1')
@@ -226,66 +205,64 @@ const mssqlSqlQueryOperations: QueryOperations = {
 
 const mysqlSqlQueryOperations: QueryOperations = {
 	insertHistory: `
-const [result] = await db.query<ResultSetHeader>(
-  'INSERT INTO count_history (count) VALUES (?)',
-  [count]
-);
-const insertId = result.insertId;
-const [rows] = await db.query<CountHistoryRow[]>(
-  'SELECT * FROM count_history WHERE uid = ? LIMIT 1',
-  [insertId]
-);
-if (!rows[0]) throw new Error('Could not retrieve the newly‑inserted history');
-return rows[0];
+    const result = await db\`
+      INSERT INTO count_history (count)
+      VALUES (\${count})
+    \`;
+
+    const insertId = result.lastInsertRowid;
+
+    const [row] = await db\`
+      SELECT *
+      FROM count_history
+      WHERE uid = \${insertId}
+      LIMIT 1
+    \`;
+
+    if (!row) throw new Error("Could not retrieve the newly-inserted history");
+    return row;
   `,
 
 	insertUser: `
-const [result] = await db.query<ResultSetHeader>(
-  'INSERT INTO users (auth_sub, metadata) VALUES (?, ?)',
-  [authSub, JSON.stringify(userIdentity)]
-);
-const insertId = result.insertId;
-const [rows] = await db.query<UserRow[]>(
-  'SELECT * FROM users WHERE uid = ? LIMIT 1',
-  [insertId]
-);
-if (!rows[0]) throw new Error('Failed to create user');
-return rows[0];
+    const result = await db\`
+      INSERT INTO users (auth_sub, metadata)
+      VALUES (\${authSub}, \${JSON.stringify(userIdentity)})
+    \`;
+
+    const insertId = result.lastInsertRowid;
+
+    const [row] = await db\`
+      SELECT *
+      FROM users
+      WHERE uid = \${insertId}
+      LIMIT 1
+    \`;
+
+    if (!row) throw new Error("Failed to create user");
+    return row;
   `,
 
 	selectHistory: `
-const [rows] = await db.query<CountHistoryRow[]>(
-  'SELECT * FROM count_history WHERE uid = ? LIMIT 1',
-  [uid]
-);
-return rows[0] ?? null;
+    const [row] = await db\`
+      SELECT *
+      FROM count_history
+      WHERE uid = \${uid}
+      LIMIT 1
+    \`;
+
+    return row ?? null;
   `,
 
 	selectUser: `
-const [rows] = await db.query<UserRow[]>(
-  'SELECT * FROM users WHERE auth_sub = ? LIMIT 1',
-  [authSub]
-);
-return rows[0] ?? null;
+    const [row] = await db\`
+      SELECT *
+      FROM users
+      WHERE auth_sub = \${authSub}
+      LIMIT 1
+    \`;
+
+    return row ?? null;
   `
-};
-
-type HandlerType = {
-	CountHistoryRow: string;
-	UserRow: string;
-};
-
-const mysqlHandlerTypes: HandlerType = {
-	CountHistoryRow: `RowDataPacket & {
-		uid: number;
-		count: number;
-		created_at: number;
-	}`,
-	UserRow: `RowDataPacket & {
-		uid: number;
-		auth_sub: string;
-		metadata: string;
-	}`
 };
 
 const mysqlDrizzleQueryOperations: QueryOperations = {
@@ -336,9 +313,9 @@ const driverConfigurations = {
 		queries: gelSqlQueryOperations
 	},
 	'mariadb:sql:local': {
-		dbType: 'Pool',
-		importLines: `import { Pool } from 'mariadb'`,
-		queries: mariadbSqlQueryOperations
+		dbType: 'SQL',
+		importLines: `import { SQL } from 'bun'`,
+		queries: mysqlSqlQueryOperations
 	},
 	'mongodb:native:local': {
 		dbType: 'Db',
@@ -359,9 +336,8 @@ import { schema, type SchemaType } from '../../../db/schema'`,
 		queries: mysqlDrizzleQueryOperations
 	},
 	'mysql:sql:local': {
-		dbType: 'Pool',
-		handlerTypes: mysqlHandlerTypes,
-		importLines: `import { Pool, ResultSetHeader, RowDataPacket } from 'mysql2/promise'`,
+		dbType: 'SQL',
+		importLines: `import { SQL } from 'bun'`,
 		queries: mysqlSqlQueryOperations
 	},
 	'postgresql:drizzle:local': {
