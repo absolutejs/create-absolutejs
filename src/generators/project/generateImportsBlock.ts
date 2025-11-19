@@ -105,8 +105,8 @@ export const generateImportsBlock = ({
 
 	if (orm === 'drizzle' && !isRemoteHost && databaseEngine === 'postgresql')
 		rawImports.push(
-			`import { Pool } from 'pg'`,
-			`import { drizzle } from 'drizzle-orm/node-postgres'`
+			`import { SQL } from 'bun'`,
+			`import { drizzle } from 'drizzle-orm/bun-sql'`
 		);
 
 	if (orm === 'drizzle' && databaseEngine === 'sqlite' && !isRemoteHost)
@@ -146,7 +146,7 @@ export const generateImportsBlock = ({
 		rawImports.push(
 			...(isRemoteHost
 				? connectorImports[databaseHost as 'neon']
-				: [`import { Pool } from 'pg'`]),
+				: [`import { SQL } from 'bun'`]),
 			`import { getEnv } from '@absolutejs/absolute'`
 		);
 

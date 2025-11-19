@@ -109,6 +109,31 @@ const bunSqliteQueryOperations: QueryOperations = {
   return user ?? null`
 };
 
+const postgresNeonQueryOperations: QueryOperations = {
+	insertHistory: `const { rows } = await db.query(
+    'INSERT INTO count_history (count) VALUES ($1) RETURNING *',
+    [count]
+  )
+  return rows[0]`,
+	insertUser: `const { rows } = await db.query(
+    'INSERT INTO users (auth_sub, metadata) VALUES ($1, $2) RETURNING *',
+    [authSub, userIdentity]
+  )
+  const newUser = rows[0]
+  if (!newUser) throw new Error('Failed to create user')
+  return newUser`,
+	selectHistory: `const { rows } = await db.query(
+    'SELECT * FROM count_history WHERE uid = $1 LIMIT 1',
+    [uid]
+  )
+  return rows[0] ?? null`,
+	selectUser: `const { rows } = await db.query(
+    'SELECT * FROM users WHERE auth_sub = $1 LIMIT 1',
+    [authSub]
+  )
+  return rows[0] ?? null`
+};
+
 const postgresSqlQueryOperations: QueryOperations = {
 	insertHistory: `const [newHistory] = await db\`
     INSERT INTO count_history (count)
@@ -365,7 +390,7 @@ import { schema, type SchemaType } from '../../../db/schema'`,
 		queries: mysqlSqlQueryOperations
 	},
 	'postgresql:drizzle:local': {
-		dbType: 'NodePgDatabase<SchemaType>',
+		dbType: 'BunSQLDatabase<SchemaType>',
 		importLines: `
 import { eq } from 'drizzle-orm'
 import { BunSQLDatabase } from 'drizzle-orm/bun-sql'
@@ -386,9 +411,9 @@ import { schema, type SchemaType } from '../../../db/schema'`,
 		queries: postgresSqlQueryOperations
 	},
 	'postgresql:sql:neon': {
-		dbType: 'NeonQueryFunction<false, false>',
-		importLines: `import { NeonQueryFunction } from '@neondatabase/serverless'`,
-		queries: postgresSqlQueryOperations
+		dbType: 'Pool',
+		importLines: `import { Pool } from '@neondatabase/serverless'`,
+		queries: postgresNeonQueryOperations
 	},
 	'singlestore:sql:local': {
 		dbType: 'Connection',
