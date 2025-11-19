@@ -130,15 +130,18 @@ export const generateImportsBlock = ({
 		rawImports.push(...connectorImports[key]);
 	}
 
-	if (databaseEngine === 'mysql' && !isRemoteHost) {
-		rawImports.push(`import { createPool } from 'mysql2/promise'`);
+	if ((databaseEngine === 'mariadb' || databaseEngine === 'mysql') && noOrm) {
+		rawImports.push(`import { SQL } from 'bun'`);
 	}
 
-	if (databaseEngine === 'mysql' && orm === 'drizzle') {
-		rawImports.push(`import { drizzle } from 'drizzle-orm/mysql2'`);
+	if ((databaseEngine === 'mysql' || databaseEngine === 'mariadb') && orm === 'drizzle') {
+		rawImports.push(
+			`import { drizzle } from 'drizzle-orm/mysql2'`,
+			`import { createPool } from 'mysql2/promise'`
+		);
 	}
 
-	if (databaseEngine === 'mysql') {
+	if (databaseEngine === 'mysql' || databaseEngine === 'mariadb') {
 		rawImports.push(`import { getEnv } from '@absolutejs/absolute'`);
 	}
 

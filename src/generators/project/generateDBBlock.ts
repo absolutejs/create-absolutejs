@@ -67,6 +67,11 @@ export const generateDBBlock = ({
 	if (!engineGroup) return '';
 
 	if (orm !== 'drizzle') {
+		if (databaseEngine === 'mysql' || databaseEngine === 'mariadb') {
+			return `
+const db = new SQL(getEnv("DATABASE_URL"))
+`;
+		}
 		const hostCfg = engineGroup[hostKey];
 		if (!hostCfg) return '';
 
@@ -80,8 +85,11 @@ const db = ${hostCfg.expr}
 	const expr = engineGroup[hostKey]?.expr ?? remoteDrizzleInit[hostKey];
 	if (!expr) return '';
 
-	if (databaseEngine === 'mysql') {
-		const mode = databaseHost === 'planetscale' ? 'planetscale' : 'default';
+	if (databaseEngine === 'mysql' || databaseEngine === 'mariadb') {
+		const mode =
+			databaseHost === 'planetscale' && databaseEngine === 'mysql'
+				? 'planetscale'
+				: 'default';
 
 		return `
 const pool = ${expr}

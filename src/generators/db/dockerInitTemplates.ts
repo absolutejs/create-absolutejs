@@ -118,8 +118,8 @@ export const initTemplates = {
 		wait: 'until pg_isready -U user -h localhost --quiet; do sleep 1; done'
 	},
 	mariadb: {
-		cli: 'MYSQL_PWD=userpassword mariadb -h127.0.0.1 -u user -e',
-		wait: 'until mysqladmin ping -h127.0.0.1 --silent; do sleep 1; done'
+		cli: 'MYSQL_PWD=userpassword mariadb -h127.0.0.1 -u user database -e',
+		wait: 'until mariadb-admin ping -h127.0.0.1 --silent; do sleep 1; done'
 	},
 	mssql: {
 		cli: '/opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P sapassword -Q',

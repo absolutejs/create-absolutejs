@@ -180,7 +180,7 @@ export const createPackageJson = ({
 		scripts['postdb:psql'] = 'bun db:down';
 	}
 
-	if (databaseEngine === 'mysql') {
+	if ((databaseEngine === 'mysql' || databaseEngine === 'mariadb') && orm === 'drizzle') {
 		dependencies['mysql2'] = resolveVersion('mysql2', '3.14.2');
 	}
 
@@ -200,6 +200,24 @@ export const createPackageJson = ({
 		scripts['predb:mysql'] = 'bun db:up';
 		scripts['postdev'] = 'bun db:down';
 		scripts['postdb:mysql'] = 'bun db:down';
+	}
+
+	if (
+		databaseEngine === 'mariadb' &&
+		(!databaseHost || databaseHost === 'none')
+	) {
+		scripts['db:up'] =
+			'sh -c "docker info >/dev/null 2>&1 || sudo service docker start; docker compose -p mariadb -f db/docker-compose.db.yml up -d db"';
+		scripts['db:down'] =
+			'docker compose -p mariadb -f db/docker-compose.db.yml down';
+		scripts['db:reset'] =
+			'docker compose -p mariadb -f db/docker-compose.db.yml down -v';
+		scripts['db:mariadb'] =
+			"docker compose -p mariadb -f db/docker-compose.db.yml exec -e MYSQL_PWD=rootpassword db bash -lc 'until mariadb-admin ping -h127.0.0.1 --silent; do sleep 1; done; exec mariadb -h127.0.0.1 -uroot'";
+		scripts['predev'] = 'bun db:up';
+		scripts['predb:mariadb'] = 'bun db:up';
+		scripts['postdev'] = 'bun db:down';
+		scripts['postdb:mariadb'] = 'bun db:down';
 	}
 
 	if (
