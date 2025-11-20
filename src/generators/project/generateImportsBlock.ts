@@ -145,7 +145,7 @@ export const generateImportsBlock = ({
 		rawImports.push(`import { getEnv } from '@absolutejs/absolute'`);
 	}
 
-	if (noOrm && databaseEngine === 'postgresql')
+	if (noOrm && (databaseEngine === 'postgresql' || databaseEngine === 'cockroachdb'))
 		rawImports.push(
 			...(isRemoteHost
 				? connectorImports[databaseHost as 'neon']

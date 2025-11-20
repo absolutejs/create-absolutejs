@@ -180,6 +180,24 @@ export const createPackageJson = ({
 		scripts['postdb:psql'] = 'bun db:down';
 	}
 
+	if (
+		databaseEngine === 'cockroachdb' &&
+		(!databaseHost || databaseHost === 'none')
+	) {
+		scripts['db:up'] =
+			'sh -c "docker info >/dev/null 2>&1 || sudo service docker start; docker compose -p cockroachdb -f db/docker-compose.db.yml up -d db"';
+		scripts['db:down'] =
+			'docker compose -p cockroachdb -f db/docker-compose.db.yml down';
+		scripts['db:reset'] =
+			'docker compose -p cockroachdb -f db/docker-compose.db.yml down -v';
+		scripts['db:cockroach'] =
+			"docker compose -p cockroachdb -f db/docker-compose.db.yml exec db bash -lc 'cockroach sql --insecure -e \"select 1\"'";
+		scripts['predev'] = 'bun db:up';
+		scripts['predb:cockroach'] = 'bun db:up';
+		scripts['postdev'] = 'bun db:down';
+		scripts['postdb:cockroach'] = 'bun db:down';
+	}
+
 	if ((databaseEngine === 'mysql' || databaseEngine === 'mariadb') && orm === 'drizzle') {
 		dependencies['mysql2'] = resolveVersion('mysql2', '3.14.2');
 	}
