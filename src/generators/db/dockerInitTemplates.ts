@@ -133,8 +133,8 @@ export const initTemplates = {
 		cli: 'psql -U user -d database -c',
 		wait: 'until pg_isready -U user -h localhost --quiet; do sleep 1; done'
 	},
-	singlestore: {
-		cli: 'MYSQL_PWD=userpassword mysql -h127.0.0.1 -u user -e',
-		wait: 'until mysqladmin ping -h127.0.0.1 --silent; do sleep 1; done'
-	}
+  singlestore: {
+    cli: 'singlestore -u root -ppassword -D database -e',
+    wait: 'until singlestore -u root -ppassword -e "SELECT 1" >/dev/null 2>&1; do sleep 1; done && singlestore -u root -ppassword -e "CREATE DATABASE IF NOT EXISTS \\`database\\`" > /dev/null'
+  }
 } as const;
