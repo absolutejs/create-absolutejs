@@ -52,8 +52,9 @@ const cockroachdbUsers = `CREATE TABLE IF NOT EXISTS users (
   metadata   JSONB        DEFAULT '{}'::jsonb
 );`;
 
-const cockroachdbCountHistory = `CREATE TABLE IF NOT EXISTS count_history (
-  uid         INT PRIMARY KEY DEFAULT unique_rowid(),
+const cockroachdbCountHistory = `CREATE SEQUENCE count_history_uid_seq START WITH 1 INCREMENT BY 1;
+CREATE TABLE IF NOT EXISTS count_history (
+  uid         BIGINT PRIMARY KEY DEFAULT nextval('count_history_uid_seq'),
   count       INT      NOT NULL,
   created_at  TIMESTAMP NOT NULL DEFAULT NOW()
 );`;
@@ -110,8 +111,8 @@ export const countHistoryTables = {
 
 export const initTemplates = {
 	cockroachdb: {
-		cli: 'cockroach sql --insecure --host=localhost -e',
-		wait: 'until pg_isready -U root -h localhost --quiet; do sleep 1; done'
+		cli: 'sleep 1; cockroach sql --insecure --host localhost -e "USE database;" -e',
+		wait: 'until (cockroach sql --insecure -e "select 1" >/dev/null 2>&1) ; do sleep 1; done'
 	},
 	gel: {
 		cli: 'psql -U user -d database -c',

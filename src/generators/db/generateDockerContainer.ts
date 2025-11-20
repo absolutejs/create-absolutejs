@@ -3,11 +3,12 @@ import { DatabaseEngine } from '../../types';
 const templates = {
 	cockroachdb: {
 		env: {
-			COCKROACH_INSECURE: 'true'
+			COCKROACH_DATABASE: 'database'
 		},
-		image: 'cockroachdb/cockroach:v24.1.0',
+		image: 'cockroachdb/cockroach:latest-v25.3',
 		port: '26257:26257',
-		volumePath: '/cockroach/cockroach-data'
+		volumePath: '/cockroach/cockroach-data',
+		command: 'start-single-node --insecure'
 	},
 	gel: {
 		env: {
@@ -17,7 +18,8 @@ const templates = {
 		},
 		image: 'gel:latest',
 		port: '4000:4000',
-		volumePath: '/var/lib/gel'
+		volumePath: '/var/lib/gel',
+		command: ''
 	},
 	mariadb: {
 		env: {
@@ -28,7 +30,8 @@ const templates = {
 		},
 		image: 'mariadb:11.4',
 		port: '3306:3306',
-		volumePath: '/var/lib/mysql'
+		volumePath: '/var/lib/mysql',
+		command: ''
 	},
 	mongodb: {
 		env: {
@@ -38,7 +41,8 @@ const templates = {
 		},
 		image: 'mongo:7.0',
 		port: '27017:27017',
-		volumePath: '/data/db'
+		volumePath: '/data/db',
+		command: ''
 	},
 	mssql: {
 		env: {
@@ -48,7 +52,8 @@ const templates = {
 		},
 		image: 'mcr.microsoft.com/mssql/server:2022-latest',
 		port: '1433:1433',
-		volumePath: '/var/opt/mssql'
+		volumePath: '/var/opt/mssql',
+		command: ''
 	},
 	mysql: {
 		env: {
@@ -59,7 +64,8 @@ const templates = {
 		},
 		image: 'mysql:8.0',
 		port: '3306:3306',
-		volumePath: '/var/lib/mysql'
+		volumePath: '/var/lib/mysql',
+		command: ''
 	},
 	postgresql: {
 		env: {
@@ -69,7 +75,8 @@ const templates = {
 		},
 		image: 'postgres:15',
 		port: '5432:5432',
-		volumePath: '/var/lib/postgresql/data'
+		volumePath: '/var/lib/postgresql/data',
+		command: ''
 	},
 	singlestore: {
 		env: {
@@ -77,7 +84,8 @@ const templates = {
 		},
 		image: 'singlestore/cluster-in-a-box:latest',
 		port: '3306:3306',
-		volumePath: '/var/lib/memsql'
+		volumePath: '/var/lib/memsql',
+		command: ''
 	}
 } as const;
 
@@ -92,7 +100,7 @@ export const generateDockerContainer = (databaseEngine: DatabaseEngine) => {
 		);
 	}
 
-	const { image, port, env, volumePath } = templates[databaseEngine];
+	const { image, port, env, volumePath, command } = templates[databaseEngine];
 	const envLines = Object.entries(env)
 		.map(([key, value]) => `            ${key}: ${value}`)
 		.join('\n');
@@ -105,6 +113,7 @@ export const generateDockerContainer = (databaseEngine: DatabaseEngine) => {
 ${envLines}
         ports:
             - "${port}"
+        command: ${command}
         volumes:
             - db_data:${volumePath}
 
