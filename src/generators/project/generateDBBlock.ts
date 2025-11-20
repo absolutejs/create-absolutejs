@@ -5,7 +5,7 @@ type DBExpr = { expr: string };
 
 const connectionMap: Record<string, Record<string, DBExpr>> = {
 	cockroachdb: {
-		none: { expr: 'new Pool({ connectionString: getEnv("DATABASE_URL") })' }
+		none: { expr: 'new SQL(getEnv("DATABASE_URL"))' }
 	},
 	gel: {
 		none: { expr: 'gelClient({ url: getEnv("DATABASE_URL") })' }
