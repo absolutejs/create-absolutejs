@@ -30,7 +30,7 @@ const connectionMap: Record<string, Record<string, DBExpr>> = {
 		none: { expr: 'new SQL(getEnv("DATABASE_URL"))' }
 	},
 	singlestore: {
-		none: { expr: 'createClient({ url: getEnv("DATABASE_URL") })' }
+		none: { expr: 'new SQL(getEnv("DATABASE_URL"))' }
 	},
 	sqlite: {
 		none: { expr: 'new Database("db/database.sqlite")' },
@@ -67,7 +67,7 @@ export const generateDBBlock = ({
 	if (!engineGroup) return '';
 
 	if (orm !== 'drizzle') {
-		if (databaseEngine === 'mysql' || databaseEngine === 'mariadb') {
+		if (databaseEngine === 'mysql' || databaseEngine === 'mariadb' || databaseEngine === 'singlestore') {
 			return `
 const db = new SQL(getEnv("DATABASE_URL"))
 `;
@@ -85,7 +85,7 @@ const db = ${hostCfg.expr}
 	const expr = engineGroup[hostKey]?.expr ?? remoteDrizzleInit[hostKey];
 	if (!expr) return '';
 
-	if (databaseEngine === 'mysql' || databaseEngine === 'mariadb') {
+	if (databaseEngine === 'mysql' || databaseEngine === 'mariadb' || databaseEngine === 'singlestore') {
 		const mode =
 			databaseHost === 'planetscale' && databaseEngine === 'mysql'
 				? 'planetscale'
