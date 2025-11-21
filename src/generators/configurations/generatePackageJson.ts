@@ -235,7 +235,7 @@ export const createPackageJson = ({
 		scripts['db:reset'] =
 			'docker compose -p mssql -f db/docker-compose.db.yml down -v';
 		scripts['db:mssql'] =
-			`docker compose -p mssql -f db/docker-compose.db.yml exec db bash -lc '/opt/mssql-tools18/bin/sqlcmd -No -S localhost -U sa -P SApassword1'`;
+			`docker compose -p mssql -f db/docker-compose.db.yml exec db bash -lc '/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P SApassword1'`;
 		scripts['predev'] = 'bun db:up';
 		scripts['predb:mssql'] = 'bun db:up';
 		scripts['postdev'] = 'bun db:down';
