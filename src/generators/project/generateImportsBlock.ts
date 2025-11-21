@@ -165,6 +165,13 @@ export const generateImportsBlock = ({
 		);
 	}
 
+	if (databaseEngine === 'mssql' && noOrm) {
+		rawImports.push(
+			`import { connect } from 'mssql'`,
+			`import { getEnv } from '@absolutejs/absolute'`
+		)
+	}
+
 	if (authProvider === 'absoluteAuth')
 		rawImports.push(
 			`import { absoluteAuth, instantiateUserSession } from '@absolutejs/auth'`,
