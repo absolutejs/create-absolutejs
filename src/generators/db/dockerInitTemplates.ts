@@ -111,7 +111,7 @@ export const countHistoryTables = {
 
 export const initTemplates = {
 	cockroachdb: {
-		cli: 'sleep 1; cockroach sql --insecure --host localhost -e "USE database;" -e',
+		cli: 'sleep 1; cockroach sql --insecure --host localhost --database=database -e',
 		wait: 'until (cockroach sql --insecure -e "select 1" >/dev/null 2>&1) ; do sleep 1; done'
 	},
 	gel: {

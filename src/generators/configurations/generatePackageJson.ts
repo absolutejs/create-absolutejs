@@ -191,7 +191,7 @@ export const createPackageJson = ({
 		scripts['db:reset'] =
 			'docker compose -p cockroachdb -f db/docker-compose.db.yml down -v';
 		scripts['db:cockroach'] =
-			"docker compose -p cockroachdb -f db/docker-compose.db.yml exec db bash -lc 'cockroach sql --insecure -e \"select 1\"'";
+			"docker compose -p cockroachdb -f db/docker-compose.db.yml exec db bash -lc 'cockroach sql --insecure --database=database'";
 		scripts['predev'] = 'bun db:up';
 		scripts['predb:cockroach'] = 'bun db:up';
 		scripts['postdev'] = 'bun db:down';
