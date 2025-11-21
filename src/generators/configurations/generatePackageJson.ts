@@ -221,6 +221,26 @@ export const createPackageJson = ({
 	}
 
 	if (
+		databaseEngine === 'mssql' &&
+		(!databaseHost || databaseHost === 'none')
+	) {
+		dependencies['mssql'] = resolveVersion('mssql', '11.0.1');
+		devDependencies['@types/mssql'] = resolveVersion('@types/mssql', '9.1.8');
+		scripts['db:up'] =
+			'sh -c "docker info >/dev/null 2>&1 || sudo service docker start; docker compose -p mssql -f db/docker-compose.db.yml up -d db"';
+		scripts['db:down'] =
+			'docker compose -p mssql -f db/docker-compose.db.yml down';
+		scripts['db:reset'] =
+			'docker compose -p mssql -f db/docker-compose.db.yml down -v';
+		scripts['db:mssql'] =
+			"docker compose -p mssql -f db/docker-compose.db.yml exec db bash -lc 'until sqlcmd -No -S localhost -U sa -P SApassword1 -Q \"SELECT 1\" >/dev/null 2>&1; do sleep 1; done'";
+		scripts['predev'] = 'bun db:up';
+		scripts['predb:mssql'] = 'bun db:up';
+		scripts['postdev'] = 'bun db:down';
+		scripts['postdb:mssql'] = 'bun db:down';
+	}
+
+	if (
 		databaseEngine === 'sqlite' &&
 		(!databaseHost || databaseHost === 'none')
 	) {

@@ -43,8 +43,7 @@ const templates = {
 	mssql: {
 		env: {
 			ACCEPT_EULA: 'Y',
-			MSSQL_PID: 'Express',
-			SA_PASSWORD: 'Strong_Passw0rd'
+			MSSQL_SA_PASSWORD: 'SApassword1'
 		},
 		image: 'mcr.microsoft.com/mssql/server:2022-latest',
 		port: '1433:1433',
