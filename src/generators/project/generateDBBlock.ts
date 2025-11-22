@@ -68,16 +68,10 @@ export const generateDBBlock = ({
 
 	if (orm !== 'drizzle') {
 		if (databaseEngine === 'mysql' || databaseEngine === 'mariadb') {
-			return `
-const db = new SQL(getEnv("DATABASE_URL"))
-`;
+			return `const db = new SQL(getEnv("DATABASE_URL"))`;
 		}
 		const hostCfg = engineGroup[hostKey];
-		if (!hostCfg) return '';
-
-		return `
-const db = ${hostCfg.expr}
-`;
+		return hostCfg ? `const db = ${hostCfg.expr}` : '';
 	}
 
 	if (!drizzleDialectSet.has(databaseEngine)) return '';
@@ -94,13 +88,6 @@ const db = ${hostCfg.expr}
 		return `
 const pool = ${expr}
 const db = drizzle(pool, { schema, mode: '${mode}' })
-`;
-	}
-
-	if (databaseEngine === 'sqlite') {
-		return `
-const pool = ${expr}
-const db = drizzle(pool, { schema })
 `;
 	}
 
