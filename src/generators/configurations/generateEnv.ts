@@ -10,7 +10,7 @@ type GenerateEnvProps = Pick<
 };
 
 const databaseURLS = {
-	cockroachdb: 'cockroachdb://user:password@localhost:26257/database',
+	cockroachdb: 'postgresql://root@localhost:26257/database',
 	gel: 'gel://user:password@localhost:5432/database',
 	mariadb: 'mariadb://user:userpassword@localhost:3306/database',
 	mongodb: 'mongodb://user:password@localhost:27017/database',
