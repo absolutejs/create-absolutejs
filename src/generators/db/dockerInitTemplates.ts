@@ -52,7 +52,7 @@ const cockroachdbUsers = `CREATE TABLE IF NOT EXISTS users (
   metadata   JSONB        DEFAULT '{}'::jsonb
 );`;
 
-const cockroachdbCountHistory = `CREATE SEQUENCE count_history_uid_seq START WITH 1 INCREMENT BY 1;
+const cockroachdbCountHistory = `CREATE SEQUENCE IF NOT EXISTS count_history_uid_seq START WITH 1 INCREMENT BY 1;
 CREATE TABLE IF NOT EXISTS count_history (
   uid         BIGINT PRIMARY KEY DEFAULT nextval('count_history_uid_seq'),
   count       INT      NOT NULL,
