@@ -226,7 +226,7 @@ export const createPackageJson = ({
 		(!databaseHost || databaseHost === 'none')
 	) {
 		const { wait } = initTemplates.mssql;
-		dependencies['mssql'] = resolveVersion('mssql', '11.0.1');
+		dependencies['mssql'] = resolveVersion('mssql', '12.1.0');
 		devDependencies['@types/mssql'] = resolveVersion('@types/mssql', '9.1.8');
 		scripts['db:up'] =
 			`sh -c "docker info >/dev/null 2>&1 || sudo service docker start; docker compose -p mssql -f db/docker-compose.db.yml up -d db && docker compose -p mssql -f db/docker-compose.db.yml exec db bash -lc \\"${wait}\\""`;
