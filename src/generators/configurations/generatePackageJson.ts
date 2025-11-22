@@ -29,6 +29,30 @@ type CreatePackageJsonProps = Pick<
 	latest: boolean;
 };
 
+const dbScripts = {
+	postgresql: {
+		waitCmd: initTemplates.postgresql.wait,
+		clientCmd: 'psql -h localhost -U user -d database'
+	},
+	cockroachdb: {
+		waitCmd: initTemplates.cockroachdb.wait,
+		clientCmd: 'cockroach sql --insecure --database=database'
+	},
+	mysql: {
+		waitCmd: initTemplates.mysql.wait,
+		clientCmd: 'mysql -h127.0.0.1 -u user database'
+	},
+	mariadb: {
+		waitCmd: initTemplates.mariadb.wait,
+		clientCmd: 'mariadb -h127.0.0.1 -u user database'
+	},
+	mssql: {
+		waitCmd: initTemplates.mssql.wait,
+		clientCmd:
+			'/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P SApassword1'
+	}
+} as const;
+
 export const createPackageJson = ({
 	projectName,
 	authProvider,
@@ -164,108 +188,47 @@ export const createPackageJson = ({
 	};
 
 	if (
-		databaseEngine === 'postgresql' &&
-		(!databaseHost || databaseHost === 'none')
+		(!databaseHost || databaseHost === 'none') &&
+		databaseEngine !== undefined &&
+		databaseEngine !== 'none' &&
+		databaseEngine !== 'mongodb' &&
+		databaseEngine !== 'singlestore' && // TODO: Add support for singlestore
+		databaseEngine !== 'gel' // TODO: Add support for gel
 	) {
-		scripts['db:up'] =
-			'sh -c "docker info >/dev/null 2>&1 || sudo service docker start; docker compose -p postgresql -f db/docker-compose.db.yml up -d db"';
-		scripts['db:down'] =
-			'docker compose -p postgresql -f db/docker-compose.db.yml down';
-		scripts['db:reset'] =
-			'docker compose -p postgresql -f db/docker-compose.db.yml down -v';
-		scripts['db:psql'] =
-			"docker compose -p postgresql -f db/docker-compose.db.yml exec db bash -lc 'until pg_isready -U user -h localhost --quiet; do sleep 1; done; exec psql -h localhost -U user -d database'";
-		scripts['predev'] = 'bun db:up';
-		scripts['predb:psql'] = 'bun db:up';
-		scripts['postdev'] = 'bun db:down';
-		scripts['postdb:psql'] = 'bun db:down';
-	}
+		if (databaseEngine === 'sqlite') {
+			scripts['db:sqlite'] = 'sqlite3 db/database.sqlite';
+			scripts['db:init'] = 'sqlite3 db/database.sqlite < db/init.sql';
+		} else {
+			const config = dbScripts[databaseEngine];
+			const dockerPrefix = `docker compose -p ${databaseEngine} -f db/docker-compose.db.yml`;
 
-	if (
-		databaseEngine === 'cockroachdb' &&
-		(!databaseHost || databaseHost === 'none')
-	) {
-		scripts['db:up'] =
-			'sh -c "docker info >/dev/null 2>&1 || sudo service docker start; docker compose -p cockroachdb -f db/docker-compose.db.yml up -d db"';
-		scripts['db:down'] =
-			'docker compose -p cockroachdb -f db/docker-compose.db.yml down';
-		scripts['db:reset'] =
-			'docker compose -p cockroachdb -f db/docker-compose.db.yml down -v';
-		scripts['db:cockroach'] =
-			"docker compose -p cockroachdb -f db/docker-compose.db.yml exec db bash -lc 'cockroach sql --insecure --database=database'";
-		scripts['predev'] = 'bun db:up';
-		scripts['predb:cockroach'] = 'bun db:up';
-		scripts['postdev'] = 'bun db:down';
-		scripts['postdb:cockroach'] = 'bun db:down';
-	}
+			scripts['db:up'] = `${dockerPrefix} up -d db`;
+			scripts['postdb:up'] = `${dockerPrefix} exec db bash -lc '${config.waitCmd}'`;
+			scripts['db:down'] = `${dockerPrefix} down`;
+			scripts['db:reset'] = `${dockerPrefix} down -v`;
+			scripts['db:' + databaseEngine] =
+				`${dockerPrefix} exec db bash -lc '${config.clientCmd}'`;
 
-	if ((databaseEngine === 'mysql' || databaseEngine === 'mariadb') && orm === 'drizzle') {
-		dependencies['mysql2'] = resolveVersion('mysql2', '3.14.2');
-	}
+			scripts['predev'] = 'bun db:up';
+			scripts['predb:' + databaseEngine] = 'bun db:up';
+			scripts['postdev'] = 'bun db:down';
+			scripts['postdb:' + databaseEngine] = 'bun db:down';
+		}
 
-	if (
-		databaseEngine === 'mysql' &&
-		(!databaseHost || databaseHost === 'none')
-	) {
-		scripts['db:up'] =
-			'sh -c "docker info >/dev/null 2>&1 || sudo service docker start; docker compose -p mysql -f db/docker-compose.db.yml up -d db"';
-		scripts['db:down'] =
-			'docker compose -p mysql -f db/docker-compose.db.yml down';
-		scripts['db:reset'] =
-			'docker compose -p mysql -f db/docker-compose.db.yml down -v';
-		scripts['db:mysql'] =
-			"docker compose -p mysql -f db/docker-compose.db.yml exec -e MYSQL_PWD=rootpassword db bash -lc 'until mysqladmin ping -h127.0.0.1 --silent; do sleep 1; done; exec mysql -h127.0.0.1 -uroot'";
-		scripts['predev'] = 'bun db:up';
-		scripts['predb:mysql'] = 'bun db:up';
-		scripts['postdev'] = 'bun db:down';
-		scripts['postdb:mysql'] = 'bun db:down';
-	}
+		if (
+			(databaseEngine === 'mysql' || databaseEngine === 'mariadb') &&
+			orm === 'drizzle'
+		) {
+			dependencies['mysql2'] = resolveVersion('mysql2', '3.14.2');
+		}
 
-	if (
-		databaseEngine === 'mariadb' &&
-		(!databaseHost || databaseHost === 'none')
-	) {
-		scripts['db:up'] =
-			'sh -c "docker info >/dev/null 2>&1 || sudo service docker start; docker compose -p mariadb -f db/docker-compose.db.yml up -d db"';
-		scripts['db:down'] =
-			'docker compose -p mariadb -f db/docker-compose.db.yml down';
-		scripts['db:reset'] =
-			'docker compose -p mariadb -f db/docker-compose.db.yml down -v';
-		scripts['db:mariadb'] =
-			"docker compose -p mariadb -f db/docker-compose.db.yml exec -e MYSQL_PWD=rootpassword db bash -lc 'until mariadb-admin ping -h127.0.0.1 --silent; do sleep 1; done; exec mariadb -h127.0.0.1 -uroot'";
-		scripts['predev'] = 'bun db:up';
-		scripts['predb:mariadb'] = 'bun db:up';
-		scripts['postdev'] = 'bun db:down';
-		scripts['postdb:mariadb'] = 'bun db:down';
-	}
-
-	if (
-		databaseEngine === 'mssql' &&
-		(!databaseHost || databaseHost === 'none')
-	) {
-		const { wait } = initTemplates.mssql;
-		dependencies['mssql'] = resolveVersion('mssql', '12.1.0');
-		devDependencies['@types/mssql'] = resolveVersion('@types/mssql', '9.1.8');
-		scripts['db:up'] =
-			`sh -c "docker info >/dev/null 2>&1 || sudo service docker start; docker compose -p mssql -f db/docker-compose.db.yml up -d db && docker compose -p mssql -f db/docker-compose.db.yml exec db bash -lc \\"${wait}\\""`;
-		scripts['db:down'] =
-			'docker compose -p mssql -f db/docker-compose.db.yml down';
-		scripts['db:reset'] =
-			'docker compose -p mssql -f db/docker-compose.db.yml down -v';
-		scripts['db:mssql'] =
-			`docker compose -p mssql -f db/docker-compose.db.yml exec db bash -lc '/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P SApassword1'`;
-		scripts['predev'] = 'bun db:up';
-		scripts['predb:mssql'] = 'bun db:up';
-		scripts['postdev'] = 'bun db:down';
-		scripts['postdb:mssql'] = 'bun db:down';
-	}
-
-	if (
-		databaseEngine === 'sqlite' &&
-		(!databaseHost || databaseHost === 'none')
-	) {
-		scripts['db:sqlite'] = 'sqlite3 db/database.sqlite';
-		scripts['db:init'] = 'sqlite3 db/database.sqlite < db/init.sql';
+		if (databaseEngine === 'mssql') {
+			dependencies['mssql'] = resolveVersion('mssql', '12.1.0');
+			devDependencies['@types/mssql'] = resolveVersion(
+				'@types/mssql',
+			'9.1.8'
+		);
+		}
 	}
 
 	const packageJson: PackageJson = {
