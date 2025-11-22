@@ -61,12 +61,21 @@ export const scaffoldConfigurationFiles = ({
 			join(projectName, '.prettierignore')
 		);
 		const prettierrc = generatePrettierrc(frontends);
-
 		writeFileSync(join(projectName, '.prettierrc.json'), prettierrc);
-	} else
-		console.warn(
-			`${dim('│')}\n${yellow('▲')}  Biome support not implemented yet`
+	} else if (codeQualityTool === 'biome') {
+		copyFileSync(
+			join(templatesDirectory, 'configurations', 'biome.json'),
+			join(projectName, 'biome.json')
 		);
+		copyFileSync(
+			join(templatesDirectory, 'configurations', '.biomeignore'),
+			join(projectName, '.biomeignore')
+		);
+	} else {
+		console.warn(
+			`${dim('│')}\n${yellow('▲')}  No code-quality tool selected or unsupported tool`
+		);
+	}
 
 	generateEnv({
 		databaseEngine,
