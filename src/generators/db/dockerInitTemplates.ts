@@ -123,8 +123,8 @@ export const initTemplates = {
 		wait: 'until mariadb-admin ping -h127.0.0.1 --silent; do sleep 1; done'
 	},
 	mssql: {
-		cli: '/opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P sapassword -Q',
-		wait: 'until /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P sapassword -Q "SELECT 1" >/dev/null 2>&1; do sleep 1; done'
+		cli: '/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P SApassword1 -Q',
+		wait: 'until /opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P SApassword1 -Q \'SELECT 1\' >/dev/null 2>&1; do sleep 1; done'
 	},
 	mysql: {
 		cli: 'MYSQL_PWD=userpassword mysql -h127.0.0.1 -u user database -e',

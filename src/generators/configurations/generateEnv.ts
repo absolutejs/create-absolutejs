@@ -14,7 +14,7 @@ const databaseURLS = {
 	gel: 'gel://user:password@localhost:5432/database',
 	mariadb: 'mariadb://user:userpassword@localhost:3306/database',
 	mongodb: 'mongodb://user:password@localhost:27017/database',
-	mssql: 'mssql://user:password@localhost:1433/database',
+	mssql: 'Server=localhost,1433;Database=master;User Id=sa;Password=SApassword1;Encrypt=true;TrustServerCertificate=true',
 	mysql: 'mysql://user:userpassword@localhost:3306/database',
 	postgresql: 'postgresql://user:password@localhost:5432/database',
 	singlestore: 'singlestore://user:password@localhost:3306/database'
