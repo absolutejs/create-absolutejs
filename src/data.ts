@@ -118,6 +118,50 @@ export const eslintAndPrettierDependencies: AvailableDependency[] = [
 	{
 		latestVersion: '3.5.3',
 		value: 'prettier'
+	},
+	{
+		latestVersion: '4.2.0',
+		value: '@stylistic/eslint-plugin-ts'
+	},
+	{
+		latestVersion: '8.47.0',
+		value: '@typescript-eslint/parser'
+	},
+	{
+		latestVersion: '0.1.6',
+		value: 'eslint-plugin-absolute'
+	},
+	{
+		latestVersion: '2.32.0',
+		value: 'eslint-plugin-import'
+	},
+	{
+		latestVersion: '6.10.2',
+		value: 'eslint-plugin-jsx-a11y'
+	},
+	{
+		latestVersion: '7.2.1',
+		value: 'eslint-plugin-promise'
+	},
+	{
+		latestVersion: '7.37.5',
+		value: 'eslint-plugin-react'
+	},
+	{
+		latestVersion: '19.1.0-rc.2',
+		value: 'eslint-plugin-react-compiler'
+	},
+	{
+		latestVersion: '7.0.0',
+		value: 'eslint-plugin-react-hooks'
+	},
+	{
+		latestVersion: '3.0.1',
+		value: 'eslint-plugin-security'
+	},
+	{
+		latestVersion: '8.47.0',
+		value: 'typescript-eslint'
 	}
 ];
 

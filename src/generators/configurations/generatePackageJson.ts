@@ -49,6 +49,7 @@ export const createPackageJson = ({
 
 	const dependencies: PackageJson['dependencies'] = {};
 	const devDependencies: PackageJson['devDependencies'] = {};
+	devDependencies['typescript'] = resolveVersion('typescript', '5.9.3');
 
 	const flags = computeFlags(frontendDirectories);
 
