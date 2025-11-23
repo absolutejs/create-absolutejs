@@ -1,8 +1,8 @@
 import { mkdirSync, writeFileSync } from 'fs';
 import { join } from 'path';
+import { isDrizzleDialect } from '../../typeGuards';
 import type { AvailableDependency, CreateConfiguration } from '../../types';
 import type { FrameworkFlags } from './computeFlags';
-import { isDrizzleDialect } from '../../typeGuards';
 
 type GenerateImportsBlockProps = {
 	backendDirectory: string;
@@ -111,47 +111,92 @@ export const generateImportsBlock = ({
 
 	const ormDatabaseImports = {
 		drizzle: {
-			postgresql: !isRemoteHost ? [`import { SQL } from 'bun'`, `import { drizzle } from 'drizzle-orm/bun-sql`] : [],
-			sqlite: !isRemoteHost ? [`import { Database } from 'bun:sqlite'`, `import { drizzle } from 'drizzle-orm/bun-sqlite'`] : [],
-			mysql: !isRemoteHost ? [`import { drizzle } from 'drizzle-orm/mysql2'`, `import { createPool } from 'mysql2/promise'`] : [],
-			mariadb: [`import { drizzle } from 'drizzle-orm/mysql2'`, `import { createPool } from 'mysql2/promise'`],
 			gel: [],
-			singlestore: []
-		},
+			mariadb: [
+				`import { drizzle } from 'drizzle-orm/mysql2'`,
+				`import { createPool } from 'mysql2/promise'`
+			],
+			mysql: !isRemoteHost
+				? [
+						`import { drizzle } from 'drizzle-orm/mysql2'`,
+						`import { createPool } from 'mysql2/promise'`
+					]
+				: [],
+			postgresql: !isRemoteHost
+				? [
+						`import { SQL } from 'bun'`,
+						`import { drizzle } from 'drizzle-orm/bun-sql'`
+					]
+				: [],
+			singlestore: [],
+			sqlite: !isRemoteHost
+				? [
+						`import { Database } from 'bun:sqlite'`,
+						`import { drizzle } from 'drizzle-orm/bun-sqlite'`
+					]
+				: []
+		}
 	} as const;
 
 	const noOrmImports = {
-		sqlite: isRemoteHost
-			? [...connectorImports[databaseHost as 'turso'], `import { getEnv } from '@absolutejs/absolute'`]
-			: [`import { Database } from 'bun:sqlite'`],
-		mysql: isRemoteHost 
-			? [...connectorImports[databaseHost as 'planetscale'], `import { getEnv } from '@absolutejs/absolute'`]
-			: [`import { SQL } from 'bun'`, `import { getEnv } from '@absolutejs/absolute'`],
-		mariadb: [`import { SQL } from 'bun'`, `import { getEnv } from '@absolutejs/absolute'`],
-		postgresql: isRemoteHost
-			? [...connectorImports[databaseHost as 'neon'], `import { getEnv } from '@absolutejs/absolute'`]
-			: [`import { SQL } from 'bun'`, `import { getEnv } from '@absolutejs/absolute'`],
-		cockroachdb: [`import { SQL } from 'bun'`, `import { getEnv } from '@absolutejs/absolute'`],
-		mssql: [`import { connect } from 'mssql'`, `import { getEnv } from '@absolutejs/absolute'`],
-		mongodb: [],
+		cockroachdb: [
+			`import { SQL } from 'bun'`,
+			`import { getEnv } from '@absolutejs/absolute'`
+		],
 		gel: [],
-		singlestore: []
+		mariadb: [
+			`import { SQL } from 'bun'`,
+			`import { getEnv } from '@absolutejs/absolute'`
+		],
+		mongodb: [],
+		mssql: [
+			`import { connect } from 'mssql'`,
+			`import { getEnv } from '@absolutejs/absolute'`
+		],
+		mysql: isRemoteHost
+			? [
+					...connectorImports[databaseHost as 'planetscale'],
+					`import { getEnv } from '@absolutejs/absolute'`
+				]
+			: [
+					`import { SQL } from 'bun'`,
+					`import { getEnv } from '@absolutejs/absolute'`
+				],
+		postgresql: isRemoteHost
+			? [
+					...connectorImports[databaseHost as 'neon'],
+					`import { getEnv } from '@absolutejs/absolute'`
+				]
+			: [
+					`import { SQL } from 'bun'`,
+					`import { getEnv } from '@absolutejs/absolute'`
+				],
+		singlestore: [],
+		sqlite: isRemoteHost
+			? [
+					...connectorImports[databaseHost as 'turso'],
+					`import { getEnv } from '@absolutejs/absolute'`
+				]
+			: [`import { Database } from 'bun:sqlite'`]
 	} as const;
 
 	if (orm === 'drizzle') {
 		rawImports.push(...ormImports[orm]);
+	}
 
-		if (isRemoteHost) {
-			rawImports.push(...connectorImports[databaseHost], ...dialectImports[databaseHost])
-		}
+	if (orm == 'drizzle' && isRemoteHost) {
+		rawImports.push(
+			...connectorImports[databaseHost],
+			...dialectImports[databaseHost]
+		);
+	}
 
-		if (isDrizzleDialect(databaseEngine)) {
-			rawImports.push(...ormDatabaseImports[orm][databaseEngine])
-		}
+	if (orm == 'drizzle' && isDrizzleDialect(databaseEngine)) {
+		rawImports.push(...ormDatabaseImports[orm][databaseEngine]);
 	}
 
 	if (noOrm && hasDatabase && noOrmImports[databaseEngine]) {
-		rawImports.push(...noOrmImports[databaseEngine])
+		rawImports.push(...noOrmImports[databaseEngine]);
 	}
 
 	if (authProvider === 'absoluteAuth')

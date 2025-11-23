@@ -11,8 +11,8 @@ import {
 } from '../../data';
 import type { CreateConfiguration, PackageJson } from '../../types';
 import { getPackageVersion } from '../../utils/getPackageVersion';
-import { computeFlags } from '../project/computeFlags';
 import { initTemplates } from '../db/dockerInitTemplates';
+import { computeFlags } from '../project/computeFlags';
 
 type CreatePackageJsonProps = Pick<
 	CreateConfiguration,
@@ -30,26 +30,27 @@ type CreatePackageJsonProps = Pick<
 };
 
 const dbScripts = {
-	postgresql: {
-		waitCmd: initTemplates.postgresql.wait,
-		clientCmd: 'psql -h localhost -U user -d database'
-	},
 	cockroachdb: {
-		waitCmd: initTemplates.cockroachdb.wait,
-		clientCmd: 'cockroach sql --insecure --database=database'
-	},
-	mysql: {
-		waitCmd: initTemplates.mysql.wait,
-		clientCmd: 'mysql -h127.0.0.1 -u user database'
+		clientCmd: 'cockroach sql --insecure --database=database',
+		waitCmd: initTemplates.cockroachdb.wait
 	},
 	mariadb: {
-		waitCmd: initTemplates.mariadb.wait,
-		clientCmd: 'mariadb -h127.0.0.1 -u user database'
+		clientCmd:
+			'MYSQL_PWD=userpassword mariadb -h127.0.0.1 -u user database',
+		waitCmd: initTemplates.mariadb.wait
 	},
 	mssql: {
-		waitCmd: initTemplates.mssql.wait,
 		clientCmd:
-			'/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P SApassword1'
+			'/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P SApassword1',
+		waitCmd: initTemplates.mssql.wait
+	},
+	mysql: {
+		clientCmd: 'MYSQL_PWD=userpassword mysql -h127.0.0.1 -u user database',
+		waitCmd: initTemplates.mysql.wait
+	},
+	postgresql: {
+		clientCmd: 'psql -h localhost -U user -d database',
+		waitCmd: initTemplates.postgresql.wait
 	}
 } as const;
 
@@ -187,48 +188,53 @@ export const createPackageJson = ({
 		typecheck: 'bun run tsc --noEmit'
 	};
 
+	const isLocal = !databaseHost || databaseHost === 'none';
+
 	if (
-		(!databaseHost || databaseHost === 'none') &&
+		isLocal &&
 		databaseEngine !== undefined &&
 		databaseEngine !== 'none' &&
+		databaseEngine !== 'sqlite' &&
 		databaseEngine !== 'mongodb' &&
 		databaseEngine !== 'singlestore' && // TODO: Add support for singlestore
 		databaseEngine !== 'gel' // TODO: Add support for gel
 	) {
-		if (databaseEngine === 'sqlite') {
-			scripts['db:sqlite'] = 'sqlite3 db/database.sqlite';
-			scripts['db:init'] = 'sqlite3 db/database.sqlite < db/init.sql';
-		} else {
-			const config = dbScripts[databaseEngine];
-			const dockerPrefix = `docker compose -p ${databaseEngine} -f db/docker-compose.db.yml`;
+		const config = dbScripts[databaseEngine];
+		const dockerPrefix = `docker compose -p ${databaseEngine} -f db/docker-compose.db.yml`;
 
-			scripts['db:up'] = `${dockerPrefix} up -d db`;
-			scripts['postdb:up'] = `${dockerPrefix} exec db bash -lc '${config.waitCmd}'`;
-			scripts['db:down'] = `${dockerPrefix} down`;
-			scripts['db:reset'] = `${dockerPrefix} down -v`;
-			scripts['db:' + databaseEngine] =
-				`${dockerPrefix} exec db bash -lc '${config.clientCmd}'`;
+		scripts['db:up'] = `${dockerPrefix} up -d db`;
+		scripts['postdb:up'] =
+			`${dockerPrefix} exec db bash -lc '${config.waitCmd}'`;
+		scripts['db:down'] = `${dockerPrefix} down`;
+		scripts['db:reset'] = `${dockerPrefix} down -v`;
+		scripts[`db:${databaseEngine}`] =
+			`${dockerPrefix} exec -it db bash -lc '${config.clientCmd}'`;
 
-			scripts['predev'] = 'bun db:up';
-			scripts['predb:' + databaseEngine] = 'bun db:up';
-			scripts['postdev'] = 'bun db:down';
-			scripts['postdb:' + databaseEngine] = 'bun db:down';
-		}
+		scripts['predev'] = 'bun db:up';
+		scripts[`predb:${databaseEngine}`] = 'bun db:up';
+		scripts['postdev'] = 'bun db:down';
+		scripts[`postdb:${databaseEngine}`] = 'bun db:down';
+	}
 
-		if (
-			(databaseEngine === 'mysql' || databaseEngine === 'mariadb') &&
-			orm === 'drizzle'
-		) {
-			dependencies['mysql2'] = resolveVersion('mysql2', '3.14.2');
-		}
+	if (
+		isLocal &&
+		(databaseEngine === 'mysql' || databaseEngine === 'mariadb') &&
+		orm === 'drizzle'
+	) {
+		dependencies['mysql2'] = resolveVersion('mysql2', '3.14.2');
+	}
 
-		if (databaseEngine === 'mssql') {
-			dependencies['mssql'] = resolveVersion('mssql', '12.1.0');
-			devDependencies['@types/mssql'] = resolveVersion(
-				'@types/mssql',
+	if (isLocal && databaseEngine === 'mssql') {
+		dependencies['mssql'] = resolveVersion('mssql', '12.1.0');
+		devDependencies['@types/mssql'] = resolveVersion(
+			'@types/mssql',
 			'9.1.8'
 		);
-		}
+	}
+
+	if (isLocal && databaseEngine === 'sqlite') {
+		scripts['db:sqlite'] = 'sqlite3 db/database.sqlite';
+		scripts['db:init'] = 'sqlite3 db/database.sqlite < db/init.sql';
 	}
 
 	const packageJson: PackageJson = {
