@@ -7,7 +7,7 @@ type AuthMatrixEntry = MatrixConfig & {
   directoryConfig: 'default';
 };
 
-const SUPPORTED_DATABASE_ENGINES = new Set(['sqlite', 'mongodb']);
+const SUPPORTED_DATABASE_ENGINES = new Set(['sqlite', 'mongodb', 'postgresql']);
 
 const createProjectName = (config: AuthMatrixEntry) => {
   const hostLabel = config.databaseHost === 'none' ? 'local' : config.databaseHost;

@@ -22,7 +22,7 @@ const CLOUD_SCENARIOS: readonly CloudScenarioDefinition[] = [
       orm: 'drizzle'
     } as const,
     requiredEnv: [
-      { source: 'ABSOLUTE_BEHAVIOURAL_NEON_DATABASE_URL', target: 'DATABASE_URL' }
+      { source: 'NEON_DATABASE_URL', target: 'DATABASE_URL' }
     ]
   },
   {
@@ -35,7 +35,7 @@ const CLOUD_SCENARIOS: readonly CloudScenarioDefinition[] = [
       orm: 'drizzle'
     } as const,
     requiredEnv: [
-      { source: 'ABSOLUTE_BEHAVIOURAL_TURSO_DATABASE_URL', target: 'DATABASE_URL' }
+      { source: 'TURSO_DB_URL', target: 'DATABASE_URL' }
     ]
   }
 ] as const;

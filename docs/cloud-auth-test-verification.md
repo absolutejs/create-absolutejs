@@ -44,6 +44,18 @@ bun run scripts/functional-tests/matrix.ts # generates test-matrix.json
 bun run test:cli --dry-run
 ```
 
+## Environment variable behavior
+- **Functional tests**: Use matrix-level `requiredEnv` metadata to annotate which scenarios need cloud credentials. If env vars are missing, the test runner skips the scenario early with a logged message. This allows CI to run without credentials while developers can opt-in by setting vars.
+- **Behavioural tests**: Use runtime guards at the start of each scenario (e.g., `resolveScenario()`) to check for required env vars. If missing, the test is skipped. These tests expect simplified env var names:
+  - `NEON_DATABASE_URL` (not prefixed)
+  - `TURSO_DB_URL` (not prefixed)
+- **Setting credentials**: Export cloud database URLs before running tests:
+  ```bash
+  export NEON_DATABASE_URL="postgresql://user:pass@host/db"
+  export TURSO_DB_URL="libsql://your-db.turso.io"
+  bun test tests/behavioural/cloud-matrix.test.ts
+  ```
+
 ## Interpreting skips
 - Each skipped scenario includes a `skipReason` explaining why it was not executed.
 - Common reasons:

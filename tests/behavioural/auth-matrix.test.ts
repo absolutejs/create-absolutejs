@@ -24,6 +24,24 @@ const AUTH_SCENARIOS: readonly BehaviouralScenario[] = [
       frontend: 'react',
       orm: 'drizzle'
     } as const
+  },
+  {
+    label: 'Vue + SQLite + AbsoluteAuth',
+    options: {
+      auth: 'absoluteAuth',
+      database: 'sqlite',
+      databaseHost: 'none',
+      frontend: 'vue'
+    } as const
+  },
+  {
+    label: 'Svelte + SQLite + AbsoluteAuth',
+    options: {
+      auth: 'absoluteAuth',
+      database: 'sqlite',
+      databaseHost: 'none',
+      frontend: 'svelte'
+    } as const
   }
 ] as const;
 
