@@ -102,9 +102,14 @@ export const generateImportsBlock = ({
 	const ormImports = {
 		drizzle: [
 			`import { Elysia } from 'elysia'`,
-			...(databaseEngine === 'sqlite' && !isRemoteHost ? [] : [`import { getEnv } from '@absolutejs/absolute'`]),
+			...(databaseEngine === 'sqlite' && !isRemoteHost
+				? []
+				: [`import { getEnv } from '@absolutejs/absolute'`]),
 			...(authProvider === 'absoluteAuth'
-				? [`import { schema } from '../../db/schema'`, `import { User } from '../types/databaseTypes'`]
+				? [
+						`import { schema } from '../../db/schema'`,
+						`import { User } from '../types/databaseTypes'`
+					]
 				: [`import { schema } from '../../db/schema'`])
 		]
 	} as const;
@@ -184,14 +189,14 @@ export const generateImportsBlock = ({
 		rawImports.push(...ormImports[orm]);
 	}
 
-	if (orm == 'drizzle' && isRemoteHost) {
+	if (orm === 'drizzle' && isRemoteHost) {
 		rawImports.push(
 			...connectorImports[databaseHost],
 			...dialectImports[databaseHost]
 		);
 	}
 
-	if (orm == 'drizzle' && isDrizzleDialect(databaseEngine)) {
+	if (orm === 'drizzle' && isDrizzleDialect(databaseEngine)) {
 		rawImports.push(...ormDatabaseImports[orm][databaseEngine]);
 	}
 
