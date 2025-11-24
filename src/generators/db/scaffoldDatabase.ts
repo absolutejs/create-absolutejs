@@ -87,8 +87,7 @@ export const scaffoldDatabase = async ({
 
 		const drizzleSchema = generateDrizzleSchema({
 			authProvider,
-			databaseEngine,
-			databaseHost
+			databaseEngine
 		});
 		writeFileSync(
 			join(projectDatabaseDirectory, 'schema.ts'),

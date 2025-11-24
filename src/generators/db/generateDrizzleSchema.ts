@@ -1,7 +1,6 @@
 import {
 	AuthProvider,
-	AvailableDrizzleDialect,
-	DatabaseHost
+	AvailableDrizzleDialect
 } from '../../types';
 
 const DIALECTS = {
@@ -57,7 +56,6 @@ const DIALECTS = {
 
 type GenerateSchemaProps = {
 	databaseEngine: AvailableDrizzleDialect;
-	databaseHost: DatabaseHost;
 	authProvider: AuthProvider;
 };
 
@@ -65,7 +63,6 @@ const builder = (expr: string) => expr.split('(')[0];
 
 export const generateDrizzleSchema = ({
 	databaseEngine,
-	databaseHost,
 	authProvider
 }: GenerateSchemaProps) => {
 	const cfg = DIALECTS[databaseEngine];
@@ -90,20 +87,6 @@ export const generateDrizzleSchema = ({
 		databaseEngine === 'sqlite'
 			? `import { sql } from 'drizzle-orm';\n`
 			: '';
-
-	let dbImport = '';
-	let dbTypeLine = '';
-	if (databaseHost === 'neon') {
-		dbImport = `import { NeonHttpDatabase } from 'drizzle-orm/neon-http';`;
-		dbTypeLine = 'export type DatabaseType = NeonHttpDatabase<SchemaType>;';
-	} else if (databaseHost === 'planetscale') {
-		dbImport = `import { PlanetScaleDatabase } from 'drizzle-orm/planetscale-serverless';`;
-		dbTypeLine =
-			'export type DatabaseType = PlanetScaleDatabase<SchemaType>;';
-	} else if (databaseHost === 'turso') {
-		dbImport = `import { LibSQLDatabase } from 'drizzle-orm/libsql';`;
-		dbTypeLine = 'export type DatabaseType = LibSQLDatabase<SchemaType>;';
-	}
 
 	let uidColumn: string;
 	if (databaseEngine === 'mysql' || databaseEngine === 'singlestore' || databaseEngine === 'mariadb') {
@@ -140,16 +123,9 @@ const MILLIS_PER_DAY = 86400000;\n\n`
 
 	const schemaKey =
 		authProvider === 'absoluteAuth' ? 'users' : 'countHistory';
-	const extraTypes =
-		authProvider === 'absoluteAuth'
-			? `export type User = typeof users.$inferSelect;
-export type NewUser = typeof users.$inferInsert;`
-			: `export type CountHistory = typeof countHistory.$inferSelect;
-export type NewCountHistory = typeof countHistory.$inferInsert;`;
 
 	return `
 ${sqliteImports}${builderImport}
-${dbImport}
 
 ${constsBlock}${tableBlock}
 
@@ -158,6 +134,5 @@ export const schema = {
 };
 
 export type SchemaType = typeof schema;
-${dbTypeLine ? `${dbTypeLine}\n\n` : '\n'}${extraTypes}
 `;
 };
