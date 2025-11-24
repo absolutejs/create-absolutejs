@@ -149,6 +149,25 @@ export const eslintAndPrettierDependencies: AvailableDependency[] = [
 	}
 ];
 
+export const eslintReactDependencies: AvailableDependency[] = [
+	{
+		latestVersion: '6.10.2',
+		value: 'eslint-plugin-jsx-a11y'
+	},
+	{
+		latestVersion: '7.37.5',
+		value: 'eslint-plugin-react'
+	},
+	{
+		latestVersion: '19.1.0-rc.2',
+		value: 'eslint-plugin-react-compiler'
+	},
+	{
+		latestVersion: '7.0.0',
+		value: 'eslint-plugin-react-hooks'
+	}
+];
+
 export const defaultDependencies: AvailableDependency[] = [
 	{
 		imports: [{ isPlugin: false, packageName: 'Elysia' }],
