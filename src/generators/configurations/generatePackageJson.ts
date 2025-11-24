@@ -182,7 +182,7 @@ export const createPackageJson = ({
 		case 'planetscale':
 			dependencies['@planetscale/database'] = resolveVersion(
 				'@planetscale/database',
-				'1.0.0'
+				'1.19.0'
 			);
 			break;
 		case 'turso':

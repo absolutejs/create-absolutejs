@@ -293,7 +293,7 @@ const mysqlDrizzleQueryOperations: QueryOperations = {
 
 	insertUser: `const [row] = await db
     .insert(schema.users)
-    .values({ auth_sub: authSub, metadata: userIdentity })
+    .values({ auth_sub: authSub, metadata: userIdentity });
 
   const [newUser] = await db
     .select()
