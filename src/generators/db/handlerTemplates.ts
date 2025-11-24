@@ -241,12 +241,10 @@ const mysqlSqlQueryOperations: QueryOperations = {
       VALUES (\${authSub}, \${JSON.stringify(userIdentity)})
     \`;
 
-    const insertId = result.lastInsertRowid;
-
     const [row] = await db\`
       SELECT *
       FROM users
-      WHERE uid = \${insertId}
+      WHERE auth_sub = \${authSub}
       LIMIT 1
     \`;
 
@@ -296,15 +294,11 @@ const mysqlDrizzleQueryOperations: QueryOperations = {
 	insertUser: `const [row] = await db
     .insert(schema.users)
     .values({ auth_sub: authSub, metadata: userIdentity })
-    .$returningId();
-
-  if (!row) throw new Error('insert failed: no uid returned');
-  const { uid } = row;
 
   const [newUser] = await db
     .select()
     .from(schema.users)
-    .where(eq(schema.users.uid, uid));
+    .where(eq(schema.users.auth_sub, authSub));
 
   if (!newUser) throw new Error('Failed to create user');
   return newUser;`,
@@ -340,12 +334,9 @@ const mysqlPlanetScaleQueryOperations: QueryOperations = {
       [authSub, JSON.stringify(userIdentity)]
     );
 
-    const insertId = result.insertId;
-    if (!insertId) throw new Error("Failed to insert user");
-
     const { rows } = await db.execute(
-      \`SELECT * FROM users WHERE uid = ? LIMIT 1\`,
-      [insertId]
+      \`SELECT * FROM users WHERE auth_sub = ? LIMIT 1\`,
+      [authSub]
     );
 
     const row = rows[0] ?? null;
