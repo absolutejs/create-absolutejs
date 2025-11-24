@@ -6,6 +6,7 @@ import { isDrizzleDialect } from '../../typeGuards';
 import type { CreateConfiguration } from '../../types';
 import { checkSqliteInstalled } from '../../utils/checkSqliteInstalled';
 import { createDrizzleConfig } from '../configurations/generateDrizzleConfig';
+import { generateDatabaseTypes } from './generateDatabaseTypes';
 import { generateDrizzleSchema } from './generateDrizzleSchema';
 import { generateDBHandlers } from './generateHandlers';
 import { generateSqliteSchema } from './generateSqliteSchema';
@@ -22,6 +23,7 @@ type ScaffoldDatabaseProps = Pick<
 > & {
 	databaseDirectory: string;
 	backendDirectory: string;
+	typesDirectory: string;
 };
 
 export const scaffoldDatabase = async ({
@@ -31,7 +33,8 @@ export const scaffoldDatabase = async ({
 	databaseDirectory,
 	backendDirectory,
 	authProvider,
-	orm
+	orm,
+	typesDirectory
 }: ScaffoldDatabaseProps) => {
 	const projectDatabaseDirectory = join(projectName, databaseDirectory);
 	const handlerDirectory = join(backendDirectory, 'handlers');
@@ -87,14 +90,19 @@ export const scaffoldDatabase = async ({
 
 		const drizzleSchema = generateDrizzleSchema({
 			authProvider,
-			databaseEngine,
-			databaseHost
+			databaseEngine
 		});
 		writeFileSync(
 			join(projectDatabaseDirectory, 'schema.ts'),
 			drizzleSchema
 		);
 		createDrizzleConfig({ databaseDirectory, databaseEngine, projectName });
+
+		const drizzleTypes = generateDatabaseTypes({
+			authProvider,
+			databaseHost
+		});
+		writeFileSync(join(typesDirectory, 'databaseTypes.ts'), drizzleTypes);
 
 		return;
 	}

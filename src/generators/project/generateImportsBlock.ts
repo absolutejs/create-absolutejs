@@ -159,9 +159,9 @@ export const generateImportsBlock = ({
 			...(databaseEngine === 'sqlite' && !isRemoteHost
 				? []
 				: [`import { getEnv } from '@absolutejs/absolute'`]),
-			authProvider === 'absoluteAuth'
-				? `import { schema, User } from '../../db/schema'`
-				: `import { schema } from '../../db/schema'`
+			...(authProvider === 'absoluteAuth'
+				? [`import { schema } from '../../db/schema'`, `import { User } from '../types/databaseTypes'`]
+				: [`import { schema } from '../../db/schema'`])
 		);
 	}
 
