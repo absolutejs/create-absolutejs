@@ -1,6 +1,17 @@
 import { DatabaseEngine } from '../../types';
 
-const templates = {
+interface DatabaseTemplate {
+	image: string;
+	port: string;
+	env: Record<string, string>;
+	volumePath: string;
+	command?: string;
+}
+
+const templates: Record<
+	Exclude<DatabaseEngine, 'none' | 'sqlite' | undefined>,
+	DatabaseTemplate
+> = {
 	cockroachdb: {
 		command: 'start-single-node --insecure',
 		env: {
@@ -11,7 +22,6 @@ const templates = {
 		volumePath: '/cockroach/cockroach-data'
 	},
 	gel: {
-		command: '',
 		env: {
 			GEL_DB: 'database',
 			GEL_PASSWORD: 'password',
@@ -22,7 +32,6 @@ const templates = {
 		volumePath: '/var/lib/gel'
 	},
 	mariadb: {
-		command: '',
 		env: {
 			MYSQL_DATABASE: 'database',
 			MYSQL_PASSWORD: 'userpassword',
@@ -34,7 +43,6 @@ const templates = {
 		volumePath: '/var/lib/mysql'
 	},
 	mongodb: {
-		command: '',
 		env: {
 			MONGO_INITDB_DATABASE: 'database',
 			MONGO_INITDB_ROOT_PASSWORD: 'password',
@@ -45,7 +53,6 @@ const templates = {
 		volumePath: '/data/db'
 	},
 	mssql: {
-		command: '',
 		env: {
 			ACCEPT_EULA: 'Y',
 			MSSQL_SA_PASSWORD: 'SApassword1'
@@ -55,7 +62,6 @@ const templates = {
 		volumePath: '/var/opt/mssql'
 	},
 	mysql: {
-		command: '',
 		env: {
 			MYSQL_DATABASE: 'database',
 			MYSQL_PASSWORD: 'userpassword',
@@ -67,7 +73,6 @@ const templates = {
 		volumePath: '/var/lib/mysql'
 	},
 	postgresql: {
-		command: '',
 		env: {
 			POSTGRES_DB: 'database',
 			POSTGRES_PASSWORD: 'password',
@@ -78,7 +83,6 @@ const templates = {
 		volumePath: '/var/lib/postgresql/data'
 	},
 	singlestore: {
-		command: '',
 		env: {
 			ROOT_PASSWORD: 'password'
 		},
@@ -86,7 +90,7 @@ const templates = {
 		port: '3306:3306',
 		volumePath: '/var/lib/memsql'
 	}
-} as const;
+};
 
 export const generateDockerContainer = (databaseEngine: DatabaseEngine) => {
 	if (
@@ -100,6 +104,7 @@ export const generateDockerContainer = (databaseEngine: DatabaseEngine) => {
 	}
 
 	const { image, port, env, volumePath, command } = templates[databaseEngine];
+	const commandLines = command ? `        command: ${command}` : '';
 	const envLines = Object.entries(env)
 		.map(([key, value]) => `            ${key}: ${value}`)
 		.join('\n');
@@ -112,7 +117,7 @@ export const generateDockerContainer = (databaseEngine: DatabaseEngine) => {
 ${envLines}
         ports:
             - "${port}"
-        command: ${command}
+${commandLines}
         volumes:
             - db_data:${volumePath}
 
