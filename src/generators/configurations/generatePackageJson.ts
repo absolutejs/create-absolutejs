@@ -7,7 +7,8 @@ import {
 	availablePlugins,
 	defaultDependencies,
 	defaultPlugins,
-	eslintAndPrettierDependencies
+	eslintAndPrettierDependencies,
+	eslintReactDependencies
 } from '../../data';
 import type { CreateConfiguration, PackageJson } from '../../types';
 import { getPackageVersion } from '../../utils/getPackageVersion';
@@ -74,6 +75,7 @@ export const createPackageJson = ({
 
 	const dependencies: PackageJson['dependencies'] = {};
 	const devDependencies: PackageJson['devDependencies'] = {};
+	devDependencies['typescript'] = resolveVersion('typescript', '5.9.3');
 
 	const flags = computeFlags(frontendDirectories);
 
@@ -129,6 +131,15 @@ export const createPackageJson = ({
 			'@types/react',
 			'19.2.0'
 		);
+	}
+
+	if (flags.requiresReact && codeQualityTool === 'eslint+prettier') {
+		eslintReactDependencies.forEach((dep) => {
+			devDependencies[dep.value] = resolveVersion(
+				dep.value,
+				dep.latestVersion
+			);
+		});
 	}
 
 	if (flags.requiresSvelte) {
