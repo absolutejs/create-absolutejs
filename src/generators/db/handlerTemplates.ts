@@ -313,6 +313,66 @@ const mysqlDrizzleQueryOperations: QueryOperations = {
 	selectUser: drizzleQueryOperations.selectUser
 };
 
+const mysqlPlanetScaleQueryOperations: QueryOperations = {
+  insertHistory: `
+    const result = await db.execute(
+      \`INSERT INTO count_history (count) VALUES (?)\`,
+      [count]
+    );
+
+    const insertId = result.insertId;
+    if (!insertId) throw new Error("Could not insert count history");
+
+    const { rows } = await db.execute(
+      \`SELECT * FROM count_history WHERE uid = ? LIMIT 1\`,
+      [insertId]
+    );
+
+    const row = rows[0] ?? null;
+    if (!row) throw new Error("Could not retrieve the newly-inserted history");
+
+    return row;
+  `,
+
+  insertUser: `
+    const result = await db.execute(
+      \`INSERT INTO users (auth_sub, metadata) VALUES (?, ?)\`,
+      [authSub, JSON.stringify(userIdentity)]
+    );
+
+    const insertId = result.insertId;
+    if (!insertId) throw new Error("Failed to insert user");
+
+    const { rows } = await db.execute(
+      \`SELECT * FROM users WHERE uid = ? LIMIT 1\`,
+      [insertId]
+    );
+
+    const row = rows[0] ?? null;
+    if (!row) throw new Error("Failed to create user");
+
+    return row;
+  `,
+
+  selectHistory: `
+    const { rows } = await db.execute(
+      \`SELECT * FROM count_history WHERE uid = ? LIMIT 1\`,
+      [uid]
+    );
+
+    return rows[0] ?? null;
+  `,
+
+  selectUser: `
+    const { rows } = await db.execute(
+      \`SELECT * FROM users WHERE auth_sub = ? LIMIT 1\`,
+      [authSub]
+    );
+
+    return rows[0] ?? null;
+  `
+};
+
 const driverConfigurations = {
 	'cockroachdb:sql:local': {
 		dbType: 'SQL',
@@ -355,10 +415,23 @@ import { MySql2Database } from 'drizzle-orm/mysql2'
 import { schema, type SchemaType } from '../../../db/schema'`,
 		queries: mysqlDrizzleQueryOperations
 	},
+  'mysql:drizzle:planetscale': {
+    dbType: 'PlanetScaleDatabase<SchemaType>',
+    importLines: `
+import { eq } from 'drizzle-orm'
+import { PlanetScaleDatabase } from 'drizzle-orm/planetscale-serverless'
+import { schema, type SchemaType } from '../../../db/schema'`,
+    queries: mysqlDrizzleQueryOperations
+  },
 	'mysql:sql:local': {
 		dbType: 'SQL',
 		importLines: `import { SQL } from 'bun'`,
 		queries: mysqlSqlQueryOperations
+	},
+	'mysql:sql:planetscale': {
+		dbType: 'Client',
+		importLines: `import { Client } from '@planetscale/database/dist'`,
+		queries: mysqlPlanetScaleQueryOperations
 	},
 	'postgresql:drizzle:local': {
 		dbType: 'BunSQLDatabase<SchemaType>',
