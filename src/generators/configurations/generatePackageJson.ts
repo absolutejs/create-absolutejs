@@ -107,6 +107,13 @@ export const createPackageJson = ({
 		);
 	}
 
+	if (flags.requiresReact && codeQualityTool === 'eslint+prettier') {
+		devDependencies['eslint-plugin-jsx-a11y'] = resolveVersion('eslint-plugin-jsx-a11y', '6.10.2');
+		devDependencies['eslint-plugin-react'] = resolveVersion('eslint-plugin-react', '7.37.5');
+		devDependencies['eslint-plugin-react-compiler'] = resolveVersion('eslint-plugin-react-compiler', '19.1.0-rc.2');
+		devDependencies['eslint-plugin-react-hooks'] = resolveVersion('eslint-plugin-react-hooks', '7.0.0');
+	}
+
 	if (flags.requiresSvelte) {
 		dependencies['svelte'] = resolveVersion('svelte', '5.34.7');
 	}

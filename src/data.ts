@@ -120,7 +120,7 @@ export const eslintAndPrettierDependencies: AvailableDependency[] = [
 		value: 'prettier'
 	},
 	{
-		latestVersion: '4.2.0',
+		latestVersion: '4.4.1',
 		value: '@stylistic/eslint-plugin-ts'
 	},
 	{
@@ -136,24 +136,8 @@ export const eslintAndPrettierDependencies: AvailableDependency[] = [
 		value: 'eslint-plugin-import'
 	},
 	{
-		latestVersion: '6.10.2',
-		value: 'eslint-plugin-jsx-a11y'
-	},
-	{
 		latestVersion: '7.2.1',
 		value: 'eslint-plugin-promise'
-	},
-	{
-		latestVersion: '7.37.5',
-		value: 'eslint-plugin-react'
-	},
-	{
-		latestVersion: '19.1.0-rc.2',
-		value: 'eslint-plugin-react-compiler'
-	},
-	{
-		latestVersion: '7.0.0',
-		value: 'eslint-plugin-react-hooks'
 	},
 	{
 		latestVersion: '3.0.1',
