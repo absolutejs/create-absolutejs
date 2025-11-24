@@ -1,12 +1,8 @@
-import {
-	AuthProvider,
-	AvailableDrizzleDialect,
-	DatabaseHost
-} from '../../types';
+import { AuthProvider, DatabaseHost } from '../../types';
 
 type GenerateTypesProps = {
-    databaseHost: DatabaseHost;
-    authProvider: AuthProvider;
+	databaseHost: DatabaseHost;
+	authProvider: AuthProvider;
 };
 
 export const generateDatabaseTypes = ({

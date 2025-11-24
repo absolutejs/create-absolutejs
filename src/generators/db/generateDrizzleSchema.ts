@@ -1,7 +1,4 @@
-import {
-	AuthProvider,
-	AvailableDrizzleDialect
-} from '../../types';
+import { AuthProvider, AvailableDrizzleDialect } from '../../types';
 
 const DIALECTS = {
 	gel: {

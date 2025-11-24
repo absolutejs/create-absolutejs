@@ -41,5 +41,10 @@ export const initalizeRoot = (
 		join(projectAssetsDirectory, 'png', 'absolutejs-temp.png')
 	);
 
-	return { backendDirectory, frontendDirectory, projectAssetsDirectory, typesDirectory };
+	return {
+		backendDirectory,
+		frontendDirectory,
+		projectAssetsDirectory,
+		typesDirectory
+	};
 };
