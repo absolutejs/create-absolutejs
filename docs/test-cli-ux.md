@@ -15,6 +15,25 @@
 | `core`       | `server`         | Boot scaffolded server only                                                | `scripts/functional-tests/server-startup-validator.ts` |
 | `core`       | `build`          | `tsc`/build pipeline sanity check                                          | `scripts/functional-tests/build-validator.ts` |
 | `core`       | `deps`           | Cached dependency install health                                           | `scripts/functional-tests/dependency-installer-tester.ts` |
+
+## Cleaning Test Artifacts
+
+We provide a safe cleanup helper to remove generated test projects and cached dependencies:
+
+- Script: `scripts/clean-tests.sh`
+- NPM script: `npm run test:clean` (runs `bash scripts/clean-tests.sh`)
+
+Usage:
+
+- Dry run (list directories found):
+	- `bash scripts/clean-tests.sh`
+- Delete test projects (standard):
+	- `bash scripts/clean-tests.sh --confirm`
+- Full cleanup (also removes `.test-dependency-cache`):
+	- `bash scripts/clean-tests.sh --full --confirm`
+
+The script only removes top-level `./test-*` directories and explicitly excludes `test-cli-project`. The `--confirm` flag is required for destructive operations to reduce risk.
+
 | `framework`  | `react`          | React matrix (behavioural + functional)                                    | `tests/functional/frameworks/react.test.ts` |
 | `framework`  | `vue`            | Vue matrix                                                                 | `tests/functional/frameworks/vue.test.ts` |
 | `framework`  | `svelte`         | Svelte matrix                                                              | `tests/functional/frameworks/svelte.test.ts` |
