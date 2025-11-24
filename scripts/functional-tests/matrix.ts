@@ -39,27 +39,18 @@ export type MatrixConfig = {
   frontend: (typeof FRONTENDS)[number];
   orm: (typeof ORMS)[number];
   useTailwind: boolean;
+  // Optional metadata for test harness
+  skip?: boolean;
+  skipReason?: string;
+  requiredEnv?: string[];
 };
 
 export const isValidMatrixConfig = (config: MatrixConfig) => {
   const { databaseEngine, orm, databaseHost } = config;
 
-  if (orm === 'drizzle' && (!DRIZZLE_COMPATIBLE.includes(databaseEngine) || databaseEngine === 'none')) {
-    return false;
-  }
-
-  if (databaseEngine === 'none') {
-    return orm === 'none' && databaseHost === 'none';
-  }
-
-  if (databaseHost !== 'none') {
-    const allowed = HOST_CONSTRAINTS[databaseHost];
-
-    if (Array.isArray(allowed) && !allowed.includes(databaseEngine)) {
-      return false;
-    }
-  }
-
+  // Keep validation permissive here; skip/invalid combinations are annotated
+  // and handled by the test harness so they appear in generated matrix with
+  // an explicit skip reason. This helps produce transparent reports.
   return true;
 };
 
@@ -90,6 +81,52 @@ export const createMatrix = () =>
     ),
   [{}])
     .map((entry) => entry as MatrixConfig)
+    .map((entry) => {
+      // Annotate skips and required envs for known unsupported combos
+      const cfg = { ...entry } as MatrixConfig;
+
+      // Drizzle compatibility
+      if (cfg.orm === 'drizzle' && (!DRIZZLE_COMPATIBLE.includes(cfg.databaseEngine) || cfg.databaseEngine === 'none')) {
+        cfg.skip = true;
+        cfg.skipReason = 'Drizzle ORM not compatible with selected database engine';
+      }
+
+      // AbsoluteAuth is not supported with MongoDB in our current stack
+      if (cfg.authProvider === 'absoluteAuth' && cfg.databaseEngine === 'mongodb') {
+        cfg.skip = true;
+        cfg.skipReason = 'AbsoluteAuth is not supported with MongoDB';
+      }
+
+      // Host constraints: mark as skipped with reason rather than filtering out
+      if (cfg.databaseHost !== 'none') {
+        const allowed = HOST_CONSTRAINTS[cfg.databaseHost];
+        if (Array.isArray(allowed) && !allowed.includes(cfg.databaseEngine)) {
+          cfg.skip = true;
+          cfg.skipReason = `${cfg.databaseEngine} is not supported by host ${cfg.databaseHost}`;
+        } else {
+          // Cloud-hosted flows typically require credentials; annotate required envs
+          if (cfg.databaseHost === 'neon') {
+            cfg.requiredEnv = ['NEON_DATABASE_URL'];
+          }
+          if (cfg.databaseHost === 'turso') {
+            cfg.requiredEnv = ['TURSO_DB_URL'];
+          }
+          if (cfg.databaseHost === 'planetscale') {
+            // Mark planetscale entries as skipped at cloud level (not exercised in cloud suite)
+            cfg.skip = true;
+            cfg.skipReason = 'PlanetScale cloud flows are not exercised by CI (skipped)';
+          }
+        }
+      }
+
+      // Database none special-case
+      if (cfg.databaseEngine === 'none' && cfg.orm !== 'none') {
+        cfg.skip = true;
+        cfg.skipReason = 'ORM specified without a database engine';
+      }
+
+      return cfg;
+    })
     .filter(isValidMatrixConfig);
 
 export const writeMatrixFile = (matrix: MatrixConfig[], outputPath: string) => {

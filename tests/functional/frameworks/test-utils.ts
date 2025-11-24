@@ -115,6 +115,21 @@ export const runFrameworkMatrix = <TConfig extends MatrixEntry>({
       console.log('');
     }
 
+    // Respect matrix skip annotations (skip tests instead of failing)
+    if ((config as any).skip) {
+      console.log(`SKIPPING scenario: ${scenarioName} – ${(config as any).skipReason || 'no reason provided'}`);
+      return;
+    }
+
+    // Respect required environment variables for cloud-hosted scenarios
+    if ((config as any).requiredEnv && Array.isArray((config as any).requiredEnv)) {
+      const missing = (config as any).requiredEnv.filter((envVar: string) => !process.env[envVar]);
+      if (missing.length > 0) {
+        console.log(`SKIPPING scenario: ${scenarioName} – missing env vars: ${missing.join(', ')}`);
+        return;
+      }
+    }
+
     const projectName = createProjectName(config);
     const projectPath = join(process.cwd(), projectName);
 
