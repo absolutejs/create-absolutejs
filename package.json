@@ -46,6 +46,7 @@
 		"test:cli": "bun run scripts/functional-tests/test-cli.ts",
 		"release": "bun run format && bun run build && bun publish",
 		"test": "bash -c 'trap \"exit 0\" INT; cd absolutejs-project && bun dev'",
+		"test:clean": "bash scripts/clean-tests.sh",
 		"typecheck": "bun run tsc --noEmit"
 	},
 	"type": "module",
