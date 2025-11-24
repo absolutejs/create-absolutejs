@@ -308,7 +308,7 @@ const mysqlDrizzleQueryOperations: QueryOperations = {
 };
 
 const mysqlPlanetScaleQueryOperations: QueryOperations = {
-  insertHistory: `
+	insertHistory: `
     const result = await db.execute(
       \`INSERT INTO count_history (count) VALUES (?)\`,
       [count]
@@ -328,7 +328,7 @@ const mysqlPlanetScaleQueryOperations: QueryOperations = {
     return row;
   `,
 
-  insertUser: `
+	insertUser: `
     const result = await db.execute(
       \`INSERT INTO users (auth_sub, metadata) VALUES (?, ?)\`,
       [authSub, JSON.stringify(userIdentity)]
@@ -345,7 +345,7 @@ const mysqlPlanetScaleQueryOperations: QueryOperations = {
     return row;
   `,
 
-  selectHistory: `
+	selectHistory: `
     const { rows } = await db.execute(
       \`SELECT * FROM count_history WHERE uid = ? LIMIT 1\`,
       [uid]
@@ -354,7 +354,7 @@ const mysqlPlanetScaleQueryOperations: QueryOperations = {
     return rows[0] ?? null;
   `,
 
-  selectUser: `
+	selectUser: `
     const { rows } = await db.execute(
       \`SELECT * FROM users WHERE auth_sub = ? LIMIT 1\`,
       [authSub]
@@ -406,14 +406,14 @@ import { MySql2Database } from 'drizzle-orm/mysql2'
 import { schema, type SchemaType } from '../../../db/schema'`,
 		queries: mysqlDrizzleQueryOperations
 	},
-  'mysql:drizzle:planetscale': {
-    dbType: 'PlanetScaleDatabase<SchemaType>',
-    importLines: `
+	'mysql:drizzle:planetscale': {
+		dbType: 'PlanetScaleDatabase<SchemaType>',
+		importLines: `
 import { eq } from 'drizzle-orm'
 import { PlanetScaleDatabase } from 'drizzle-orm/planetscale-serverless'
 import { schema, type SchemaType } from '../../../db/schema'`,
-    queries: mysqlDrizzleQueryOperations
-  },
+		queries: mysqlDrizzleQueryOperations
+	},
 	'mysql:sql:local': {
 		dbType: 'SQL',
 		importLines: `import { SQL } from 'bun'`,
@@ -421,7 +421,7 @@ import { schema, type SchemaType } from '../../../db/schema'`,
 	},
 	'mysql:sql:planetscale': {
 		dbType: 'Client',
-		importLines: `import { Client } from '@planetscale/database/dist'`,
+		importLines: `import { Client } from '@planetscale/database'`,
 		queries: mysqlPlanetScaleQueryOperations
 	},
 	'postgresql:drizzle:local': {

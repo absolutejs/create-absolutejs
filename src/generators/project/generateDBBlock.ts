@@ -40,7 +40,7 @@ const connectionMap: Record<string, Record<string, DBExpr>> = {
 
 const remoteDrizzleInit: Record<string, string> = {
 	neon: 'new Pool({ connectionString: getEnv("DATABASE_URL") })',
-	planetscale: 'connect({ url: getEnv("DATABASE_URL") })',
+	planetscale: 'new Client({ url: getEnv("DATABASE_URL") })',
 	turso: 'createClient({ url: getEnv("DATABASE_URL") })'
 };
 
@@ -77,7 +77,10 @@ export const generateDBBlock = ({
 	const expr = engineGroup[hostKey]?.expr ?? remoteDrizzleInit[hostKey];
 	if (!expr) return '';
 
-	if ((databaseEngine === 'mysql' || databaseEngine === 'mariadb') && databaseHost !== 'planetscale') {
+	if (
+		(databaseEngine === 'mysql' || databaseEngine === 'mariadb') &&
+		databaseHost !== 'planetscale'
+	) {
 		return `
 const pool = createPool(getEnv("DATABASE_URL"))
 const db = drizzle(pool, { schema, mode: 'default' })
