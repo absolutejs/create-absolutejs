@@ -30,7 +30,7 @@ const connectionMap: Record<string, Record<string, DBExpr>> = {
 		none: { expr: 'new SQL(getEnv("DATABASE_URL"))' }
 	},
 	singlestore: {
-		none: { expr: 'createClient({ url: getEnv("DATABASE_URL") })' }
+		none: { expr: 'createPool(getEnv("DATABASE_URL"))' }
 	},
 	sqlite: {
 		none: { expr: 'new Database("db/database.sqlite")' },

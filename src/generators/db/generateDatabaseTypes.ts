@@ -43,6 +43,11 @@ export const generateDatabaseTypes = ({
 				dbTypeLine =
 					'export type DatabaseType = BunSQLDatabase<SchemaType>;';
 				break;
+			case 'singlestore':
+				dbImport = `import { SingleStoreDriverDatabase } from 'drizzle-orm/singlestore';`;
+				dbTypeLine =
+					'export type DatabaseType = SingleStoreDriverDatabase<SchemaType>;';
+				break;
 			case 'sqlite':
 				dbImport = `import { BunSQLiteDatabase } from 'drizzle-orm/bun-sqlite';`;
 				dbTypeLine =

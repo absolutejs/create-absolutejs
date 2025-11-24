@@ -133,7 +133,10 @@ export const generateImportsBlock = ({
 						`import { drizzle } from 'drizzle-orm/bun-sql'`
 					]
 				: [],
-			singlestore: [],
+			singlestore: [
+				`import { drizzle } from 'drizzle-orm/singlestore'`,
+				`import { createPool } from 'mysql2/promise'`
+			],
 			sqlite: !isRemoteHost
 				? [
 						`import { Database } from 'bun:sqlite'`,
@@ -176,7 +179,10 @@ export const generateImportsBlock = ({
 					`import { SQL } from 'bun'`,
 					`import { getEnv } from '@absolutejs/absolute'`
 				],
-		singlestore: [],
+		singlestore: [
+			`import { createPool } from 'mysql2/promise'`,
+			`import { getEnv } from '@absolutejs/absolute'`
+		],
 		sqlite: isRemoteHost
 			? [
 					...connectorImports[databaseHost as 'turso'],
