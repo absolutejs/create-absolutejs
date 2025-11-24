@@ -100,6 +100,7 @@ export const scaffoldDatabase = async ({
 
 		const drizzleTypes = generateDatabaseTypes({
 			authProvider,
+			databaseEngine,
 			databaseHost
 		});
 		writeFileSync(join(typesDirectory, 'databaseTypes.ts'), drizzleTypes);
