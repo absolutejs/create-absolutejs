@@ -86,9 +86,9 @@ const templates: Record<
 		env: {
 			ROOT_PASSWORD: 'password'
 		},
-		image: 'singlestore/cluster-in-a-box:latest',
+		image: 'ghcr.io/singlestore-labs/singlestoredb-dev', // NOTE: No tag specified due to data persistence
 		port: '3306:3306',
-		volumePath: '/var/lib/memsql'
+		volumePath: '/data'
 	}
 };
 

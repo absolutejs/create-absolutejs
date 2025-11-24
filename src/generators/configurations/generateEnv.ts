@@ -17,7 +17,7 @@ const databaseURLS = {
 	mssql: 'Server=localhost,1433;Database=master;User Id=sa;Password=SApassword1;Encrypt=true;TrustServerCertificate=true',
 	mysql: 'mysql://user:userpassword@localhost:3306/database',
 	postgresql: 'postgresql://user:password@localhost:5432/database',
-	singlestore: 'singlestore://user:password@localhost:3306/database'
+	singlestore: 'mysql://root:password@localhost:3306/database'
 } as const;
 
 export const generateEnv = ({
