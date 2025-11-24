@@ -82,7 +82,7 @@ export const generateImportsBlock = ({
 
 	const connectorImports = {
 		neon: [`import { Pool } from '@neondatabase/serverless'`],
-		planetscale: [`import { connect } from '@planetscale/database'`],
+		planetscale: [`import { Client } from '@planetscale/database'`],
 		turso: [`import { createClient } from '@libsql/client'`]
 	} as const;
 
