@@ -11,16 +11,16 @@ const connectionMap: Record<string, Record<string, DBExpr>> = {
 		none: { expr: 'gelClient({ url: getEnv("DATABASE_URL") })' }
 	},
 	mariadb: {
-		none: { expr: 'createPool(getEnv("DATABASE_URL"))' }
+		none: { expr: 'new SQL(getEnv("DATABASE_URL"))' }
 	},
 	mongodb: {
-		none: { expr: 'new MongoClient(getEnv("DATABASE_URL") })' }
+		none: { expr: 'new MongoClient(getEnv("DATABASE_URL"))' }
 	},
 	mssql: {
 		none: { expr: 'await connect(getEnv("DATABASE_URL"))' }
 	},
 	mysql: {
-		none: { expr: 'createPool(getEnv("DATABASE_URL"))' },
+		none: { expr: 'new SQL(getEnv("DATABASE_URL"))' },
 		planetscale: { expr: 'connect({ url: getEnv("DATABASE_URL") })' }
 	},
 	postgresql: {
@@ -67,17 +67,9 @@ export const generateDBBlock = ({
 	if (!engineGroup) return '';
 
 	if (orm !== 'drizzle') {
-		if (databaseEngine === 'mysql' || databaseEngine === 'mariadb') {
-			return `
-const db = new SQL(getEnv("DATABASE_URL"))
-`;
-		}
 		const hostCfg = engineGroup[hostKey];
-		if (!hostCfg) return '';
 
-		return `
-const db = ${hostCfg.expr}
-`;
+		return hostCfg ? `const db = ${hostCfg.expr}` : '';
 	}
 
 	if (!drizzleDialectSet.has(databaseEngine)) return '';
@@ -92,15 +84,8 @@ const db = ${hostCfg.expr}
 				: 'default';
 
 		return `
-const pool = ${expr}
+const pool = createPool(getEnv("DATABASE_URL"))
 const db = drizzle(pool, { schema, mode: '${mode}' })
-`;
-	}
-
-	if (databaseEngine === 'sqlite') {
-		return `
-const pool = ${expr}
-const db = drizzle(pool, { schema })
 `;
 	}
 

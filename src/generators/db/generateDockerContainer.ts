@@ -1,14 +1,25 @@
 import { DatabaseEngine } from '../../types';
 
-const templates = {
+interface DatabaseTemplate {
+	image: string;
+	port: string;
+	env: Record<string, string>;
+	volumePath: string;
+	command?: string;
+}
+
+const templates: Record<
+	Exclude<DatabaseEngine, 'none' | 'sqlite' | undefined>,
+	DatabaseTemplate
+> = {
 	cockroachdb: {
+		command: 'start-single-node --insecure',
 		env: {
 			COCKROACH_DATABASE: 'database'
 		},
 		image: 'cockroachdb/cockroach:latest-v25.3',
 		port: '26257:26257',
-		volumePath: '/cockroach/cockroach-data',
-		command: 'start-single-node --insecure'
+		volumePath: '/cockroach/cockroach-data'
 	},
 	gel: {
 		env: {
@@ -18,8 +29,7 @@ const templates = {
 		},
 		image: 'gel:latest',
 		port: '4000:4000',
-		volumePath: '/var/lib/gel',
-		command: ''
+		volumePath: '/var/lib/gel'
 	},
 	mariadb: {
 		env: {
@@ -30,8 +40,7 @@ const templates = {
 		},
 		image: 'mariadb:11.4',
 		port: '3306:3306',
-		volumePath: '/var/lib/mysql',
-		command: ''
+		volumePath: '/var/lib/mysql'
 	},
 	mongodb: {
 		env: {
@@ -41,8 +50,7 @@ const templates = {
 		},
 		image: 'mongo:7.0',
 		port: '27017:27017',
-		volumePath: '/data/db',
-		command: ''
+		volumePath: '/data/db'
 	},
 	mssql: {
 		env: {
@@ -51,8 +59,7 @@ const templates = {
 		},
 		image: 'mcr.microsoft.com/mssql/server:2022-latest',
 		port: '1433:1433',
-		volumePath: '/var/opt/mssql',
-		command: ''
+		volumePath: '/var/opt/mssql'
 	},
 	mysql: {
 		env: {
@@ -63,8 +70,7 @@ const templates = {
 		},
 		image: 'mysql:8.0',
 		port: '3306:3306',
-		volumePath: '/var/lib/mysql',
-		command: ''
+		volumePath: '/var/lib/mysql'
 	},
 	postgresql: {
 		env: {
@@ -74,8 +80,7 @@ const templates = {
 		},
 		image: 'postgres:15',
 		port: '5432:5432',
-		volumePath: '/var/lib/postgresql/data',
-		command: ''
+		volumePath: '/var/lib/postgresql/data'
 	},
 	singlestore: {
 		env: {
@@ -83,10 +88,9 @@ const templates = {
 		},
 		image: 'singlestore/cluster-in-a-box:latest',
 		port: '3306:3306',
-		volumePath: '/var/lib/memsql',
-		command: ''
+		volumePath: '/var/lib/memsql'
 	}
-} as const;
+};
 
 export const generateDockerContainer = (databaseEngine: DatabaseEngine) => {
 	if (
@@ -100,6 +104,7 @@ export const generateDockerContainer = (databaseEngine: DatabaseEngine) => {
 	}
 
 	const { image, port, env, volumePath, command } = templates[databaseEngine];
+	const commandLines = command ? `        command: ${command}` : '';
 	const envLines = Object.entries(env)
 		.map(([key, value]) => `            ${key}: ${value}`)
 		.join('\n');
@@ -112,7 +117,7 @@ export const generateDockerContainer = (databaseEngine: DatabaseEngine) => {
 ${envLines}
         ports:
             - "${port}"
-        command: ${command}
+${commandLines}
         volumes:
             - db_data:${volumePath}
 
