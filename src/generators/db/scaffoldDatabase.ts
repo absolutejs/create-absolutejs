@@ -9,6 +9,7 @@ import { createDrizzleConfig } from '../configurations/generateDrizzleConfig';
 import { generateDrizzleSchema } from './generateDrizzleSchema';
 import { generateDBHandlers } from './generateHandlers';
 import { generateSqliteSchema } from './generateSqliteSchema';
+import { generateDatabaseTypes } from './generateDatabaseTypes';
 import { scaffoldDocker } from './scaffoldDocker';
 
 type ScaffoldDatabaseProps = Pick<
@@ -22,6 +23,7 @@ type ScaffoldDatabaseProps = Pick<
 > & {
 	databaseDirectory: string;
 	backendDirectory: string;
+	typesDirectory: string;
 };
 
 export const scaffoldDatabase = async ({
@@ -31,7 +33,8 @@ export const scaffoldDatabase = async ({
 	databaseDirectory,
 	backendDirectory,
 	authProvider,
-	orm
+	orm,
+	typesDirectory
 }: ScaffoldDatabaseProps) => {
 	const projectDatabaseDirectory = join(projectName, databaseDirectory);
 	const handlerDirectory = join(backendDirectory, 'handlers');
@@ -95,6 +98,14 @@ export const scaffoldDatabase = async ({
 		);
 		createDrizzleConfig({ databaseDirectory, databaseEngine, projectName });
 
+		const drizzleTypes = generateDatabaseTypes({
+			databaseHost,
+			authProvider
+		});
+		writeFileSync(
+			join(typesDirectory, 'databaseTypes.ts'),
+			drizzleTypes
+		);
 		return;
 	}
 
