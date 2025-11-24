@@ -87,7 +87,16 @@ export const absoluteAuthPlugin: AvailableDependency = {
 	imports: [
 		{
 			config: {
-				providersConfiguration: {}
+				providersConfiguration: {
+					github: {
+						credentials: {
+							clientId: 'github-test-client',
+							clientSecret: 'github-test-secret'
+							,
+							redirectUri: 'http://localhost:3000/auth/callback/github'
+						}
+					}
+				}
 			},
 			isPlugin: true,
 			packageName: 'absoluteAuth'
@@ -125,6 +134,24 @@ export const defaultDependencies: AvailableDependency[] = [
 		imports: [{ isPlugin: false, packageName: 'Elysia' }],
 		latestVersion: '1.4.9',
 		value: 'elysia'
+	}
+];
+
+export const prismaRuntimeDependencies: AvailableDependency[] = [
+	{
+		latestVersion: '6.2.1',
+		value: '@prisma/client'
+	},
+	{
+		latestVersion: '5.23.0',
+		value: '@prisma/extension-accelerate'
+	}
+];
+
+export const prismaDevDependencies: AvailableDependency[] = [
+	{
+		latestVersion: '6.2.1',
+		value: 'prisma'
 	}
 ];
 

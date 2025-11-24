@@ -1,9 +1,9 @@
-import type { DatabaseMatrixDefinition } from './database-matrix';
 import {
   createMongoHooks,
   createMysqlHooks,
   createPostgresHooks
 } from './database-hooks';
+import type { DatabaseMatrixDefinition } from './database-matrix';
 
 const POSTGRES_ENV = {
   DATABASE_URL: 'postgresql://user:password@127.0.0.1:5433/database',
@@ -16,65 +16,48 @@ const POSTGRES_ENV = {
 
 export const DATABASE_MATRIX_DEFINITIONS: readonly DatabaseMatrixDefinition[] = [
   {
-    database: 'postgresql',
-    name: 'PostgreSQL',
-    suiteLabel: 'PostgreSQL behavioural matrix',
     baseOptions: {
       databaseHost: 'none',
       env: { ...POSTGRES_ENV }
-    },
-    createHooks: createPostgresHooks,
-    scenarios: [
+    }, createHooks: createPostgresHooks, database: 'postgresql', name: 'PostgreSQL', scenarios: [
       { frontend: 'react' },
       { frontend: 'react', orm: 'drizzle' },
       { frontend: 'vue' },
       { frontend: 'svelte' },
       { frontend: 'html' },
       { frontend: 'htmx' }
-    ]
+    ], suiteLabel: 'PostgreSQL behavioural matrix'
   },
   {
-    database: 'mysql',
-    name: 'MySQL',
-    suiteLabel: 'MySQL behavioural matrix',
     baseOptions: {
       databaseHost: 'none'
-    },
-    createHooks: createMysqlHooks,
-    scenarios: [
+    }, createHooks: createMysqlHooks, database: 'mysql', name: 'MySQL', scenarios: [
       { frontend: 'react' },
       { frontend: 'react', orm: 'drizzle' },
       { frontend: 'vue' },
       { frontend: 'svelte' },
       { frontend: 'html' },
       { frontend: 'htmx' }
-    ]
+    ], suiteLabel: 'MySQL behavioural matrix'
   },
   {
-    database: 'mongodb',
-    name: 'MongoDB',
-    suiteLabel: 'MongoDB behavioural matrix',
-    createHooks: createMongoHooks,
-    scenarios: [
+    createHooks: createMongoHooks, database: 'mongodb', name: 'MongoDB', scenarios: [
       { frontend: 'react' },
       { frontend: 'vue' },
       { frontend: 'svelte' },
       { frontend: 'html' },
       { frontend: 'htmx' }
-    ]
+    ], suiteLabel: 'MongoDB behavioural matrix'
   },
   {
-    database: 'sqlite',
-    name: 'SQLite',
-    suiteLabel: 'SQLite behavioural matrix',
-    scenarios: [
+    database: 'sqlite', name: 'SQLite', scenarios: [
       { frontend: 'react' },
       { frontend: 'react', orm: 'drizzle' },
       { frontend: 'vue' },
       { frontend: 'svelte' },
       { frontend: 'html' },
       { frontend: 'htmx' }
-    ]
+    ], suiteLabel: 'SQLite behavioural matrix'
   }
 ] as const;
 

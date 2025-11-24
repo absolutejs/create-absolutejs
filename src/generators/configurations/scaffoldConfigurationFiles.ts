@@ -36,7 +36,15 @@ export const scaffoldConfigurationFiles = ({
 		'tsconfig.example.json'
 	);
 	const tsconfigTargetPath = join(projectName, 'tsconfig.json');
-	try {
+	// Helper to determine JSX compiler option based on frontends
+	const getJsxOption = () => {
+		if (frontends.includes('react')) return 'react-jsx';
+		if (frontends.includes('vue')) return 'preserve';
+
+		return undefined;
+	};
+
+	const writeTsconfigFile = () => {
 		const tsconfigContent = readFileSync(tsconfigTemplatePath, 'utf-8');
 		const tsconfig = JSON.parse(tsconfigContent);
 
@@ -44,19 +52,26 @@ export const scaffoldConfigurationFiles = ({
 			tsconfig.compilerOptions = {};
 		}
 
-		if (frontends.includes('react')) {
-			tsconfig.compilerOptions.jsx = 'react-jsx';
-		} else if (frontends.includes('vue')) {
-			tsconfig.compilerOptions.jsx = 'preserve';
-		} else {
+		const jsxOption = getJsxOption();
+		if (!jsxOption) {
 			delete tsconfig.compilerOptions.jsx;
+			mkdirSync(projectName, { recursive: true });
+			writeFileSync(tsconfigTargetPath, `${JSON.stringify(tsconfig, null, 2)}\n`);
+
+			return;
 		}
 
+		tsconfig.compilerOptions.jsx = jsxOption;
 		mkdirSync(projectName, { recursive: true });
 		writeFileSync(tsconfigTargetPath, `${JSON.stringify(tsconfig, null, 2)}\n`);
-	} catch (error: any) {
+	};
+
+	try {
+		writeTsconfigFile();
+	} catch (error: unknown) {
+		const message = error instanceof Error ? error.message : String(error);
 		console.error(
-			`Failed to scaffold tsconfig from "${tsconfigTemplatePath}" to "${tsconfigTargetPath}": ${error?.message ?? error}`
+			`Failed to scaffold tsconfig from "${tsconfigTemplatePath}" to "${tsconfigTargetPath}": ${message}`
 		);
 		throw error;
 	}

@@ -7,7 +7,9 @@ import {
 	availablePlugins,
 	defaultDependencies,
 	defaultPlugins,
-	eslintAndPrettierDependencies
+	eslintAndPrettierDependencies,
+	prismaDevDependencies,
+	prismaRuntimeDependencies
 } from '../../data';
 import type { CreateConfiguration, PackageJson } from '../../types';
 import { getPackageVersion } from '../../utils/getPackageVersion';
@@ -126,11 +128,30 @@ export const createPackageJson = ({
 			'0.1.1'
 		);
 	}
-
 	if (orm === 'drizzle') {
 		dependencies['drizzle-orm'] = resolveVersion('drizzle-orm', '0.41.0');
+		devDependencies['drizzle-kit'] = resolveVersion('drizzle-kit', '0.30.6');
+	}
+	const usesAccelerate =
+		orm === 'prisma' &&
+		(databaseHost === 'neon' || databaseHost === 'planetscale');
+
+	if (orm === 'prisma') {
+		prismaRuntimeDependencies.forEach((dep) => {
+			dependencies[dep.value] = resolveVersion(dep.value, dep.latestVersion);
+		});
+
+		prismaDevDependencies.forEach((dep) => {
+			if (dep.value === '@prisma/extension-accelerate' && !usesAccelerate) return;
+			devDependencies[dep.value] = resolveVersion(
+				dep.value,
+				dep.latestVersion
+			);
+		});
 	}
 
+	// Add cloud provider client dependencies when using cloud hosts
+	// These are needed regardless of ORM choice (drizzle, prisma, or none)
 	switch (databaseHost) {
 		case 'neon':
 			dependencies['@neondatabase/serverless'] = resolveVersion(
@@ -166,8 +187,6 @@ export const createPackageJson = ({
 		databaseEngine === 'postgresql' &&
 		(!databaseHost || databaseHost === 'none')
 	) {
-		dependencies['pg'] = resolveVersion('pg', '8.12.0');
-		devDependencies['@types/pg'] = resolveVersion('@types/pg', '8.11.10');
 		scripts['db:up'] =
 			'sh -c "docker info >/dev/null 2>&1 || sudo service docker start; docker compose -p postgresql -f db/docker-compose.db.yml up -d db"';
 		scripts['db:down'] =
@@ -184,10 +203,6 @@ export const createPackageJson = ({
 
 	if (databaseEngine === 'mysql') {
 		dependencies['mysql2'] = resolveVersion('mysql2', '3.14.2');
-	}
-
-	if (databaseEngine === 'mongodb') {
-		dependencies['mongodb'] = resolveVersion('mongodb', '6.10.0');
 	}
 
 	if (
@@ -216,22 +231,15 @@ export const createPackageJson = ({
 		scripts['db:init'] = 'sqlite3 db/database.sqlite < db/init.sql';
 	}
 
-	if (
-		databaseEngine === 'mongodb' &&
-		(!databaseHost || databaseHost === 'none')
-	) {
-		scripts['db:up'] =
-			'sh -c "docker info >/dev/null 2>&1 || sudo service docker start; docker compose -p mongodb -f db/docker-compose.db.yml up -d db"';
-		scripts['db:down'] =
-			'docker compose -p mongodb -f db/docker-compose.db.yml down';
-		scripts['db:reset'] =
-			'docker compose -p mongodb -f db/docker-compose.db.yml down -v';
-		scripts['db:mongosh'] =
-			"docker compose -p mongodb -f db/docker-compose.db.yml exec db bash -lc 'until mongosh --eval \"db.runCommand({ ping: 1 })\" --quiet; do sleep 1; done; exec mongosh'";
-		scripts['predev'] = 'bun db:up';
-		scripts['predb:mongosh'] = 'bun db:up';
-		scripts['postdev'] = 'bun db:down';
-		scripts['postdb:mongosh'] = 'bun db:down';
+	if (orm === 'prisma') {
+  			scripts['postinstall'] = 'prisma generate';
+  			scripts['db:generate'] = 'prisma generate';
+  			scripts['db:push'] = 'prisma db push';
+  			scripts['db:studio'] = 'prisma studio';
+  			scripts['db:migrate'] = 'prisma migrate dev';
+  			scripts['db:migrate:deploy'] = 'prisma migrate deploy';
+  			scripts['db:migrate:reset'] = 'prisma migrate reset';
+
 	}
 
 	const packageJson: PackageJson = {
@@ -248,3 +256,4 @@ export const createPackageJson = ({
 		JSON.stringify(packageJson, null, 2)
 	);
 };
+

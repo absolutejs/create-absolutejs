@@ -16,7 +16,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig([
 	{
-		ignores: ['dist/**', 'absolutejs-project/**', '**/*/htmx.*.min.js']
+		ignores: ['dist/**', 'absolutejs-project/**', '**/*/htmx.*.min.js', 'test-cli-project/**']
 	},
 
 	pluginJs.configs.recommended,

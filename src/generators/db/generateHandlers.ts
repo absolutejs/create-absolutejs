@@ -1,4 +1,4 @@
-import { CreateConfiguration } from '../../types';
+import type { CreateConfiguration } from '../../types';
 import { getAuthTemplate, getCountTemplate } from './handlerTemplates';
 
 type GenerateDBHandlersProps = Pick<
@@ -20,12 +20,12 @@ export const generateDBHandlers = ({
 
 	const host =
 		databaseHost && databaseHost !== 'none' ? databaseHost : 'local';
-	// MongoDB uses 'native' instead of 'sql' when no ORM is selected
-	const ormKey = databaseEngine === 'mongodb' && orm === 'none' 
-		? 'native' 
-		: (orm === 'drizzle' ? 'drizzle' : 'sql');
+	let ormKey = 'sql';
+	if (orm === 'drizzle') ormKey = 'drizzle';
+	else if (orm === 'prisma') ormKey = 'prisma';
 	const key = `${databaseEngine}:${ormKey}:${host}` as const;
 
 	// @ts-expect-error - TODO: Finish the other templates
 	return usesAuth ? getAuthTemplate(key) : getCountTemplate(key);
 };
+

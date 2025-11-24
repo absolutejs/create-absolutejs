@@ -1,4 +1,6 @@
-import { text, isCancel } from '@clack/prompts';
+import process from 'node:process';
+
+import { isCancel, text } from '@clack/prompts';
 import { frontendLabels } from '../data';
 import type {
 	DirectoryConfiguration,
@@ -37,6 +39,7 @@ const getDirectoryForFrontend = async (
 		placeholder: defaultValue
 	});
 	if (isCancel(response)) abort();
+
 	return response;
 };
 
@@ -49,22 +52,33 @@ export const getFrontendDirectoryConfigurations = async (
 	const frontendDirectories: FrontendDirectories = {};
 	const frontendsToPrompt: Frontend[] = [];
 
-	for (const frontend of frontends) {
+	const processFrontend = (frontend: Frontend) => {
 		const prefilled = passedFrontendDirectories?.[frontend];
-		if (prefilled === undefined) {
-			if (directoryConfiguration === 'custom') {
-				frontendsToPrompt.push(frontend);
-			} else {
-				const defaultValue = isSingleFrontend ? '' : frontend;
-				frontendDirectories[frontend] = defaultValue;
-			}
-		} else {
+		if (prefilled !== undefined) {
 			frontendDirectories[frontend] = prefilled;
-	}
+
+			return;
+		}
+
+		if (directoryConfiguration === 'custom') {
+			frontendsToPrompt.push(frontend);
+
+			return;
+		}
+
+		const defaultValue = isSingleFrontend ? '' : frontend;
+		frontendDirectories[frontend] = defaultValue;
+	};
+
+	for (const frontend of frontends) {
+		processFrontend(frontend);
 	}
 
 	// Only prompt if there are frontends that need prompting (shouldn't happen with --skip)
-	if (frontendsToPrompt.length > 0) {
+	if (frontendsToPrompt.length === 0) {
+		return frontendDirectories;
+	}
+
 	const promptedDirectories = await Promise.all(
 		frontendsToPrompt.map((name) =>
 			getDirectoryForFrontend(
@@ -80,7 +94,6 @@ export const getFrontendDirectoryConfigurations = async (
 		(name, index) =>
 			(frontendDirectories[name] = promptedDirectories[index])
 	);
-	}
 
 	return frontendDirectories;
 };

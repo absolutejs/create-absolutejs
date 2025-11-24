@@ -26,8 +26,9 @@ export type ScenarioHooks = {
   ) => Promise<void>;
 };
 
-export const COUNT_ENDPOINT = 'http://localhost:3000/count';
-export const ROOT_READY_URL = 'http://localhost:3000/';
+const DEFAULT_SERVER_PORT = 3000;
+export const COUNT_ENDPOINT = `http://localhost:${DEFAULT_SERVER_PORT}/count`;
+export const ROOT_READY_URL = `http://localhost:${DEFAULT_SERVER_PORT}/`;
 export const HTTP_BAD_REQUEST = 400;
 export const HTTP_OK = 200;
 export const HTTP_UNAUTHORIZED = 401;
@@ -146,7 +147,7 @@ const ALL_DATABASE_ENV_KEYS = new Set<string>(
 );
 
 const resolveSuiteKey = (scenario: BehaviouralScenario) => {
-  const database = scenario.options.database;
+  const {database} = scenario.options;
 
   if (database && database !== 'none') {
     return database;
@@ -449,7 +450,7 @@ export const runCountHistoryScenario = async (
     restoreEnv();
   };
 
-  await ensurePortAvailable(3000, scenario.label);
+  await ensurePortAvailable(DEFAULT_SERVER_PORT, scenario.label);
   await runBeforeHook();
   try {
     server = await startServer(projectPath, {

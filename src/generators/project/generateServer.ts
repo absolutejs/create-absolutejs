@@ -79,11 +79,7 @@ export const generateServerFile = ({
 		orm
 	});
 	const routesBlock = generateRoutesBlock({
-		authProvider,
-		buildDirectory,
-		flags,
-		frontendDirectories,
-		databaseEngine
+		authProvider, buildDirectory, databaseEngine, flags, frontendDirectories
 	});
 
 	const content = `${importsBlock}

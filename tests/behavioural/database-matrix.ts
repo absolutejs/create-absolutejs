@@ -1,7 +1,6 @@
 import { describe, it } from 'bun:test';
 
-import type { BehaviouralScenario, ScenarioHooks } from './utils';
-import { runCountHistoryScenario } from './utils';
+import { runCountHistoryScenario, type BehaviouralScenario, type ScenarioHooks } from './utils';
 
 type Frontend = NonNullable<BehaviouralScenario['options']['frontend']>;
 type Orm = NonNullable<BehaviouralScenario['options']['orm']>;
@@ -34,6 +33,8 @@ const formatFrontendName = (frontend: Frontend) => {
 
   return capitalize(frontend);
 };
+
+const DEFAULT_TEST_TIMEOUT_MS = 120_000;
 
 const buildScenario = (
   definition: DatabaseMatrixDefinition,
@@ -81,7 +82,7 @@ export const describeDatabaseMatrix = (definition: DatabaseMatrixDefinition) => 
   const scenarios = definition.scenarios.map((scenario) =>
     buildScenario(definition, scenario)
   );
-  const timeoutMs = definition.timeoutMs ?? 120_000;
+  const timeoutMs = definition.timeoutMs ?? DEFAULT_TEST_TIMEOUT_MS;
 
   describe(definition.suiteLabel, () => {
     scenarios.forEach((scenario) => {

@@ -84,6 +84,7 @@ export const generateImportsBlock = ({
 		if (orm === 'drizzle') {
 			return [`import { Pool } from '@neondatabase/serverless'`];
 		}
+
 		return [`import { neon } from '@neondatabase/serverless'`];
 	};
 
@@ -150,19 +151,19 @@ export const generateImportsBlock = ({
 		rawImports.push(`import { getEnv } from '@absolutejs/absolute'`);
 	}
 
-	if (noOrm && databaseEngine === 'postgresql') {
-		if (isRemoteHost) {
-			const connectorKey = databaseHost as keyof typeof connectorImports;
-			if (connectorImports[connectorKey]) {
-				rawImports.push(...connectorImports[connectorKey]);
-			}
-		} else {
-			rawImports.push(
-				`import { Pool } from 'pg'`,
-				`import { createPgSql } from './database/createPgSql'`
-			);
-		}
+	const shouldAddPostgresqlImports = noOrm && databaseEngine === 'postgresql';
+	if (shouldAddPostgresqlImports && !isRemoteHost) {
+		rawImports.push(
+			`import { Pool } from 'pg'`,
+			`import { createPgSql } from './database/createPgSql'`,
+			`import { getEnv } from '@absolutejs/absolute'`
+		);
+	}
 
+	if (shouldAddPostgresqlImports && isRemoteHost) {
+		const connectorKey = databaseHost;
+		const connectorImportsList = connectorImports[connectorKey];
+		if (connectorImportsList) rawImports.push(...connectorImportsList);
 		rawImports.push(`import { getEnv } from '@absolutejs/absolute'`);
 	}
 
@@ -212,6 +213,23 @@ export const generateImportsBlock = ({
 		rawImports.push(`import { vueImports } from './utils/vueImporter'`);
 	}
 
+	// Helper to parse import clause and update entry
+	const parseImportClause = (
+		importClause: string,
+		entry: { defaultImport: string | null; namedImports: Set<string> }
+	) => {
+		if (importClause.startsWith('{')) {
+			importClause
+				.slice(1, -1)
+				.split(',')
+				.map((segment) => segment.trim())
+				.filter(Boolean)
+				.forEach((name) => entry.namedImports.add(name));
+		} else {
+			entry.defaultImport = importClause.trim();
+		}
+	};
+
 	const importMap = new Map<
 		string,
 		{ defaultImport: string | null; namedImports: Set<string> }
@@ -229,14 +247,7 @@ export const generateImportsBlock = ({
 		};
 		importMap.set(modulePath, entry);
 
-		void (importClause.startsWith('{')
-			? importClause
-					.slice(1, -1)
-					.split(',')
-					.map((segment) => segment.trim())
-					.filter(Boolean)
-					.forEach((name) => entry.namedImports.add(name))
-			: (entry.defaultImport = importClause.trim()));
+		parseImportClause(importClause, entry);
 	}
 
 	return Array.from(importMap.entries())

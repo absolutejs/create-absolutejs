@@ -1,6 +1,4 @@
-import { text, isCancel } from '@clack/prompts';
 import type { ArgumentConfiguration, CreateConfiguration } from '../types';
-import { abort } from '../utils/abort';
 
 type GetDirectoryConfigurationProps = Pick<
 	CreateConfiguration,

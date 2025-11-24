@@ -301,29 +301,16 @@ export const parseCommandLineOptions = () => {
 
 	values.env = validEnv.length ? validEnv : undefined;
 
-    // Non-interactive defaults when --skip is provided
+	// Non-interactive defaults when --skip is provided
     if (values.skip) {
         if (codeQualityTool === undefined) codeQualityTool = 'eslint+prettier';
-        // If not explicitly enabling tailwind, default to false to avoid prompt
-        if (values.tailwind === undefined) {
-            (values as any).tailwind = false;
-        }
-        // Default to 'default' directory strategy to avoid prompts
-        if (directoryConfig === undefined) {
-            (values as any).directory = 'default';
-            // reflect in local var used below
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        }
-        // Avoid interactive git/install prompts
-        if (values.git === undefined) (values as any).git = false;
-        if (values.install === undefined) (values as any).install = false;
-        // If DB host not provided, default to 'none'
+        if (values.tailwind === undefined) (values as Record<string, unknown>).tailwind = false;
+        if (directoryConfig === undefined) (values as Record<string, unknown>).directory = 'default';
+        if (values.git === undefined) (values as Record<string, unknown>).git = false;
+        if (values.install === undefined) (values as Record<string, unknown>).install = false;
         if (databaseHost === undefined) databaseHost = 'none';
-        // If HTML scripting not provided, default to false to avoid prompt
-        if (values['html-scripts'] === undefined) (values as any)['html-scripts'] = false;
-    }
-
-	const argumentConfiguration: ArgumentConfiguration = {
+        if (values['html-scripts'] === undefined) (values as Record<string, unknown>)['html-scripts'] = false;
+    }	const argumentConfiguration: ArgumentConfiguration = {
 		assetsDirectory: values.assets,
 		authProvider,
 		buildDirectory: values.build,
@@ -331,7 +318,7 @@ export const parseCommandLineOptions = () => {
 		databaseDirectory,
 		databaseEngine,
 		databaseHost,
-        directoryConfig: (values.directory as any) ?? directoryConfig,
+        directoryConfig: (values.directory as 'default' | 'custom' | undefined) ?? directoryConfig,
 		frontendDirectories,
 		frontends: selectedFrontends.length ? selectedFrontends : undefined,
 		initializeGitNow: values.git,
