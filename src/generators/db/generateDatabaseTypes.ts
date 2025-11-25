@@ -32,6 +32,11 @@ export const generateDatabaseTypes = ({
 		isDrizzleDialect(databaseEngine)
 	) {
 		switch (databaseEngine) {
+			case 'gel':
+				dbImport = `import { GelJsDatabase } from 'drizzle-orm/gel';`;
+				dbTypeLine =
+					'export type DatabaseType = GelJsDatabase<SchemaType>;';
+				break;
 			case 'mariadb':
 			case 'mysql':
 				dbImport = `import { Mysql2Database } from 'drizzle-orm/mysql2';`;

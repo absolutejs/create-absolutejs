@@ -87,7 +87,7 @@ const gelUsers = `create type users {
   };
 
   create required property metadata: json {
-    set default := <json>{};
+    set default := to_json('{}');
   };
 };`;
 
@@ -95,6 +95,7 @@ const gelCountHistory = `create scalar type CountHistoryUid extending sequence;
 create type count_history {
   create required property uid: CountHistoryUid {
     create constraint exclusive;
+    set default := sequence_next(introspect CountHistoryUid)
   };
 
   create required property count: int16;

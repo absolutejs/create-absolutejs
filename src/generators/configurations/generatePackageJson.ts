@@ -36,7 +36,8 @@ const dbScripts = {
 		waitCmd: initTemplates.cockroachdb.wait
 	},
 	gel: {
-		clientCmd: 'gel -H localhost -P 5656 -u admin --tls-security insecure -b main',
+		clientCmd:
+			'gel -H localhost -P 5656 -u admin --tls-security insecure -b main',
 		waitCmd: initTemplates.gel.wait
 	},
 	mariadb: {

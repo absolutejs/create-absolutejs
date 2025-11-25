@@ -151,7 +151,10 @@ export const generateImportsBlock = ({
 			`import { SQL } from 'bun'`,
 			`import { getEnv } from '@absolutejs/absolute'`
 		],
-		gel: [],
+		gel: [
+			`import { createClient } from 'gel'`,
+			`import { getEnv } from '@absolutejs/absolute'`
+		],
 		mariadb: [
 			`import { SQL } from 'bun'`,
 			`import { getEnv } from '@absolutejs/absolute'`
