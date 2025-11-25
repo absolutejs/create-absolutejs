@@ -77,17 +77,32 @@ BEGIN
   );
 END;`;
 
-const gelUsers = `CREATE TABLE IF NOT EXISTS users (
-  auth_sub   VARCHAR(255) PRIMARY KEY,
-  created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-  metadata   JSON        DEFAULT '{}'::json
-);`;
+const gelUsers = `create type users {
+  create required property auth_sub: str {
+    create constraint exclusive;
+  };
 
-const gelCountHistory = `CREATE TABLE IF NOT EXISTS count_history (
-  uid         INTEGER   PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-  count       INTEGER   NOT NULL,
-  created_at  TIMESTAMP NOT NULL DEFAULT NOW()
-);`;
+  create required property created_at: datetime {
+    set default := datetime_current();
+  };
+
+  create required property metadata: json {
+    set default := <json>{};
+  };
+};`;
+
+const gelCountHistory = `create scalar type CountHistoryUid extending sequence;
+create type count_history {
+  create required property uid: CountHistoryUid {
+    create constraint exclusive;
+  };
+
+  create required property count: int16;
+
+  create required property created_at: datetime {
+    set default := datetime_current();
+  };
+};`;
 
 export const userTables = {
 	cockroachdb: cockroachdbUsers,
@@ -115,8 +130,8 @@ export const initTemplates = {
 		wait: 'until (cockroach sql --insecure -e "select 1" >/dev/null 2>&1) ; do sleep 1; done'
 	},
 	gel: {
-		cli: 'psql -U user -d database -c',
-		wait: 'until pg_isready -U user -h localhost --quiet; do sleep 1; done'
+		cli: 'gel query -H localhost -P 5656 -u admin --tls-security insecure -b main ',
+		wait: 'until gel query -H localhost -P 5656 -u admin --tls-security insecure "select 1"; do sleep 1; done'
 	},
 	mariadb: {
 		cli: 'MYSQL_PWD=userpassword mariadb -h127.0.0.1 -u user database -e',

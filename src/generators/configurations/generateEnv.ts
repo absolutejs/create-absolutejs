@@ -11,7 +11,7 @@ type GenerateEnvProps = Pick<
 
 const databaseURLS = {
 	cockroachdb: 'postgresql://root@localhost:26257/database',
-	gel: 'gel://user:password@localhost:5432/database',
+	gel: 'gel://admin@localhost:5656/main?tls_security=insecure',
 	mariadb: 'mariadb://user:userpassword@localhost:3306/database',
 	mongodb: 'mongodb://user:password@localhost:27017/database',
 	mssql: 'Server=localhost,1433;Database=master;User Id=sa;Password=SApassword1;Encrypt=true;TrustServerCertificate=true',
