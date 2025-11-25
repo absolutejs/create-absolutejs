@@ -52,6 +52,10 @@ const dbScripts = {
 	postgresql: {
 		clientCmd: 'psql -h localhost -U user -d database',
 		waitCmd: initTemplates.postgresql.wait
+	},
+	singlestore: {
+		clientCmd: 'singlestore -u root -ppassword -D database',
+		waitCmd: initTemplates.singlestore.wait
 	}
 } as const;
 
@@ -207,7 +211,6 @@ export const createPackageJson = ({
 		databaseEngine !== 'none' &&
 		databaseEngine !== 'sqlite' &&
 		databaseEngine !== 'mongodb' &&
-		databaseEngine !== 'singlestore' && // TODO: Add support for singlestore
 		databaseEngine !== 'gel' // TODO: Add support for gel
 	) {
 		const config = dbScripts[databaseEngine];
@@ -232,6 +235,10 @@ export const createPackageJson = ({
 		(databaseEngine === 'mysql' || databaseEngine === 'mariadb') &&
 		orm === 'drizzle'
 	) {
+		dependencies['mysql2'] = resolveVersion('mysql2', '3.14.2');
+	}
+
+	if (isLocal && databaseEngine === 'singlestore') {
 		dependencies['mysql2'] = resolveVersion('mysql2', '3.14.2');
 	}
 

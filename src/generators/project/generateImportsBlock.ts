@@ -102,9 +102,14 @@ export const generateImportsBlock = ({
 	const ormImports = {
 		drizzle: [
 			`import { Elysia } from 'elysia'`,
-			...(databaseEngine === 'sqlite' && !isRemoteHost ? [] : [`import { getEnv } from '@absolutejs/absolute'`]),
+			...(databaseEngine === 'sqlite' && !isRemoteHost
+				? []
+				: [`import { getEnv } from '@absolutejs/absolute'`]),
 			...(authProvider === 'absoluteAuth'
-				? [`import { schema } from '../../db/schema'`, `import { User } from '../types/databaseTypes'`]
+				? [
+						`import { schema } from '../../db/schema'`,
+						`import { User } from '../types/databaseTypes'`
+					]
 				: [`import { schema } from '../../db/schema'`])
 		]
 	} as const;
@@ -128,7 +133,10 @@ export const generateImportsBlock = ({
 						`import { drizzle } from 'drizzle-orm/bun-sql'`
 					]
 				: [],
-			singlestore: [],
+			singlestore: [
+				`import { drizzle } from 'drizzle-orm/singlestore'`,
+				`import { createPool } from 'mysql2/promise'`
+			],
 			sqlite: !isRemoteHost
 				? [
 						`import { Database } from 'bun:sqlite'`,
@@ -171,7 +179,10 @@ export const generateImportsBlock = ({
 					`import { SQL } from 'bun'`,
 					`import { getEnv } from '@absolutejs/absolute'`
 				],
-		singlestore: [],
+		singlestore: [
+			`import { createPool } from 'mysql2/promise'`,
+			`import { getEnv } from '@absolutejs/absolute'`
+		],
 		sqlite: isRemoteHost
 			? [
 					...connectorImports[databaseHost as 'turso'],
@@ -184,14 +195,14 @@ export const generateImportsBlock = ({
 		rawImports.push(...ormImports[orm]);
 	}
 
-	if (orm == 'drizzle' && isRemoteHost) {
+	if (orm === 'drizzle' && isRemoteHost) {
 		rawImports.push(
 			...connectorImports[databaseHost],
 			...dialectImports[databaseHost]
 		);
 	}
 
-	if (orm == 'drizzle' && isDrizzleDialect(databaseEngine)) {
+	if (orm === 'drizzle' && isDrizzleDialect(databaseEngine)) {
 		rawImports.push(...ormDatabaseImports[orm][databaseEngine]);
 	}
 
