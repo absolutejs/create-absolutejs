@@ -2,8 +2,8 @@ import { AuthProvider, AvailableDrizzleDialect } from '../../types';
 
 const DIALECTS = {
 	gel: {
-		builders: ['text', 'gelTable', 'timestamp', 'integer'],
-		json: 'text()',
+		builders: ['text', 'gelTable', 'timestamp', 'integer', 'json'],
+		json: 'json()',
 		pkg: 'gel-core',
 		string: 'text()',
 		table: 'gelTable',

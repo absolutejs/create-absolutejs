@@ -324,6 +324,15 @@ const driverConfigurations = {
 		importLines: `import { GelClient } from 'gel'`,
 		queries: gelSqlQueryOperations
 	},
+	'gel:drizzle:local': {
+		dbType: 'GelJsDatabase<SchemaType>',
+		importLines: `
+import { eq } from 'drizzle-orm'
+import { GelJsDatabase } from 'drizzle-orm/gel'
+import { schema, type SchemaType } from '../../../db/schema'
+`,
+		queries: drizzleQueryOperations
+	},
 	'mariadb:drizzle:local': {
 		dbType: 'MySql2Database<SchemaType>',
 		importLines: `

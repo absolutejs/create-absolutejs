@@ -116,7 +116,10 @@ export const generateImportsBlock = ({
 
 	const ormDatabaseImports = {
 		drizzle: {
-			gel: [],
+			gel: [
+				`import { createClient } from 'gel'`,
+				`import { drizzle } from 'drizzle-orm/gel'`
+			],
 			mariadb: [
 				`import { drizzle } from 'drizzle-orm/mysql2'`,
 				`import { createPool } from 'mysql2/promise'`
