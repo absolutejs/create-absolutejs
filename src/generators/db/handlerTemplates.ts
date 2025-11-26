@@ -195,16 +195,16 @@ const gelClientQueryOperations: QueryOperations = {
 
 const singlestoreSqlQueryOperations: QueryOperations = {
 	insertHistory: `await db.query('INSERT INTO count_history (count) VALUES (?)', [count])
-  const [rows] = await db.query('SELECT * FROM count_history ORDER BY uid DESC LIMIT 1')
+  const [rows] = await db.query<RowDataPacket[]>('SELECT * FROM count_history ORDER BY uid DESC LIMIT 1')
   return rows[0]`,
 	insertUser: `await db.query('INSERT INTO users (auth_sub, metadata) VALUES (?, ?)', [authSub, JSON.stringify(userIdentity)])
-  const [rows] = await db.query('SELECT * FROM users WHERE auth_sub = ? LIMIT 1', [authSub])
+  const [rows] = await db.query<RowDataPacket[]>('SELECT * FROM users WHERE auth_sub = ? LIMIT 1', [authSub])
   const newUser = rows[0]
   if (!newUser) throw new Error('Failed to create user')
   return newUser`,
-	selectHistory: `const [rows] = await db.query('SELECT * FROM count_history WHERE uid = ? LIMIT 1', [uid])
+	selectHistory: `const [rows] = await db.query<RowDataPacket[]>('SELECT * FROM count_history WHERE uid = ? LIMIT 1', [uid])
   return rows[0] ?? null`,
-	selectUser: `const [rows] = await db.query('SELECT * FROM users WHERE auth_sub = ? LIMIT 1', [authSub])
+	selectUser: `const [rows] = await db.query<RowDataPacket[]>('SELECT * FROM users WHERE auth_sub = ? LIMIT 1', [authSub])
   return rows[0] ?? null`
 };
 
@@ -404,9 +404,17 @@ import { schema, type SchemaType } from '../../../db/schema'`,
 		queries: postgresNeonQueryOperations
 	},
 	'singlestore:sql:local': {
-		dbType: 'Connection',
-		importLines: `import { Connection } from '@singlestore/db-client'`,
+		dbType: 'Pool',
+		importLines: `import { Pool, RowDataPacket } from 'mysql2/promise'`,
 		queries: singlestoreSqlQueryOperations
+	},
+	'singlestore:drizzle:local': {
+		dbType: 'SingleStoreDriverDatabase<SchemaType>',
+		importLines: `
+import { eq } from 'drizzle-orm'
+import { SingleStoreDriverDatabase } from 'drizzle-orm/singlestore'
+import { schema, type SchemaType } from '../../../db/schema'`,
+		queries: mysqlDrizzleQueryOperations
 	},
 	'sqlite:drizzle:local': {
 		dbType: 'BunSQLiteDatabase<SchemaType>',

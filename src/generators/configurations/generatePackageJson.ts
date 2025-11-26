@@ -57,6 +57,10 @@ const dbScripts = {
 	postgresql: {
 		clientCmd: 'psql -h localhost -U user -d database',
 		waitCmd: initTemplates.postgresql.wait
+	},
+	singlestore: {
+		clientCmd: 'singlestore -u root -ppassword -D database',
+		waitCmd: initTemplates.singlestore.wait
 	}
 } as const;
 
@@ -211,8 +215,7 @@ export const createPackageJson = ({
 		databaseEngine !== undefined &&
 		databaseEngine !== 'none' &&
 		databaseEngine !== 'sqlite' &&
-		databaseEngine !== 'mongodb' &&
-		databaseEngine !== 'singlestore' // TODO: Add support for singlestore
+		databaseEngine !== 'mongodb'
 	) {
 		const config = dbScripts[databaseEngine];
 		const dockerPrefix = `docker compose -p ${databaseEngine} -f db/docker-compose.db.yml`;
@@ -236,6 +239,10 @@ export const createPackageJson = ({
 		(databaseEngine === 'mysql' || databaseEngine === 'mariadb') &&
 		orm === 'drizzle'
 	) {
+		dependencies['mysql2'] = resolveVersion('mysql2', '3.14.2');
+	}
+
+	if (isLocal && databaseEngine === 'singlestore') {
 		dependencies['mysql2'] = resolveVersion('mysql2', '3.14.2');
 	}
 
