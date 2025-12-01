@@ -35,6 +35,11 @@ const dbScripts = {
 		clientCmd: 'cockroach sql --insecure --database=database',
 		waitCmd: initTemplates.cockroachdb.wait
 	},
+	gel: {
+		clientCmd:
+			'gel -H localhost -P 5656 -u admin --tls-security insecure -b main',
+		waitCmd: initTemplates.gel.wait
+	},
 	mariadb: {
 		clientCmd:
 			'MYSQL_PWD=userpassword mariadb -h127.0.0.1 -u user database',
@@ -210,8 +215,7 @@ export const createPackageJson = ({
 		databaseEngine !== undefined &&
 		databaseEngine !== 'none' &&
 		databaseEngine !== 'sqlite' &&
-		databaseEngine !== 'mongodb' &&
-		databaseEngine !== 'gel' // TODO: Add support for gel
+		databaseEngine !== 'mongodb'
 	) {
 		const config = dbScripts[databaseEngine];
 		const dockerPrefix = `docker compose -p ${databaseEngine} -f db/docker-compose.db.yml`;
@@ -248,6 +252,10 @@ export const createPackageJson = ({
 			'@types/mssql',
 			'9.1.8'
 		);
+	}
+
+	if (isLocal && databaseEngine === 'gel') {
+		dependencies['gel'] = resolveVersion('gel', '2.1.1');
 	}
 
 	if (isLocal && databaseEngine === 'sqlite') {

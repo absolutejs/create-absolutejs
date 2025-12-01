@@ -170,19 +170,27 @@ const mongodbQueryOperations: QueryOperations = {
   return user ?? null`
 };
 
-const gelSqlQueryOperations: QueryOperations = {
-	insertHistory: `await db.query('INSERT INTO count_history (count) VALUES (?)', [count])
-  const [rows] = await db.query('SELECT * FROM count_history ORDER BY uid DESC LIMIT 1')
-  return rows[0]`,
-	insertUser: `await db.query('INSERT INTO users (auth_sub, metadata) VALUES (?, ?)', [authSub, JSON.stringify(userIdentity)])
-  const [rows] = await db.query('SELECT * FROM users WHERE auth_sub = ? LIMIT 1', [authSub])
-  const newUser = rows[0]
-  if (!newUser) throw new Error('Failed to create user')
+const gelClientQueryOperations: QueryOperations = {
+	insertHistory: `const newHistory = await db.queryRequiredSingle(
+    'select (insert count_history { count := <int16>$count }) { uid, count, created_at }',
+    { count }
+  )
+  return newHistory`,
+	insertUser: `const newUser = await db.queryRequiredSingle(
+    'select (insert users { auth_sub := <str>$authSub, metadata := <json>$metadata }) { auth_sub, created_at, metadata }',
+    { authSub, metadata: userIdentity }
+  )
   return newUser`,
-	selectHistory: `const [rows] = await db.query('SELECT * FROM count_history WHERE uid = ? LIMIT 1', [uid])
-  return rows[0] ?? null`,
-	selectUser: `const [rows] = await db.query('SELECT * FROM users WHERE auth_sub = ? LIMIT 1', [authSub])
-  return rows[0] ?? null`
+	selectHistory: `const history = await db.querySingle(
+    'select count_history { uid, count, created_at } filter .uid = <int64>$uid',
+    { uid }
+  )
+  return history ?? null`,
+	selectUser: `const user = await db.querySingle(
+    'select users { auth_sub, created_at, metadata } filter .auth_sub = <str>$authSub',
+    { authSub }
+  )
+  return user ?? null`
 };
 
 const singlestoreSqlQueryOperations: QueryOperations = {
@@ -319,10 +327,19 @@ const driverConfigurations = {
 		importLines: `import { SQL } from 'bun'`,
 		queries: postgresSqlQueryOperations
 	},
+	'gel:drizzle:local': {
+		dbType: 'GelJsDatabase<SchemaType>',
+		importLines: `
+import { eq } from 'drizzle-orm'
+import { GelJsDatabase } from 'drizzle-orm/gel'
+import { schema, type SchemaType } from '../../../db/schema'
+`,
+		queries: drizzleQueryOperations
+	},
 	'gel:sql:local': {
-		dbType: 'GelClient',
-		importLines: `import { GelClient } from 'gel'`,
-		queries: gelSqlQueryOperations
+		dbType: 'Client',
+		importLines: `import { Client } from 'gel'`,
+		queries: gelClientQueryOperations
 	},
 	'mariadb:drizzle:local': {
 		dbType: 'MySql2Database<SchemaType>',

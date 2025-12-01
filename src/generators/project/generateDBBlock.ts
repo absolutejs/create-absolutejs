@@ -8,7 +8,7 @@ const connectionMap: Record<string, Record<string, DBExpr>> = {
 		none: { expr: 'new SQL(getEnv("DATABASE_URL"))' }
 	},
 	gel: {
-		none: { expr: 'gelClient({ url: getEnv("DATABASE_URL") })' }
+		none: { expr: 'createClient(getEnv("DATABASE_URL"))' }
 	},
 	mariadb: {
 		none: { expr: 'new SQL(getEnv("DATABASE_URL"))' }

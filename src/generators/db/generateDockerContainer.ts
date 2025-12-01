@@ -23,13 +23,11 @@ const templates: Record<
 	},
 	gel: {
 		env: {
-			GEL_DB: 'database',
-			GEL_PASSWORD: 'password',
-			GEL_USER: 'user'
+			GEL_SERVER_SECURITY: 'insecure_dev_mode'
 		},
-		image: 'gel:latest',
-		port: '4000:4000',
-		volumePath: '/var/lib/gel'
+		image: 'geldata/gel:latest',
+		port: '5656:5656',
+		volumePath: '/var/lib/gel/data'
 	},
 	mariadb: {
 		env: {
