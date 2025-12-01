@@ -242,6 +242,11 @@ export const createPackageJson = ({
 		dependencies['mysql2'] = resolveVersion('mysql2', '3.14.2');
 	}
 
+	if (databaseEngine === 'postgresql' && databaseHost === 'planetscale') {
+		dependencies['pg'] = resolveVersion('pg', '8.11.0');
+		devDependencies['@types/pg'] = resolveVersion('@types/pg', '8.6.1');
+	}
+
 	if (isLocal && databaseEngine === 'mssql') {
 		dependencies['mssql'] = resolveVersion('mssql', '12.1.0');
 		devDependencies['@types/mssql'] = resolveVersion(

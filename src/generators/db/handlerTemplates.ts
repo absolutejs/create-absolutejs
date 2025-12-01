@@ -103,7 +103,7 @@ const bunSqliteQueryOperations: QueryOperations = {
   return user ?? null`
 };
 
-const postgresNeonQueryOperations: QueryOperations = {
+const postgresQueryOperations: QueryOperations = {
 	insertHistory: `const { rows } = await db.query(
     'INSERT INTO count_history (count) VALUES ($1) RETURNING *',
     [count]
@@ -440,6 +440,14 @@ import { NeonDatabase } from 'drizzle-orm/neon-serverless'
 import { schema, type SchemaType } from '../../../db/schema'`,
 		queries: drizzleQueryOperations
 	},
+	'postgresql:drizzle:planetscale': {
+		dbType: 'NodePgDatabase<SchemaType>',
+		importLines: `
+import { eq } from 'drizzle-orm'
+import { NodePgDatabase } from 'drizzle-orm/node-postgres'
+import { schema, type SchemaType } from '../../../db/schema'`,
+		queries: drizzleQueryOperations
+	},
 	'postgresql:sql:local': {
 		dbType: 'SQL',
 		importLines: `import { SQL } from 'bun'`,
@@ -448,7 +456,12 @@ import { schema, type SchemaType } from '../../../db/schema'`,
 	'postgresql:sql:neon': {
 		dbType: 'Pool',
 		importLines: `import { Pool } from '@neondatabase/serverless'`,
-		queries: postgresNeonQueryOperations
+		queries: postgresQueryOperations
+	},
+	'postgresql:sql:planetscale': {
+		dbType: 'Pool',
+		importLines: `import { Pool } from 'pg'`,
+		queries: postgresQueryOperations
 	},
 	'singlestore:sql:local': {
 		dbType: 'Pool',

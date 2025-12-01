@@ -18,10 +18,16 @@ export const generateDatabaseTypes = ({
 	if (databaseHost === 'neon') {
 		dbImport = `import { NeonHttpDatabase } from 'drizzle-orm/neon-http';`;
 		dbTypeLine = 'export type DatabaseType = NeonHttpDatabase<SchemaType>;';
-	} else if (databaseHost === 'planetscale') {
+	} else if (databaseHost === 'planetscale' && databaseEngine === 'mysql') {
 		dbImport = `import { PlanetScaleDatabase } from 'drizzle-orm/planetscale-serverless';`;
 		dbTypeLine =
 			'export type DatabaseType = PlanetScaleDatabase<SchemaType>;';
+	} else if (
+		databaseHost === 'planetscale' &&
+		databaseEngine === 'postgresql'
+	) {
+		dbImport = `import { NodePgDatabase } from 'drizzle-orm/node-postgres';`;
+		dbTypeLine = 'export type DatabaseType = NodePgDatabase<SchemaType>;';
 	} else if (databaseHost === 'turso') {
 		dbImport = `import { LibSQLDatabase } from 'drizzle-orm/libsql';`;
 		dbTypeLine = 'export type DatabaseType = LibSQLDatabase<SchemaType>;';

@@ -27,7 +27,10 @@ const connectionMap: Record<string, Record<string, DBExpr>> = {
 		neon: {
 			expr: 'new Pool({ connectionString: getEnv("DATABASE_URL") })'
 		},
-		none: { expr: 'new SQL(getEnv("DATABASE_URL"))' }
+		none: { expr: 'new SQL(getEnv("DATABASE_URL"))' },
+		planetscale: {
+			expr: 'new Pool({ connectionString: getEnv("DATABASE_URL") })'
+		}
 	},
 	singlestore: {
 		none: { expr: 'createPool(getEnv("DATABASE_URL"))' }

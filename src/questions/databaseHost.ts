@@ -9,7 +9,8 @@ export const getDatabaseHost = async (databaseEngine: DatabaseEngine) => {
 			message: 'Select database host:',
 			options: [
 				{ label: 'None', value: 'none' },
-				{ label: cyan('Neon'), value: 'neon' }
+				{ label: cyan('Neon'), value: 'neon' },
+				{ label: cyan('PlanetScale'), value: 'planetscale' }
 			]
 		});
 		if (isCancel(databaseHost)) abort();
