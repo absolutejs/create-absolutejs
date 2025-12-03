@@ -170,9 +170,9 @@ export const createPackageJson = ({
 	};
 
 	if (codeQualityTool === 'biome') {
-		scripts.format = 'npx @biomejs/biome format . --write';
-		scripts.lint = 'npx @biomejs/biome lint .';
-		scripts.check = 'npx @biomejs/biome check .';
+		scripts.format = 'biome format . --write';
+		scripts.lint = 'biome lint .';
+		scripts.check = 'biome check .';
 	} else {
 		scripts.format = `prettier --write "./**/*.{js,ts,css,json,mjs,md${flags.requiresReact ? ',jsx,tsx' : ''}${flags.requiresSvelte ? ',svelte' : ''}${flags.requiresVue ? ',vue' : ''}${flags.requiresHtml || flags.requiresHtmx ? ',html' : ''}}"`;
 		scripts.lint = 'eslint ./src';
