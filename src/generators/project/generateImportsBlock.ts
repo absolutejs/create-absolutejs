@@ -30,6 +30,7 @@ export const generateImportsBlock = ({
 		cond &&
 		rawImports.push(`import { ${name} } from '@absolutejs/absolute'`);
 
+	pushHandler(flags.requiresAngular, 'handleAngularPageRequest');
 	pushHandler(flags.requiresHtml, 'handleHTMLPageRequest');
 	pushHandler(flags.requiresReact, 'handleReactPageRequest');
 	pushHandler(flags.requiresSvelte, 'handleSveltePageRequest');
@@ -39,6 +40,7 @@ export const generateImportsBlock = ({
 
 	const nonFrameworkOnly =
 		(flags.requiresHtml || flags.requiresHtmx) &&
+		!flags.requiresAngular &&
 		!flags.requiresReact &&
 		!flags.requiresSvelte &&
 		!flags.requiresVue;
@@ -60,9 +62,12 @@ export const generateImportsBlock = ({
 	const buildExamplePath = (dir: string, file: string) =>
 		`../frontend${dir ? `/${dir}` : ''}/pages/${file}`;
 
+	const angularDir = frontendDirectories.angular;
 	const reactDir = frontendDirectories.react;
 	const svelteDir = frontendDirectories.svelte;
 	const vueDir = frontendDirectories.vue;
+
+	// Angular uses dynamic imports after build - no static import needed
 
 	if (flags.requiresReact && reactDir !== undefined)
 		rawImports.push(

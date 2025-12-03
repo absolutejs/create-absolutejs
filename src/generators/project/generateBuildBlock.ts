@@ -28,7 +28,7 @@ export const generateBuildBlock = ({
 		.filter(Boolean)
 		.join(',\n  ');
 
-	const frameworks: Frontend[] = ['react', 'svelte', 'vue'];
+	const frameworks: Frontend[] = ['angular', 'react', 'svelte', 'vue'];
 	const nonFrameworkOnly = frameworks.every(
 		(f) => frontendDirectories[f] === undefined
 	);

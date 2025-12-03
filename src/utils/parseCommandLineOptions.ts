@@ -227,7 +227,7 @@ export const parseCommandLineOptions = () => {
 	}
 
 	const selectedFrontends: Frontend[] = [];
-	// if (values.angular) selectedFrontends.push('angular')
+	if (values.angular) selectedFrontends.push('angular');
 	if (values.html) selectedFrontends.push('html');
 	if (values.htmx) selectedFrontends.push('htmx');
 	if (values.react) selectedFrontends.push('react');
@@ -235,9 +235,9 @@ export const parseCommandLineOptions = () => {
 	if (values.vue) selectedFrontends.push('vue');
 
 	const frontendDirectories: FrontendDirectories = {};
-	// if (values['angular-dir'] !== undefined) {
-	// 	frontendDirectories.angular = values['angular-dir']
-	// }
+	if (values['angular-dir'] !== undefined) {
+		frontendDirectories.angular = values['angular-dir'];
+	}
 	if (values['html-dir'] !== undefined) {
 		frontendDirectories.html = values['html-dir'];
 	}

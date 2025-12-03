@@ -3,6 +3,7 @@ import type { FrontendDirectories } from '../../types';
 export type FrameworkFlags = ReturnType<typeof computeFlags>;
 
 export const computeFlags = (dirs: FrontendDirectories) => ({
+	requiresAngular: dirs.angular !== undefined,
 	requiresHtml: dirs.html !== undefined,
 	requiresHtmx: dirs.htmx !== undefined,
 	requiresReact: dirs.react !== undefined,

@@ -72,13 +72,19 @@ export const generateServerFile = ({
 	const routesBlock = generateRoutesBlock({
 		authProvider,
 		buildDirectory,
+		databaseEngine,
 		flags,
 		frontendDirectories
 	});
 
+	// Generate Angular dynamic imports after build
+	const angularImports = flags.requiresAngular
+		? `\n// Dynamically import Angular components after compilation\nconst { default: AngularExample } = await import('../frontend/compiled/pages/AngularExample');\n`
+		: '';
+
 	const content = `${importsBlock}
 
-${manifestBlock}
+${manifestBlock}${angularImports}
 ${dbBlock}
 new Elysia()
 ${useBlock}
@@ -91,4 +97,19 @@ ${useBlock}
 
 	mkdirSync(backendDirectory, { recursive: true });
 	writeFileSync(serverFilePath, content);
+
+	// For Angular, create an entry point file that loads the compiler before importing the server
+	if (flags.requiresAngular) {
+		const entryPointPath = join(backendDirectory, 'index.ts');
+		const entryPointContent = `// Entry point for Angular SSR
+// Loads the Angular compiler before importing any server code
+
+// Load Angular compiler first (required for JIT compilation in SSR)
+await import('@angular/compiler');
+
+// Now import the server which will import Angular components
+await import('./server');
+`;
+		writeFileSync(entryPointPath, entryPointContent);
+	}
 };

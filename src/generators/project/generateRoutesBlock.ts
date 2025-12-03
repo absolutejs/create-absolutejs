@@ -1,3 +1,4 @@
+import type { CreateConfiguration } from '../../types';
 import { isFrontend } from '../../typeGuards';
 import type { AuthProvider, FrontendDirectories } from '../../types';
 import type { FrameworkFlags } from './computeFlags';
@@ -7,18 +8,27 @@ type GenerateRoutesBlockProps = {
 	frontendDirectories: FrontendDirectories;
 	authProvider: AuthProvider;
 	buildDirectory: string;
+	databaseEngine?: CreateConfiguration['databaseEngine'];
 };
 
 export const generateRoutesBlock = ({
 	flags,
 	frontendDirectories,
 	authProvider,
-	buildDirectory
+	buildDirectory,
+	databaseEngine
 }: GenerateRoutesBlockProps) => {
 	const routes: string[] = [];
 
 	const createHandlerCall = (frontend: string, directory: string) => {
 		const base = `${buildDirectory}${directory ? `/${directory}` : ''}/pages`;
+
+	if (frontend === 'angular')
+		return `handleAngularPageRequest(
+        AngularExampleComponent,
+        asset(manifest, 'AngularExampleIndex'),
+        { initialCount: 0, cssPath: asset(manifest, 'AngularExampleCSS') }
+      )`;
 
 		if (frontend === 'html')
 			return `handleHTMLPageRequest(\`${base}/HTMLExample.html\`)`;
@@ -91,7 +101,9 @@ export const generateRoutesBlock = ({
 		}
 	);
 
-	if (authProvider === undefined || authProvider === 'none') {
+	// Only add database routes if a database is configured
+	const hasDatabase = databaseEngine !== undefined && databaseEngine !== 'none';
+	if (hasDatabase && (authProvider === undefined || authProvider === 'none')) {
 		routes.push(
 			`.get('/count/:uid', ({ params: { uid } }) => getCountHistory(db, uid), {
     params: t.Object({

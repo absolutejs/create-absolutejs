@@ -1,6 +1,7 @@
 import { cpSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import type { CreateConfiguration } from '../../types';
+import { scaffoldAngular } from '../angular/scaffoldAngular';
 import { scaffoldHTML } from '../html/scaffoldHTML';
 import { scaffoldHTMX } from '../htmx/scaffoldHTMX';
 import { scaffoldReact } from '../react/scaffoldReact';
@@ -51,6 +52,15 @@ export const scaffoldFrontends = ({
 		if (!isSingleFrontend) mkdirSync(targetDirectory);
 
 		switch (frontendName) {
+			case 'angular':
+				scaffoldAngular({
+					frontends,
+					isSingleFrontend,
+					projectAssetsDirectory,
+					targetDirectory,
+					templatesDirectory
+				});
+				break;
 			case 'react':
 				scaffoldReact({
 					frontends,
@@ -76,11 +86,6 @@ export const scaffoldFrontends = ({
 					targetDirectory,
 					templatesDirectory
 				});
-				break;
-			case 'angular':
-				console.warn(
-					'Angular is not yet supported. Refer to the documentation for more information.'
-				);
 				break;
 			case 'html':
 				scaffoldHTML({

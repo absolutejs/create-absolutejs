@@ -1,11 +1,11 @@
-import { cyan, green, magenta } from 'picocolors';
+import { cyan, green, magenta, red } from 'picocolors';
 import type { FrontendLabels, AvailableDependency } from './types';
 
 export const availableFrontends = [
 	'react',
 	'html',
 	'svelte',
-	// 'angular',
+	'angular',
 	'vue',
 	'htmx'
 ] as const;
@@ -58,8 +58,8 @@ export const frontendLabels: FrontendLabels = {
 	html: 'HTML',
 	htmx: 'HTMX',
 	svelte: magenta('Svelte'),
-	vue: green('Vue')
-	// angular: red('Angular'),
+	vue: green('Vue'),
+	angular: red('Angular')
 };
 /* eslint-enable absolute/sort-keys-fixable */
 

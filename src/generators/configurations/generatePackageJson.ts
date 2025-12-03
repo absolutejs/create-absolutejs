@@ -97,6 +97,18 @@ export const createPackageJson = ({
 		);
 	}
 
+	if (flags.requiresAngular) {
+		dependencies['@angular/core'] = resolveVersion('@angular/core', '19.2.0');
+		dependencies['@angular/common'] = resolveVersion('@angular/common', '19.2.0');
+		dependencies['@angular/platform-browser'] = resolveVersion('@angular/platform-browser', '19.2.0');
+		dependencies['@angular/platform-server'] = resolveVersion('@angular/platform-server', '19.2.0');
+		dependencies['rxjs'] = resolveVersion('rxjs', '7.8.1');
+		dependencies['tslib'] = resolveVersion('tslib', '2.8.1');
+		dependencies['zone.js'] = resolveVersion('zone.js', '0.15.0');
+		devDependencies['@angular/compiler'] = resolveVersion('@angular/compiler', '19.2.0');
+		devDependencies['@angular/compiler-cli'] = resolveVersion('@angular/compiler-cli', '19.2.0');
+	}
+
 	if (flags.requiresReact) {
 		dependencies['react'] = resolveVersion('react', '19.2.0');
 		devDependencies['@types/react'] = resolveVersion(
@@ -154,13 +166,23 @@ export const createPackageJson = ({
 
 	if (latest) s.stop(green('Package versions resolved'));
 
+	// Use index.ts entry point for Angular (to load compiler first), server.ts for others
+	const entryPoint = flags.requiresAngular ? 'index.ts' : 'server.ts';
+
 	const scripts: PackageJson['scripts'] = {
-		dev: 'bash -c \'trap "exit 0" INT; bun run --watch src/backend/server.ts\'',
-		format: `prettier --write "./**/*.{js,ts,css,json,mjs,md${flags.requiresReact ? ',jsx,tsx' : ''}${flags.requiresSvelte ? ',svelte' : ''}${flags.requiresVue ? ',vue' : ''}${flags.requiresHtml || flags.requiresHtmx ? ',html' : ''}}"`,
-		lint: 'eslint ./src',
+		dev: `bash -c 'trap "exit 0" INT; bun run --watch src/backend/${entryPoint}'`,
 		test: 'echo "Error: no test specified" && exit 1',
 		typecheck: 'bun run tsc --noEmit'
 	};
+
+	if (codeQualityTool === 'eslint+prettier') {
+		scripts.format = `prettier --write "./**/*.{js,ts,css,json,mjs,md${flags.requiresAngular ? ',html' : ''}${flags.requiresReact ? ',jsx,tsx' : ''}${flags.requiresSvelte ? ',svelte' : ''}${flags.requiresVue ? ',vue' : ''}${flags.requiresHtml || flags.requiresHtmx ? ',html' : ''}}"`;
+		scripts.lint = 'eslint ./src';
+	} else if (codeQualityTool === 'biome') {
+		scripts.format = 'npx @biomejs/biome format . --write';
+		scripts.lint = 'npx @biomejs/biome lint .';
+		scripts.check = 'npx @biomejs/biome check .';
+	}
 
 	if (
 		databaseEngine === 'postgresql' &&
