@@ -25,9 +25,6 @@ type UserHandlerProps = {
 }
 
 export const getUser = async ({ authProvider, db, userIdentity }: UserHandlerProps) => {
-  if (!isValidProviderOption(authProvider)) {
-		throw new Error(\`Invalid auth provider: \${authProvider}\`);
-	}
 	const providerConfiguration = providers[authProvider]
 
 	const subject = extractPropFromIdentity(
@@ -40,9 +37,6 @@ export const getUser = async ({ authProvider, db, userIdentity }: UserHandlerPro
 }
 
 export const createUser = async ({ authProvider, db, userIdentity }: UserHandlerProps) => {
-  if (!isValidProviderOption(authProvider)) {
-		throw new Error(\`Invalid auth provider: \${authProvider}\`);
-	}
 	const providerConfiguration = providers[authProvider]
 
 	const subject = extractPropFromIdentity(
