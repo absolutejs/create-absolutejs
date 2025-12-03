@@ -8,7 +8,7 @@ import {
 	defaultDependencies,
 	defaultPlugins,
 	eslintAndPrettierDependencies,
-	biomeDependency
+	biomeDependency,
 	eslintReactDependencies
 } from '../../data';
 import type { CreateConfiguration, PackageJson } from '../../types';
@@ -214,6 +214,15 @@ export const createPackageJson = ({
 		test: 'echo "Error: no test specified" && exit 1',
 		typecheck: 'bun run tsc --noEmit'
 	};
+
+	if (codeQualityTool === 'biome') {
+		scripts.format = 'biome format . --write';
+		scripts.lint = 'biome lint .';
+		scripts.check = 'biome check .';
+	} else {
+		scripts.format = `prettier --write "./**/*.{js,ts,css,json,mjs,md${flags.requiresReact ? ',jsx,tsx' : ''}${flags.requiresSvelte ? ',svelte' : ''}${flags.requiresVue ? ',vue' : ''}${flags.requiresHtml || flags.requiresHtmx ? ',html' : ''}}"`;
+		scripts.lint = 'eslint ./src';
+	}
 
 	const isLocal = !databaseHost || databaseHost === 'none';
 
