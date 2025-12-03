@@ -76,7 +76,6 @@ export const createPackageJson = ({
 		);
 	}
 
-	// ---- Code quality devDependencies ----
 	if (codeQualityTool === 'eslint+prettier') {
 		eslintAndPrettierDependencies.forEach((dep) => {
 			devDependencies[dep.value] = resolveVersion(
@@ -85,7 +84,7 @@ export const createPackageJson = ({
 			);
 		});
 	}
-	//  Biome: add devDependency here (scripts come later after scripts is initialized)
+	
 	else if (codeQualityTool === 'biome') {
 		devDependencies[biomeDependency.value] = resolveVersion(
 			biomeDependency.value,
