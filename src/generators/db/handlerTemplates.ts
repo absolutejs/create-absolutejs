@@ -16,7 +16,7 @@ const buildSqlAuthTemplate = ({
 	dbType,
 	queries
 }: AuthTemplateOptions) => `
-import { isValidProviderOption, providers } from 'citra'
+import { isValidProviderOption, providers, extractPropFromIdentity } from 'citra'
 ${importLines}
 type UserHandlerProps = {
   authProvider: string
@@ -25,16 +25,26 @@ type UserHandlerProps = {
 }
 
 export const getUser = async ({ authProvider, db, userIdentity }: UserHandlerProps) => {
-  if (!isValidProviderOption(authProvider)) throw new Error(\`Invalid auth provider: \${authProvider}\`)
-  const subject = providers[authProvider].extractSubjectFromIdentity(userIdentity)
-  const authSub = \`\${authProvider.toUpperCase()}|\${subject}\`
+	const providerConfiguration = providers[authProvider]
+
+	const subject = extractPropFromIdentity(
+		userIdentity,
+		providerConfiguration.subject,
+		providerConfiguration.subjectType
+	)
+	const authSub = \`\${authProvider.toUpperCase()}|\${subject}\`;
   ${queries.selectUser}
 }
 
 export const createUser = async ({ authProvider, db, userIdentity }: UserHandlerProps) => {
-  if (!isValidProviderOption(authProvider)) throw new Error(\`Invalid auth provider: \${authProvider}\`)
-  const subject = providers[authProvider].extractSubjectFromIdentity(userIdentity)
-  const authSub = \`\${authProvider.toUpperCase()}|\${subject}\`
+	const providerConfiguration = providers[authProvider]
+
+	const subject = extractPropFromIdentity(
+		userIdentity,
+		providerConfiguration.subject,
+		providerConfiguration.subjectType
+	)
+	const authSub = \`\${authProvider.toUpperCase()}|\${subject}\`;
   ${queries.insertUser}
 }
 `;
