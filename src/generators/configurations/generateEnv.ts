@@ -10,14 +10,14 @@ type GenerateEnvProps = Pick<
 };
 
 const databaseURLS = {
-	cockroachdb: 'cockroachdb://user:password@localhost:26257/database',
-	gel: 'gel://user:password@localhost:5432/database',
-	mariadb: 'mariadb://user:password@localhost:3306/database',
+	cockroachdb: 'postgresql://root@localhost:26257/database',
+	gel: 'gel://admin@localhost:5656/main?tls_security=insecure',
+	mariadb: 'mariadb://user:userpassword@localhost:3306/database',
 	mongodb: 'mongodb://user:password@localhost:27017/database',
-	mssql: 'mssql://user:password@localhost:1433/database',
-	mysql: 'mysql://user:password@localhost:3306/database',
+	mssql: 'Server=localhost,1433;Database=master;User Id=sa;Password=SApassword1;Encrypt=true;TrustServerCertificate=true',
+	mysql: 'mysql://user:userpassword@localhost:3306/database',
 	postgresql: 'postgresql://user:password@localhost:5432/database',
-	singlestore: 'singlestore://user:password@localhost:3306/database'
+	singlestore: 'mysql://root:password@localhost:3306/database'
 } as const;
 
 export const generateEnv = ({

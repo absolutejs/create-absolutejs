@@ -46,8 +46,12 @@ export const scaffold = async ({
 	const __dirname = dirname(fileURLToPath(import.meta.url));
 	const templatesDirectory = join(__dirname, '/templates');
 
-	const { frontendDirectory, backendDirectory, projectAssetsDirectory } =
-		initalizeRoot(projectName, templatesDirectory);
+	const {
+		frontendDirectory,
+		backendDirectory,
+		projectAssetsDirectory,
+		typesDirectory
+	} = initalizeRoot(projectName, templatesDirectory);
 
 	copyFileSync(
 		join(templatesDirectory, 'README.md'),
@@ -103,7 +107,8 @@ export const scaffold = async ({
 			databaseEngine,
 			databaseHost,
 			orm,
-			projectName
+			projectName,
+			typesDirectory
 		}))
 	);
 

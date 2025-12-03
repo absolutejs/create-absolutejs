@@ -5,32 +5,32 @@ type DBExpr = { expr: string };
 
 const connectionMap: Record<string, Record<string, DBExpr>> = {
 	cockroachdb: {
-		none: { expr: 'new Pool({ connectionString: getEnv("DATABASE_URL") })' }
+		none: { expr: 'new SQL(getEnv("DATABASE_URL"))' }
 	},
 	gel: {
-		none: { expr: 'gelClient({ url: getEnv("DATABASE_URL") })' }
+		none: { expr: 'createClient(getEnv("DATABASE_URL"))' }
 	},
 	mariadb: {
-		none: { expr: 'createPool(getEnv("DATABASE_URL"))' }
+		none: { expr: 'new SQL(getEnv("DATABASE_URL"))' }
 	},
 	mongodb: {
-		none: { expr: 'new MongoClient(getEnv("DATABASE_URL") })' }
+		none: { expr: 'new MongoClient(getEnv("DATABASE_URL"))' }
 	},
 	mssql: {
 		none: { expr: 'await connect(getEnv("DATABASE_URL"))' }
 	},
 	mysql: {
-		none: { expr: 'createPool(getEnv("DATABASE_URL"))' },
+		none: { expr: 'new SQL(getEnv("DATABASE_URL"))' },
 		planetscale: { expr: 'connect({ url: getEnv("DATABASE_URL") })' }
 	},
 	postgresql: {
 		neon: {
 			expr: 'new Pool({ connectionString: getEnv("DATABASE_URL") })'
 		},
-		none: { expr: 'new Pool({ connectionString: getEnv("DATABASE_URL") })' }
+		none: { expr: 'new SQL(getEnv("DATABASE_URL"))' }
 	},
 	singlestore: {
-		none: { expr: 'createClient({ url: getEnv("DATABASE_URL") })' }
+		none: { expr: 'createPool(getEnv("DATABASE_URL"))' }
 	},
 	sqlite: {
 		none: { expr: 'new Database("db/database.sqlite")' },
@@ -68,11 +68,8 @@ export const generateDBBlock = ({
 
 	if (orm !== 'drizzle') {
 		const hostCfg = engineGroup[hostKey];
-		if (!hostCfg) return '';
 
-		return `
-const pool = ${hostCfg.expr}
-`;
+		return hostCfg ? `const db = ${hostCfg.expr}` : '';
 	}
 
 	if (!drizzleDialectSet.has(databaseEngine)) return '';
@@ -80,19 +77,15 @@ const pool = ${hostCfg.expr}
 	const expr = engineGroup[hostKey]?.expr ?? remoteDrizzleInit[hostKey];
 	if (!expr) return '';
 
-	if (databaseEngine === 'mysql') {
-		const mode = databaseHost === 'planetscale' ? 'planetscale' : 'default';
+	if (databaseEngine === 'mysql' || databaseEngine === 'mariadb') {
+		const mode =
+			databaseHost === 'planetscale' && databaseEngine === 'mysql'
+				? 'planetscale'
+				: 'default';
 
 		return `
-const pool = ${expr}
+const pool = createPool(getEnv("DATABASE_URL"))
 const db = drizzle(pool, { schema, mode: '${mode}' })
-`;
-	}
-
-	if (databaseEngine === 'sqlite') {
-		return `
-const pool = ${expr}
-const db = drizzle(pool, { schema })
 `;
 	}
 

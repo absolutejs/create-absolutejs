@@ -52,8 +52,9 @@ const cockroachdbUsers = `CREATE TABLE IF NOT EXISTS users (
   metadata   JSONB        DEFAULT '{}'::jsonb
 );`;
 
-const cockroachdbCountHistory = `CREATE TABLE IF NOT EXISTS count_history (
-  uid         INT PRIMARY KEY DEFAULT unique_rowid(),
+const cockroachdbCountHistory = `CREATE SEQUENCE IF NOT EXISTS count_history_uid_seq START WITH 1 INCREMENT BY 1;
+CREATE TABLE IF NOT EXISTS count_history (
+  uid         BIGINT PRIMARY KEY DEFAULT nextval('count_history_uid_seq'),
   count       INT      NOT NULL,
   created_at  TIMESTAMP NOT NULL DEFAULT NOW()
 );`;
@@ -76,17 +77,33 @@ BEGIN
   );
 END;`;
 
-const gelUsers = `CREATE TABLE IF NOT EXISTS users (
-  auth_sub   VARCHAR(255) PRIMARY KEY,
-  created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-  metadata   JSON        DEFAULT '{}'::json
-);`;
+const gelUsers = `create type users {
+  create required property auth_sub: str {
+    create constraint exclusive;
+  };
 
-const gelCountHistory = `CREATE TABLE IF NOT EXISTS count_history (
-  uid         INTEGER   PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-  count       INTEGER   NOT NULL,
-  created_at  TIMESTAMP NOT NULL DEFAULT NOW()
-);`;
+  create required property created_at: datetime {
+    set default := datetime_current();
+  };
+
+  create required property metadata: json {
+    set default := to_json('{}');
+  };
+};`;
+
+const gelCountHistory = `create scalar type CountHistoryUid extending sequence;
+create type count_history {
+  create required property uid: CountHistoryUid {
+    create constraint exclusive;
+    set default := sequence_next(introspect CountHistoryUid);
+  };
+
+  create required property count: int16;
+
+  create required property created_at: datetime {
+    set default := datetime_current();
+  };
+};`;
 
 export const userTables = {
 	cockroachdb: cockroachdbUsers,
@@ -110,20 +127,20 @@ export const countHistoryTables = {
 
 export const initTemplates = {
 	cockroachdb: {
-		cli: 'cockroach sql --insecure --host=localhost -e',
-		wait: 'until pg_isready -U root -h localhost --quiet; do sleep 1; done'
+		cli: 'sleep 1; cockroach sql --insecure --host localhost --database=database -e',
+		wait: 'until (cockroach sql --insecure -e "select 1" >/dev/null 2>&1) ; do sleep 1; done'
 	},
 	gel: {
-		cli: 'psql -U user -d database -c',
-		wait: 'until pg_isready -U user -h localhost --quiet; do sleep 1; done'
+		cli: 'gel query -H localhost -P 5656 -u admin --tls-security insecure -b main ',
+		wait: 'until gel query -H localhost -P 5656 -u admin --tls-security insecure "select 1"; do sleep 1; done'
 	},
 	mariadb: {
-		cli: 'MYSQL_PWD=userpassword mariadb -h127.0.0.1 -u user -e',
-		wait: 'until mysqladmin ping -h127.0.0.1 --silent; do sleep 1; done'
+		cli: 'MYSQL_PWD=userpassword mariadb -h127.0.0.1 -u user database -e',
+		wait: 'until mariadb-admin ping -h127.0.0.1 --silent; do sleep 1; done'
 	},
 	mssql: {
-		cli: '/opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P sapassword -Q',
-		wait: 'until /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P sapassword -Q "SELECT 1" >/dev/null 2>&1; do sleep 1; done'
+		cli: '/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P SApassword1 -Q',
+		wait: 'until /opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P SApassword1 -Q "SELECT 1" >/dev/null 2>&1; do sleep 1; done'
 	},
 	mysql: {
 		cli: 'MYSQL_PWD=userpassword mysql -h127.0.0.1 -u user database -e',
@@ -134,7 +151,7 @@ export const initTemplates = {
 		wait: 'until pg_isready -U user -h localhost --quiet; do sleep 1; done'
 	},
 	singlestore: {
-		cli: 'MYSQL_PWD=userpassword mysql -h127.0.0.1 -u user -e',
-		wait: 'until mysqladmin ping -h127.0.0.1 --silent; do sleep 1; done'
+		cli: 'singlestore -u root -ppassword -e "CREATE DATABASE IF NOT EXISTS \\`database\\`" > /dev/null && singlestore -u root -ppassword -D database -e',
+		wait: 'until singlestore -u root -ppassword -e "SELECT 1" >/dev/null 2>&1; do sleep 1; done'
 	}
 } as const;

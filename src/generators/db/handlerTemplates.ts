@@ -9,18 +9,15 @@ type AuthTemplateOptions = {
 	importLines: string;
 	dbType: string;
 	queries: QueryOperations;
-	handlerTypes?: HandlerType;
 };
 
 const buildSqlAuthTemplate = ({
 	importLines,
-	handlerTypes,
 	dbType,
 	queries
 }: AuthTemplateOptions) => `
-import { isValidProviderOption, providers } from 'citra'
+import { isValidProviderOption, providers, extractPropFromIdentity } from 'citra'
 ${importLines}
-${handlerTypes?.UserRow ? `\ntype UserRow = ${handlerTypes.UserRow}` : ''}
 type UserHandlerProps = {
   authProvider: string
   db: ${dbType}
@@ -28,16 +25,26 @@ type UserHandlerProps = {
 }
 
 export const getUser = async ({ authProvider, db, userIdentity }: UserHandlerProps) => {
-  if (!isValidProviderOption(authProvider)) throw new Error(\`Invalid auth provider: \${authProvider}\`)
-  const subject = providers[authProvider].extractSubjectFromIdentity(userIdentity)
-  const authSub = \`\${authProvider.toUpperCase()}|\${subject}\`
+	const providerConfiguration = providers[authProvider]
+
+	const subject = extractPropFromIdentity(
+		userIdentity,
+		providerConfiguration.subject,
+		providerConfiguration.subjectType
+	)
+	const authSub = \`\${authProvider.toUpperCase()}|\${subject}\`;
   ${queries.selectUser}
 }
 
 export const createUser = async ({ authProvider, db, userIdentity }: UserHandlerProps) => {
-  if (!isValidProviderOption(authProvider)) throw new Error(\`Invalid auth provider: \${authProvider}\`)
-  const subject = providers[authProvider].extractSubjectFromIdentity(userIdentity)
-  const authSub = \`\${authProvider.toUpperCase()}|\${subject}\`
+	const providerConfiguration = providers[authProvider]
+
+	const subject = extractPropFromIdentity(
+		userIdentity,
+		providerConfiguration.subject,
+		providerConfiguration.subjectType
+	)
+	const authSub = \`\${authProvider.toUpperCase()}|\${subject}\`;
   ${queries.insertUser}
 }
 `;
@@ -46,17 +53,14 @@ type CountTemplateOptions = {
 	importLines: string;
 	dbType: string;
 	queries: QueryOperations;
-	handlerTypes?: HandlerType;
 };
 
 const buildSqlCountTemplate = ({
 	importLines,
-	handlerTypes,
 	dbType,
 	queries
 }: CountTemplateOptions) => `
 ${importLines}
-${handlerTypes?.CountHistoryRow ? `\ntype CountHistoryRow = ${handlerTypes.CountHistoryRow}\n` : ''}
 export const getCountHistory = async (db: ${dbType}, uid: number) => {
   ${queries.selectHistory}
 }
@@ -109,6 +113,31 @@ const bunSqliteQueryOperations: QueryOperations = {
   return user ?? null`
 };
 
+const postgresNeonQueryOperations: QueryOperations = {
+	insertHistory: `const { rows } = await db.query(
+    'INSERT INTO count_history (count) VALUES ($1) RETURNING *',
+    [count]
+  )
+  return rows[0]`,
+	insertUser: `const { rows } = await db.query(
+    'INSERT INTO users (auth_sub, metadata) VALUES ($1, $2) RETURNING *',
+    [authSub, userIdentity]
+  )
+  const newUser = rows[0]
+  if (!newUser) throw new Error('Failed to create user')
+  return newUser`,
+	selectHistory: `const { rows } = await db.query(
+    'SELECT * FROM count_history WHERE uid = $1 LIMIT 1',
+    [uid]
+  )
+  return rows[0] ?? null`,
+	selectUser: `const { rows } = await db.query(
+    'SELECT * FROM users WHERE auth_sub = $1 LIMIT 1',
+    [authSub]
+  )
+  return rows[0] ?? null`
+};
+
 const postgresSqlQueryOperations: QueryOperations = {
 	insertHistory: `const [newHistory] = await db\`
     INSERT INTO count_history (count)
@@ -151,61 +180,41 @@ const mongodbQueryOperations: QueryOperations = {
   return user ?? null`
 };
 
-const mariadbSqlQueryOperations: QueryOperations = {
-	insertHistory: `await db.query('INSERT INTO count_history (count) VALUES (?)', [count])
-  const [rows] = await db.query('SELECT * FROM count_history ORDER BY uid DESC LIMIT 1')
-  return rows[0]`,
-	insertUser: `await db.query('INSERT INTO users (auth_sub, metadata) VALUES (?, ?)', [authSub, JSON.stringify(userIdentity)])
-  const [rows] = await db.query('SELECT * FROM users WHERE auth_sub = ? LIMIT 1', [authSub])
-  const newUser = rows[0]
-  if (!newUser) throw new Error('Failed to create user')
+const gelClientQueryOperations: QueryOperations = {
+	insertHistory: `const newHistory = await db.queryRequiredSingle(
+    'select (insert count_history { count := <int16>$count }) { uid, count, created_at }',
+    { count }
+  )
+  return newHistory`,
+	insertUser: `const newUser = await db.queryRequiredSingle(
+    'select (insert users { auth_sub := <str>$authSub, metadata := <json>$metadata }) { auth_sub, created_at, metadata }',
+    { authSub, metadata: userIdentity }
+  )
   return newUser`,
-	selectHistory: `const [rows] = await db.query('SELECT * FROM count_history WHERE uid = ? LIMIT 1', [uid])
-  return rows[0] ?? null`,
-	selectUser: `const [rows] = await db.query('SELECT * FROM users WHERE auth_sub = ? LIMIT 1', [authSub])
-  return rows[0] ?? null`
-};
-
-const gelSqlQueryOperations: QueryOperations = {
-	insertHistory: `await db.query('INSERT INTO count_history (count) VALUES (?)', [count])
-  const [rows] = await db.query('SELECT * FROM count_history ORDER BY uid DESC LIMIT 1')
-  return rows[0]`,
-	insertUser: `await db.query('INSERT INTO users (auth_sub, metadata) VALUES (?, ?)', [authSub, JSON.stringify(userIdentity)])
-  const [rows] = await db.query('SELECT * FROM users WHERE auth_sub = ? LIMIT 1', [authSub])
-  const newUser = rows[0]
-  if (!newUser) throw new Error('Failed to create user')
-  return newUser`,
-	selectHistory: `const [rows] = await db.query('SELECT * FROM count_history WHERE uid = ? LIMIT 1', [uid])
-  return rows[0] ?? null`,
-	selectUser: `const [rows] = await db.query('SELECT * FROM users WHERE auth_sub = ? LIMIT 1', [authSub])
-  return rows[0] ?? null`
+	selectHistory: `const history = await db.querySingle(
+    'select count_history { uid, count, created_at } filter .uid = <int64>$uid',
+    { uid }
+  )
+  return history ?? null`,
+	selectUser: `const user = await db.querySingle(
+    'select users { auth_sub, created_at, metadata } filter .auth_sub = <str>$authSub',
+    { authSub }
+  )
+  return user ?? null`
 };
 
 const singlestoreSqlQueryOperations: QueryOperations = {
 	insertHistory: `await db.query('INSERT INTO count_history (count) VALUES (?)', [count])
-  const [rows] = await db.query('SELECT * FROM count_history ORDER BY uid DESC LIMIT 1')
+  const [rows] = await db.query<RowDataPacket[]>('SELECT * FROM count_history ORDER BY uid DESC LIMIT 1')
   return rows[0]`,
 	insertUser: `await db.query('INSERT INTO users (auth_sub, metadata) VALUES (?, ?)', [authSub, JSON.stringify(userIdentity)])
-  const [rows] = await db.query('SELECT * FROM users WHERE auth_sub = ? LIMIT 1', [authSub])
+  const [rows] = await db.query<RowDataPacket[]>('SELECT * FROM users WHERE auth_sub = ? LIMIT 1', [authSub])
   const newUser = rows[0]
   if (!newUser) throw new Error('Failed to create user')
   return newUser`,
-	selectHistory: `const [rows] = await db.query('SELECT * FROM count_history WHERE uid = ? LIMIT 1', [uid])
+	selectHistory: `const [rows] = await db.query<RowDataPacket[]>('SELECT * FROM count_history WHERE uid = ? LIMIT 1', [uid])
   return rows[0] ?? null`,
-	selectUser: `const [rows] = await db.query('SELECT * FROM users WHERE auth_sub = ? LIMIT 1', [authSub])
-  return rows[0] ?? null`
-};
-
-const cockroachdbPoolQueryOperations: QueryOperations = {
-	insertHistory: `const { rows } = await db.query('INSERT INTO count_history (count) VALUES ($1) RETURNING *', [count])
-  return rows[0]`,
-	insertUser: `const { rows } = await db.query('INSERT INTO users (auth_sub, metadata) VALUES ($1, $2) RETURNING *', [authSub, userIdentity])
-  const newUser = rows[0]
-  if (!newUser) throw new Error('Failed to create user')
-  return newUser`,
-	selectHistory: `const { rows } = await db.query('SELECT * FROM count_history WHERE uid = $1 LIMIT 1', [uid])
-  return rows[0] ?? null`,
-	selectUser: `const { rows } = await db.query('SELECT * FROM users WHERE auth_sub = $1 LIMIT 1', [authSub])
+	selectUser: `const [rows] = await db.query<RowDataPacket[]>('SELECT * FROM users WHERE auth_sub = ? LIMIT 1', [authSub])
   return rows[0] ?? null`
 };
 
@@ -226,66 +235,64 @@ const mssqlSqlQueryOperations: QueryOperations = {
 
 const mysqlSqlQueryOperations: QueryOperations = {
 	insertHistory: `
-const [result] = await db.query<ResultSetHeader>(
-  'INSERT INTO count_history (count) VALUES (?)',
-  [count]
-);
-const insertId = result.insertId;
-const [rows] = await db.query<CountHistoryRow[]>(
-  'SELECT * FROM count_history WHERE uid = ? LIMIT 1',
-  [insertId]
-);
-if (!rows[0]) throw new Error('Could not retrieve the newly‑inserted history');
-return rows[0];
+    const result = await db\`
+      INSERT INTO count_history (count)
+      VALUES (\${count})
+    \`;
+
+    const insertId = result.lastInsertRowid;
+
+    const [row] = await db\`
+      SELECT *
+      FROM count_history
+      WHERE uid = \${insertId}
+      LIMIT 1
+    \`;
+
+    if (!row) throw new Error("Could not retrieve the newly-inserted history");
+    return row;
   `,
 
 	insertUser: `
-const [result] = await db.query<ResultSetHeader>(
-  'INSERT INTO users (auth_sub, metadata) VALUES (?, ?)',
-  [authSub, JSON.stringify(userIdentity)]
-);
-const insertId = result.insertId;
-const [rows] = await db.query<UserRow[]>(
-  'SELECT * FROM users WHERE uid = ? LIMIT 1',
-  [insertId]
-);
-if (!rows[0]) throw new Error('Failed to create user');
-return rows[0];
+    const result = await db\`
+      INSERT INTO users (auth_sub, metadata)
+      VALUES (\${authSub}, \${JSON.stringify(userIdentity)})
+    \`;
+
+    const insertId = result.lastInsertRowid;
+
+    const [row] = await db\`
+      SELECT *
+      FROM users
+      WHERE uid = \${insertId}
+      LIMIT 1
+    \`;
+
+    if (!row) throw new Error("Failed to create user");
+    return row;
   `,
 
 	selectHistory: `
-const [rows] = await db.query<CountHistoryRow[]>(
-  'SELECT * FROM count_history WHERE uid = ? LIMIT 1',
-  [uid]
-);
-return rows[0] ?? null;
+    const [row] = await db\`
+      SELECT *
+      FROM count_history
+      WHERE uid = \${uid}
+      LIMIT 1
+    \`;
+
+    return row ?? null;
   `,
 
 	selectUser: `
-const [rows] = await db.query<UserRow[]>(
-  'SELECT * FROM users WHERE auth_sub = ? LIMIT 1',
-  [authSub]
-);
-return rows[0] ?? null;
+    const [row] = await db\`
+      SELECT *
+      FROM users
+      WHERE auth_sub = \${authSub}
+      LIMIT 1
+    \`;
+
+    return row ?? null;
   `
-};
-
-type HandlerType = {
-	CountHistoryRow: string;
-	UserRow: string;
-};
-
-const mysqlHandlerTypes: HandlerType = {
-	CountHistoryRow: `RowDataPacket & {
-		uid: number;
-		count: number;
-		created_at: number;
-	}`,
-	UserRow: `RowDataPacket & {
-		uid: number;
-		auth_sub: string;
-		metadata: string;
-	}`
 };
 
 const mysqlDrizzleQueryOperations: QueryOperations = {
@@ -326,19 +333,36 @@ const mysqlDrizzleQueryOperations: QueryOperations = {
 
 const driverConfigurations = {
 	'cockroachdb:sql:local': {
-		dbType: 'Pool',
-		importLines: `import { Pool } from 'pg'`,
-		queries: cockroachdbPoolQueryOperations
+		dbType: 'SQL',
+		importLines: `import { SQL } from 'bun'`,
+		queries: postgresSqlQueryOperations
+	},
+	'gel:drizzle:local': {
+		dbType: 'GelJsDatabase<SchemaType>',
+		importLines: `
+import { eq } from 'drizzle-orm'
+import { GelJsDatabase } from 'drizzle-orm/gel'
+import { schema, type SchemaType } from '../../../db/schema'
+`,
+		queries: drizzleQueryOperations
 	},
 	'gel:sql:local': {
-		dbType: 'GelClient',
-		importLines: `import { GelClient } from 'gel'`,
-		queries: gelSqlQueryOperations
+		dbType: 'Client',
+		importLines: `import { Client } from 'gel'`,
+		queries: gelClientQueryOperations
+	},
+	'mariadb:drizzle:local': {
+		dbType: 'MySql2Database<SchemaType>',
+		importLines: `
+import { eq } from 'drizzle-orm'
+import { MySql2Database } from 'drizzle-orm/mysql2'
+import { schema, type SchemaType } from '../../../db/schema'`,
+		queries: mysqlDrizzleQueryOperations
 	},
 	'mariadb:sql:local': {
-		dbType: 'Pool',
-		importLines: `import { Pool } from 'mariadb'`,
-		queries: mariadbSqlQueryOperations
+		dbType: 'SQL',
+		importLines: `import { SQL } from 'bun'`,
+		queries: mysqlSqlQueryOperations
 	},
 	'mongodb:native:local': {
 		dbType: 'Db',
@@ -359,13 +383,12 @@ import { schema, type SchemaType } from '../../../db/schema'`,
 		queries: mysqlDrizzleQueryOperations
 	},
 	'mysql:sql:local': {
-		dbType: 'Pool',
-		handlerTypes: mysqlHandlerTypes,
-		importLines: `import { Pool, ResultSetHeader, RowDataPacket } from 'mysql2/promise'`,
+		dbType: 'SQL',
+		importLines: `import { SQL } from 'bun'`,
 		queries: mysqlSqlQueryOperations
 	},
 	'postgresql:drizzle:local': {
-		dbType: 'NodePgDatabase<SchemaType>',
+		dbType: 'BunSQLDatabase<SchemaType>',
 		importLines: `
 import { eq } from 'drizzle-orm'
 import { BunSQLDatabase } from 'drizzle-orm/bun-sql'
@@ -386,14 +409,22 @@ import { schema, type SchemaType } from '../../../db/schema'`,
 		queries: postgresSqlQueryOperations
 	},
 	'postgresql:sql:neon': {
-		dbType: 'NeonQueryFunction<false, false>',
-		importLines: `import { NeonQueryFunction } from '@neondatabase/serverless'`,
-		queries: postgresSqlQueryOperations
+		dbType: 'Pool',
+		importLines: `import { Pool } from '@neondatabase/serverless'`,
+		queries: postgresNeonQueryOperations
 	},
 	'singlestore:sql:local': {
-		dbType: 'Connection',
-		importLines: `import { Connection } from '@singlestore/db-client'`,
+		dbType: 'Pool',
+		importLines: `import { Pool, RowDataPacket } from 'mysql2/promise'`,
 		queries: singlestoreSqlQueryOperations
+	},
+	'singlestore:drizzle:local': {
+		dbType: 'SingleStoreDriverDatabase<SchemaType>',
+		importLines: `
+import { eq } from 'drizzle-orm'
+import { SingleStoreDriverDatabase } from 'drizzle-orm/singlestore'
+import { schema, type SchemaType } from '../../../db/schema'`,
+		queries: mysqlDrizzleQueryOperations
 	},
 	'sqlite:drizzle:local': {
 		dbType: 'BunSQLiteDatabase<SchemaType>',

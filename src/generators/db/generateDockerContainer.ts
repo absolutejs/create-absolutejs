@@ -1,23 +1,33 @@
 import { DatabaseEngine } from '../../types';
 
-const templates = {
+interface DatabaseTemplate {
+	image: string;
+	port: string;
+	env: Record<string, string>;
+	volumePath: string;
+	command?: string;
+}
+
+const templates: Record<
+	Exclude<DatabaseEngine, 'none' | 'sqlite' | undefined>,
+	DatabaseTemplate
+> = {
 	cockroachdb: {
+		command: 'start-single-node --insecure',
 		env: {
-			COCKROACH_INSECURE: 'true'
+			COCKROACH_DATABASE: 'database'
 		},
-		image: 'cockroachdb/cockroach:v24.1.0',
+		image: 'cockroachdb/cockroach:latest-v25.3',
 		port: '26257:26257',
 		volumePath: '/cockroach/cockroach-data'
 	},
 	gel: {
 		env: {
-			GEL_DB: 'database',
-			GEL_PASSWORD: 'password',
-			GEL_USER: 'user'
+			GEL_SERVER_SECURITY: 'insecure_dev_mode'
 		},
-		image: 'gel:latest',
-		port: '4000:4000',
-		volumePath: '/var/lib/gel'
+		image: 'geldata/gel:latest',
+		port: '5656:5656',
+		volumePath: '/var/lib/gel/data'
 	},
 	mariadb: {
 		env: {
@@ -43,8 +53,7 @@ const templates = {
 	mssql: {
 		env: {
 			ACCEPT_EULA: 'Y',
-			MSSQL_PID: 'Express',
-			SA_PASSWORD: 'Strong_Passw0rd'
+			MSSQL_SA_PASSWORD: 'SApassword1'
 		},
 		image: 'mcr.microsoft.com/mssql/server:2022-latest',
 		port: '1433:1433',
@@ -75,11 +84,11 @@ const templates = {
 		env: {
 			ROOT_PASSWORD: 'password'
 		},
-		image: 'singlestore/cluster-in-a-box:latest',
+		image: 'ghcr.io/singlestore-labs/singlestoredb-dev', // NOTE: No tag specified due to data persistence
 		port: '3306:3306',
-		volumePath: '/var/lib/memsql'
+		volumePath: '/data'
 	}
-} as const;
+};
 
 export const generateDockerContainer = (databaseEngine: DatabaseEngine) => {
 	if (
@@ -92,7 +101,8 @@ export const generateDockerContainer = (databaseEngine: DatabaseEngine) => {
 		);
 	}
 
-	const { image, port, env, volumePath } = templates[databaseEngine];
+	const { image, port, env, volumePath, command } = templates[databaseEngine];
+	const commandLines = command ? `        command: ${command}` : '';
 	const envLines = Object.entries(env)
 		.map(([key, value]) => `            ${key}: ${value}`)
 		.join('\n');
@@ -105,6 +115,7 @@ export const generateDockerContainer = (databaseEngine: DatabaseEngine) => {
 ${envLines}
         ports:
             - "${port}"
+${commandLines}
         volumes:
             - db_data:${volumePath}
 

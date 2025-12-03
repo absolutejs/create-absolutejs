@@ -28,7 +28,11 @@ export const generateUseBlock = ({
 				const pluginGeneric = hasOrm ? '<User>' : '';
 
 				const callback = hasDatabase
-					? `async ({ authProvider, providerInstance, tokenResponse, userSessionId, session }) => ${instantiate}({ authProvider, providerInstance, session, tokenResponse, userSessionId, createUser: (userIdentity) => createUser({ authProvider, db, userIdentity }), getUser: (userIdentity) => getUser({ authProvider, db, userIdentity }) })`
+					? `async ({ authProvider, providerInstance, tokenResponse, unregisteredSession, cookie: { user_session_id }, session }) => ${instantiate}(
+						{ authProvider, providerInstance, session, tokenResponse, unregisteredSession, user_session_id, 
+						 	getUser: async (userIdentity) => getUser({ authProvider, db, userIdentity }),
+							onNewUser: async (userIdentity) => createUser({ authProvider, db, userIdentity })
+						})`
 					: `({ authProvider, tokenResponse, userSessionId }) => { console.log(\`Successfully authorized OAuth2 with \${authProvider} (session: \${userSessionId})\`, tokenResponse); }`;
 
 				const mergedConfig = `{ ${baseConfigString}${baseConfigString ? ',' : ''} onCallbackSuccess: ${callback} }`;
