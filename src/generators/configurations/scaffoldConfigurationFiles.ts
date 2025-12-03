@@ -51,30 +51,33 @@ export const scaffoldConfigurationFiles = ({
 			join(projectName, '.gitignore')
 		);
 
-	if (codeQualityTool === 'eslint+prettier') {
-		copyFileSync(
-			join(templatesDirectory, 'configurations', 'eslint.config.mjs'),
-			join(projectName, 'eslint.config.mjs')
-		);
-		copyFileSync(
-			join(templatesDirectory, 'configurations', '.prettierignore'),
-			join(projectName, '.prettierignore')
-		);
-		const prettierrc = generatePrettierrc(frontends);
-		writeFileSync(join(projectName, '.prettierrc.json'), prettierrc);
-	} else if (codeQualityTool === 'biome') {
-		copyFileSync(
-			join(templatesDirectory, 'configurations', 'biome.json'),
-			join(projectName, 'biome.json')
-		);
-		copyFileSync(
-			join(templatesDirectory, 'configurations', '.biomeignore'),
-			join(projectName, '.biomeignore')
-		);
-	} else {
-		console.warn(
-			`${dim('│')}\n${yellow('▲')}  No code-quality tool selected or unsupported tool`
-		);
+	switch (codeQualityTool) {
+		case 'eslint+prettier':
+			copyFileSync(
+				join(templatesDirectory, 'configurations', 'eslint.config.mjs'),
+				join(projectName, 'eslint.config.mjs')
+			);
+			copyFileSync(
+				join(templatesDirectory, 'configurations', '.prettierignore'),
+				join(projectName, '.prettierignore')
+			);
+			const prettierrc = generatePrettierrc(frontends);
+			writeFileSync(join(projectName, '.prettierrc.json'), prettierrc);
+			break;
+		case 'biome':
+			copyFileSync(
+				join(templatesDirectory, 'configurations', 'biome.json'),
+				join(projectName, 'biome.json')
+			);
+			copyFileSync(
+				join(templatesDirectory, 'configurations', '.biomeignore'),
+				join(projectName, '.biomeignore')
+			);
+			break;
+		default:
+			console.warn(
+				`${dim('│')}\n${yellow('▲')}  No code-quality tool selected or unsupported tool`
+			);
 	}
 
 	generateEnv({
