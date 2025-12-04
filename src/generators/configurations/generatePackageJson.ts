@@ -187,7 +187,7 @@ export const createPackageJson = ({
 		case 'planetscale':
 			dependencies['@planetscale/database'] = resolveVersion(
 				'@planetscale/database',
-				'1.0.0'
+				'1.19.0'
 			);
 			break;
 		case 'turso':
@@ -244,6 +244,11 @@ export const createPackageJson = ({
 
 	if (isLocal && databaseEngine === 'singlestore') {
 		dependencies['mysql2'] = resolveVersion('mysql2', '3.14.2');
+	}
+
+	if (databaseEngine === 'postgresql' && databaseHost === 'planetscale') {
+		dependencies['pg'] = resolveVersion('pg', '8.11.0');
+		devDependencies['@types/pg'] = resolveVersion('@types/pg', '8.6.1');
 	}
 
 	if (isLocal && databaseEngine === 'mssql') {

@@ -113,7 +113,7 @@ const bunSqliteQueryOperations: QueryOperations = {
   return user ?? null`
 };
 
-const postgresNeonQueryOperations: QueryOperations = {
+const postgresQueryOperations: QueryOperations = {
 	insertHistory: `const { rows } = await db.query(
     'INSERT INTO count_history (count) VALUES ($1) RETURNING *',
     [count]
@@ -259,12 +259,10 @@ const mysqlSqlQueryOperations: QueryOperations = {
       VALUES (\${authSub}, \${JSON.stringify(userIdentity)})
     \`;
 
-    const insertId = result.lastInsertRowid;
-
     const [row] = await db\`
       SELECT *
       FROM users
-      WHERE uid = \${insertId}
+      WHERE auth_sub = \${authSub}
       LIMIT 1
     \`;
 
@@ -313,22 +311,75 @@ const mysqlDrizzleQueryOperations: QueryOperations = {
 
 	insertUser: `const [row] = await db
     .insert(schema.users)
-    .values({ auth_sub: authSub, metadata: userIdentity })
-    .$returningId();
-
-  if (!row) throw new Error('insert failed: no uid returned');
-  const { uid } = row;
+    .values({ auth_sub: authSub, metadata: userIdentity });
 
   const [newUser] = await db
     .select()
     .from(schema.users)
-    .where(eq(schema.users.uid, uid));
+    .where(eq(schema.users.auth_sub, authSub));
 
   if (!newUser) throw new Error('Failed to create user');
   return newUser;`,
 
 	selectHistory: drizzleQueryOperations.selectHistory,
 	selectUser: drizzleQueryOperations.selectUser
+};
+
+const mysqlPlanetScaleQueryOperations: QueryOperations = {
+	insertHistory: `
+    const result = await db.execute(
+      \`INSERT INTO count_history (count) VALUES (?)\`,
+      [count]
+    );
+
+    const insertId = result.insertId;
+    if (!insertId) throw new Error("Could not insert count history");
+
+    const { rows } = await db.execute(
+      \`SELECT * FROM count_history WHERE uid = ? LIMIT 1\`,
+      [insertId]
+    );
+
+    const row = rows[0] ?? null;
+    if (!row) throw new Error("Could not retrieve the newly-inserted history");
+
+    return row;
+  `,
+
+	insertUser: `
+    const result = await db.execute(
+      \`INSERT INTO users (auth_sub, metadata) VALUES (?, ?)\`,
+      [authSub, JSON.stringify(userIdentity)]
+    );
+
+    const { rows } = await db.execute(
+      \`SELECT * FROM users WHERE auth_sub = ? LIMIT 1\`,
+      [authSub]
+    );
+
+    const row = rows[0] ?? null;
+    if (!row) throw new Error("Failed to create user");
+
+    return row;
+  `,
+
+	selectHistory: `
+    const { rows } = await db.execute(
+      \`SELECT * FROM count_history WHERE uid = ? LIMIT 1\`,
+      [uid]
+    );
+
+    return rows[0] ?? null;
+  `,
+
+	selectUser: `
+    const { rows } = await db.execute(
+      \`SELECT * FROM users WHERE auth_sub = ? LIMIT 1\`,
+      [authSub]
+    );
+
+    return rows[0] ?? null;
+  `
 };
 
 const driverConfigurations = {
@@ -382,10 +433,23 @@ import { MySql2Database } from 'drizzle-orm/mysql2'
 import { schema, type SchemaType } from '../../../db/schema'`,
 		queries: mysqlDrizzleQueryOperations
 	},
+	'mysql:drizzle:planetscale': {
+		dbType: 'PlanetScaleDatabase<SchemaType>',
+		importLines: `
+import { eq } from 'drizzle-orm'
+import { PlanetScaleDatabase } from 'drizzle-orm/planetscale-serverless'
+import { schema, type SchemaType } from '../../../db/schema'`,
+		queries: mysqlDrizzleQueryOperations
+	},
 	'mysql:sql:local': {
 		dbType: 'SQL',
 		importLines: `import { SQL } from 'bun'`,
 		queries: mysqlSqlQueryOperations
+	},
+	'mysql:sql:planetscale': {
+		dbType: 'Client',
+		importLines: `import { Client } from '@planetscale/database'`,
+		queries: mysqlPlanetScaleQueryOperations
 	},
 	'postgresql:drizzle:local': {
 		dbType: 'BunSQLDatabase<SchemaType>',
@@ -403,6 +467,14 @@ import { NeonDatabase } from 'drizzle-orm/neon-serverless'
 import { schema, type SchemaType } from '../../../db/schema'`,
 		queries: drizzleQueryOperations
 	},
+	'postgresql:drizzle:planetscale': {
+		dbType: 'NodePgDatabase<SchemaType>',
+		importLines: `
+import { eq } from 'drizzle-orm'
+import { NodePgDatabase } from 'drizzle-orm/node-postgres'
+import { schema, type SchemaType } from '../../../db/schema'`,
+		queries: drizzleQueryOperations
+	},
 	'postgresql:sql:local': {
 		dbType: 'SQL',
 		importLines: `import { SQL } from 'bun'`,
@@ -411,7 +483,12 @@ import { schema, type SchemaType } from '../../../db/schema'`,
 	'postgresql:sql:neon': {
 		dbType: 'Pool',
 		importLines: `import { Pool } from '@neondatabase/serverless'`,
-		queries: postgresNeonQueryOperations
+		queries: postgresQueryOperations
+	},
+	'postgresql:sql:planetscale': {
+		dbType: 'Pool',
+		importLines: `import { Pool } from 'pg'`,
+		queries: postgresQueryOperations
 	},
 	'singlestore:sql:local': {
 		dbType: 'Pool',

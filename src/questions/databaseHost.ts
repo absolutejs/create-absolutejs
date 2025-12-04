@@ -18,6 +18,19 @@ export const getDatabaseHost = async (databaseEngine: DatabaseEngine) => {
 		return databaseHost === 'none' ? undefined : databaseHost;
 	}
 
+	if (databaseEngine === 'mysql') {
+		const databaseHost = await select({
+			message: 'Select database host:',
+			options: [
+				{ label: 'None', value: 'none' },
+				{ label: cyan('PlanetScale'), value: 'planetscale' }
+			]
+		});
+		if (isCancel(databaseHost)) abort();
+
+		return databaseHost === 'none' ? undefined : databaseHost;
+	}
+
 	if (databaseEngine === 'sqlite') {
 		const databaseHost = await select({
 			message: 'Select database host:',
