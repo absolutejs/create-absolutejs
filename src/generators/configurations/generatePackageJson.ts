@@ -135,7 +135,7 @@ export const createPackageJson = ({
 	}
 
 	if (flags.requiresReact) {
-		dependencies['react'] = resolveVersion('react', '19.2.0');
+		dependencies['react'] = resolveVersion('react', '19.2.1');
 		devDependencies['@types/react'] = resolveVersion(
 			'@types/react',
 			'19.2.0'

@@ -36,7 +36,7 @@ Options:
   ${cyan('--plugin')} ${dim(cyan('<plugin>'))}               Elysia plugin(s) to include (repeatable); 'none' skips plugin setup
   ${cyan('--react')}                         Include a React frontend
   ${cyan('--react-dir')} ${dim(cyan('<directory>'))}         Specify the directory for and use the React frontend
-  ${cyan('--skip')}                          Skip non-required prompts; uses 'none' for all optional configs
+  ${cyan('--skip')}                          Skip non-required prompts; use 'none' for all optional configs and "absolutejs-project" when no project name is provided.
   ${cyan('--svelte')}                        Include a Svelte frontend
   ${cyan('--svelte-dir')} ${dim(cyan('<directory>'))}        Specify the directory for and use the Svelte frontend
   ${cyan('--tailwind')}                      Include Tailwind CSS setup
