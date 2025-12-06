@@ -31,13 +31,7 @@ export const ProfilePicture = ({
 			/>
 		);
 	}
-
-	if (!givenName || !familyName) {
-		throw new Error(
-			'Internal Error: givenName and familyName are required when userImage is not provided.'
-		);
-	}
-
+	
 	const initials = `${givenName.charAt(0).toUpperCase()}${familyName.charAt(0).toUpperCase()}`;
 
 	return (
