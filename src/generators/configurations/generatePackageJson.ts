@@ -268,6 +268,11 @@ export const createPackageJson = ({
 		scripts['db:init'] = 'sqlite3 db/database.sqlite < db/init.sql';
 	}
 
+	if (orm === 'drizzle') {
+		scripts["db:studio"] = "drizzle-kit studio";
+		scripts["db:push"] = "drizzle-kit push";
+	}
+
 	const packageJson: PackageJson = {
 		dependencies,
 		devDependencies,
