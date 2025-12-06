@@ -31,7 +31,7 @@ export const ProfilePicture = ({
 			/>
 		);
 	}
-	
+
 	const initials = `${givenName.charAt(0).toUpperCase()}${familyName.charAt(0).toUpperCase()}`;
 
 	return (

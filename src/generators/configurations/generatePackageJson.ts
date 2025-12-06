@@ -269,8 +269,8 @@ export const createPackageJson = ({
 	}
 
 	if (orm === 'drizzle') {
-		scripts["db:studio"] = "drizzle-kit studio";
-		scripts["db:push"] = "drizzle-kit push";
+		scripts['db:studio'] = 'drizzle-kit studio';
+		scripts['db:push'] = 'drizzle-kit push';
 	}
 
 	const packageJson: PackageJson = {
