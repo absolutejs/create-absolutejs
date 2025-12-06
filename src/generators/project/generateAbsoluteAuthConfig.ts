@@ -24,10 +24,7 @@ const defaultProviderConfigurations: OAuth2ConfigurationDefaults = {
 			'https://www.googleapis.com/auth/userinfo.profile',
 			'https://www.googleapis.com/auth/userinfo.email'
 		],
-		searchParams: [
-			['access_type', 'offline'],
-			['prompt', 'consent']
-		]
+		searchParams: [['access_type', 'offline']]
 	}
 };
 

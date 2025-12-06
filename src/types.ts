@@ -12,6 +12,9 @@ import {
 } from './data';
 
 export type ScaffoldFrontendProps = {
+	absProviders: ProviderOption[] | undefined;
+	assetsDirectory: string;
+	authOption: AuthOption;
 	targetDirectory: string;
 	templatesDirectory: string;
 	projectAssetsDirectory: string;

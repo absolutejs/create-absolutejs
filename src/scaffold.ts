@@ -115,6 +115,9 @@ export const scaffold = async ({
 	);
 
 	scaffoldFrontends({
+		absProviders,
+		assetsDirectory,
+		authOption,
 		frontendDirectories,
 		frontendDirectory,
 		frontends,

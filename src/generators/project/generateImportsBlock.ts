@@ -106,10 +106,7 @@ export const generateImportsBlock = ({
 				? []
 				: [`import { getEnv } from '@absolutejs/absolute'`]),
 			...(authOption === 'abs'
-				? [
-						`import { schema } from '../../db/schema'`,
-						`import { User } from '../types/databaseTypes'`
-					]
+				? [`import { schema } from '../../db/schema'`]
 				: [`import { schema } from '../../db/schema'`])
 		]
 	} as const;
@@ -233,7 +230,9 @@ export const generateImportsBlock = ({
 
 	if (authOption === 'abs')
 		rawImports.push(
-			`import { absoluteAuthConfig } from './utils/absoluteAuthConfig'`
+			`import { absoluteAuthConfig } from './utils/absoluteAuthConfig'`,
+			`import { t } from 'elysia'`,
+			`import { authProviderOption, providers, userSessionIdTypebox, getStatus } from '@absolutejs/auth'`
 		);
 
 	if (hasDatabase && (authOption === undefined || authOption === 'none'))

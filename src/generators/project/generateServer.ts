@@ -85,6 +85,13 @@ export const generateServerFile = ({
 		})
 		.join('\n');
 
+	const guardBlock = `.guard({
+			cookie: t.Cookie({
+				auth_provider: t.Optional(authProviderOption),
+				user_session_id: userSessionIdTypebox
+			})
+		})`;
+
 	const routesBlock = generateRoutesBlock({
 		authOption,
 		buildDirectory,
@@ -98,6 +105,7 @@ ${manifestBlock}
 ${dbBlock}
 new Elysia()
 ${useBlock}
+${authOption === 'abs' ? guardBlock : ''}
   ${routesBlock}
   .on('error', err => {
     const { request } = err

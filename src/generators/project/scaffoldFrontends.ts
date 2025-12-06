@@ -9,7 +9,12 @@ import { scaffoldVue } from '../vue/scaffoldVue';
 
 type ScaffoldFrontendsProps = Pick<
 	CreateConfiguration,
-	'useHTMLScripts' | 'frontendDirectories' | 'frontends'
+	| 'useHTMLScripts'
+	| 'frontendDirectories'
+	| 'assetsDirectory'
+	| 'frontends'
+	| 'authOption'
+	| 'absProviders'
 > & {
 	frontendDirectory: string;
 	templatesDirectory: string;
@@ -18,6 +23,9 @@ type ScaffoldFrontendsProps = Pick<
 
 export const scaffoldFrontends = ({
 	frontendDirectory,
+	assetsDirectory,
+	absProviders,
+	authOption,
 	templatesDirectory,
 	projectAssetsDirectory,
 	useHTMLScripts,
@@ -53,6 +61,9 @@ export const scaffoldFrontends = ({
 		switch (frontendName) {
 			case 'react':
 				scaffoldReact({
+					absProviders,
+					assetsDirectory,
+					authOption,
 					frontends,
 					isSingleFrontend,
 					projectAssetsDirectory,
@@ -62,6 +73,9 @@ export const scaffoldFrontends = ({
 				break;
 			case 'svelte':
 				scaffoldSvelte({
+					absProviders,
+					assetsDirectory,
+					authOption,
 					frontends,
 					isSingleFrontend,
 					projectAssetsDirectory,
@@ -71,6 +85,9 @@ export const scaffoldFrontends = ({
 				break;
 			case 'vue':
 				scaffoldVue({
+					absProviders,
+					assetsDirectory,
+					authOption,
 					frontends,
 					projectAssetsDirectory,
 					targetDirectory,
@@ -84,6 +101,9 @@ export const scaffoldFrontends = ({
 				break;
 			case 'html':
 				scaffoldHTML({
+					absProviders,
+					assetsDirectory,
+					authOption,
 					frontends,
 					isSingleFrontend,
 					projectAssetsDirectory,
@@ -94,6 +114,9 @@ export const scaffoldFrontends = ({
 				break;
 			case 'htmx':
 				scaffoldHTMX({
+					absProviders,
+					assetsDirectory,
+					authOption,
 					frontends,
 					isSingleFrontend,
 					projectAssetsDirectory,
