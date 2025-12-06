@@ -1,7 +1,7 @@
-import { AuthProvider } from '../../types';
+import { AuthOption } from '../../types';
 
-export const generateSqliteSchema = (authProvider: AuthProvider) =>
-	authProvider && authProvider !== 'none'
+export const generateSqliteSchema = (authOption: AuthOption) =>
+	authOption && authOption !== 'none'
 		? `CREATE TABLE IF NOT EXISTS users (
   auth_sub TEXT PRIMARY KEY,
   created_at INTEGER NOT NULL DEFAULT ((julianday('now') - 2440587.5) * 86400000),

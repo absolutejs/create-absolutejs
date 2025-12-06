@@ -13,10 +13,11 @@ Options:
   ${cyan('--help, -h')}                      Show this help message and exit
   ${cyan('--debug, -d')}                     Display a summary of the project configuration after creation
 
+  ${cyan('--abs-provider')}                  A provider for Absolute-Auth (eg. 'google', 'github', 'discord') the full list is available at https://absolutejs.com/documentation/absolute-auth   
   ${cyan('--angular')}                       Include an Angular frontend
   ${cyan('--angular-dir')} ${dim(cyan('<directory>'))}       Specify the directory for and use the Angular frontend
   ${cyan('--assets')} ${dim(cyan('<directory>'))}            Directory name for your static assets
-  ${cyan('--auth')} ${dim(cyan('<plugin>'))}                 Pre-configured auth plugin (currently only "absolute-auth") or 'none'
+  ${cyan('--auth')} ${dim(cyan('<plugin>'))}                 Pre-configured auth plugin (currently only "abs") or 'none'
   ${cyan('--biome')}                         Use Biome for code quality and formatting
   ${cyan('--build')} ${dim(cyan('<directory>'))}             Output directory for build artifacts
   ${cyan('--db')} ${dim(cyan('<engine>'))}                   Database engine (postgresql | mysql | sqlite | mongodb | mariadb | gel | singlestore | cockroachdb | mssql) or 'none'
@@ -83,7 +84,7 @@ export const getDebugMessage = ({
 		databaseHost,
 		databaseDirectory,
 		orm,
-		authProvider,
+		authOption,
 		plugins,
 		initializeGitNow,
 		installDependenciesNow
@@ -123,7 +124,7 @@ export const getDebugMessage = ({
 		['Database Host',        databaseHost && databaseHost !== 'none' ? databaseHost : dim('None')],
 		['Database Directory',   databaseDirectory ?? dim('None')],
 		['ORM',                  orm ?? dim('None')],
-		['Auth Provider',        authProvider && authProvider !== 'none' ? authProvider : dim('None')],
+		['Auth Provider',        authOption && authOption !== 'none' ? authOption : dim('None')],
 		['Plugins',              plugins.length && !plugins.includes('none') ? plugins.join(', ') : dim('None')],
 		['Initialize Git',       initializeGitNow ? green('Yes') : red('No')],
 		['Install Dependencies', installDependenciesNow ? green('Yes') : red('No')],

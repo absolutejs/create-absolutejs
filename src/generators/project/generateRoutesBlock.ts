@@ -1,18 +1,18 @@
 import { isFrontend } from '../../typeGuards';
-import type { AuthProvider, FrontendDirectories } from '../../types';
+import type { AuthOption, FrontendDirectories } from '../../types';
 import type { FrameworkFlags } from './computeFlags';
 
 type GenerateRoutesBlockProps = {
 	flags: FrameworkFlags;
 	frontendDirectories: FrontendDirectories;
-	authProvider: AuthProvider;
+	authOption: AuthOption;
 	buildDirectory: string;
 };
 
 export const generateRoutesBlock = ({
 	flags,
 	frontendDirectories,
-	authProvider,
+	authOption,
 	buildDirectory
 }: GenerateRoutesBlockProps) => {
 	const routes: string[] = [];
@@ -91,7 +91,7 @@ export const generateRoutesBlock = ({
 		}
 	);
 
-	if (authProvider === undefined || authProvider === 'none') {
+	if (authOption === undefined || authOption === 'none') {
 		routes.push(
 			`.get('/count/:uid', ({ params: { uid } }) => getCountHistory(db, uid), {
     params: t.Object({

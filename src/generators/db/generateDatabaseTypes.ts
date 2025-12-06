@@ -1,16 +1,16 @@
 import { isDrizzleDialect } from '../../typeGuards';
-import { AuthProvider, DatabaseEngine, DatabaseHost } from '../../types';
+import { AuthOption, DatabaseEngine, DatabaseHost } from '../../types';
 
 type GenerateTypesProps = {
 	databaseEngine: DatabaseEngine;
 	databaseHost: DatabaseHost;
-	authProvider: AuthProvider;
+	authOption: AuthOption;
 };
 
 export const generateDatabaseTypes = ({
 	databaseEngine,
 	databaseHost,
-	authProvider
+	authOption
 }: GenerateTypesProps) => {
 	let dbImport = '';
 	let dbTypeLine = '';
@@ -68,11 +68,11 @@ export const generateDatabaseTypes = ({
 	}
 
 	const schemaImport =
-		authProvider === 'absoluteAuth'
-			? `import { users, SchemaType } from '../../db/schema';`
-			: `import { countHistory, SchemaType } from '../../db/schema';`;
+		authOption === 'abs'
+			? `import { users, schema } from '../../db/schema';`
+			: `import { countHistory } from '../../db/schema';`;
 	const extraTypes =
-		authProvider === 'absoluteAuth'
+		authOption === 'abs'
 			? `export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;`
 			: `export type CountHistory = typeof countHistory.$inferSelect;
@@ -81,6 +81,6 @@ export type NewCountHistory = typeof countHistory.$inferInsert;`;
 	return `${schemaImport}
 ${dbImport}
 
-${dbTypeLine ? `${dbTypeLine}\n\n` : '\n'}${extraTypes}
+${`${dbTypeLine}\n`}export type SchemaType = typeof schema;\n\n${extraTypes}
 `;
 };

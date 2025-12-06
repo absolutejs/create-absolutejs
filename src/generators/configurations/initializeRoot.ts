@@ -1,5 +1,5 @@
-import { copyFileSync, existsSync, mkdirSync } from 'node:fs';
-import { join } from 'node:path';
+import { copyFileSync, existsSync, mkdirSync } from 'fs';
+import { join } from 'path';
 
 export const initalizeRoot = (
 	projectName: string,

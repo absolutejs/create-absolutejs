@@ -6,7 +6,7 @@ import {
 	frontendLabels
 } from './data';
 import type {
-	AuthProvider,
+	AuthOption,
 	AvailableDrizzleDialect,
 	CodeQualityTool,
 	DatabaseEngine,
@@ -15,10 +15,10 @@ import type {
 	ORM
 } from './types';
 
-export const isAuthProvider = (
+export const isValidAuthOption = (
 	value: string | undefined
-): value is AuthProvider =>
-	value === 'absoluteAuth' || value === 'none' || value === undefined;
+): value is AuthOption =>
+	value === 'abs' || value === 'none' || value === undefined;
 
 export const isDirectoryConfig = (
 	value: string

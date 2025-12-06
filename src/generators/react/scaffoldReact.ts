@@ -2,7 +2,10 @@ import { copyFileSync, cpSync, mkdirSync, writeFileSync } from 'fs';
 import { join } from 'path';
 import { ScaffoldFrontendProps } from '../../types';
 import { generateMarkupCSS } from '../project/generateMarkupCSS';
-import { generateDropdownComponent } from './generateReactPage';
+import {
+	generateDropdownComponent,
+	generateReactExamplePage
+} from './generateReactComponents';
 
 export const scaffoldReact = ({
 	isSingleFrontend,
@@ -23,6 +26,14 @@ export const scaffoldReact = ({
 	writeFileSync(
 		join(targetDirectory, 'components', 'Dropdown.tsx'),
 		dropdownComponent,
+		'utf-8'
+	);
+
+	const pageComponent = generateReactExamplePage();
+	mkdirSync(join(targetDirectory, 'pages'), { recursive: true });
+	writeFileSync(
+		join(targetDirectory, 'pages', 'ReactExample.tsx'),
+		pageComponent,
 		'utf-8'
 	);
 

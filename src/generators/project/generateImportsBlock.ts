@@ -9,7 +9,7 @@ type GenerateImportsBlockProps = {
 	deps: AvailableDependency[];
 	flags: FrameworkFlags;
 	orm: CreateConfiguration['orm'];
-	authProvider: CreateConfiguration['authProvider'];
+	authOption: CreateConfiguration['authOption'];
 	databaseEngine: CreateConfiguration['databaseEngine'];
 	databaseHost: CreateConfiguration['databaseHost'];
 	frontendDirectories: CreateConfiguration['frontendDirectories'];
@@ -20,7 +20,7 @@ export const generateImportsBlock = ({
 	deps,
 	flags,
 	orm,
-	authProvider,
+	authOption,
 	databaseEngine,
 	databaseHost,
 	frontendDirectories
@@ -81,13 +81,13 @@ export const generateImportsBlock = ({
 		);
 
 	const connectorImports = {
-		neon: [`import { Pool } from '@neondatabase/serverless'`],
+		neon: [`import { neon } from '@neondatabase/serverless'`],
 		planetscale: [`import { Client } from '@planetscale/database'`],
 		turso: [`import { createClient } from '@libsql/client'`]
 	} as const;
 
 	const dialectImports = {
-		neon: [`import { drizzle } from 'drizzle-orm/neon-serverless'`],
+		neon: [`import { drizzle } from 'drizzle-orm/neon-http'`],
 		planetscale: [
 			`import { drizzle } from 'drizzle-orm/planetscale-serverless'`
 		],
@@ -105,7 +105,7 @@ export const generateImportsBlock = ({
 			...(databaseEngine === 'sqlite' && !isRemoteHost
 				? []
 				: [`import { getEnv } from '@absolutejs/absolute'`]),
-			...(authProvider === 'absoluteAuth'
+			...(authOption === 'abs'
 				? [
 						`import { schema } from '../../db/schema'`,
 						`import { User } from '../types/databaseTypes'`
@@ -231,17 +231,12 @@ export const generateImportsBlock = ({
 		rawImports.push(...noOrmImports[databaseEngine]);
 	}
 
-	if (authProvider === 'absoluteAuth')
+	if (authOption === 'abs')
 		rawImports.push(
-			`import { absoluteAuth, instantiateUserSession } from '@absolutejs/auth'`,
-			...(hasDatabase
-				? [
-						`import { createUser, getUser } from './handlers/userHandlers'`
-					]
-				: [])
+			`import { absoluteAuthConfig } from './utils/absoluteAuthConfig'`
 		);
 
-	if (hasDatabase && (authProvider === undefined || authProvider === 'none'))
+	if (hasDatabase && (authOption === undefined || authOption === 'none'))
 		rawImports.push(
 			`import { getCountHistory, createCountHistory } from './handlers/countHistoryHandlers'`,
 			`import { t } from 'elysia'`

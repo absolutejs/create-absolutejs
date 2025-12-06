@@ -1,5 +1,5 @@
-import { copyFileSync, cpSync, mkdirSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { copyFileSync, cpSync, mkdirSync, writeFileSync } from 'fs';
+import { join } from 'path';
 import { ScaffoldFrontendProps } from '../../types';
 import { generateMarkupCSS } from '../project/generateMarkupCSS';
 import { generateHTMLPage } from './generateHTMLPage';

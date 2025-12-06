@@ -9,6 +9,7 @@
 	},
 	"description": "A CLI tool to create a new AbsoluteJS project",
 	"devDependencies": {
+		"@absolutejs/auth": "0.21.1",
 		"@stylistic/eslint-plugin-ts": "4.2.0",
 		"@types/bun": "latest",
 		"@types/react": "19.1.4",
@@ -47,5 +48,5 @@
 		"typecheck": "bun run tsc --noEmit"
 	},
 	"type": "module",
-	"version": "0.5.1"
+	"version": "0.6.0"
 }

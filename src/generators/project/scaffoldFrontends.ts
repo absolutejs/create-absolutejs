@@ -1,5 +1,5 @@
-import { cpSync, mkdirSync } from 'node:fs';
-import { join } from 'node:path';
+import { cpSync, mkdirSync } from 'fs';
+import { join } from 'path';
 import type { CreateConfiguration } from '../../types';
 import { scaffoldHTML } from '../html/scaffoldHTML';
 import { scaffoldHTMX } from '../htmx/scaffoldHTMX';

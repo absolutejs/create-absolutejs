@@ -1,7 +1,7 @@
 import { writeFileSync } from 'fs';
 import { join } from 'path';
 import { $ } from 'bun';
-import { AuthProvider, DatabaseEngine } from '../../types';
+import { AuthOption, DatabaseEngine } from '../../types';
 import { checkDockerInstalled } from '../../utils/checkDockerInstalled';
 import {
 	countHistoryTables,
@@ -13,7 +13,7 @@ import { generateDockerContainer } from './generateDockerContainer';
 type ScaffoldDockerProps = {
 	databaseEngine: DatabaseEngine;
 	projectDatabaseDirectory: string;
-	authProvider: AuthProvider;
+	authOption: AuthOption;
 	projectName: string;
 };
 
@@ -21,7 +21,7 @@ export const scaffoldDocker = async ({
 	databaseEngine,
 	projectDatabaseDirectory,
 	projectName,
-	authProvider
+	authOption
 }: ScaffoldDockerProps) => {
 	if (
 		databaseEngine === undefined ||
@@ -44,7 +44,7 @@ export const scaffoldDocker = async ({
 	if (databaseEngine === 'mongodb') {
 	} else {
 		const { wait, cli } = initTemplates[databaseEngine];
-		const usesAuth = authProvider !== undefined && authProvider !== 'none';
+		const usesAuth = authOption !== undefined && authOption !== 'none';
 		const dbCommand = usesAuth
 			? userTables[databaseEngine]
 			: countHistoryTables[databaseEngine];

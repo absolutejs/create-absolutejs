@@ -18,7 +18,7 @@ type ScaffoldDatabaseProps = Pick<
 	| 'databaseHost'
 	| 'orm'
 	| 'databaseDirectory'
-	| 'authProvider'
+	| 'authOption'
 	| 'databaseEngine'
 > & {
 	databaseDirectory: string;
@@ -32,7 +32,7 @@ export const scaffoldDatabase = async ({
 	databaseHost,
 	databaseDirectory,
 	backendDirectory,
-	authProvider,
+	authOption,
 	orm,
 	typesDirectory
 }: ScaffoldDatabaseProps) => {
@@ -41,7 +41,7 @@ export const scaffoldDatabase = async ({
 	mkdirSync(projectDatabaseDirectory, { recursive: true });
 	mkdirSync(handlerDirectory, { recursive: true });
 
-	const usesAuth = authProvider !== undefined && authProvider !== 'none';
+	const usesAuth = authOption !== undefined && authOption !== 'none';
 	const handlerFileName = usesAuth
 		? 'userHandlers.ts'
 		: 'countHistoryHandlers.ts';
@@ -58,7 +58,7 @@ export const scaffoldDatabase = async ({
 			(orm === undefined || orm === 'none') &&
 			(await checkSqliteInstalled())
 		);
-		const sqliteSchema = generateSqliteSchema(authProvider);
+		const sqliteSchema = generateSqliteSchema(authOption);
 		writeFileSync(
 			join(projectDatabaseDirectory, 'schema.sql'),
 			sqliteSchema
@@ -76,7 +76,7 @@ export const scaffoldDatabase = async ({
 		databaseEngine !== 'none'
 	) {
 		await scaffoldDocker({
-			authProvider,
+			authOption,
 			databaseEngine,
 			projectDatabaseDirectory,
 			projectName
@@ -89,7 +89,7 @@ export const scaffoldDatabase = async ({
 		}
 
 		const drizzleSchema = generateDrizzleSchema({
-			authProvider,
+			authOption,
 			databaseEngine
 		});
 		writeFileSync(
@@ -99,7 +99,7 @@ export const scaffoldDatabase = async ({
 		createDrizzleConfig({ databaseDirectory, databaseEngine, projectName });
 
 		const drizzleTypes = generateDatabaseTypes({
-			authProvider,
+			authOption,
 			databaseEngine,
 			databaseHost
 		});

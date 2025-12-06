@@ -17,7 +17,7 @@ import { computeFlags } from '../project/computeFlags';
 
 type CreatePackageJsonProps = Pick<
 	CreateConfiguration,
-	| 'authProvider'
+	| 'authOption'
 	| 'useTailwind'
 	| 'databaseEngine'
 	| 'databaseHost'
@@ -66,7 +66,7 @@ const dbScripts = {
 
 export const createPackageJson = ({
 	projectName,
-	authProvider,
+	authOption,
 	plugins,
 	databaseEngine,
 	orm,
@@ -96,7 +96,7 @@ export const createPackageJson = ({
 		dependencies[dep.value] = resolveVersion(dep.value, dep.latestVersion);
 	}
 
-	if (authProvider === 'absoluteAuth') {
+	if (authOption === 'abs') {
 		dependencies[absoluteAuthPlugin.value] = resolveVersion(
 			absoluteAuthPlugin.value,
 			absoluteAuthPlugin.latestVersion

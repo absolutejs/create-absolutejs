@@ -1,4 +1,4 @@
-import { writeFileSync, mkdirSync } from 'fs';
+import { writeFileSync } from 'fs';
 import { join } from 'path';
 import type { CreateConfiguration } from '../../types';
 import { collectDependencies } from './collectDependencies';
@@ -7,12 +7,11 @@ import { generateBuildBlock } from './generateBuildBlock';
 import { generateDBBlock } from './generateDBBlock';
 import { generateImportsBlock } from './generateImportsBlock';
 import { generateRoutesBlock } from './generateRoutesBlock';
-import { generateUseBlock } from './generateUseBlock';
 
 type CreateServerFileProps = Pick<
 	CreateConfiguration,
 	| 'tailwind'
-	| 'authProvider'
+	| 'authOption'
 	| 'databaseEngine'
 	| 'plugins'
 	| 'buildDirectory'
@@ -26,7 +25,7 @@ type CreateServerFileProps = Pick<
 
 export const generateServerFile = ({
 	tailwind,
-	authProvider,
+	authOption,
 	plugins,
 	buildDirectory,
 	databaseEngine,
@@ -39,10 +38,10 @@ export const generateServerFile = ({
 	const serverFilePath = join(backendDirectory, 'server.ts');
 
 	const flags = computeFlags(frontendDirectories);
-	const deps = collectDependencies({ authProvider, flags, plugins });
+	const deps = collectDependencies({ authOption, flags, plugins });
 
 	const importsBlock = generateImportsBlock({
-		authProvider,
+		authOption,
 		backendDirectory,
 		databaseEngine,
 		databaseHost,
@@ -64,13 +63,30 @@ export const generateServerFile = ({
 		dbBlock = generateDBBlock({ databaseEngine, databaseHost, orm });
 	}
 
-	const useBlock = generateUseBlock({
-		databaseEngine,
-		deps,
-		orm
-	});
+	const useBlock = deps
+		.flatMap((dependency) => dependency.imports ?? [])
+		.filter((pluginImport) => pluginImport.isPlugin)
+		.map((pluginImport) => {
+			if (pluginImport.packageName === 'absoluteAuth') {
+				return `.use(absoluteAuth(absoluteAuthConfig(db)))`;
+			}
+
+			if (pluginImport.config === undefined) {
+				return `.use(${pluginImport.packageName})`;
+			}
+
+			if (pluginImport.config === null) {
+				return `.use(${pluginImport.packageName}())`;
+			}
+
+			return `.use(${pluginImport.packageName}(${JSON.stringify(
+				pluginImport.config
+			)}))`;
+		})
+		.join('\n');
+
 	const routesBlock = generateRoutesBlock({
-		authProvider,
+		authOption,
 		buildDirectory,
 		flags,
 		frontendDirectories
@@ -88,7 +104,5 @@ ${useBlock}
     console.error(\`Server error on \${request.method} \${request.url}: \${err.message}\`)
   });
 `;
-
-	mkdirSync(backendDirectory, { recursive: true });
 	writeFileSync(serverFilePath, content);
 };

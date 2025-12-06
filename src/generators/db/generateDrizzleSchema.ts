@@ -1,4 +1,4 @@
-import { AuthProvider, AvailableDrizzleDialect } from '../../types';
+import { AuthOption, AvailableDrizzleDialect } from '../../types';
 
 const DIALECTS = {
 	gel: {
@@ -53,14 +53,14 @@ const DIALECTS = {
 
 type GenerateSchemaProps = {
 	databaseEngine: AvailableDrizzleDialect;
-	authProvider: AuthProvider;
+	authOption: AuthOption;
 };
 
 const builder = (expr: string) => expr.split('(')[0];
 
 export const generateDrizzleSchema = ({
 	databaseEngine,
-	authProvider
+	authOption
 }: GenerateSchemaProps) => {
 	const cfg = DIALECTS[databaseEngine];
 	const intBuilder =
@@ -74,7 +74,7 @@ export const generateDrizzleSchema = ({
 	const stringBuilder = builder(cfg.string);
 
 	const importBuilders =
-		authProvider === 'absoluteAuth'
+		authOption === 'abs'
 			? [cfg.table, stringBuilder, timeBuilder, jsonBuilder]
 			: [cfg.table, intBuilder, timeBuilder];
 	const uniqueBuilders = Array.from(new Set(importBuilders));
@@ -112,7 +112,7 @@ const MILLIS_PER_DAY = 86400000;\n\n`
 			: `${cfg.time}.notNull().defaultNow()`;
 
 	const tableBlock =
-		authProvider === 'absoluteAuth'
+		authOption === 'abs'
 			? `export const users = ${cfg.table}('users', {
   auth_sub: ${cfg.string}.primaryKey(),
   created_at: ${timestampColumn},
@@ -124,8 +124,7 @@ const MILLIS_PER_DAY = 86400000;\n\n`
   created_at: ${timestampColumn}
 });`;
 
-	const schemaKey =
-		authProvider === 'absoluteAuth' ? 'users' : 'countHistory';
+	const schemaKey = authOption === 'abs' ? 'users' : 'countHistory';
 
 	return `
 ${sqliteImports}${builderImport}
@@ -135,7 +134,5 @@ ${constsBlock}${tableBlock}
 export const schema = {
   ${schemaKey}
 };
-
-export type SchemaType = typeof schema;
 `;
 };

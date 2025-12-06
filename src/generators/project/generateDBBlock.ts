@@ -25,7 +25,7 @@ const connectionMap: Record<string, Record<string, DBExpr>> = {
 	},
 	postgresql: {
 		neon: {
-			expr: 'new Pool({ connectionString: getEnv("DATABASE_URL") })'
+			expr: 'neon(getEnv("DATABASE_URL"));'
 		},
 		none: { expr: 'new SQL(getEnv("DATABASE_URL"))' },
 		planetscale: {
@@ -42,7 +42,7 @@ const connectionMap: Record<string, Record<string, DBExpr>> = {
 };
 
 const remoteDrizzleInit: Record<string, string> = {
-	neon: 'new Pool({ connectionString: getEnv("DATABASE_URL") })',
+	neon: 'neon(getEnv("DATABASE_URL"));',
 	planetscale: 'new Client({ url: getEnv("DATABASE_URL") })',
 	turso: 'createClient({ url: getEnv("DATABASE_URL") })'
 };
@@ -87,6 +87,13 @@ export const generateDBBlock = ({
 		return `
 const pool = createPool(getEnv("DATABASE_URL"))
 const db = drizzle(pool, { schema, mode: 'default' })
+`;
+	}
+
+	if (databaseEngine === 'postgresql' && databaseHost === 'neon') {
+		return `
+		const sql = neon(getEnv('DATABASE_URL'));
+const db = drizzle(sql, { schema });
 `;
 	}
 

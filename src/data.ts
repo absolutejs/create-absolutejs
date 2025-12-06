@@ -9,7 +9,7 @@ export const availableFrontends = [
 	'vue',
 	'htmx'
 ] as const;
-export const availableAuthProviders = ['absoluteAuth', 'none'] as const;
+export const availableAuthProviders = ['abs', 'none'] as const;
 
 export const availableDrizzleDialects = [
 	'gel',
@@ -94,7 +94,7 @@ export const absoluteAuthPlugin: AvailableDependency = {
 			packageName: 'absoluteAuth'
 		}
 	],
-	latestVersion: '0.20.3',
+	latestVersion: '0.21.1',
 	value: '@absolutejs/auth'
 };
 
