@@ -33,5 +33,25 @@ export const generateBuildBlock = ({
 		(f) => frontendDirectories[f] === undefined
 	);
 
-	return `${nonFrameworkOnly ? '' : 'const manifest = '}await build({\n  ${opts}\n});`;
+	// For non-framework projects, we don't need manifest or HMR
+	if (nonFrameworkOnly) {
+		return `await build({\n  ${opts}\n});`;
+	}
+
+	// For framework projects, conditionally use dev() or build() based on NODE_ENV
+	return `const isDev = process.env.NODE_ENV === 'development';
+
+let manifest, hmrState;
+
+if (isDev) {
+  const devResult = await dev({
+  ${opts}
+});
+  manifest = devResult.manifest;
+  hmrState = devResult.hmrState;
+} else {
+  manifest = await build({
+  ${opts}
+});
+}`;
 };

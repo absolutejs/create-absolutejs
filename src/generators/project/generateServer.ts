@@ -63,7 +63,15 @@ export const generateServerFile = ({
 		dbBlock = generateDBBlock({ databaseEngine, databaseHost, orm });
 	}
 
-	const useBlock = deps
+	const frameworks: Array<'react' | 'svelte' | 'vue'> = ['react', 'svelte', 'vue'];
+	const hasFrameworks = frameworks.some((f) => frontendDirectories[f] !== undefined);
+
+	// Add HMR plugin for framework projects in development mode
+	const hmrPlugin = hasFrameworks ? `.use(isDev ? hmr(hmrState, manifest) : (app) => app)` : '';
+
+	const useBlock = [
+		hmrPlugin,
+		...deps
 		.flatMap((dependency) => dependency.imports ?? [])
 		.filter((pluginImport) => pluginImport.isPlugin)
 		.map((pluginImport) => {
@@ -83,6 +91,8 @@ export const generateServerFile = ({
 				pluginImport.config
 			)}))`;
 		})
+	]
+		.filter(Boolean)
 		.join('\n');
 
 	const guardBlock = `.guard({

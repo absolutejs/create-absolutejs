@@ -31,6 +31,9 @@ export const generateImportsBlock = ({
 		cond &&
 		rawImports.push(`import { ${name} } from '@absolutejs/absolute'`);
 
+	// Always add dev, hmr, build for development mode support
+	rawImports.push(`import { dev, hmr, build, asset } from '@absolutejs/absolute'`);
+
 	pushHandler(flags.requiresHtml, 'handleHTMLPageRequest');
 	pushHandler(flags.requiresReact, 'handleReactPageRequest');
 	pushHandler(flags.requiresSvelte, 'handleSveltePageRequest');
@@ -38,17 +41,10 @@ export const generateImportsBlock = ({
 	pushHandler(flags.requiresVue, 'generateHeadElement');
 	pushHandler(flags.requiresHtmx, 'handleHTMXPageRequest');
 
-	const nonFrameworkOnly =
-		(flags.requiresHtml || flags.requiresHtmx) &&
-		!flags.requiresReact &&
-		!flags.requiresSvelte &&
-		!flags.requiresVue;
-
+	// Process other dependencies (asset is already imported above)
 	for (const dependency of deps) {
 		const importsList = dependency.imports ?? [];
-		const relevantImports = nonFrameworkOnly
-			? importsList.filter((imp) => imp.packageName !== 'asset')
-			: importsList;
+		const relevantImports = importsList.filter((imp) => imp.packageName !== 'asset');
 		if (relevantImports.length === 0) continue;
 		rawImports.push(
 			`import { ${relevantImports
