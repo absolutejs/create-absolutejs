@@ -168,6 +168,11 @@ export const eslintReactDependencies: AvailableDependency[] = [
 	}
 ];
 
+export const biomeDependency: AvailableDependency = {
+	latestVersion: '2.3.5',
+	value: '@biomejs/biome'
+};
+
 export const defaultDependencies: AvailableDependency[] = [
 	{
 		imports: [{ isPlugin: false, packageName: 'Elysia' }],
