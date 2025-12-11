@@ -171,7 +171,7 @@ export const eslintReactDependencies: AvailableDependency[] = [
 export const defaultDependencies: AvailableDependency[] = [
 	{
 		imports: [{ isPlugin: false, packageName: 'Elysia' }],
-		latestVersion: '1.4.9',
+		latestVersion: '1.4.18',
 		value: 'elysia'
 	}
 ];
