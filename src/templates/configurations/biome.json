@@ -1,0 +1,78 @@
+{
+	"$schema": "https://biomejs.dev/schemas/2.3.5/schema.json",
+	"files": {
+		"includes": ["**/*"]
+	},
+	"formatter": {
+		"enabled": true,
+		"indentStyle": "tab",
+		"indentWidth": 4,
+		"lineWidth": 80
+	},
+	"linter": {
+		"enabled": true,
+		"rules": {
+			"recommended": true,
+			"a11y": {
+				"recommended": true,
+				"useHtmlLang": "off",
+				"useButtonType": "off"
+			},
+			"performance": { "recommended": true },
+			"security": {
+				"recommended": true,
+				"noBlankTarget": "off"
+			},
+			"correctness": { "noUnusedVariables": "warn" },
+			"complexity": { "noUselessCatch": "warn" },
+			"style": {
+				"useBlockStatements": "error",
+				"useConst": "error",
+				"noParameterAssign": "warn"
+			}
+		}
+	},
+	"javascript": {
+		"formatter": {
+			"quoteStyle": "single",
+			"semicolons": "always"
+		}
+	},
+	"assist": {
+		"enabled": true,
+		"actions": {
+			"source": {
+				"organizeImports": "on"
+			}
+		}
+	},
+	"overrides": [
+		{
+			"includes": ["**/*.md", "**/*.mdx"],
+			"formatter": { "lineWidth": 80 }
+		},
+		{
+			"includes": ["**/*.{yml,yaml}"],
+			"formatter": { "indentStyle": "space", "indentWidth": 2 }
+		},
+		{
+			"includes": [
+				"**/*.json",
+				"**/*.jsonc",
+				"**/*.json5",
+				"tsconfig.json",
+				"tsconfig.*.json"
+			],
+			"formatter": {
+				"indentStyle": "space",
+				"indentWidth": 2,
+				"enabled": false
+			},
+			"linter": { "enabled": false }
+		},
+		{
+			"includes": ["**/*.{config,cfg}.{js,ts,mjs,cjs}"],
+			"linter": { "rules": { "complexity": { "recommended": false } } }
+		}
+	]
+}
