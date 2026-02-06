@@ -48,7 +48,12 @@ export const scaffoldBackend = ({
 
 	if (authOption === 'abs') {
 		mkdirSync(join(backendDirectory, 'utils'), { recursive: true });
-		const absoluteAuthConfig = generateAbsoluteAuthConfig(absProviders);
+		const hasDatabase =
+			databaseEngine !== undefined && databaseEngine !== 'none';
+		const absoluteAuthConfig = generateAbsoluteAuthConfig(
+			absProviders,
+			hasDatabase
+		);
 		writeFileSync(
 			join(backendDirectory, 'utils', 'absoluteAuthConfig.ts'),
 			absoluteAuthConfig,

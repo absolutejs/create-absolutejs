@@ -29,7 +29,8 @@ const defaultProviderConfigurations: OAuth2ConfigurationDefaults = {
 };
 
 export const generateAbsoluteAuthConfig = (
-	absProviders: ProviderOption[] | undefined
+	absProviders: ProviderOption[] | undefined,
+	hasDatabase: boolean
 ) => {
 	const providerConfigs = (absProviders ?? [])
 		.map((provider) => {
@@ -71,6 +72,18 @@ ${credentialsLines}
 		})
 		.filter((entry): entry is string => entry !== null)
 		.join(',\n');
+
+	if (!hasDatabase) {
+		return `import { getEnv } from '@absolutejs/absolute';
+import { AbsoluteAuthProps } from '@absolutejs/auth';
+
+export const absoluteAuthConfig = (): AbsoluteAuthProps => ({
+	providersConfiguration: {
+${providerConfigs}
+	}
+});
+`;
+	}
 
 	return `import { getEnv } from '@absolutejs/absolute';
 import {

@@ -24,7 +24,8 @@ export const formatProject = async ({
 			: formatNoInstallCommands[packageManager];
 
 		spin.start('Formatting files…');
-		await $`sh -c ${fmt}`.cwd(projectName).quiet();
+		const [bin, ...args] = fmt.split(' ');
+		await $`${bin} ${args}`.cwd(projectName).quiet();
 		spin.stop(green('Files formatted'));
 	} catch (err) {
 		spin.stop(red('Failed to format files'), 1);

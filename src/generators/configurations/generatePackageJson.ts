@@ -135,7 +135,8 @@ export const createPackageJson = ({
 	}
 
 	if (flags.requiresReact) {
-		dependencies['react'] = resolveVersion('react', '19.2.1');
+		dependencies['react'] = resolveVersion('react', '19.2.4');
+		dependencies['react-dom'] = resolveVersion('react-dom', '19.2.4');
 		devDependencies['@types/react'] = resolveVersion(
 			'@types/react',
 			'19.2.0'
@@ -201,7 +202,7 @@ export const createPackageJson = ({
 	if (latest) s.stop(green('Package versions resolved'));
 
 	const scripts: PackageJson['scripts'] = {
-		dev: 'bash -c \'trap "exit 0" INT; bun run --watch src/backend/server.ts\'',
+		dev: 'bun run --watch src/backend/server.ts',
 		format: `prettier --write "./**/*.{js,ts,css,json,mjs,md${flags.requiresReact ? ',jsx,tsx' : ''}${flags.requiresSvelte ? ',svelte' : ''}${flags.requiresVue ? ',vue' : ''}${flags.requiresHtml || flags.requiresHtmx ? ',html' : ''}}"`,
 		lint: 'eslint ./src',
 		test: 'echo "Error: no test specified" && exit 1',
