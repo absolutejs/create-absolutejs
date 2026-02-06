@@ -123,7 +123,8 @@ export const scaffold = async ({
 		frontends,
 		projectAssetsDirectory,
 		templatesDirectory,
-		useHTMLScripts
+		useHTMLScripts,
+		useTailwind
 	});
 
 	if (installDependenciesNow) {

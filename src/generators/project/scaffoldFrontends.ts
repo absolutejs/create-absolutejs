@@ -1,4 +1,4 @@
-import { cpSync, mkdirSync } from 'fs';
+import { copyFileSync, cpSync, mkdirSync } from 'fs';
 import { join } from 'path';
 import type { CreateConfiguration } from '../../types';
 import { scaffoldHTML } from '../html/scaffoldHTML';
@@ -15,6 +15,7 @@ type ScaffoldFrontendsProps = Pick<
 	| 'frontends'
 	| 'authOption'
 	| 'absProviders'
+	| 'useTailwind'
 > & {
 	frontendDirectory: string;
 	templatesDirectory: string;
@@ -29,6 +30,7 @@ export const scaffoldFrontends = ({
 	templatesDirectory,
 	projectAssetsDirectory,
 	useHTMLScripts,
+	useTailwind,
 	frontendDirectories,
 	frontends
 }: ScaffoldFrontendsProps) => {
@@ -36,6 +38,13 @@ export const scaffoldFrontends = ({
 	cpSync(join(templatesDirectory, 'styles'), stylesTargetDirectory, {
 		recursive: true
 	});
+
+	if (useTailwind) {
+		copyFileSync(
+			join(templatesDirectory, 'tailwind', 'tailwind.css'),
+			join(stylesTargetDirectory, 'tailwind.css')
+		);
+	}
 
 	const frontendEntries = Object.entries(frontendDirectories);
 	const isSingleFrontend = frontendEntries.length === 1;
