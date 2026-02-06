@@ -284,7 +284,10 @@ export const createPackageJson = ({
 	}
 
 	if (databaseEngine === 'mongodb') {
-		dependencies['mongodb'] = resolveVersion('mongodb', versions['mongodb']);
+		dependencies['mongodb'] = resolveVersion(
+			'mongodb',
+			versions['mongodb']
+		);
 	}
 
 	if (isLocal && databaseEngine === 'sqlite') {

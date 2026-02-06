@@ -2,7 +2,10 @@ import { writeFileSync } from 'fs';
 import { join } from 'path';
 import { $ } from 'bun';
 import { AuthOption, DatabaseEngine } from '../../types';
-import { checkDockerInstalled } from '../../utils/checkDockerInstalled';
+import {
+	checkDockerInstalled,
+	ensureDockerDaemonRunning
+} from '../../utils/checkDockerInstalled';
 import {
 	countHistoryTables,
 	initTemplates,
@@ -34,6 +37,7 @@ export const scaffoldDocker = async ({
 	}
 
 	await checkDockerInstalled();
+	await ensureDockerDaemonRunning();
 	const dbContainer = generateDockerContainer(databaseEngine);
 	writeFileSync(
 		join(projectDatabaseDirectory, 'docker-compose.db.yml'),

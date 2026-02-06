@@ -189,9 +189,66 @@ const installLinux = async () => {
 	return false;
 };
 
+const DAEMON_POLL_INTERVAL_MS = 1000;
+const DAEMON_TIMEOUT_MS = 60_000;
+
 export const hasDocker = async () =>
 	(await $`docker --version`.quiet().nothrow()).exitCode === 0 &&
 	(await $`docker compose version`.quiet().nothrow()).exitCode === 0;
+
+export const isDockerDaemonRunning = async () =>
+	(await $`docker info`.quiet().nothrow()).exitCode === 0;
+
+const waitForDockerDaemon = async () => {
+	const spin = spinner();
+	spin.start('Waiting for Docker daemon…');
+	const start = Date.now();
+	while (Date.now() - start < DAEMON_TIMEOUT_MS) {
+		if (await isDockerDaemonRunning()) {
+			spin.stop('Docker daemon ready');
+			return;
+		}
+		await new Promise((resolve) =>
+			setTimeout(resolve, DAEMON_POLL_INTERVAL_MS)
+		);
+	}
+	spin.stop('Docker daemon failed to start');
+	throw new Error(
+		`Docker daemon did not start within ${DAEMON_TIMEOUT_MS / 1000}s`
+	);
+};
+
+export const ensureDockerDaemonRunning = async () => {
+	if (await isDockerDaemonRunning()) return;
+
+	const spin = spinner();
+	spin.start('Starting Docker daemon…');
+
+	const desktopRes = await $`docker desktop start`.quiet().nothrow();
+	if (desktopRes.exitCode === 0) {
+		spin.stop('Docker Desktop started');
+		await waitForDockerDaemon();
+		return;
+	}
+
+	if (platform === 'darwin') {
+		await $`open -a Docker`.quiet().nothrow();
+		spin.stop('Docker Desktop launched');
+	} else if (platform !== 'win32') {
+		await ensureSudo();
+		const systemctlRes = await $`sudo systemctl start docker`
+			.quiet()
+			.nothrow();
+		if (systemctlRes.exitCode !== 0) {
+			await $`sudo service docker start`.quiet().nothrow();
+		}
+		spin.stop('Docker start attempted');
+	} else {
+		spin.stop('Docker Desktop start failed');
+	}
+
+	await waitForDockerDaemon();
+};
 
 export const checkDockerInstalled = async () => {
 	if (await hasDocker()) return;
