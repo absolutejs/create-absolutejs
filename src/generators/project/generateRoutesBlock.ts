@@ -1,5 +1,9 @@
 import { isFrontend } from '../../typeGuards';
-import type { AuthOption, CreateConfiguration, FrontendDirectories } from '../../types';
+import type {
+	AuthOption,
+	CreateConfiguration,
+	FrontendDirectories
+} from '../../types';
 import type { FrameworkFlags } from './computeFlags';
 
 type GenerateRoutesBlockProps = {

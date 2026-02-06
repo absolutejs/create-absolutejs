@@ -13,8 +13,10 @@ console.log(`\nChecking ${entries.length} packages against npm registry…\n`);
 
 const results: VersionResult[] = entries.map(([name, current]) => {
 	const latest = getPackageVersion(name);
-	if (!latest) return { current, latest: '??', name, status: 'error' as const };
-	const status = latest === current ? ('up-to-date' as const) : ('outdated' as const);
+	if (!latest)
+		return { current, latest: '??', name, status: 'error' as const };
+	const status =
+		latest === current ? ('up-to-date' as const) : ('outdated' as const);
 
 	return { current, latest, name, status };
 });

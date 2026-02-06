@@ -85,7 +85,10 @@ export const createPackageJson = ({
 
 	const dependencies: PackageJson['dependencies'] = {};
 	const devDependencies: PackageJson['devDependencies'] = {};
-	devDependencies['typescript'] = resolveVersion('typescript', versions['typescript']);
+	devDependencies['typescript'] = resolveVersion(
+		'typescript',
+		versions['typescript']
+	);
 
 	const flags = computeFlags(frontendDirectories);
 
@@ -127,8 +130,14 @@ export const createPackageJson = ({
 			'autoprefixer',
 			versions['autoprefixer']
 		);
-		devDependencies['postcss'] = resolveVersion('postcss', versions['postcss']);
-		devDependencies['tailwindcss'] = resolveVersion('tailwindcss', versions['tailwindcss']);
+		devDependencies['postcss'] = resolveVersion(
+			'postcss',
+			versions['postcss']
+		);
+		devDependencies['tailwindcss'] = resolveVersion(
+			'tailwindcss',
+			versions['tailwindcss']
+		);
 		devDependencies['@tailwindcss/cli'] = resolveVersion(
 			'@tailwindcss/cli',
 			versions['@tailwindcss/cli']
@@ -137,7 +146,10 @@ export const createPackageJson = ({
 
 	if (flags.requiresReact) {
 		dependencies['react'] = resolveVersion('react', versions['react']);
-		dependencies['react-dom'] = resolveVersion('react-dom', versions['react-dom']);
+		dependencies['react-dom'] = resolveVersion(
+			'react-dom',
+			versions['react-dom']
+		);
 		devDependencies['@types/react'] = resolveVersion(
 			'@types/react',
 			versions['@types/react']
@@ -176,7 +188,10 @@ export const createPackageJson = ({
 	}
 
 	if (orm === 'drizzle') {
-		dependencies['drizzle-orm'] = resolveVersion('drizzle-orm', versions['drizzle-orm']);
+		dependencies['drizzle-orm'] = resolveVersion(
+			'drizzle-orm',
+			versions['drizzle-orm']
+		);
 	}
 
 	switch (databaseHost) {
@@ -250,7 +265,10 @@ export const createPackageJson = ({
 
 	if (databaseEngine === 'postgresql' && databaseHost === 'planetscale') {
 		dependencies['pg'] = resolveVersion('pg', versions['pg']);
-		devDependencies['@types/pg'] = resolveVersion('@types/pg', versions['@types/pg']);
+		devDependencies['@types/pg'] = resolveVersion(
+			'@types/pg',
+			versions['@types/pg']
+		);
 	}
 
 	if (isLocal && databaseEngine === 'mssql') {

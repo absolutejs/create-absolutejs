@@ -1,8 +1,8 @@
 {
-  "permissions": {
-    "allow": [
-      "Bash(del \"C:\\\\Users\\\\alex\\\\abs\\\\create-absolutejs\\\\src\\\\templates\\\\styles\\\\tailwind.css\")",
-      "Bash(bun run:*)"
-    ]
-  }
+	"permissions": {
+		"allow": [
+			"Bash(del \"C:\\\\Users\\\\alex\\\\abs\\\\create-absolutejs\\\\src\\\\templates\\\\styles\\\\tailwind.css\")",
+			"Bash(bun run:*)"
+		]
+	}
 }
