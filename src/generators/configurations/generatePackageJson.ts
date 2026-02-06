@@ -283,6 +283,10 @@ export const createPackageJson = ({
 		dependencies['gel'] = resolveVersion('gel', versions['gel']);
 	}
 
+	if (databaseEngine === 'mongodb') {
+		dependencies['mongodb'] = resolveVersion('mongodb', versions['mongodb']);
+	}
+
 	if (isLocal && databaseEngine === 'sqlite') {
 		scripts['db:sqlite'] = 'sqlite3 db/database.sqlite';
 		scripts['db:init'] = 'sqlite3 db/database.sqlite < db/init.sql';

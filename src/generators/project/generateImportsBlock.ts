@@ -164,7 +164,10 @@ export const generateImportsBlock = ({
 			`import { SQL } from 'bun'`,
 			`import { getEnv } from '@absolutejs/absolute'`
 		],
-		mongodb: [],
+		mongodb: [
+			`import { MongoClient } from 'mongodb'`,
+			`import { getEnv } from '@absolutejs/absolute'`
+		],
 		mssql: [
 			`import { connect } from 'mssql'`,
 			`import { getEnv } from '@absolutejs/absolute'`

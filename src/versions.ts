@@ -66,6 +66,7 @@ export const versions = {
 	'@types/mssql': '9.1.9',
 	'@types/pg': '8.16.0',
 	gel: '2.2.0',
+	mongodb: '6.12.0',
 	mssql: '12.2.0',
 	mysql2: '3.16.3',
 	pg: '8.18.0'
