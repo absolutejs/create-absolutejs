@@ -18,7 +18,7 @@ export const installDependencies = async (
 		await $`${bin} ${args}`.cwd(projectName).quiet();
 		spin.stop(green('Dependencies installed'));
 	} catch (err) {
-		spin.stop(red('Installation failed'), 1);
+		spin.cancel(red('Installation failed'));
 		console.error('Error installing dependencies:', err);
 		exit(1);
 	}

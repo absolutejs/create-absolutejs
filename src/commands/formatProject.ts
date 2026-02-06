@@ -28,7 +28,7 @@ export const formatProject = async ({
 		await $`${bin} ${args}`.cwd(projectName).quiet();
 		spin.stop(green('Files formatted'));
 	} catch (err) {
-		spin.stop(red('Failed to format files'), 1);
+		spin.cancel(red('Failed to format files'));
 		console.error('Error formatting:', err);
 		exit(1);
 	}

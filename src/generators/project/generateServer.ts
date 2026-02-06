@@ -99,6 +99,7 @@ export const generateServerFile = ({
 	const routesBlock = generateRoutesBlock({
 		authOption,
 		buildDirectory,
+		databaseEngine,
 		flags,
 		frontendDirectories
 	});

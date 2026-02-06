@@ -40,6 +40,7 @@
 	},
 	"scripts": {
 		"build": "rm -rf dist && tsc --project tsconfig.build.json && cp -R src/templates dist/templates",
+		"check-versions": "bun scripts/check-versions.ts",
 		"dev": "bun scripts/dev.ts",
 		"format": "prettier --write \"./**/*.{js,jsx,ts,tsx,css,json,mjs,md,svelte,html,vue}\"",
 		"lint": "eslint ./",

@@ -1,5 +1,6 @@
 import { cyan, green, magenta } from 'picocolors';
 import type { FrontendLabels, AvailableDependency } from './types';
+import { versions } from './versions';
 
 export const availableFrontends = [
 	'react',
@@ -67,19 +68,19 @@ export const availablePlugins: AvailableDependency[] = [
 	{
 		imports: [{ config: null, isPlugin: true, packageName: 'cors' }],
 		label: cyan('⚙️ @elysiajs/cors'),
-		latestVersion: '1.3.3',
+		latestVersion: versions['@elysiajs/cors'],
 		value: '@elysiajs/cors'
 	},
 	{
 		imports: [{ config: null, isPlugin: true, packageName: 'swagger' }],
 		label: cyan('📑 @elysiajs/swagger'),
-		latestVersion: '1.3.0',
+		latestVersion: versions['@elysiajs/swagger'],
 		value: '@elysiajs/swagger'
 	},
 	{
 		imports: [{ config: null, isPlugin: true, packageName: 'rateLimit' }],
 		label: green('🛠️ elysia-rate-limit'),
-		latestVersion: '4.3.0',
+		latestVersion: versions['elysia-rate-limit'],
 		value: 'elysia-rate-limit'
 	}
 ];
@@ -94,7 +95,7 @@ export const absoluteAuthPlugin: AvailableDependency = {
 			packageName: 'absoluteAuth'
 		}
 	],
-	latestVersion: '0.21.1',
+	latestVersion: versions['@absolutejs/auth'],
 	value: '@absolutejs/auth'
 };
 
@@ -106,64 +107,64 @@ export const scopedStatePlugin: AvailableDependency = {
 			packageName: 'scopedState'
 		}
 	],
-	latestVersion: '0.1.1',
+	latestVersion: versions['elysia-scoped-state'],
 	value: 'elysia-scoped-state'
 };
 
 export const eslintAndPrettierDependencies: AvailableDependency[] = [
 	{
-		latestVersion: '9.27.0',
+		latestVersion: versions['eslint'],
 		value: 'eslint'
 	},
 	{
-		latestVersion: '3.5.3',
+		latestVersion: versions['prettier'],
 		value: 'prettier'
 	},
 	{
-		latestVersion: '4.4.1',
+		latestVersion: versions['@stylistic/eslint-plugin-ts'],
 		value: '@stylistic/eslint-plugin-ts'
 	},
 	{
-		latestVersion: '8.47.0',
+		latestVersion: versions['@typescript-eslint/parser'],
 		value: '@typescript-eslint/parser'
 	},
 	{
-		latestVersion: '0.1.6',
+		latestVersion: versions['eslint-plugin-absolute'],
 		value: 'eslint-plugin-absolute'
 	},
 	{
-		latestVersion: '2.32.0',
+		latestVersion: versions['eslint-plugin-import'],
 		value: 'eslint-plugin-import'
 	},
 	{
-		latestVersion: '7.2.1',
+		latestVersion: versions['eslint-plugin-promise'],
 		value: 'eslint-plugin-promise'
 	},
 	{
-		latestVersion: '3.0.1',
+		latestVersion: versions['eslint-plugin-security'],
 		value: 'eslint-plugin-security'
 	},
 	{
-		latestVersion: '8.47.0',
+		latestVersion: versions['typescript-eslint'],
 		value: 'typescript-eslint'
 	}
 ];
 
 export const eslintReactDependencies: AvailableDependency[] = [
 	{
-		latestVersion: '6.10.2',
+		latestVersion: versions['eslint-plugin-jsx-a11y'],
 		value: 'eslint-plugin-jsx-a11y'
 	},
 	{
-		latestVersion: '7.37.5',
+		latestVersion: versions['eslint-plugin-react'],
 		value: 'eslint-plugin-react'
 	},
 	{
-		latestVersion: '19.1.0-rc.2',
+		latestVersion: versions['eslint-plugin-react-compiler'],
 		value: 'eslint-plugin-react-compiler'
 	},
 	{
-		latestVersion: '7.0.0',
+		latestVersion: versions['eslint-plugin-react-hooks'],
 		value: 'eslint-plugin-react-hooks'
 	}
 ];
@@ -171,7 +172,7 @@ export const eslintReactDependencies: AvailableDependency[] = [
 export const defaultDependencies: AvailableDependency[] = [
 	{
 		imports: [{ isPlugin: false, packageName: 'Elysia' }],
-		latestVersion: '1.4.18',
+		latestVersion: versions['elysia'],
 		value: 'elysia'
 	}
 ];
@@ -183,7 +184,7 @@ export const defaultPlugins: AvailableDependency[] = [
 			{ isPlugin: false, packageName: 'build' },
 			{ isPlugin: true, packageName: 'networking' }
 		],
-		latestVersion: '0.12.3',
+		latestVersion: versions['@absolutejs/absolute'],
 		value: '@absolutejs/absolute'
 	},
 	{
@@ -194,7 +195,7 @@ export const defaultPlugins: AvailableDependency[] = [
 				packageName: 'staticPlugin'
 			}
 		],
-		latestVersion: '1.4.0',
+		latestVersion: versions['@elysiajs/static'],
 		value: '@elysiajs/static'
 	}
 ];

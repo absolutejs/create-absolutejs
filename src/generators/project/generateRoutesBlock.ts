@@ -1,8 +1,9 @@
 import { isFrontend } from '../../typeGuards';
-import type { AuthOption, FrontendDirectories } from '../../types';
+import type { AuthOption, CreateConfiguration, FrontendDirectories } from '../../types';
 import type { FrameworkFlags } from './computeFlags';
 
 type GenerateRoutesBlockProps = {
+	databaseEngine: CreateConfiguration['databaseEngine'];
 	flags: FrameworkFlags;
 	frontendDirectories: FrontendDirectories;
 	authOption: AuthOption;
@@ -10,11 +11,14 @@ type GenerateRoutesBlockProps = {
 };
 
 export const generateRoutesBlock = ({
+	databaseEngine,
 	flags,
 	frontendDirectories,
 	authOption,
 	buildDirectory
 }: GenerateRoutesBlockProps) => {
+	const hasDatabase =
+		databaseEngine !== undefined && databaseEngine !== 'none';
 	const routes: string[] = [];
 
 	const wrap = (handlerCall: string) =>
@@ -110,7 +114,7 @@ export const generateRoutesBlock = ({
 		}
 	);
 
-	if (authOption === undefined || authOption === 'none') {
+	if (hasDatabase && (authOption === undefined || authOption === 'none')) {
 		routes.push(
 			`.get('/count/:uid', ({ params: { uid } }) => getCountHistory(db, uid), {
     params: t.Object({ uid: t.Number() })

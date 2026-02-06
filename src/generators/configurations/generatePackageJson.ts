@@ -12,6 +12,7 @@ import {
 } from '../../data';
 import type { CreateConfiguration, PackageJson } from '../../types';
 import { getPackageVersion } from '../../utils/getPackageVersion';
+import { versions } from '../../versions';
 import { initTemplates } from '../db/dockerInitTemplates';
 import { computeFlags } from '../project/computeFlags';
 
@@ -84,7 +85,7 @@ export const createPackageJson = ({
 
 	const dependencies: PackageJson['dependencies'] = {};
 	const devDependencies: PackageJson['devDependencies'] = {};
-	devDependencies['typescript'] = resolveVersion('typescript', '5.9.3');
+	devDependencies['typescript'] = resolveVersion('typescript', versions['typescript']);
 
 	const flags = computeFlags(frontendDirectories);
 
@@ -124,22 +125,22 @@ export const createPackageJson = ({
 	if (useTailwind) {
 		devDependencies['autoprefixer'] = resolveVersion(
 			'autoprefixer',
-			'10.4.21'
+			versions['autoprefixer']
 		);
-		devDependencies['postcss'] = resolveVersion('postcss', '8.5.3');
-		devDependencies['tailwindcss'] = resolveVersion('tailwindcss', '4.1.7');
+		devDependencies['postcss'] = resolveVersion('postcss', versions['postcss']);
+		devDependencies['tailwindcss'] = resolveVersion('tailwindcss', versions['tailwindcss']);
 		devDependencies['@tailwindcss/cli'] = resolveVersion(
 			'@tailwindcss/cli',
-			'4.1.7'
+			versions['@tailwindcss/cli']
 		);
 	}
 
 	if (flags.requiresReact) {
-		dependencies['react'] = resolveVersion('react', '19.2.4');
-		dependencies['react-dom'] = resolveVersion('react-dom', '19.2.4');
+		dependencies['react'] = resolveVersion('react', versions['react']);
+		dependencies['react-dom'] = resolveVersion('react-dom', versions['react-dom']);
 		devDependencies['@types/react'] = resolveVersion(
 			'@types/react',
-			'19.2.0'
+			versions['@types/react']
 		);
 	}
 
@@ -153,48 +154,48 @@ export const createPackageJson = ({
 	}
 
 	if (flags.requiresSvelte) {
-		dependencies['svelte'] = resolveVersion('svelte', '5.34.7');
+		dependencies['svelte'] = resolveVersion('svelte', versions['svelte']);
 	}
 
 	if (flags.requiresSvelte && codeQualityTool === 'eslint+prettier') {
 		devDependencies['prettier-plugin-svelte'] = resolveVersion(
 			'prettier-plugin-svelte',
-			'3.4.0'
+			versions['prettier-plugin-svelte']
 		);
 	}
 
 	if (flags.requiresVue) {
-		dependencies['vue'] = resolveVersion('vue', '3.5.17');
+		dependencies['vue'] = resolveVersion('vue', versions['vue']);
 	}
 
 	if (flags.requiresHtmx) {
 		dependencies['elysia-scoped-state'] = resolveVersion(
 			'elysia-scoped-state',
-			'0.1.1'
+			versions['elysia-scoped-state']
 		);
 	}
 
 	if (orm === 'drizzle') {
-		dependencies['drizzle-orm'] = resolveVersion('drizzle-orm', '0.41.0');
+		dependencies['drizzle-orm'] = resolveVersion('drizzle-orm', versions['drizzle-orm']);
 	}
 
 	switch (databaseHost) {
 		case 'neon':
 			dependencies['@neondatabase/serverless'] = resolveVersion(
 				'@neondatabase/serverless',
-				'1.0.0'
+				versions['@neondatabase/serverless']
 			);
 			break;
 		case 'planetscale':
 			dependencies['@planetscale/database'] = resolveVersion(
 				'@planetscale/database',
-				'1.19.0'
+				versions['@planetscale/database']
 			);
 			break;
 		case 'turso':
 			dependencies['@libsql/client'] = resolveVersion(
 				'@libsql/client',
-				'0.15.9'
+				versions['@libsql/client']
 			);
 			break;
 	}
@@ -240,28 +241,28 @@ export const createPackageJson = ({
 		(databaseEngine === 'mysql' || databaseEngine === 'mariadb') &&
 		orm === 'drizzle'
 	) {
-		dependencies['mysql2'] = resolveVersion('mysql2', '3.14.2');
+		dependencies['mysql2'] = resolveVersion('mysql2', versions['mysql2']);
 	}
 
 	if (isLocal && databaseEngine === 'singlestore') {
-		dependencies['mysql2'] = resolveVersion('mysql2', '3.14.2');
+		dependencies['mysql2'] = resolveVersion('mysql2', versions['mysql2']);
 	}
 
 	if (databaseEngine === 'postgresql' && databaseHost === 'planetscale') {
-		dependencies['pg'] = resolveVersion('pg', '8.11.0');
-		devDependencies['@types/pg'] = resolveVersion('@types/pg', '8.6.1');
+		dependencies['pg'] = resolveVersion('pg', versions['pg']);
+		devDependencies['@types/pg'] = resolveVersion('@types/pg', versions['@types/pg']);
 	}
 
 	if (isLocal && databaseEngine === 'mssql') {
-		dependencies['mssql'] = resolveVersion('mssql', '12.1.0');
+		dependencies['mssql'] = resolveVersion('mssql', versions['mssql']);
 		devDependencies['@types/mssql'] = resolveVersion(
 			'@types/mssql',
-			'9.1.8'
+			versions['@types/mssql']
 		);
 	}
 
 	if (isLocal && databaseEngine === 'gel') {
-		dependencies['gel'] = resolveVersion('gel', '2.1.1');
+		dependencies['gel'] = resolveVersion('gel', versions['gel']);
 	}
 
 	if (isLocal && databaseEngine === 'sqlite') {
