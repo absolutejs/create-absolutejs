@@ -138,6 +138,10 @@ export const initTemplates = {
 		cli: 'MYSQL_PWD=userpassword mariadb -h127.0.0.1 -u user database -e',
 		wait: 'until mariadb-admin ping -h127.0.0.1 --silent; do sleep 1; done'
 	},
+	mongodb: {
+		cli: 'mongosh -u user -p password --authenticationDatabase admin database --eval',
+		wait: 'for i in $(seq 1 60); do mongosh -u user -p password --authenticationDatabase admin --eval "db.adminCommand(\\"ping\\")" --quiet 2>/dev/null && exit 0; sleep 1; done; exit 1'
+	},
 	mssql: {
 		cli: '/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P SApassword1 -Q',
 		wait: 'until /opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P SApassword1 -Q "SELECT 1" >/dev/null 2>&1; do sleep 1; done'

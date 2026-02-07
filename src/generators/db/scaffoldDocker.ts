@@ -4,7 +4,8 @@ import { $ } from 'bun';
 import { AuthOption, DatabaseEngine } from '../../types';
 import {
 	checkDockerInstalled,
-	ensureDockerDaemonRunning
+	ensureDockerDaemonRunning,
+	shutdownDockerDaemon
 } from '../../utils/checkDockerInstalled';
 import {
 	countHistoryTables,
@@ -37,7 +38,7 @@ export const scaffoldDocker = async ({
 	}
 
 	await checkDockerInstalled();
-	await ensureDockerDaemonRunning();
+	const { daemonWasStarted } = await ensureDockerDaemonRunning();
 	const dbContainer = generateDockerContainer(databaseEngine);
 	writeFileSync(
 		join(projectDatabaseDirectory, 'docker-compose.db.yml'),
@@ -46,6 +47,8 @@ export const scaffoldDocker = async ({
 	);
 
 	if (databaseEngine === 'mongodb') {
+		await $`bun db:up`.cwd(projectName);
+		await $`bun db:down`.cwd(projectName);
 	} else {
 		const { wait, cli } = initTemplates[databaseEngine];
 		const usesAuth = authOption !== undefined && authOption !== 'none';
@@ -56,5 +59,9 @@ export const scaffoldDocker = async ({
 		await $`docker compose -p ${databaseEngine} -f db/docker-compose.db.yml exec -T db \
   bash -lc '${wait} && ${cli} "${dbCommand}"'`.cwd(projectName);
 		await $`bun db:down`.cwd(projectName);
+	}
+
+	if (daemonWasStarted) {
+		await shutdownDockerDaemon();
 	}
 };

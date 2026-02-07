@@ -395,7 +395,7 @@ import { schema } from '../../../db/schema'`,
 		importLines: ``,
 		queries: mysqlSqlQueryOperations
 	},
-	'mongodb:native:local': {
+	'mongodb:sql:local': {
 		dbType: 'Db',
 		importLines: ``,
 		queries: mongodbQueryOperations

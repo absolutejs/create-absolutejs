@@ -46,6 +46,11 @@ const dbScripts = {
 			'MYSQL_PWD=userpassword mariadb -h127.0.0.1 -u user database',
 		waitCmd: initTemplates.mariadb.wait
 	},
+	mongodb: {
+		clientCmd:
+			'mongosh -u user -p password --authenticationDatabase admin database',
+		waitCmd: initTemplates.mongodb.wait
+	},
 	mssql: {
 		clientCmd:
 			'/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P SApassword1',
@@ -231,8 +236,7 @@ export const createPackageJson = ({
 		isLocal &&
 		databaseEngine !== undefined &&
 		databaseEngine !== 'none' &&
-		databaseEngine !== 'sqlite' &&
-		databaseEngine !== 'mongodb'
+		databaseEngine !== 'sqlite'
 	) {
 		const config = dbScripts[databaseEngine];
 		const dockerPrefix = `docker compose -p ${databaseEngine} -f db/docker-compose.db.yml`;
