@@ -90,18 +90,6 @@ const installWindowsSqlite = async () => {
 
 		return res.exitCode === 0;
 	}
-	if (await commandExists('choco')) {
-		const spin = spinner();
-		spin.start('Installing sqlite3 with Chocolatey');
-		const res = await $`choco install sqlite -y`.quiet().nothrow();
-		spin.stop(
-			res.exitCode === 0
-				? 'sqlite3 installed'
-				: 'Chocolatey install failed'
-		);
-
-		return res.exitCode === 0;
-	}
 	console.log(
 		`Automatic Windows install failed. Get sqlite3 from ${SQLITE_URL}`
 	);

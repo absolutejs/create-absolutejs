@@ -81,18 +81,6 @@ const configureDocker = async () => {
 	spin.stop('Docker daemon running & permissions configured');
 };
 
-const installWindowsChoco = async () => {
-	const spin = spinner();
-	spin.start('Installing Docker Desktop with Chocolatey');
-	const res = await $`choco install docker-desktop -y`.quiet().nothrow();
-	spin.stop(
-		res.exitCode === 0
-			? 'Docker Desktop installed'
-			: 'Chocolatey install failed'
-	);
-	return res.exitCode === 0;
-};
-
 const installWindowsWinget = async () => {
 	const spin = spinner();
 	spin.start('Installing Docker Desktop with winget');
@@ -147,9 +135,6 @@ const installWindowsOpenBrowser = async () => {
 };
 
 const installWindows = async () => {
-	if (await commandExists('choco')) {
-		if (await installWindowsChoco()) return true;
-	}
 	if (await commandExists('winget')) {
 		if (await installWindowsWinget()) return true;
 	}
