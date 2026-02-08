@@ -222,22 +222,24 @@ export const createPackageJson = ({
 
 	if (latest) s.stop(green('Package versions resolved'));
 
+	const isLocal = !databaseHost || databaseHost === 'none';
+	const hasLocalDocker =
+		isLocal &&
+		databaseEngine !== undefined &&
+		databaseEngine !== 'none' &&
+		databaseEngine !== 'sqlite';
+
 	const scripts: PackageJson['scripts'] = {
-		dev: 'bun run --watch src/backend/server.ts',
+		dev: hasLocalDocker
+			? 'bun run scripts/dev-with-db.ts'
+			: 'bun run --watch src/backend/server.ts',
 		format: `prettier --write "./**/*.{js,ts,css,json,mjs,md${flags.requiresReact ? ',jsx,tsx' : ''}${flags.requiresSvelte ? ',svelte' : ''}${flags.requiresVue ? ',vue' : ''}${flags.requiresHtml || flags.requiresHtmx ? ',html' : ''}}"`,
 		lint: 'eslint ./src',
 		test: 'echo "Error: no test specified" && exit 1',
 		typecheck: 'bun run tsc --noEmit'
 	};
 
-	const isLocal = !databaseHost || databaseHost === 'none';
-
-	if (
-		isLocal &&
-		databaseEngine !== undefined &&
-		databaseEngine !== 'none' &&
-		databaseEngine !== 'sqlite'
-	) {
+	if (hasLocalDocker) {
 		const config = dbScripts[databaseEngine];
 		const dockerPrefix = `docker compose -p ${databaseEngine} -f db/docker-compose.db.yml`;
 
@@ -248,10 +250,7 @@ export const createPackageJson = ({
 		scripts['db:reset'] = `${dockerPrefix} down -v`;
 		scripts[`db:${databaseEngine}`] =
 			`${dockerPrefix} exec -it db bash -lc '${config.clientCmd}'`;
-
-		scripts['predev'] = 'bun db:up';
 		scripts[`predb:${databaseEngine}`] = 'bun db:up';
-		scripts['postdev'] = 'bun db:down';
 		scripts[`postdb:${databaseEngine}`] = 'bun db:down';
 	}
 

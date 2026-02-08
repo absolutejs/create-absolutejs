@@ -1,28 +1,35 @@
 import { writeFileSync } from 'fs';
 import { join } from 'path';
-import { CreateConfiguration } from '../../types';
+import type { CreateConfiguration, DatabaseEngine } from '../../types';
 
 type GenerateEnvProps = Pick<
 	CreateConfiguration,
 	'databaseEngine' | 'databaseHost' | 'projectName'
 > & {
+	databasePort?: number;
 	envVariables?: string[];
 };
 
-const databaseURLS = {
-	cockroachdb: 'postgresql://root@localhost:26257/database',
-	gel: 'gel://admin@localhost:5656/main?tls_security=insecure',
-	mariadb: 'mariadb://user:userpassword@localhost:3306/database',
-	mongodb: 'mongodb://user:password@localhost:27017/database',
-	mssql: 'Server=localhost,1433;Database=master;User Id=sa;Password=SApassword1;Encrypt=true;TrustServerCertificate=true',
-	mysql: 'mysql://user:userpassword@localhost:3306/database',
-	postgresql: 'postgresql://user:password@localhost:5432/database',
-	singlestore: 'mysql://root:password@localhost:3306/database'
-} as const;
+const urlBuilders: Record<
+	Exclude<DatabaseEngine, 'none' | 'sqlite' | undefined>,
+	(port: number) => string
+> = {
+	cockroachdb: (port) => `postgresql://root@localhost:${port}/database`,
+	gel: (port) => `gel://admin@localhost:${port}/main?tls_security=insecure`,
+	mariadb: (port) => `mariadb://user:userpassword@localhost:${port}/database`,
+	mongodb: (port) => `mongodb://user:password@localhost:${port}/database`,
+	mssql: (port) =>
+		`Server=localhost,${port};Database=master;User Id=sa;Password=SApassword1;Encrypt=true;TrustServerCertificate=true`,
+	mysql: (port) => `mysql://user:userpassword@localhost:${port}/database`,
+	postgresql: (port) =>
+		`postgresql://user:password@localhost:${port}/database`,
+	singlestore: (port) => `mysql://root:password@localhost:${port}/database`
+};
 
 export const generateEnv = ({
 	databaseEngine,
 	databaseHost,
+	databasePort,
 	envVariables = [],
 	projectName
 }: GenerateEnvProps) => {
@@ -32,9 +39,11 @@ export const generateEnv = ({
 		databaseEngine !== 'sqlite' &&
 		databaseEngine !== 'none' &&
 		databaseEngine !== undefined &&
-		(databaseHost === 'none' || databaseHost === undefined)
+		(databaseHost === 'none' || databaseHost === undefined) &&
+		databasePort !== undefined
 	) {
-		vars.push(`DATABASE_URL=${databaseURLS[databaseEngine]}`);
+		const databaseURL = urlBuilders[databaseEngine](databasePort);
+		vars.push(`DATABASE_URL=${databaseURL}`);
 	}
 
 	if (vars.length === 0) return;
