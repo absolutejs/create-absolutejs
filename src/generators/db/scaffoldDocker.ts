@@ -37,7 +37,7 @@ export const scaffoldDocker = async ({
 		);
 	}
 
-	await checkDockerInstalled();
+	await checkDockerInstalled(databaseEngine);
 	const { daemonWasStarted } = await ensureDockerDaemonRunning();
 	const dbContainer = generateDockerContainer(databaseEngine);
 	writeFileSync(
@@ -46,18 +46,20 @@ export const scaffoldDocker = async ({
 		'utf-8'
 	);
 
-	if (databaseEngine === 'mongodb') {
-		await $`bun db:up`.cwd(projectName);
-		await $`bun db:down`.cwd(projectName);
-	} else {
-		const { wait, cli } = initTemplates[databaseEngine];
+	const hasSchemaInit = databaseEngine in userTables;
+	if (hasSchemaInit) {
+		const dbKey = databaseEngine as keyof typeof userTables;
+		const { wait, cli } = initTemplates[dbKey];
 		const usesAuth = authOption !== undefined && authOption !== 'none';
 		const dbCommand = usesAuth
-			? userTables[databaseEngine]
-			: countHistoryTables[databaseEngine];
+			? userTables[dbKey]
+			: countHistoryTables[dbKey];
 		await $`bun db:up`.cwd(projectName);
 		await $`docker compose -p ${databaseEngine} -f db/docker-compose.db.yml exec -T db \
   bash -lc '${wait} && ${cli} "${dbCommand}"'`.cwd(projectName);
+		await $`bun db:down`.cwd(projectName);
+	} else {
+		await $`bun db:up`.cwd(projectName);
 		await $`bun db:down`.cwd(projectName);
 	}
 

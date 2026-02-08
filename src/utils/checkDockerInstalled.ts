@@ -199,7 +199,7 @@ export const hasDocker = async () =>
 export const isDockerDaemonRunning = async () =>
 	(await $`docker info`.quiet().nothrow()).exitCode === 0;
 
-const startDockerDaemon = async (): Promise<boolean> => {
+const startDockerDaemon = async () => {
 	const spin = spinner();
 	spin.start('Starting Docker daemon…');
 
@@ -267,12 +267,12 @@ export const shutdownDockerDaemon = async () => {
 	}
 };
 
-export const checkDockerInstalled = async () => {
+export const checkDockerInstalled = async (databaseEngine?: string) => {
 	if (await hasDocker()) return;
+	const dbLabel = databaseEngine ?? 'database';
 	const proceed = await confirm({
 		initialValue: true,
-		message:
-			'Docker Engine and Compose plugin are required for local Postgresql. Install them now?'
+		message: `Docker Engine and Compose plugin are required for your local ${dbLabel}. Install them now?`
 	});
 	if (!proceed) return;
 	switch (hostEnv) {

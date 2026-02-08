@@ -7,7 +7,12 @@ const projectDir = 'absolutejs-project';
 if (existsSync(`${projectDir}/package.json`)) {
 	const pkg = JSON.parse(readFileSync(`${projectDir}/package.json`, 'utf-8'));
 	if (pkg.scripts?.['db:reset']) {
-		await $`bun run db:reset`.cwd(projectDir);
+		const res = await $`bun run db:reset`.cwd(projectDir).quiet().nothrow();
+		if (res.exitCode !== 0) {
+			console.warn(
+				`db:reset failed (exit ${res.exitCode}), continuing with re-scaffold…`
+			);
+		}
 	}
 }
 
