@@ -16,22 +16,16 @@ const urlBuilders: Record<
 > = {
 	cockroachdb: (port) => `postgresql://root@localhost:${port}/database`,
 	gel: (port) => `gel://admin@localhost:${port}/main?tls_security=insecure`,
-	mariadb: (port) => `mysql://user:userpassword@localhost:${port}/database`,
-	mongodb: (port) => `mongodb://user:password@localhost:${port}/database?authSource=admin`,
+	mariadb: (port) => `mysql://root:rootpassword@localhost:${port}/database`,
+	mongodb: (port) =>
+		`mongodb://root:rootpassword@localhost:${port}/database?authSource=admin`,
 	mssql: (port) =>
 		`Server=localhost,${port};Database=master;User Id=sa;Password=SApassword1;Encrypt=true;TrustServerCertificate=true`,
-	mysql: (port) => `mysql://user:userpassword@localhost:${port}/database`,
+	mysql: (port) => `mysql://root:rootpassword@localhost:${port}/database`,
 	postgresql: (port) =>
-		`postgresql://user:password@localhost:${port}/database`,
-	singlestore: (port) => `mysql://root:password@localhost:${port}/database`
-};
-
-const shadowDbUrlBuilders: Record<
-	'mariadb' | 'mysql',
-	(port: number) => string
-> = {
-	mariadb: (port) => `mysql://root:rootpassword@localhost:${port}/`,
-	mysql: (port) => `mysql://root:rootpassword@localhost:${port}/`
+		`postgresql://postgres:rootpassword@localhost:${port}/database`,
+	singlestore: (port) =>
+		`mysql://root:rootpassword@localhost:${port}/database`
 };
 
 export const generateEnv = ({
@@ -58,13 +52,6 @@ export const generateEnv = ({
 	) {
 		const databaseURL = urlBuilders[databaseEngine](databasePort);
 		vars.push(`DATABASE_URL=${databaseURL}`);
-		if (
-			(databaseEngine === 'mysql' || databaseEngine === 'mariadb') &&
-			shadowDbUrlBuilders[databaseEngine]
-		) {
-			const shadowUrl = shadowDbUrlBuilders[databaseEngine](databasePort);
-			vars.push(`SHADOW_DATABASE_URL=${shadowUrl}`);
-		}
 	}
 
 	if (vars.length === 0) return;

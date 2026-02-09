@@ -33,9 +33,7 @@ const templates: Record<
 		containerPort: 3306,
 		env: {
 			MYSQL_DATABASE: 'database',
-			MYSQL_PASSWORD: 'userpassword',
-			MYSQL_ROOT_PASSWORD: 'rootpassword',
-			MYSQL_USER: 'user'
+			MYSQL_ROOT_PASSWORD: 'rootpassword'
 		},
 		image: 'mariadb:11.4',
 		volumePath: '/var/lib/mysql'
@@ -44,8 +42,8 @@ const templates: Record<
 		containerPort: 27017,
 		env: {
 			MONGO_INITDB_DATABASE: 'database',
-			MONGO_INITDB_ROOT_PASSWORD: 'password',
-			MONGO_INITDB_ROOT_USERNAME: 'user'
+			MONGO_INITDB_ROOT_PASSWORD: 'rootpassword',
+			MONGO_INITDB_ROOT_USERNAME: 'root'
 		},
 		image: 'mongo:7.0',
 		volumePath: '/data/db'
@@ -63,9 +61,7 @@ const templates: Record<
 		containerPort: 3306,
 		env: {
 			MYSQL_DATABASE: 'database',
-			MYSQL_PASSWORD: 'userpassword',
-			MYSQL_ROOT_PASSWORD: 'rootpassword',
-			MYSQL_USER: 'user'
+			MYSQL_ROOT_PASSWORD: 'rootpassword'
 		},
 		image: 'mysql:8.0',
 		volumePath: '/var/lib/mysql'
@@ -74,8 +70,8 @@ const templates: Record<
 		containerPort: 5432,
 		env: {
 			POSTGRES_DB: 'database',
-			POSTGRES_PASSWORD: 'password',
-			POSTGRES_USER: 'user'
+			POSTGRES_PASSWORD: 'rootpassword',
+			POSTGRES_USER: 'postgres'
 		},
 		image: 'postgres:15',
 		volumePath: '/var/lib/postgresql/data'
@@ -83,7 +79,7 @@ const templates: Record<
 	singlestore: {
 		containerPort: 3306,
 		env: {
-			ROOT_PASSWORD: 'password'
+			ROOT_PASSWORD: 'rootpassword'
 		},
 		image: 'ghcr.io/singlestore-labs/singlestoredb-dev', // NOTE: No tag specified due to data persistence
 		volumePath: '/data'

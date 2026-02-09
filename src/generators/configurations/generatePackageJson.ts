@@ -47,12 +47,12 @@ const dbScripts = {
 	},
 	mariadb: {
 		clientCmd:
-			'MYSQL_PWD=userpassword mariadb -h127.0.0.1 -u user database',
+			'MYSQL_PWD=rootpassword mariadb -h127.0.0.1 -u root database',
 		waitCmd: initTemplates.mariadb.wait
 	},
 	mongodb: {
 		clientCmd:
-			'mongosh -u user -p password --authenticationDatabase admin database',
+			'mongosh -u root -p rootpassword --authenticationDatabase admin database',
 		waitCmd: initTemplates.mongodb.wait
 	},
 	mssql: {
@@ -61,15 +61,15 @@ const dbScripts = {
 		waitCmd: initTemplates.mssql.wait
 	},
 	mysql: {
-		clientCmd: 'MYSQL_PWD=userpassword mysql -h127.0.0.1 -u user database',
+		clientCmd: 'MYSQL_PWD=rootpassword mysql -h127.0.0.1 -u root database',
 		waitCmd: initTemplates.mysql.wait
 	},
 	postgresql: {
-		clientCmd: 'psql -h localhost -U user -d database',
+		clientCmd: 'psql -h localhost -U postgres -d database',
 		waitCmd: initTemplates.postgresql.wait
 	},
 	singlestore: {
-		clientCmd: 'singlestore -u root -ppassword -D database',
+		clientCmd: 'singlestore -u root -prootpassword -D database',
 		waitCmd: initTemplates.singlestore.wait
 	}
 } as const;

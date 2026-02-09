@@ -46,16 +46,6 @@ type GeneratePrismaSchemaProps = {
 	databaseHost: DatabaseHost;
 };
 
-const needsShadowDatabaseUrl = (
-	databaseEngine: AvailablePrismaDialect,
-	databaseHost: DatabaseHost
-) => {
-	const isLocal = databaseHost === undefined || databaseHost === 'none';
-	const isMySQLOrMariaDB =
-		databaseEngine === 'mysql' || databaseEngine === 'mariadb';
-	return isLocal && isMySQLOrMariaDB;
-};
-
 const buildGeneratorBlock = (databaseHost: DatabaseHost) => {
 	const needsDriverAdapters =
 		databaseHost === 'neon' || databaseHost === 'planetscale';
@@ -68,19 +58,10 @@ const buildGeneratorBlock = (databaseHost: DatabaseHost) => {
 }`;
 };
 
-const buildDatasourceBlock = (
-	cfg: DialectConfig,
-	databaseEngine: AvailablePrismaDialect,
-	databaseHost: DatabaseHost
-) => {
-	const shadowDbLine = needsShadowDatabaseUrl(databaseEngine, databaseHost)
-		? '\n  shadowDatabaseUrl = env("SHADOW_DATABASE_URL")'
-		: '';
-	return `datasource db {
+const buildDatasourceBlock = (cfg: DialectConfig) => `datasource db {
   provider = "${cfg.provider}"
-  url      = env("DATABASE_URL")${shadowDbLine}
+  url      = env("DATABASE_URL")
 }`;
-};
 
 const buildUserModel = () => `model User {
   auth_sub   String @id
@@ -111,11 +92,7 @@ export const generatePrismaSchema = ({
 	}
 
 	const generatorBlock = buildGeneratorBlock(databaseHost);
-	const datasourceBlock = buildDatasourceBlock(
-		cfg,
-		databaseEngine,
-		databaseHost
-	);
+	const datasourceBlock = buildDatasourceBlock(cfg);
 	const modelBlock =
 		authOption === 'abs' ? buildUserModel() : buildCountHistoryModel(cfg);
 
