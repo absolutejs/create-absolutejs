@@ -1,43 +1,54 @@
 import { writeFileSync } from 'fs';
 import { join } from 'path';
-import { CreateConfiguration } from '../../types';
+import type { CreateConfiguration, DatabaseEngine } from '../../types';
 
 type GenerateEnvProps = Pick<
 	CreateConfiguration,
 	'databaseEngine' | 'databaseHost' | 'projectName'
 > & {
+	databasePort?: number;
 	envVariables?: string[];
 };
 
-const databaseURLS = {
-	cockroachdb: 'cockroachdb://user:password@localhost:26257/database',
-	gel: 'gel://user:password@localhost:5432/database',
-	mariadb: 'mariadb://user:password@localhost:3306/database',
-	mongodb: 'mongodb://user:password@localhost:27017/database',
-	mssql: 'mssql://user:password@localhost:1433/database',
-	mysql: 'mysql://user:password@localhost:3306/database',
-	postgresql: 'postgresql://user:password@localhost:5432/database',
-	singlestore: 'singlestore://user:password@localhost:3306/database'
-} as const;
+const urlBuilders: Record<
+	Exclude<DatabaseEngine, 'none' | 'sqlite' | undefined>,
+	(port: number) => string
+> = {
+	cockroachdb: (port) => `postgresql://root@localhost:${port}/database`,
+	gel: (port) => `gel://admin@localhost:${port}/main?tls_security=insecure`,
+	mariadb: (port) => `mariadb://user:userpassword@localhost:${port}/database`,
+	mongodb: (port) => `mongodb://user:password@localhost:${port}/database`,
+	mssql: (port) =>
+		`Server=localhost,${port};Database=master;User Id=sa;Password=SApassword1;Encrypt=true;TrustServerCertificate=true`,
+	mysql: (port) => `mysql://user:userpassword@localhost:${port}/database`,
+	postgresql: (port) =>
+		`postgresql://user:password@localhost:${port}/database`,
+	singlestore: (port) => `mysql://root:password@localhost:${port}/database`
+};
 
 export const generateEnv = ({
 	databaseEngine,
 	databaseHost,
+	databasePort,
 	envVariables = [],
 	projectName
 }: GenerateEnvProps) => {
 	const vars = [...envVariables];
 
 	if (
-		databaseEngine !== 'none' &&
-		databaseEngine !== undefined &&
+		databaseEngine === 'sqlite' &&
 		(databaseHost === 'none' || databaseHost === undefined)
 	) {
-		if (databaseEngine === 'sqlite') {
-			vars.push('DATABASE_URL=file:./db/database.sqlite');
-		} else {
-			vars.push(`DATABASE_URL=${databaseURLS[databaseEngine]}`);
-		}
+		vars.push('DATABASE_URL=file:./db/database.sqlite');
+	} else if (
+		databaseEngine !== 'none' &&
+		databaseEngine !== 'sqlite' &&
+		databaseEngine !== undefined &&
+		(databaseHost === 'none' || databaseHost === undefined) &&
+		databasePort !== undefined
+	) {
+		const databaseURL = urlBuilders[databaseEngine](databasePort);
+		vars.push(`DATABASE_URL=${databaseURL}`);
 	}
 
 	if (vars.length === 0) return;

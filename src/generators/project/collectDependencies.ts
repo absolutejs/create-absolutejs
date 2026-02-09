@@ -10,20 +10,19 @@ import type { FrameworkFlags } from './computeFlags';
 
 type CollectDependenciesProps = {
 	plugins: string[];
-	authProvider: CreateConfiguration['authProvider'];
+	authOption: CreateConfiguration['authOption'];
 	flags: FrameworkFlags;
 };
 
 export const collectDependencies = ({
 	plugins,
-	authProvider,
+	authOption,
 	flags
 }: CollectDependenciesProps) => {
 	const customSelections = availablePlugins.filter((plugin) =>
 		plugins.includes(plugin.value)
 	);
-	const authPlugins =
-		authProvider === 'absoluteAuth' ? [absoluteAuthPlugin] : [];
+	const authPlugins = authOption === 'abs' ? [absoluteAuthPlugin] : [];
 	const htmxPlugins = flags.requiresHtmx ? [scopedStatePlugin] : [];
 
 	const allDeps = [

@@ -1,6 +1,6 @@
-import { copyFileSync } from 'node:fs';
-import { join, dirname } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { copyFileSync } from 'fs';
+import { join, dirname } from 'path';
+import { fileURLToPath } from 'url';
 import { formatProject } from './commands/formatProject';
 import { initializeGit } from './commands/initializeGit';
 import { installDependencies } from './commands/installDependencies';
@@ -8,9 +8,10 @@ import { createPackageJson } from './generators/configurations/generatePackageJs
 import { initalizeRoot } from './generators/configurations/initializeRoot';
 import { scaffoldConfigurationFiles } from './generators/configurations/scaffoldConfigurationFiles';
 import { scaffoldDatabase } from './generators/db/scaffoldDatabase';
-import { generateServerFile } from './generators/project/generateServer';
+import { scaffoldBackend } from './generators/project/scaffoldBackend';
 import { scaffoldFrontends } from './generators/project/scaffoldFrontends';
 import type { PackageManager, CreateConfiguration } from './types';
+import { resolveDatabasePort } from './utils/resolveDatabasePort';
 
 type ScaffoldProps = {
 	response: CreateConfiguration;
@@ -29,10 +30,11 @@ export const scaffold = async ({
 		useHTMLScripts,
 		useTailwind,
 		databaseDirectory,
+		absProviders,
 		orm,
 		frontends,
 		plugins,
-		authProvider,
+		authOption,
 		buildDirectory,
 		assetsDirectory,
 		tailwind,
@@ -46,18 +48,32 @@ export const scaffold = async ({
 	const __dirname = dirname(fileURLToPath(import.meta.url));
 	const templatesDirectory = join(__dirname, '/templates');
 
-	const { frontendDirectory, backendDirectory, projectAssetsDirectory } =
-		initalizeRoot(projectName, templatesDirectory);
+	const {
+		frontendDirectory,
+		backendDirectory,
+		projectAssetsDirectory,
+		typesDirectory
+	} = initalizeRoot(projectName, templatesDirectory);
 
 	copyFileSync(
 		join(templatesDirectory, 'README.md'),
 		join(projectName, 'README.md')
 	);
 
+	const isLocalDocker =
+		(databaseHost === 'none' || databaseHost === undefined) &&
+		databaseEngine !== 'none' &&
+		databaseEngine !== undefined &&
+		databaseEngine !== 'sqlite';
+	const databasePort = isLocalDocker
+		? await resolveDatabasePort(databaseEngine)
+		: undefined;
+
 	scaffoldConfigurationFiles({
 		codeQualityTool,
 		databaseEngine,
 		databaseHost,
+		databasePort,
 		envVariables,
 		frontends,
 		initializeGitNow,
@@ -67,7 +83,7 @@ export const scaffold = async ({
 	});
 
 	createPackageJson({
-		authProvider,
+		authOption,
 		codeQualityTool,
 		databaseEngine,
 		databaseHost,
@@ -80,9 +96,10 @@ export const scaffold = async ({
 		useTailwind
 	});
 
-	generateServerFile({
+	scaffoldBackend({
+		absProviders,
 		assetsDirectory,
-		authProvider,
+		authOption,
 		backendDirectory,
 		buildDirectory,
 		databaseEngine,
@@ -98,23 +115,29 @@ export const scaffold = async ({
 		databaseEngine !== 'none' &&
 		databaseEngine !== undefined &&
 		(await scaffoldDatabase({
-			authProvider,
+			authOption,
 			backendDirectory,
 			databaseDirectory,
 			databaseEngine,
 			databaseHost,
+			databasePort,
 			orm,
-			projectName
+			projectName,
+			typesDirectory
 		}))
 	);
 
 	scaffoldFrontends({
+		absProviders,
+		assetsDirectory,
+		authOption,
 		frontendDirectories,
 		frontendDirectory,
 		frontends,
 		projectAssetsDirectory,
 		templatesDirectory,
-		useHTMLScripts
+		useHTMLScripts,
+		useTailwind
 	});
 
 	if (installDependenciesNow) {

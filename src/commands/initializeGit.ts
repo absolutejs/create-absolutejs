@@ -4,7 +4,10 @@ import { green, red } from 'picocolors';
 import { abort } from '../utils/abort';
 import { checkGitInstalled } from '../utils/checkGitInstalled';
 
-const initializeRepository = async (projectName: string, spin: ReturnType<typeof spinner>) => {
+const initializeRepository = async (
+	projectName: string,
+	spin: ReturnType<typeof spinner>
+) => {
 	spin.stop();
 	spin.start('Initializing git repository…');
 
@@ -20,16 +23,18 @@ export const initializeGit = async (projectName: string) => {
 
 	spin.start('Checking git availability...');
 	const isGitInstalled = await checkGitInstalled();
-	
+
 	if (!isGitInstalled) {
-		spin.stop(red('Git is not installed. Please install git before proceeding.'), 1);
+		spin.stop(
+			red('Git is not installed. Please install git before proceeding.')
+		);
 		abort();
 	}
 
 	try {
 		await initializeRepository(projectName, spin);
 	} catch (err) {
-		spin.stop(red('Failed to initialize git'), 1);
+		spin.cancel(red('Failed to initialize git'));
 		throw err;
 	}
 };

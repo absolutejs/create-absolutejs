@@ -1,25 +1,36 @@
 import { DatabaseEngine } from '../../types';
 
-const templates = {
+interface DatabaseTemplate {
+	command?: string;
+	containerPort: number;
+	env: Record<string, string>;
+	image: string;
+	volumePath: string;
+}
+
+const templates: Record<
+	Exclude<DatabaseEngine, 'none' | 'sqlite' | undefined>,
+	DatabaseTemplate
+> = {
 	cockroachdb: {
+		command: 'start-single-node --insecure',
+		containerPort: 26257,
 		env: {
-			COCKROACH_INSECURE: 'true'
+			COCKROACH_DATABASE: 'database'
 		},
-		image: 'cockroachdb/cockroach:v24.1.0',
-		port: '26257:26257',
+		image: 'cockroachdb/cockroach:latest-v25.3',
 		volumePath: '/cockroach/cockroach-data'
 	},
 	gel: {
+		containerPort: 5656,
 		env: {
-			GEL_DB: 'database',
-			GEL_PASSWORD: 'password',
-			GEL_USER: 'user'
+			GEL_SERVER_SECURITY: 'insecure_dev_mode'
 		},
-		image: 'gel:latest',
-		port: '4000:4000',
-		volumePath: '/var/lib/gel'
+		image: 'geldata/gel:latest',
+		volumePath: '/var/lib/gel/data'
 	},
 	mariadb: {
+		containerPort: 3306,
 		env: {
 			MYSQL_DATABASE: 'database',
 			MYSQL_PASSWORD: 'userpassword',
@@ -27,30 +38,29 @@ const templates = {
 			MYSQL_USER: 'user'
 		},
 		image: 'mariadb:11.4',
-		port: '3306:3306',
 		volumePath: '/var/lib/mysql'
 	},
 	mongodb: {
+		containerPort: 27017,
 		env: {
 			MONGO_INITDB_DATABASE: 'database',
 			MONGO_INITDB_ROOT_PASSWORD: 'password',
 			MONGO_INITDB_ROOT_USERNAME: 'user'
 		},
 		image: 'mongo:7.0',
-		port: '27017:27017',
 		volumePath: '/data/db'
 	},
 	mssql: {
+		containerPort: 1433,
 		env: {
 			ACCEPT_EULA: 'Y',
-			MSSQL_PID: 'Express',
-			SA_PASSWORD: 'Strong_Passw0rd'
+			MSSQL_SA_PASSWORD: 'SApassword1'
 		},
 		image: 'mcr.microsoft.com/mssql/server:2022-latest',
-		port: '1433:1433',
 		volumePath: '/var/opt/mssql'
 	},
 	mysql: {
+		containerPort: 3306,
 		env: {
 			MYSQL_DATABASE: 'database',
 			MYSQL_PASSWORD: 'userpassword',
@@ -58,30 +68,32 @@ const templates = {
 			MYSQL_USER: 'user'
 		},
 		image: 'mysql:8.0',
-		port: '3306:3306',
 		volumePath: '/var/lib/mysql'
 	},
 	postgresql: {
+		containerPort: 5432,
 		env: {
 			POSTGRES_DB: 'database',
 			POSTGRES_PASSWORD: 'password',
 			POSTGRES_USER: 'user'
 		},
 		image: 'postgres:15',
-		port: '5432:5432',
 		volumePath: '/var/lib/postgresql/data'
 	},
 	singlestore: {
+		containerPort: 3306,
 		env: {
 			ROOT_PASSWORD: 'password'
 		},
-		image: 'singlestore/cluster-in-a-box:latest',
-		port: '3306:3306',
-		volumePath: '/var/lib/memsql'
+		image: 'ghcr.io/singlestore-labs/singlestoredb-dev', // NOTE: No tag specified due to data persistence
+		volumePath: '/data'
 	}
-} as const;
+};
 
-export const generateDockerContainer = (databaseEngine: DatabaseEngine) => {
+export const generateDockerContainer = (
+	databaseEngine: DatabaseEngine,
+	hostPort: number
+) => {
 	if (
 		databaseEngine === undefined ||
 		databaseEngine === 'none' ||
@@ -92,10 +104,13 @@ export const generateDockerContainer = (databaseEngine: DatabaseEngine) => {
 		);
 	}
 
-	const { image, port, env, volumePath } = templates[databaseEngine];
+	const { command, containerPort, env, image, volumePath } =
+		templates[databaseEngine];
+	const commandLines = command ? `        command: ${command}` : '';
 	const envLines = Object.entries(env)
 		.map(([key, value]) => `            ${key}: ${value}`)
 		.join('\n');
+	const portMapping = `${hostPort}:${containerPort}`;
 
 	return `services:
     db:
@@ -104,7 +119,8 @@ export const generateDockerContainer = (databaseEngine: DatabaseEngine) => {
         environment:
 ${envLines}
         ports:
-            - "${port}"
+            - "${portMapping}"
+${commandLines}
         volumes:
             - db_data:${volumePath}
 

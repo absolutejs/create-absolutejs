@@ -1,16 +1,20 @@
-import {
-	AuthProvider,
-	AvailableDrizzleDialect,
-	DatabaseHost
-} from '../../types';
+import { AuthOption, AvailableDrizzleDialect } from '../../types';
 
 const DIALECTS = {
 	gel: {
-		builders: ['text', 'gelTable', 'timestamp', 'integer'],
-		json: 'text()',
+		builders: ['text', 'gelTable', 'timestamp', 'integer', 'json'],
+		json: 'json()',
 		pkg: 'gel-core',
 		string: 'text()',
 		table: 'gelTable',
+		time: 'timestamp()'
+	},
+	mariadb: {
+		builders: ['json', 'mysqlTable', 'timestamp', 'varchar', 'int'],
+		json: 'json()',
+		pkg: 'mysql-core',
+		string: 'varchar({ length: 255 })',
+		table: 'mysqlTable',
 		time: 'timestamp()'
 	},
 	mysql: {
@@ -49,20 +53,20 @@ const DIALECTS = {
 
 type GenerateSchemaProps = {
 	databaseEngine: AvailableDrizzleDialect;
-	databaseHost: DatabaseHost;
-	authProvider: AuthProvider;
+	authOption: AuthOption;
 };
 
 const builder = (expr: string) => expr.split('(')[0];
 
 export const generateDrizzleSchema = ({
 	databaseEngine,
-	databaseHost,
-	authProvider
+	authOption
 }: GenerateSchemaProps) => {
 	const cfg = DIALECTS[databaseEngine];
 	const intBuilder =
-		databaseEngine === 'mysql' || databaseEngine === 'singlestore'
+		databaseEngine === 'mysql' ||
+		databaseEngine === 'singlestore' ||
+		databaseEngine === 'mariadb'
 			? 'int'
 			: 'integer';
 	const timeBuilder = builder(cfg.time);
@@ -70,7 +74,7 @@ export const generateDrizzleSchema = ({
 	const stringBuilder = builder(cfg.string);
 
 	const importBuilders =
-		authProvider === 'absoluteAuth'
+		authOption === 'abs'
 			? [cfg.table, stringBuilder, timeBuilder, jsonBuilder]
 			: [cfg.table, intBuilder, timeBuilder];
 	const uniqueBuilders = Array.from(new Set(importBuilders));
@@ -83,22 +87,12 @@ export const generateDrizzleSchema = ({
 			? `import { sql } from 'drizzle-orm';\n`
 			: '';
 
-	let dbImport = '';
-	let dbTypeLine = '';
-	if (databaseHost === 'neon') {
-		dbImport = `import { NeonHttpDatabase } from 'drizzle-orm/neon-http';`;
-		dbTypeLine = 'export type DatabaseType = NeonHttpDatabase<SchemaType>;';
-	} else if (databaseHost === 'planetscale') {
-		dbImport = `import { PlanetScaleDatabase } from 'drizzle-orm/planetscale-serverless';`;
-		dbTypeLine =
-			'export type DatabaseType = PlanetScaleDatabase<SchemaType>;';
-	} else if (databaseHost === 'turso') {
-		dbImport = `import { LibSQLDatabase } from 'drizzle-orm/libsql';`;
-		dbTypeLine = 'export type DatabaseType = LibSQLDatabase<SchemaType>;';
-	}
-
 	let uidColumn: string;
-	if (databaseEngine === 'mysql' || databaseEngine === 'singlestore') {
+	if (
+		databaseEngine === 'mysql' ||
+		databaseEngine === 'singlestore' ||
+		databaseEngine === 'mariadb'
+	) {
 		uidColumn = `${intBuilder}('uid').primaryKey().autoincrement()`;
 	} else if (databaseEngine === 'sqlite') {
 		uidColumn = `integer('uid').primaryKey({ autoIncrement: true })`;
@@ -118,7 +112,7 @@ const MILLIS_PER_DAY = 86400000;\n\n`
 			: `${cfg.time}.notNull().defaultNow()`;
 
 	const tableBlock =
-		authProvider === 'absoluteAuth'
+		authOption === 'abs'
 			? `export const users = ${cfg.table}('users', {
   auth_sub: ${cfg.string}.primaryKey(),
   created_at: ${timestampColumn},
@@ -130,26 +124,15 @@ const MILLIS_PER_DAY = 86400000;\n\n`
   created_at: ${timestampColumn}
 });`;
 
-	const schemaKey =
-		authProvider === 'absoluteAuth' ? 'users' : 'countHistory';
-	const extraTypes =
-		authProvider === 'absoluteAuth'
-			? `export type User = typeof users.$inferSelect;
-export type NewUser = typeof users.$inferInsert;`
-			: `export type CountHistory = typeof countHistory.$inferSelect;
-export type NewCountHistory = typeof countHistory.$inferInsert;`;
+	const schemaKey = authOption === 'abs' ? 'users' : 'countHistory';
 
 	return `
 ${sqliteImports}${builderImport}
-${dbImport}
 
 ${constsBlock}${tableBlock}
 
 export const schema = {
   ${schemaKey}
 };
-
-export type SchemaType = typeof schema;
-${dbTypeLine ? `${dbTypeLine}\n\n` : '\n'}${extraTypes}
 `;
 };

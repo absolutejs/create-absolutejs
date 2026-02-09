@@ -28,4 +28,3 @@ export const generateDBHandlers = ({
 	// @ts-expect-error - TODO: Finish the other templates
 	return usesAuth ? getAuthTemplate(key) : getCountTemplate(key);
 };
-

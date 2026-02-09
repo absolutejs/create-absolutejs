@@ -3,9 +3,9 @@ import { join } from 'path';
 import type { DatabaseHost } from '../../types';
 
 type GeneratePrismaClientProps = {
-    databaseHost: DatabaseHost;
-    databaseDirectory: string;
-    projectName: string;
+	databaseHost: DatabaseHost;
+	databaseDirectory: string;
+	projectName: string;
 };
 
 const buildClientModule = (databaseHost: DatabaseHost) => {
@@ -45,9 +45,9 @@ export default prismaClient
 };
 
 export const generatePrismaClient = ({
-    databaseHost,
-    databaseDirectory,
-    projectName
+	databaseHost,
+	databaseDirectory,
+	projectName
 }: GeneratePrismaClientProps) => {
 	const contents = buildClientModule(databaseHost);
 	writeFileSync(

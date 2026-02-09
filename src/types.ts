@@ -1,3 +1,4 @@
+import { ProviderOption } from '@absolutejs/auth';
 import {
 	availableAuthProviders,
 	availableCodeQualityTools,
@@ -11,6 +12,9 @@ import {
 } from './data';
 
 export type ScaffoldFrontendProps = {
+	absProviders: ProviderOption[] | undefined;
+	assetsDirectory: string;
+	authOption: AuthOption;
 	targetDirectory: string;
 	templatesDirectory: string;
 	projectAssetsDirectory: string;
@@ -37,7 +41,7 @@ export type AvailableDependency = {
 
 export type PackageManager = 'npm' | 'pnpm' | 'yarn' | 'bun';
 
-export type AuthProvider = (typeof availableAuthProviders)[number] | undefined;
+export type AuthOption = (typeof availableAuthProviders)[number] | undefined;
 
 export type AvailableDrizzleDialect = (typeof availableDrizzleDialects)[number];
 export type AvailablePrismaDialect = (typeof availablePrismaDialects)[number];
@@ -59,8 +63,9 @@ export type TailwindConfig =
 	| undefined;
 
 export type CreateConfiguration = {
+	absProviders: ProviderOption[] | undefined;
 	assetsDirectory: string;
-	authProvider: AuthProvider;
+	authOption: AuthOption;
 	buildDirectory: string;
 	directoryConfig: DirectoryConfiguration;
 	databaseEngine: DatabaseEngine;

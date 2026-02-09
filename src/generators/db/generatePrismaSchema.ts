@@ -1,5 +1,5 @@
 import type {
-	AuthProvider,
+	AuthOption,
 	AvailablePrismaDialect,
 	DatabaseHost
 } from '../../types';
@@ -10,33 +10,40 @@ type DialectConfig = {
 };
 
 const DIALECTS: Record<AvailablePrismaDialect, DialectConfig> = {
-    cockroachdb: {
-		countHistoryId: 'Int @id @default(sequence())', provider: 'cockroachdb'
-    },
-    mariadb: {
-		countHistoryId: 'Int @id @default(autoincrement())', provider: 'mysql'
-    },
-    mongodb: {
-		countHistoryId: 'String @id @default(auto()) @map("_id") @db.ObjectId', provider: 'mongodb'
-    },
+	cockroachdb: {
+		countHistoryId: 'Int @id @default(sequence())',
+		provider: 'cockroachdb'
+	},
+	mariadb: {
+		countHistoryId: 'Int @id @default(autoincrement())',
+		provider: 'mysql'
+	},
+	mongodb: {
+		countHistoryId: 'String @id @default(auto()) @map("_id") @db.ObjectId',
+		provider: 'mongodb'
+	},
 	mssql: {
-		countHistoryId: 'Int @id @default(autoincrement())', provider: 'sqlserver'
-    },
-    mysql: {
-		countHistoryId: 'Int @id @default(autoincrement())', provider: 'mysql'
-    },
-    postgresql: {
-		countHistoryId: 'Int @id @default(autoincrement())', provider: 'postgresql'
-    },
-    sqlite: {
-		countHistoryId: 'Int @id @default(autoincrement())', provider: 'sqlite'
+		countHistoryId: 'Int @id @default(autoincrement())',
+		provider: 'sqlserver'
+	},
+	mysql: {
+		countHistoryId: 'Int @id @default(autoincrement())',
+		provider: 'mysql'
+	},
+	postgresql: {
+		countHistoryId: 'Int @id @default(autoincrement())',
+		provider: 'postgresql'
+	},
+	sqlite: {
+		countHistoryId: 'Int @id @default(autoincrement())',
+		provider: 'sqlite'
 	}
 };
 
 type GeneratePrismaSchemaProps = {
-    databaseEngine: AvailablePrismaDialect;
-    databaseHost: DatabaseHost;
-    authProvider: AuthProvider;
+	authOption: AuthOption;
+	databaseEngine: AvailablePrismaDialect;
+	databaseHost: DatabaseHost;
 };
 
 const buildGeneratorBlock = (databaseHost: DatabaseHost) => {
@@ -50,7 +57,7 @@ const buildGeneratorBlock = (databaseHost: DatabaseHost) => {
   provider = "prisma-client-js"${previewFeatures}
 }`;
 };
-    
+
 const buildDatasourceBlock = (cfg: DialectConfig) => `datasource db {
   provider = "${cfg.provider}"
   url      = env("DATABASE_URL")
@@ -73,9 +80,9 @@ const buildCountHistoryModel = (cfg: DialectConfig) => `model CountHistory {
 }`;
 
 export const generatePrismaSchema = ({
+	authOption,
 	databaseEngine,
-	databaseHost,
-	authProvider
+	databaseHost
 }: GeneratePrismaSchemaProps) => {
 	const cfg = DIALECTS[databaseEngine];
 	if (!cfg) {
@@ -87,9 +94,7 @@ export const generatePrismaSchema = ({
 	const generatorBlock = buildGeneratorBlock(databaseHost);
 	const datasourceBlock = buildDatasourceBlock(cfg);
 	const modelBlock =
-		authProvider === 'absoluteAuth'
-			? buildUserModel()
-			: buildCountHistoryModel(cfg);
+		authOption === 'abs' ? buildUserModel() : buildCountHistoryModel(cfg);
 
 	return [generatorBlock, datasourceBlock, modelBlock].join('\n\n');
 };

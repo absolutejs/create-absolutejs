@@ -1,5 +1,5 @@
-import { copyFileSync, existsSync, mkdirSync } from 'node:fs';
-import { join } from 'node:path';
+import { copyFileSync, existsSync, mkdirSync } from 'fs';
+import { join } from 'path';
 
 export const initalizeRoot = (
 	projectName: string,
@@ -14,7 +14,8 @@ export const initalizeRoot = (
 	mkdirSync(projectName);
 	const srcDir = join(projectName, 'src');
 	mkdirSync(srcDir);
-	mkdirSync(join(srcDir, 'types'));
+	const typesDirectory = join(srcDir, 'types');
+	mkdirSync(typesDirectory);
 
 	const constantsSrc = join(templatesDirectory, 'constants.ts');
 	const constantsDest = join(srcDir, 'constants.ts');
@@ -40,5 +41,10 @@ export const initalizeRoot = (
 		join(projectAssetsDirectory, 'png', 'absolutejs-temp.png')
 	);
 
-	return { backendDirectory, frontendDirectory, projectAssetsDirectory };
+	return {
+		backendDirectory,
+		frontendDirectory,
+		projectAssetsDirectory,
+		typesDirectory
+	};
 };

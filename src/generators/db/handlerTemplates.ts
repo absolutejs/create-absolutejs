@@ -7,56 +7,36 @@ type QueryOperations = {
 
 type AuthTemplateOptions = {
 	importLines: string;
-	dbType: string;
 	queries: QueryOperations;
-	handlerTypes?: HandlerType;
 };
 
 const buildSqlAuthTemplate = ({
 	importLines,
-	handlerTypes,
-	dbType,
 	queries
 }: AuthTemplateOptions) => `
-import { isValidProviderOption, providers } from 'citra'
+import { DatabaseType, NewUser } from '../../types/databaseTypes';
 ${importLines}
-${handlerTypes?.UserRow ? `\ntype UserRow = ${handlerTypes.UserRow}` : ''}
-type UserHandlerProps = {
-  authProvider: string
-  db: ${dbType}
-  userIdentity: Record<string, unknown>
-}
 
-export const getUser = async ({ authProvider, db, userIdentity }: UserHandlerProps) => {
-  if (!isValidProviderOption(authProvider)) throw new Error(\`Invalid auth provider: \${authProvider}\`)
-  const subject = providers[authProvider].extractSubjectFromIdentity(userIdentity)
-  const authSub = \`\${authProvider.toUpperCase()}|\${subject}\`
-  ${queries.selectUser}
-}
+export const getUser = async (db: DatabaseType, authSub: string) => {
+	${queries.selectUser}
+};
 
-export const createUser = async ({ authProvider, db, userIdentity }: UserHandlerProps) => {
-  if (!isValidProviderOption(authProvider)) throw new Error(\`Invalid auth provider: \${authProvider}\`)
-  const subject = providers[authProvider].extractSubjectFromIdentity(userIdentity)
-  const authSub = \`\${authProvider.toUpperCase()}|\${subject}\`
-  ${queries.insertUser}
-}
-`;
+export const createUser = async (db: DatabaseType, newUserData: NewUser) => {
+	${queries.insertUser}
+}`;
 
 type CountTemplateOptions = {
 	importLines: string;
 	dbType: string;
 	queries: QueryOperations;
-	handlerTypes?: HandlerType;
 };
 
 const buildSqlCountTemplate = ({
 	importLines,
-	handlerTypes,
 	dbType,
 	queries
 }: CountTemplateOptions) => `
 ${importLines}
-${handlerTypes?.CountHistoryRow ? `\ntype CountHistoryRow = ${handlerTypes.CountHistoryRow}\n` : ''}
 export const getCountHistory = async (db: ${dbType}, uid: number) => {
   ${queries.selectHistory}
 }
@@ -69,13 +49,21 @@ export const createCountHistory = async (db: ${dbType}, count: number) => {
 const drizzleQueryOperations: QueryOperations = {
 	insertHistory: `const [newHistory] = await db.insert(schema.countHistory).values({ count }).returning()
   return newHistory`,
-	insertUser: `const [newUser] = await db.insert(schema.users).values({ auth_sub: authSub, metadata: userIdentity }).returning()
-  if (!newUser) throw new Error('Failed to create user')
-  return newUser`,
+	insertUser: `const [newUser] = await db
+		.insert(schema.users)
+		.values(newUserData)
+		.returning();
+	if (!newUser) throw new Error('Failed to create user');
+	return newUser;
+`,
 	selectHistory: `const [history] = await db.select().from(schema.countHistory).where(eq(schema.countHistory.uid, uid)).execute()
   return history`,
-	selectUser: `const [user] = await db.select().from(schema.users).where(eq(schema.users.auth_sub, authSub)).execute()
-  return user`
+	selectUser: `const [user] = await db
+		.select()
+		.from(schema.users)
+		.where(eq(schema.users.auth_sub, authSub))
+		.execute();
+	return user;`
 };
 
 const libsqlQueryOperations: QueryOperations = {
@@ -107,6 +95,31 @@ const bunSqliteQueryOperations: QueryOperations = {
 	selectUser: `const statement = db.query('SELECT * FROM users WHERE auth_sub = ? LIMIT 1')
   const [user] = statement.all(authSub)
   return user ?? null`
+};
+
+const postgresQueryOperations: QueryOperations = {
+	insertHistory: `const { rows } = await db.query(
+    'INSERT INTO count_history (count) VALUES ($1) RETURNING *',
+    [count]
+  )
+  return rows[0]`,
+	insertUser: `const { rows } = await db.query(
+    'INSERT INTO users (auth_sub, metadata) VALUES ($1, $2) RETURNING *',
+    [authSub, userIdentity]
+  )
+  const newUser = rows[0]
+  if (!newUser) throw new Error('Failed to create user')
+  return newUser`,
+	selectHistory: `const { rows } = await db.query(
+    'SELECT * FROM count_history WHERE uid = $1 LIMIT 1',
+    [uid]
+  )
+  return rows[0] ?? null`,
+	selectUser: `const { rows } = await db.query(
+    'SELECT * FROM users WHERE auth_sub = $1 LIMIT 1',
+    [authSub]
+  )
+  return rows[0] ?? null`
 };
 
 const postgresSqlQueryOperations: QueryOperations = {
@@ -151,61 +164,41 @@ const mongodbQueryOperations: QueryOperations = {
   return user ?? null`
 };
 
-const mariadbSqlQueryOperations: QueryOperations = {
-	insertHistory: `await db.query('INSERT INTO count_history (count) VALUES (?)', [count])
-  const [rows] = await db.query('SELECT * FROM count_history ORDER BY uid DESC LIMIT 1')
-  return rows[0]`,
-	insertUser: `await db.query('INSERT INTO users (auth_sub, metadata) VALUES (?, ?)', [authSub, JSON.stringify(userIdentity)])
-  const [rows] = await db.query('SELECT * FROM users WHERE auth_sub = ? LIMIT 1', [authSub])
-  const newUser = rows[0]
-  if (!newUser) throw new Error('Failed to create user')
+const gelClientQueryOperations: QueryOperations = {
+	insertHistory: `const newHistory = await db.queryRequiredSingle(
+    'select (insert count_history { count := <int16>$count }) { uid, count, created_at }',
+    { count }
+  )
+  return newHistory`,
+	insertUser: `const newUser = await db.queryRequiredSingle(
+    'select (insert users { auth_sub := <str>$authSub, metadata := <json>$metadata }) { auth_sub, created_at, metadata }',
+    { authSub, metadata: userIdentity }
+  )
   return newUser`,
-	selectHistory: `const [rows] = await db.query('SELECT * FROM count_history WHERE uid = ? LIMIT 1', [uid])
-  return rows[0] ?? null`,
-	selectUser: `const [rows] = await db.query('SELECT * FROM users WHERE auth_sub = ? LIMIT 1', [authSub])
-  return rows[0] ?? null`
-};
-
-const gelSqlQueryOperations: QueryOperations = {
-	insertHistory: `await db.query('INSERT INTO count_history (count) VALUES (?)', [count])
-  const [rows] = await db.query('SELECT * FROM count_history ORDER BY uid DESC LIMIT 1')
-  return rows[0]`,
-	insertUser: `await db.query('INSERT INTO users (auth_sub, metadata) VALUES (?, ?)', [authSub, JSON.stringify(userIdentity)])
-  const [rows] = await db.query('SELECT * FROM users WHERE auth_sub = ? LIMIT 1', [authSub])
-  const newUser = rows[0]
-  if (!newUser) throw new Error('Failed to create user')
-  return newUser`,
-	selectHistory: `const [rows] = await db.query('SELECT * FROM count_history WHERE uid = ? LIMIT 1', [uid])
-  return rows[0] ?? null`,
-	selectUser: `const [rows] = await db.query('SELECT * FROM users WHERE auth_sub = ? LIMIT 1', [authSub])
-  return rows[0] ?? null`
+	selectHistory: `const history = await db.querySingle(
+    'select count_history { uid, count, created_at } filter .uid = <int64>$uid',
+    { uid }
+  )
+  return history ?? null`,
+	selectUser: `const user = await db.querySingle(
+    'select users { auth_sub, created_at, metadata } filter .auth_sub = <str>$authSub',
+    { authSub }
+  )
+  return user ?? null`
 };
 
 const singlestoreSqlQueryOperations: QueryOperations = {
 	insertHistory: `await db.query('INSERT INTO count_history (count) VALUES (?)', [count])
-  const [rows] = await db.query('SELECT * FROM count_history ORDER BY uid DESC LIMIT 1')
+  const [rows] = await db.query<RowDataPacket[]>('SELECT * FROM count_history ORDER BY uid DESC LIMIT 1')
   return rows[0]`,
 	insertUser: `await db.query('INSERT INTO users (auth_sub, metadata) VALUES (?, ?)', [authSub, JSON.stringify(userIdentity)])
-  const [rows] = await db.query('SELECT * FROM users WHERE auth_sub = ? LIMIT 1', [authSub])
+  const [rows] = await db.query<RowDataPacket[]>('SELECT * FROM users WHERE auth_sub = ? LIMIT 1', [authSub])
   const newUser = rows[0]
   if (!newUser) throw new Error('Failed to create user')
   return newUser`,
-	selectHistory: `const [rows] = await db.query('SELECT * FROM count_history WHERE uid = ? LIMIT 1', [uid])
+	selectHistory: `const [rows] = await db.query<RowDataPacket[]>('SELECT * FROM count_history WHERE uid = ? LIMIT 1', [uid])
   return rows[0] ?? null`,
-	selectUser: `const [rows] = await db.query('SELECT * FROM users WHERE auth_sub = ? LIMIT 1', [authSub])
-  return rows[0] ?? null`
-};
-
-const cockroachdbPoolQueryOperations: QueryOperations = {
-	insertHistory: `const { rows } = await db.query('INSERT INTO count_history (count) VALUES ($1) RETURNING *', [count])
-  return rows[0]`,
-	insertUser: `const { rows } = await db.query('INSERT INTO users (auth_sub, metadata) VALUES ($1, $2) RETURNING *', [authSub, userIdentity])
-  const newUser = rows[0]
-  if (!newUser) throw new Error('Failed to create user')
-  return newUser`,
-	selectHistory: `const { rows } = await db.query('SELECT * FROM count_history WHERE uid = $1 LIMIT 1', [uid])
-  return rows[0] ?? null`,
-	selectUser: `const { rows } = await db.query('SELECT * FROM users WHERE auth_sub = $1 LIMIT 1', [authSub])
+	selectUser: `const [rows] = await db.query<RowDataPacket[]>('SELECT * FROM users WHERE auth_sub = ? LIMIT 1', [authSub])
   return rows[0] ?? null`
 };
 
@@ -226,47 +219,61 @@ const mssqlSqlQueryOperations: QueryOperations = {
 
 const mysqlSqlQueryOperations: QueryOperations = {
 	insertHistory: `
-const [result] = await db.query<ResultSetHeader>(
-  'INSERT INTO count_history (count) VALUES (?)',
-  [count]
-);
-const insertId = result.insertId;
-const [rows] = await db.query<CountHistoryRow[]>(
-  'SELECT * FROM count_history WHERE uid = ? LIMIT 1',
-  [insertId]
-);
-if (!rows[0]) throw new Error('Could not retrieve the newly‑inserted history');
-return rows[0];
+    const result = await db\`
+      INSERT INTO count_history (count)
+      VALUES (\${count})
+    \`;
+
+    const insertId = result.lastInsertRowid;
+
+    const [row] = await db\`
+      SELECT *
+      FROM count_history
+      WHERE uid = \${insertId}
+      LIMIT 1
+    \`;
+
+    if (!row) throw new Error("Could not retrieve the newly-inserted history");
+    return row;
   `,
 
 	insertUser: `
-const [result] = await db.query<ResultSetHeader>(
-  'INSERT INTO users (auth_sub, metadata) VALUES (?, ?)',
-  [authSub, JSON.stringify(userIdentity)]
-);
-const insertId = result.insertId;
-const [rows] = await db.query<UserRow[]>(
-  'SELECT * FROM users WHERE uid = ? LIMIT 1',
-  [insertId]
-);
-if (!rows[0]) throw new Error('Failed to create user');
-return rows[0];
+    const result = await db\`
+      INSERT INTO users (auth_sub, metadata)
+      VALUES (\${authSub}, \${JSON.stringify(userIdentity)})
+    \`;
+
+    const [row] = await db\`
+      SELECT *
+      FROM users
+      WHERE auth_sub = \${authSub}
+      LIMIT 1
+    \`;
+
+    if (!row) throw new Error("Failed to create user");
+    return row;
   `,
 
 	selectHistory: `
-const [rows] = await db.query<CountHistoryRow[]>(
-  'SELECT * FROM count_history WHERE uid = ? LIMIT 1',
-  [uid]
-);
-return rows[0] ?? null;
+    const [row] = await db\`
+      SELECT *
+      FROM count_history
+      WHERE uid = \${uid}
+      LIMIT 1
+    \`;
+
+    return row ?? null;
   `,
 
 	selectUser: `
-const [rows] = await db.query<UserRow[]>(
-  'SELECT * FROM users WHERE auth_sub = ? LIMIT 1',
-  [authSub]
-);
-return rows[0] ?? null;
+    const [row] = await db\`
+      SELECT *
+      FROM users
+      WHERE auth_sub = \${authSub}
+      LIMIT 1
+    \`;
+
+    return row ?? null;
   `
 };
 
@@ -274,36 +281,21 @@ const prismaQueryOperations: QueryOperations = {
 	insertHistory: `const newHistory = await db.countHistory.create({
   data: { count }
 })
-  return newHistory`, insertUser: `const newUser = await db.user.upsert({
+  return newHistory`,
+	insertUser: `const newUser = await db.user.upsert({
   where: { auth_sub: authSub },
   update: { metadata: userIdentity },
   create: { auth_sub: authSub, metadata: userIdentity }
 })
-  return newUser`, selectHistory: `const history = await db.countHistory.findUnique({
+  return newUser`,
+	selectHistory: `const history = await db.countHistory.findUnique({
   where: { uid }
 })
-  return history`, selectUser: `const user = await db.user.findUnique({
+  return history`,
+	selectUser: `const user = await db.user.findUnique({
   where: { auth_sub: authSub }
 })
   return user`
-};
-
-type HandlerType = {
-	CountHistoryRow: string;
-	UserRow: string;
-};
-
-const mysqlHandlerTypes: HandlerType = {
-	CountHistoryRow: `RowDataPacket & {
-		uid: number;
-		count: number;
-		created_at: number;
-	}`,
-	UserRow: `RowDataPacket & {
-		uid: number;
-		auth_sub: string;
-		metadata: string;
-	}`
 };
 
 const mysqlDrizzleQueryOperations: QueryOperations = {
@@ -324,16 +316,12 @@ const mysqlDrizzleQueryOperations: QueryOperations = {
 
 	insertUser: `const [row] = await db
     .insert(schema.users)
-    .values({ auth_sub: authSub, metadata: userIdentity })
-    .$returningId();
-
-  if (!row) throw new Error('insert failed: no uid returned');
-  const { uid } = row;
+    .values({ auth_sub: authSub, metadata: userIdentity });
 
   const [newUser] = await db
     .select()
     .from(schema.users)
-    .where(eq(schema.users.uid, uid));
+    .where(eq(schema.users.auth_sub, authSub));
 
   if (!newUser) throw new Error('Failed to create user');
   return newUser;`,
@@ -342,129 +330,244 @@ const mysqlDrizzleQueryOperations: QueryOperations = {
 	selectUser: drizzleQueryOperations.selectUser
 };
 
+const mysqlPlanetScaleQueryOperations: QueryOperations = {
+	insertHistory: `
+    const result = await db.execute(
+      \`INSERT INTO count_history (count) VALUES (?)\`,
+      [count]
+    );
+
+    const insertId = result.insertId;
+    if (!insertId) throw new Error("Could not insert count history");
+
+    const { rows } = await db.execute(
+      \`SELECT * FROM count_history WHERE uid = ? LIMIT 1\`,
+      [insertId]
+    );
+
+    const row = rows[0] ?? null;
+    if (!row) throw new Error("Could not retrieve the newly-inserted history");
+
+    return row;
+  `,
+
+	insertUser: `
+    const result = await db.execute(
+      \`INSERT INTO users (auth_sub, metadata) VALUES (?, ?)\`,
+      [authSub, JSON.stringify(userIdentity)]
+    );
+
+    const { rows } = await db.execute(
+      \`SELECT * FROM users WHERE auth_sub = ? LIMIT 1\`,
+      [authSub]
+    );
+
+    const row = rows[0] ?? null;
+    if (!row) throw new Error("Failed to create user");
+
+    return row;
+  `,
+
+	selectHistory: `
+    const { rows } = await db.execute(
+      \`SELECT * FROM count_history WHERE uid = ? LIMIT 1\`,
+      [uid]
+    );
+
+    return rows[0] ?? null;
+  `,
+
+	selectUser: `
+    const { rows } = await db.execute(
+      \`SELECT * FROM users WHERE auth_sub = ? LIMIT 1\`,
+      [authSub]
+    );
+
+    return rows[0] ?? null;
+  `
+};
+
 const driverConfigurations = {
 	'cockroachdb:prisma:local': {
 		dbType: 'PrismaClient',
 		importLines: `import type { PrismaClient } from '@prisma/client'`,
 		queries: prismaQueryOperations
-	}, 'cockroachdb:sql:local': {
-		dbType: 'Pool',
-		importLines: `import { Pool } from 'pg'`,
-		queries: cockroachdbPoolQueryOperations
-	}, 'gel:sql:local': {
-		dbType: 'GelClient',
-		importLines: `import { GelClient } from 'gel'`,
-		queries: gelSqlQueryOperations
-	}, 'mariadb:prisma:local': {
-		dbType: 'PrismaClient',
-		importLines: `import type { PrismaClient } from '@prisma/client'`,
-		queries: prismaQueryOperations
-	}, 'mariadb:sql:local': {
-		dbType: 'Pool',
-		importLines: `import { Pool } from 'mariadb'`,
-		queries: mariadbSqlQueryOperations
-	}, 'mongodb:native:local': {
-		dbType: 'Db',
-		importLines: `import { Db } from 'mongodb'`,
-		queries: mongodbQueryOperations
-	}, 'mssql:prisma:local': {
-		dbType: 'PrismaClient',
-		importLines: `import type { PrismaClient } from '@prisma/client'`,
-		queries: prismaQueryOperations
-	}, 'mssql:sql:local': {
-		dbType: 'ConnectionPool',
-		importLines: `import { ConnectionPool } from 'mssql'`,
-		queries: mssqlSqlQueryOperations
-	}, 'mysql:drizzle:local': {
-		dbType: 'MySql2Database<SchemaType>',
-		importLines: `
-import { eq } from 'drizzle-orm'
-import { MySql2Database } from 'drizzle-orm/mysql2'
-import { schema, type SchemaType } from '../../../db/schema'`,
-		queries: mysqlDrizzleQueryOperations
-	}, 'mysql:prisma:local': {
-		dbType: 'PrismaClient',
-		importLines: `import type { PrismaClient } from '@prisma/client'`,
-		queries: prismaQueryOperations
-	}, 'mysql:prisma:planetscale': {
-		dbType: 'PrismaClient',
-		importLines: `import type { PrismaClient } from '@prisma/client'`,
-		queries: prismaQueryOperations
-	}, 'mysql:sql:local': {
-		dbType: 'Pool',
-		handlerTypes: mysqlHandlerTypes,
-		importLines: `import { Pool, ResultSetHeader, RowDataPacket } from 'mysql2/promise'`,
-		queries: mysqlSqlQueryOperations
-	}, 'postgresql:drizzle:local': {
-		dbType: 'NodePgDatabase<SchemaType>',
-		importLines: `
-import { eq } from 'drizzle-orm'
-import { BunSQLDatabase } from 'drizzle-orm/bun-sql'
-import { schema, type SchemaType } from '../../../db/schema'`,
-		queries: drizzleQueryOperations
-	}, 'postgresql:drizzle:neon': {
-		dbType: 'NeonDatabase<SchemaType>',
-		importLines: `
-import { eq } from 'drizzle-orm'
-import { NeonDatabase } from 'drizzle-orm/neon-serverless'
-import { schema, type SchemaType } from '../../../db/schema'`,
-		queries: drizzleQueryOperations
-	}, 'postgresql:drizzle:planetscale': {
-  dbType: 'PlanetScaleDatabase<SchemaType>',
-  importLines: `
-import { eq } from 'drizzle-orm'
-import { PlanetScaleDatabase } from 'drizzle-orm/planetscale-serverless'
-import { schema, type SchemaType } from '../../../db/schema'`,
-  queries: drizzleQueryOperations
-}, 'postgresql:prisma:local': {
-		dbType: 'PrismaClient',
-		importLines: `import type { PrismaClient } from '@prisma/client'`,
-		queries: prismaQueryOperations
-	}, 'postgresql:prisma:neon': {
-		dbType: 'PrismaClient',
-		importLines: `import type { PrismaClient } from '@prisma/client'`,
-		queries: prismaQueryOperations
-	}, 'postgresql:sql:local': {
+	},
+	'cockroachdb:sql:local': {
 		dbType: 'SQL',
-		importLines: `import { SQL } from 'bun'`,
+		importLines: ``,
 		queries: postgresSqlQueryOperations
-	}, 'postgresql:sql:neon': {
-		dbType: 'NeonQueryFunction<false, false>',
-		importLines: `import { NeonQueryFunction } from '@neondatabase/serverless'`,
-		queries: postgresSqlQueryOperations
-	}, 'singlestore:sql:local': {
-		dbType: 'Connection',
-		importLines: `import { Connection } from '@singlestore/db-client'`,
-		queries: singlestoreSqlQueryOperations
-	}, 'sqlite:drizzle:local': {
-		dbType: 'BunSQLiteDatabase<SchemaType>',
-		importLines: `
-import { eq } from 'drizzle-orm'
-import { BunSQLiteDatabase } from 'drizzle-orm/bun-sqlite'
-import { schema, type SchemaType } from '../../../db/schema'`,
+	},
+	'gel:drizzle:local': {
+		dbType: 'GelJsDatabase<SchemaType>',
+		importLines: `import { eq } from 'drizzle-orm'
+import { schema } from '../../../db/schema'
+`,
 		queries: drizzleQueryOperations
-	}, 'sqlite:drizzle:turso': {
-		dbType: 'LibSQLDatabase<SchemaType>',
-		importLines: `
-import { eq } from 'drizzle-orm'
-import { LibSQLDatabase } from 'drizzle-orm/libsql'
-import { schema, type SchemaType } from '../../../db/schema'`,
-		queries: drizzleQueryOperations
-	}, 'sqlite:prisma:local': {
-		dbType: 'PrismaClient',
-		importLines: `import type { PrismaClient } from '@prisma/client'`,
-		queries: prismaQueryOperations
-	}, 'sqlite:prisma:turso': {
-		dbType: 'PrismaClient',
-		importLines: `import type { PrismaClient } from '@prisma/client'`,
-		queries: prismaQueryOperations
-	}, 'sqlite:sql:local': {
-		dbType: 'Database',
-		importLines: `import { Database } from 'bun:sqlite'`,
-		queries: bunSqliteQueryOperations
-	}, 'sqlite:sql:turso': {
+	},
+	'gel:sql:local': {
 		dbType: 'Client',
-		importLines: `import { Client } from '@libsql/client'`,
+		importLines: ``,
+		queries: gelClientQueryOperations
+	},
+	'mariadb:drizzle:local': {
+		dbType: 'MySql2Database<SchemaType>',
+		importLines: `import { eq } from 'drizzle-orm'
+import { schema } from '../../../db/schema'`,
+		queries: mysqlDrizzleQueryOperations
+	},
+	'mariadb:prisma:local': {
+		dbType: 'PrismaClient',
+		importLines: `import type { PrismaClient } from '@prisma/client'`,
+		queries: prismaQueryOperations
+	},
+	'mariadb:sql:local': {
+		dbType: 'SQL',
+		importLines: ``,
+		queries: mysqlSqlQueryOperations
+	},
+	'mongodb:prisma:local': {
+		dbType: 'PrismaClient',
+		importLines: `import type { PrismaClient } from '@prisma/client'`,
+		queries: prismaQueryOperations
+	},
+	'mongodb:sql:local': {
+		dbType: 'Db',
+		importLines: ``,
+		queries: mongodbQueryOperations
+	},
+	'mssql:prisma:local': {
+		dbType: 'PrismaClient',
+		importLines: `import type { PrismaClient } from '@prisma/client'`,
+		queries: prismaQueryOperations
+	},
+	'mssql:sql:local': {
+		dbType: 'ConnectionPool',
+		importLines: ``,
+		queries: mssqlSqlQueryOperations
+	},
+	'mysql:drizzle:local': {
+		dbType: 'MySql2Database<SchemaType>',
+		importLines: `import { eq } from 'drizzle-orm'
+import { schema } from '../../../db/schema'`,
+		queries: mysqlDrizzleQueryOperations
+	},
+	'mysql:drizzle:planetscale': {
+		dbType: 'PlanetScaleDatabase<SchemaType>',
+		importLines: `import { eq } from 'drizzle-orm'
+import { schema } from '../../../db/schema'`,
+		queries: mysqlDrizzleQueryOperations
+	},
+	'mysql:prisma:local': {
+		dbType: 'PrismaClient',
+		importLines: `import type { PrismaClient } from '@prisma/client'`,
+		queries: prismaQueryOperations
+	},
+	'mysql:prisma:planetscale': {
+		dbType: 'PrismaClient',
+		importLines: `import type { PrismaClient } from '@prisma/client'`,
+		queries: prismaQueryOperations
+	},
+	'mysql:sql:local': {
+		dbType: 'SQL',
+		importLines: ``,
+		queries: mysqlSqlQueryOperations
+	},
+	'mysql:sql:planetscale': {
+		dbType: 'Client',
+		importLines: ``,
+		queries: mysqlPlanetScaleQueryOperations
+	},
+	'postgresql:drizzle:local': {
+		dbType: 'BunSQLDatabase<SchemaType>',
+		importLines: `import { eq } from 'drizzle-orm'
+import { schema } from '../../../db/schema'`,
+		queries: drizzleQueryOperations
+	},
+	'postgresql:drizzle:neon': {
+		dbType: 'NeonDatabase<SchemaType>',
+		importLines: `import { eq } from 'drizzle-orm'
+import { schema } from '../../../db/schema'`,
+		queries: drizzleQueryOperations
+	},
+	'postgresql:drizzle:planetscale': {
+		dbType: 'NodePgDatabase<SchemaType>',
+		importLines: `import { eq } from 'drizzle-orm'
+import { schema } from '../../../db/schema'`,
+		queries: drizzleQueryOperations
+	},
+	'postgresql:prisma:local': {
+		dbType: 'PrismaClient',
+		importLines: `import type { PrismaClient } from '@prisma/client'`,
+		queries: prismaQueryOperations
+	},
+	'postgresql:prisma:neon': {
+		dbType: 'PrismaClient',
+		importLines: `import type { PrismaClient } from '@prisma/client'`,
+		queries: prismaQueryOperations
+	},
+	'postgresql:sql:local': {
+		dbType: 'SQL',
+		importLines: ``,
+		queries: postgresSqlQueryOperations
+	},
+	'postgresql:sql:neon': {
+		dbType: 'Pool',
+		importLines: ``,
+		queries: postgresQueryOperations
+	},
+	'postgresql:sql:planetscale': {
+		dbType: 'Pool',
+		importLines: ``,
+		queries: postgresQueryOperations
+	},
+	'singlestore:drizzle:local': {
+		dbType: 'SingleStoreDriverDatabase<SchemaType>',
+		importLines: `import { eq } from 'drizzle-orm'
+import { schema } from '../../../db/schema'`,
+		queries: mysqlDrizzleQueryOperations
+	},
+	'singlestore:prisma:local': {
+		dbType: 'PrismaClient',
+		importLines: `import type { PrismaClient } from '@prisma/client'`,
+		queries: prismaQueryOperations
+	},
+	'singlestore:sql:local': {
+		dbType: 'Pool',
+		importLines: `import { RowDataPacket } from 'mysql2/promise'
+`,
+		queries: singlestoreSqlQueryOperations
+	},
+	'sqlite:drizzle:local': {
+		dbType: 'BunSQLiteDatabase<SchemaType>',
+		importLines: `import { eq } from 'drizzle-orm'
+import { schema } from '../../../db/schema'`,
+		queries: drizzleQueryOperations
+	},
+	'sqlite:drizzle:turso': {
+		dbType: 'LibSQLDatabase<SchemaType>',
+		importLines: `import { eq } from 'drizzle-orm'
+import { schema } from '../../../db/schema'`,
+		queries: drizzleQueryOperations
+	},
+	'sqlite:prisma:local': {
+		dbType: 'PrismaClient',
+		importLines: `import type { PrismaClient } from '@prisma/client'`,
+		queries: prismaQueryOperations
+	},
+	'sqlite:prisma:turso': {
+		dbType: 'PrismaClient',
+		importLines: `import type { PrismaClient } from '@prisma/client'`,
+		queries: prismaQueryOperations
+	},
+	'sqlite:sql:local': {
+		dbType: 'Database',
+		importLines: ``,
+		queries: bunSqliteQueryOperations
+	},
+	'sqlite:sql:turso': {
+		dbType: 'Client',
+		importLines: ``,
 		queries: libsqlQueryOperations
 	}
 } as const;
@@ -486,4 +589,3 @@ export const getCountTemplate = (key: DriverConfigurationKey) => {
 
 	return buildSqlCountTemplate(configuration);
 };
-

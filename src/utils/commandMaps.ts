@@ -8,13 +8,13 @@ export const formatCommands: Record<PackageManager, string> = {
 };
 
 export const formatNoInstallCommands: Record<PackageManager, string> = {
-	bun: 'bunx prettier --write "./**/*.{js,ts,css,json,mjs,md,jsx,tsx,svelte,vue}"',
-	npm: 'npx prettier --write "./**/*.{js,ts,css,json,mjs,md,jsx,tsx,svelte,vue}"',
-	pnpm: 'pnpm dlx prettier --write "./**/*.{js,ts,css,json,mjs,md,jsx,tsx,svelte,vue}"',
-	yarn: 'yarn dlx prettier --write "./**/*.{js,ts,css,json,mjs,md,jsx,tsx,svelte,vue}"'
+	bun: 'bunx prettier --write ./**/*.{js,ts,css,json,mjs,md,jsx,tsx,svelte,vue}',
+	npm: 'npx prettier --write ./**/*.{js,ts,css,json,mjs,md,jsx,tsx,svelte,vue}',
+	pnpm: 'pnpm dlx prettier --write ./**/*.{js,ts,css,json,mjs,md,jsx,tsx,svelte,vue}',
+	yarn: 'yarn dlx prettier --write ./**/*.{js,ts,css,json,mjs,md,jsx,tsx,svelte,vue}'
 };
 
-export const installCommands: Record<string, string> = {
+export const installCommands: Record<PackageManager, string> = {
 	bun: 'bun install',
 	npm: 'npm install',
 	pnpm: 'pnpm install',

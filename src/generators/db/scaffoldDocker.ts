@@ -1,8 +1,13 @@
 import { writeFileSync } from 'fs';
 import { join } from 'path';
 import { $ } from 'bun';
-import { AuthProvider, DatabaseEngine } from '../../types';
-import { checkDockerInstalled } from '../../utils/checkDockerInstalled';
+import { AuthOption, DatabaseEngine } from '../../types';
+import {
+	checkDockerInstalled,
+	ensureDockerDaemonRunning,
+	getDockerEnv,
+	shutdownDockerDaemon
+} from '../../utils/checkDockerInstalled';
 import {
 	countHistoryTables,
 	initTemplates,
@@ -11,17 +16,19 @@ import {
 import { generateDockerContainer } from './generateDockerContainer';
 
 type ScaffoldDockerProps = {
+	authOption: AuthOption;
 	databaseEngine: DatabaseEngine;
+	hostPort: number;
 	projectDatabaseDirectory: string;
-	authProvider: AuthProvider;
 	projectName: string;
 };
 
 export const scaffoldDocker = async ({
+	authOption,
 	databaseEngine,
+	hostPort,
 	projectDatabaseDirectory,
-	projectName,
-	authProvider
+	projectName
 }: ScaffoldDockerProps) => {
 	if (
 		databaseEngine === undefined ||
@@ -33,25 +40,49 @@ export const scaffoldDocker = async ({
 		);
 	}
 
-	await checkDockerInstalled();
-	const dbContainer = generateDockerContainer(databaseEngine);
+	await checkDockerInstalled(databaseEngine);
+	const { daemonWasStarted } = await ensureDockerDaemonRunning();
+	const dbContainer = generateDockerContainer(databaseEngine, hostPort);
 	writeFileSync(
 		join(projectDatabaseDirectory, 'docker-compose.db.yml'),
 		dbContainer,
 		'utf-8'
 	);
 
-	if (databaseEngine === 'mongodb') {
-		// ...work...
-	} else {
-		const { wait, cli } = initTemplates[databaseEngine];
-		const usesAuth = authProvider !== undefined && authProvider !== 'none';
+	const dockerEnv = await getDockerEnv();
+	const runDbDown = () =>
+		$`bun db:down`.cwd(projectName).env(dockerEnv).quiet().nothrow();
+
+	// Pre-flight: clean up any leftover container from a previous killed scaffold
+	await runDbDown();
+
+	const hasSchemaInit = databaseEngine in userTables;
+	const runDbUpAndInit = async () => {
+		if (!hasSchemaInit) {
+			await $`bun db:up`.cwd(projectName).env(dockerEnv);
+
+			return;
+		}
+		const dbKey = databaseEngine as keyof typeof userTables;
+		const { wait, cli } = initTemplates[dbKey];
+		const usesAuth = authOption !== undefined && authOption !== 'none';
 		const dbCommand = usesAuth
-			? userTables[databaseEngine]
-			: countHistoryTables[databaseEngine];
-		await $`bun db:up`.cwd(projectName);
+			? userTables[dbKey]
+			: countHistoryTables[dbKey];
+		await $`bun db:up`.cwd(projectName).env(dockerEnv);
 		await $`docker compose -p ${databaseEngine} -f db/docker-compose.db.yml exec -T db \
-  bash -lc '${wait} && ${cli} "${dbCommand}"'`.cwd(projectName);
-		await $`bun db:down`.cwd(projectName);
+  bash -lc '${wait} && ${cli} "${dbCommand}"'`
+			.cwd(projectName)
+			.env(dockerEnv);
+	};
+
+	try {
+		await runDbUpAndInit();
+	} finally {
+		await runDbDown();
+	}
+
+	if (daemonWasStarted) {
+		await shutdownDockerDaemon();
 	}
 };

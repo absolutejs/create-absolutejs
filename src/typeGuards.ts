@@ -6,7 +6,7 @@ import {
 	frontendLabels
 } from './data';
 import type {
-	AuthProvider,
+	AuthOption,
 	AvailableDrizzleDialect,
 	AvailablePrismaDialect,
 	CodeQualityTool,
@@ -16,10 +16,10 @@ import type {
 	ORM
 } from './types';
 
-export const isAuthProvider = (
+export const isValidAuthOption = (
 	value: string | undefined
-): value is AuthProvider =>
-	value === 'absoluteAuth' || value === 'none' || value === undefined;
+): value is AuthOption =>
+	value === 'abs' || value === 'none' || value === undefined;
 
 export const isDirectoryConfig = (
 	value: string
@@ -30,7 +30,9 @@ export const isDrizzleDialect = (
 ): value is AvailableDrizzleDialect =>
 	availableDrizzleDialects.some((dialect) => dialect === value);
 
-export const isPrismaDialect = (value: string | undefined): value is AvailablePrismaDialect =>
+export const isPrismaDialect = (
+	value: string | undefined
+): value is AvailablePrismaDialect =>
 	availablePrismaDialects.some((dialect) => dialect === value);
 
 export const isDatabaseEngine = (
@@ -53,4 +55,3 @@ export const isCodeQualityTool = (
 
 export const isFrontend = (value: string | undefined): value is Frontend =>
 	value !== undefined && Object.keys(frontendLabels).includes(value);
-

@@ -1,4 +1,4 @@
-import { writeFileSync, mkdirSync } from 'fs';
+import { mkdirSync, writeFileSync } from 'fs';
 import { join } from 'path';
 import type { CreateConfiguration } from '../../types';
 import { collectDependencies } from './collectDependencies';
@@ -7,12 +7,11 @@ import { generateBuildBlock } from './generateBuildBlock';
 import { generateDBBlock } from './generateDBBlock';
 import { generateImportsBlock } from './generateImportsBlock';
 import { generateRoutesBlock } from './generateRoutesBlock';
-import { generateUseBlock } from './generateUseBlock';
 
 type CreateServerFileProps = Pick<
 	CreateConfiguration,
 	| 'tailwind'
-	| 'authProvider'
+	| 'authOption'
 	| 'databaseEngine'
 	| 'plugins'
 	| 'buildDirectory'
@@ -26,7 +25,7 @@ type CreateServerFileProps = Pick<
 
 export const generateServerFile = ({
 	tailwind,
-	authProvider,
+	authOption,
 	plugins,
 	buildDirectory,
 	databaseEngine,
@@ -39,10 +38,10 @@ export const generateServerFile = ({
 	const serverFilePath = join(backendDirectory, 'server.ts');
 
 	const flags = computeFlags(frontendDirectories);
-	const deps = collectDependencies({ authProvider, flags, plugins });
+	const deps = collectDependencies({ authOption, flags, plugins });
 
 	const importsBlock = generateImportsBlock({
-		authProvider,
+		authOption,
 		backendDirectory,
 		databaseEngine,
 		databaseHost,
@@ -64,14 +63,43 @@ export const generateServerFile = ({
 		dbBlock = generateDBBlock({ databaseEngine, databaseHost, orm });
 	}
 
-	const useBlock = generateUseBlock({
-		databaseEngine,
-		deps,
-		orm
-	});
+	const useBlock = deps
+		.flatMap((dependency) => dependency.imports ?? [])
+		.filter((pluginImport) => pluginImport.isPlugin)
+		.map((pluginImport) => {
+			if (pluginImport.packageName === 'absoluteAuth') {
+				const hasDatabase =
+					databaseEngine !== undefined && databaseEngine !== 'none';
+				return hasDatabase
+					? `.use(absoluteAuth(absoluteAuthConfig(db)))`
+					: `.use(absoluteAuth(absoluteAuthConfig()))`;
+			}
+
+			if (pluginImport.config === undefined) {
+				return `.use(${pluginImport.packageName})`;
+			}
+
+			if (pluginImport.config === null) {
+				return `.use(${pluginImport.packageName}())`;
+			}
+
+			return `.use(${pluginImport.packageName}(${JSON.stringify(
+				pluginImport.config
+			)}))`;
+		})
+		.join('\n');
+
+	const guardBlock = `.guard({
+			cookie: t.Cookie({
+				auth_provider: t.Optional(authProviderOption),
+				user_session_id: userSessionIdTypebox
+			})
+		})`;
+
 	const routesBlock = generateRoutesBlock({
-		authProvider,
+		authOption,
 		buildDirectory,
+		databaseEngine,
 		flags,
 		frontendDirectories
 	});
@@ -98,6 +126,7 @@ ${manifestBlock}
 ${dbBlock}
 new Elysia()
 ${useBlock}
+${authOption === 'abs' ? guardBlock : ''}
   ${routesBlock}
   .on('error', err => {
     const { request } = err

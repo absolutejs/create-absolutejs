@@ -1,5 +1,6 @@
 import { mkdirSync, writeFileSync } from 'fs';
 import { join } from 'path';
+import { isDrizzleDialect } from '../../typeGuards';
 import type { AvailableDependency, CreateConfiguration } from '../../types';
 import type { FrameworkFlags } from './computeFlags';
 
@@ -8,7 +9,7 @@ type GenerateImportsBlockProps = {
 	deps: AvailableDependency[];
 	flags: FrameworkFlags;
 	orm: CreateConfiguration['orm'];
-	authProvider: CreateConfiguration['authProvider'];
+	authOption: CreateConfiguration['authOption'];
 	databaseEngine: CreateConfiguration['databaseEngine'];
 	databaseHost: CreateConfiguration['databaseHost'];
 	frontendDirectories: CreateConfiguration['frontendDirectories'];
@@ -19,7 +20,7 @@ export const generateImportsBlock = ({
 	deps,
 	flags,
 	orm,
-	authProvider,
+	authOption,
 	databaseEngine,
 	databaseHost,
 	frontendDirectories
@@ -80,13 +81,13 @@ export const generateImportsBlock = ({
 		);
 
 	const connectorImports = {
-		neon: [`import { Pool } from '@neondatabase/serverless'`],
-		planetscale: [`import { connect } from '@planetscale/database'`],
+		neon: [`import { neon } from '@neondatabase/serverless'`],
+		planetscale: [`import { Client } from '@planetscale/database'`],
 		turso: [`import { createClient } from '@libsql/client'`]
 	} as const;
 
 	const dialectImports = {
-		neon: [`import { drizzle } from 'drizzle-orm/neon-serverless'`],
+		neon: [`import { drizzle } from 'drizzle-orm/neon-http'`],
 		planetscale: [
 			`import { drizzle } from 'drizzle-orm/planetscale-serverless'`
 		],
@@ -98,85 +99,154 @@ export const generateImportsBlock = ({
 		databaseEngine !== undefined && databaseEngine !== 'none';
 	const noOrm = orm === undefined || orm === 'none';
 
-	if (orm === 'drizzle' && isRemoteHost) {
-		const key = databaseHost;
-		rawImports.push(...connectorImports[key], ...dialectImports[key]);
-	}
-	if (orm === 'prisma') {
-		rawImports.push(`import type { Elysia } from 'elysia'`);
-		rawImports.push(`import type { PrismaClient } from '@prisma/client'`);
-		if (authProvider === 'absoluteAuth') rawImports.push(`import type { User } from '@prisma/client'`);
-	}
-	if (orm === 'drizzle' && !isRemoteHost && databaseEngine === 'postgresql')
-		rawImports.push(
-			`import { Pool } from 'pg'`,
-			`import { drizzle } from 'drizzle-orm/node-postgres'`
-		);
-
-	if (orm === 'drizzle' && databaseEngine === 'sqlite' && !isRemoteHost)
-		rawImports.push(
-			`import { Database } from 'bun:sqlite'`,
-			`import { drizzle } from 'drizzle-orm/bun-sqlite'`
-		);
-
-	if (noOrm && databaseEngine === 'sqlite')
-		rawImports.push(
-			...(databaseHost === 'turso'
-				? [
-						`import { createClient } from '@libsql/client'`,
-						`import { getEnv } from '@absolutejs/absolute'`
-					]
-				: [`import { Database } from 'bun:sqlite'`])
-		);
-
-	if (databaseEngine === 'mysql' && isRemoteHost) {
-		const key = databaseHost as 'planetscale';
-		rawImports.push(...connectorImports[key]);
-	}
-
-	if (databaseEngine === 'mysql' && !isRemoteHost) {
-		rawImports.push(`import { createPool } from 'mysql2/promise'`);
-	}
-
-	if (databaseEngine === 'mysql' && orm === 'drizzle') {
-		rawImports.push(`import { drizzle } from 'drizzle-orm/mysql2'`);
-	}
-
-	if (databaseEngine === 'mysql') {
-		rawImports.push(`import { getEnv } from '@absolutejs/absolute'`);
-	}
-
-	if (noOrm && databaseEngine === 'postgresql')
-		rawImports.push(
-			...(isRemoteHost
-				? connectorImports[databaseHost as 'neon']
-				: [`import { Pool } from 'pg'`]),
-			`import { getEnv } from '@absolutejs/absolute'`
-		);
-
-	if (orm === 'drizzle') {
-		rawImports.push(
+	const ormImports = {
+		drizzle: [
 			`import { Elysia } from 'elysia'`,
 			...(databaseEngine === 'sqlite' && !isRemoteHost
 				? []
 				: [`import { getEnv } from '@absolutejs/absolute'`]),
-			authProvider === 'absoluteAuth'
-				? `import { schema, User } from '../../db/schema'`
-				: `import { schema } from '../../db/schema'`
+			...(authOption === 'abs'
+				? [`import { schema } from '../../db/schema'`]
+				: [`import { schema } from '../../db/schema'`])
+		]
+	} as const;
+
+	const ormDatabaseImports = {
+		drizzle: {
+			gel: [
+				`import { createClient } from 'gel'`,
+				`import { drizzle } from 'drizzle-orm/gel'`
+			],
+			mariadb: [
+				`import { drizzle } from 'drizzle-orm/mysql2'`,
+				`import { createPool } from 'mysql2/promise'`
+			],
+			mysql: !isRemoteHost
+				? [
+						`import { drizzle } from 'drizzle-orm/mysql2'`,
+						`import { createPool } from 'mysql2/promise'`
+					]
+				: [],
+			postgresql: !isRemoteHost
+				? [
+						`import { SQL } from 'bun'`,
+						`import { drizzle } from 'drizzle-orm/bun-sql'`
+					]
+				: isRemoteHost && databaseHost === 'planetscale'
+					? [
+							`import { drizzle } from 'drizzle-orm/node-postgres'`,
+							`import { Pool } from 'pg'`
+						]
+					: [],
+			singlestore: [
+				`import { drizzle } from 'drizzle-orm/singlestore'`,
+				`import { createPool } from 'mysql2/promise'`
+			],
+			sqlite: !isRemoteHost
+				? [
+						`import { Database } from 'bun:sqlite'`,
+						`import { drizzle } from 'drizzle-orm/bun-sqlite'`
+					]
+				: []
+		}
+	} as const;
+
+	const noOrmImports = {
+		cockroachdb: [
+			`import { SQL } from 'bun'`,
+			`import { getEnv } from '@absolutejs/absolute'`
+		],
+		gel: [
+			`import { createClient } from 'gel'`,
+			`import { getEnv } from '@absolutejs/absolute'`
+		],
+		mariadb: [
+			`import { SQL } from 'bun'`,
+			`import { getEnv } from '@absolutejs/absolute'`
+		],
+		mongodb: [
+			`import { MongoClient } from 'mongodb'`,
+			`import { getEnv } from '@absolutejs/absolute'`
+		],
+		mssql: [
+			`import { connect } from 'mssql'`,
+			`import { getEnv } from '@absolutejs/absolute'`
+		],
+		mysql: isRemoteHost
+			? [
+					...connectorImports[databaseHost as 'planetscale'],
+					`import { getEnv } from '@absolutejs/absolute'`
+				]
+			: [
+					`import { SQL } from 'bun'`,
+					`import { getEnv } from '@absolutejs/absolute'`
+				],
+		postgresql:
+			isRemoteHost && databaseHost === 'neon'
+				? [
+						...connectorImports[databaseHost as 'neon'],
+						`import { getEnv } from '@absolutejs/absolute'`
+					]
+				: isRemoteHost && databaseHost === 'planetscale'
+					? [
+							`import { Pool } from 'pg'`,
+							`import { getEnv } from '@absolutejs/absolute'`
+						]
+					: [
+							`import { SQL } from 'bun'`,
+							`import { getEnv } from '@absolutejs/absolute'`
+						],
+		singlestore: [
+			`import { createPool } from 'mysql2/promise'`,
+			`import { getEnv } from '@absolutejs/absolute'`
+		],
+		sqlite: isRemoteHost
+			? [
+					...connectorImports[databaseHost as 'turso'],
+					`import { getEnv } from '@absolutejs/absolute'`
+				]
+			: [`import { Database } from 'bun:sqlite'`]
+	} as const;
+
+	if (orm === 'drizzle') {
+		rawImports.push(...ormImports[orm]);
+	}
+
+	if (orm === 'prisma') {
+		rawImports.push(`import type { Elysia } from 'elysia'`);
+		rawImports.push(`import type { PrismaClient } from '@prisma/client'`);
+		if (authOption === 'abs') {
+			rawImports.push(`import type { User } from '@prisma/client'`);
+		}
+	}
+
+	if (
+		orm == 'drizzle' &&
+		isRemoteHost &&
+		!(databaseEngine === 'postgresql' && databaseHost === 'planetscale')
+	) {
+		rawImports.push(
+			...connectorImports[databaseHost],
+			...dialectImports[databaseHost]
 		);
 	}
 
-	if (authProvider === 'absoluteAuth')
+	if (orm === 'drizzle' && isDrizzleDialect(databaseEngine)) {
+		rawImports.push(...ormDatabaseImports[orm][databaseEngine]);
+	}
+
+	if (noOrm && hasDatabase && noOrmImports[databaseEngine]) {
+		rawImports.push(...noOrmImports[databaseEngine]);
+	}
+
+	if (authOption === 'abs')
 		rawImports.push(
-			`import { absoluteAuth, instantiateUserSession } from '@absolutejs/auth'`,
-			...(hasDatabase
-				? [
-						`import { createUser, getUser } from './handlers/userHandlers'`
-					]
-				: [])
+			`import { absoluteAuthConfig } from './utils/absoluteAuthConfig'`,
+			`import { t } from 'elysia'`,
+			`import { authProviderOption, providers, userSessionIdTypebox, getStatus } from '@absolutejs/auth'`
 		);
 
-	if (hasDatabase && (authProvider === undefined || authProvider === 'none'))
+	if (hasDatabase && (authOption === undefined || authOption === 'none'))
 		rawImports.push(
 			`import { getCountHistory, createCountHistory } from './handlers/countHistoryHandlers'`,
 			`import { t } from 'elysia'`
@@ -232,4 +302,3 @@ export const generateImportsBlock = ({
 		})
 		.join('\n');
 };
-

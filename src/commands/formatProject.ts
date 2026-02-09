@@ -1,6 +1,7 @@
+import { exit } from 'node:process';
 import { spinner } from '@clack/prompts';
 import { $ } from 'bun';
-import { green, yellow } from 'picocolors';
+import { green, red } from 'picocolors';
 import { PackageManager } from '../types';
 import { formatCommands, formatNoInstallCommands } from '../utils/commandMaps';
 
@@ -23,9 +24,12 @@ export const formatProject = async ({
 			: formatNoInstallCommands[packageManager];
 
 		spin.start('Formatting files…');
-		await $`sh -c ${fmt}`.cwd(projectName).quiet().nothrow();
+		const [bin, ...args] = fmt.split(' ');
+		await $`${bin} ${args}`.cwd(projectName).quiet();
 		spin.stop(green('Files formatted'));
-	} catch {
-		spin.stop(yellow('Formatting skipped - continuing...'), 0);
+	} catch (err) {
+		spin.cancel(red('Failed to format files'));
+		console.error('Error formatting:', err);
+		exit(1);
 	}
 };

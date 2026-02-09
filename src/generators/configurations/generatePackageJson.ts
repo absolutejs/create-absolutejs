@@ -8,16 +8,19 @@ import {
 	defaultDependencies,
 	defaultPlugins,
 	eslintAndPrettierDependencies,
+	eslintReactDependencies,
 	prismaDevDependencies,
 	prismaRuntimeDependencies
 } from '../../data';
 import type { CreateConfiguration, PackageJson } from '../../types';
 import { getPackageVersion } from '../../utils/getPackageVersion';
+import { versions } from '../../versions';
+import { initTemplates } from '../db/dockerInitTemplates';
 import { computeFlags } from '../project/computeFlags';
 
 type CreatePackageJsonProps = Pick<
 	CreateConfiguration,
-	| 'authProvider'
+	| 'authOption'
 	| 'useTailwind'
 	| 'databaseEngine'
 	| 'databaseHost'
@@ -31,9 +34,48 @@ type CreatePackageJsonProps = Pick<
 	latest: boolean;
 };
 
+const dbScripts = {
+	cockroachdb: {
+		clientCmd: 'cockroach sql --insecure --database=database',
+		waitCmd: initTemplates.cockroachdb.wait
+	},
+	gel: {
+		clientCmd:
+			'gel -H localhost -P 5656 -u admin --tls-security insecure -b main',
+		waitCmd: initTemplates.gel.wait
+	},
+	mariadb: {
+		clientCmd:
+			'MYSQL_PWD=userpassword mariadb -h127.0.0.1 -u user database',
+		waitCmd: initTemplates.mariadb.wait
+	},
+	mongodb: {
+		clientCmd:
+			'mongosh -u user -p password --authenticationDatabase admin database',
+		waitCmd: initTemplates.mongodb.wait
+	},
+	mssql: {
+		clientCmd:
+			'/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P SApassword1',
+		waitCmd: initTemplates.mssql.wait
+	},
+	mysql: {
+		clientCmd: 'MYSQL_PWD=userpassword mysql -h127.0.0.1 -u user database',
+		waitCmd: initTemplates.mysql.wait
+	},
+	postgresql: {
+		clientCmd: 'psql -h localhost -U user -d database',
+		waitCmd: initTemplates.postgresql.wait
+	},
+	singlestore: {
+		clientCmd: 'singlestore -u root -ppassword -D database',
+		waitCmd: initTemplates.singlestore.wait
+	}
+} as const;
+
 export const createPackageJson = ({
 	projectName,
-	authProvider,
+	authOption,
 	plugins,
 	databaseEngine,
 	orm,
@@ -52,6 +94,10 @@ export const createPackageJson = ({
 
 	const dependencies: PackageJson['dependencies'] = {};
 	const devDependencies: PackageJson['devDependencies'] = {};
+	devDependencies['typescript'] = resolveVersion(
+		'typescript',
+		versions['typescript']
+	);
 
 	const flags = computeFlags(frontendDirectories);
 
@@ -63,7 +109,7 @@ export const createPackageJson = ({
 		dependencies[dep.value] = resolveVersion(dep.value, dep.latestVersion);
 	}
 
-	if (authProvider === 'absoluteAuth') {
+	if (authOption === 'abs') {
 		dependencies[absoluteAuthPlugin.value] = resolveVersion(
 			absoluteAuthPlugin.value,
 			absoluteAuthPlugin.latestVersion
@@ -91,48 +137,73 @@ export const createPackageJson = ({
 	if (useTailwind) {
 		devDependencies['autoprefixer'] = resolveVersion(
 			'autoprefixer',
-			'10.4.21'
+			versions['autoprefixer']
 		);
-		devDependencies['postcss'] = resolveVersion('postcss', '8.5.3');
-		devDependencies['tailwindcss'] = resolveVersion('tailwindcss', '4.1.7');
+		devDependencies['postcss'] = resolveVersion(
+			'postcss',
+			versions['postcss']
+		);
+		devDependencies['tailwindcss'] = resolveVersion(
+			'tailwindcss',
+			versions['tailwindcss']
+		);
 		devDependencies['@tailwindcss/cli'] = resolveVersion(
 			'@tailwindcss/cli',
-			'4.1.7'
+			versions['@tailwindcss/cli']
 		);
 	}
 
 	if (flags.requiresReact) {
-		dependencies['react'] = resolveVersion('react', '19.2.0');
+		dependencies['react'] = resolveVersion('react', versions['react']);
+		dependencies['react-dom'] = resolveVersion(
+			'react-dom',
+			versions['react-dom']
+		);
 		devDependencies['@types/react'] = resolveVersion(
 			'@types/react',
-			'19.2.0'
+			versions['@types/react']
 		);
 	}
 
+	if (flags.requiresReact && codeQualityTool === 'eslint+prettier') {
+		eslintReactDependencies.forEach((dep) => {
+			devDependencies[dep.value] = resolveVersion(
+				dep.value,
+				dep.latestVersion
+			);
+		});
+	}
+
 	if (flags.requiresSvelte) {
-		dependencies['svelte'] = resolveVersion('svelte', '5.34.7');
+		dependencies['svelte'] = resolveVersion('svelte', versions['svelte']);
 	}
 
 	if (flags.requiresSvelte && codeQualityTool === 'eslint+prettier') {
 		devDependencies['prettier-plugin-svelte'] = resolveVersion(
 			'prettier-plugin-svelte',
-			'3.4.0'
+			versions['prettier-plugin-svelte']
 		);
 	}
 
 	if (flags.requiresVue) {
-		dependencies['vue'] = resolveVersion('vue', '3.5.17');
+		dependencies['vue'] = resolveVersion('vue', versions['vue']);
 	}
 
 	if (flags.requiresHtmx) {
 		dependencies['elysia-scoped-state'] = resolveVersion(
 			'elysia-scoped-state',
-			'0.1.1'
+			versions['elysia-scoped-state']
 		);
 	}
 	if (orm === 'drizzle') {
-		dependencies['drizzle-orm'] = resolveVersion('drizzle-orm', '0.41.0');
-		devDependencies['drizzle-kit'] = resolveVersion('drizzle-kit', '0.30.6');
+		dependencies['drizzle-orm'] = resolveVersion(
+			'drizzle-orm',
+			versions['drizzle-orm']
+		);
+		devDependencies['drizzle-kit'] = resolveVersion(
+			'drizzle-kit',
+			versions['drizzle-kit']
+		);
 	}
 	const usesAccelerate =
 		orm === 'prisma' &&
@@ -140,11 +211,15 @@ export const createPackageJson = ({
 
 	if (orm === 'prisma') {
 		prismaRuntimeDependencies.forEach((dep) => {
-			dependencies[dep.value] = resolveVersion(dep.value, dep.latestVersion);
+			dependencies[dep.value] = resolveVersion(
+				dep.value,
+				dep.latestVersion
+			);
 		});
 
 		prismaDevDependencies.forEach((dep) => {
-			if (dep.value === '@prisma/extension-accelerate' && !usesAccelerate) return;
+			if (dep.value === '@prisma/extension-accelerate' && !usesAccelerate)
+				return;
 			devDependencies[dep.value] = resolveVersion(
 				dep.value,
 				dep.latestVersion
@@ -152,95 +227,124 @@ export const createPackageJson = ({
 		});
 	}
 	if (orm === 'drizzle') {
-	switch (databaseHost) {
-		case 'neon':
-			dependencies['@neondatabase/serverless'] = resolveVersion(
-				'@neondatabase/serverless',
-				'1.0.0'
-			);
-			break;
-		case 'planetscale':
-			dependencies['@planetscale/database'] = resolveVersion(
-				'@planetscale/database',
-				'1.0.0'
-			);
-			break;
-		case 'turso':
-			dependencies['@libsql/client'] = resolveVersion(
-				'@libsql/client',
-				'0.15.9'
-			);
-			break;
+		switch (databaseHost) {
+			case 'neon':
+				dependencies['@neondatabase/serverless'] = resolveVersion(
+					'@neondatabase/serverless',
+					versions['@neondatabase/serverless']
+				);
+				break;
+			case 'planetscale':
+				dependencies['@planetscale/database'] = resolveVersion(
+					'@planetscale/database',
+					versions['@planetscale/database']
+				);
+				break;
+			case 'turso':
+				dependencies['@libsql/client'] = resolveVersion(
+					'@libsql/client',
+					versions['@libsql/client']
+				);
+				break;
+		}
 	}
-}
 
 	if (latest) s.stop(green('Package versions resolved'));
 
+	const isLocal = !databaseHost || databaseHost === 'none';
+	const hasLocalDocker =
+		isLocal &&
+		databaseEngine !== undefined &&
+		databaseEngine !== 'none' &&
+		databaseEngine !== 'sqlite';
+
 	const scripts: PackageJson['scripts'] = {
-		dev: 'bash -c \'trap "exit 0" INT; bun run --watch src/backend/server.ts\'',
+		dev: hasLocalDocker
+			? 'bun run scripts/dev-with-db.ts'
+			: 'bun run --watch src/backend/server.ts',
 		format: `prettier --write "./**/*.{js,ts,css,json,mjs,md${flags.requiresReact ? ',jsx,tsx' : ''}${flags.requiresSvelte ? ',svelte' : ''}${flags.requiresVue ? ',vue' : ''}${flags.requiresHtml || flags.requiresHtmx ? ',html' : ''}}"`,
 		lint: 'eslint ./src',
 		test: 'echo "Error: no test specified" && exit 1',
 		typecheck: 'bun run tsc --noEmit'
 	};
 
-	if (
-		databaseEngine === 'postgresql' &&
-		(!databaseHost || databaseHost === 'none')
-	) {
-		scripts['db:up'] =
-			'sh -c "docker info >/dev/null 2>&1 || sudo service docker start; docker compose -p postgresql -f db/docker-compose.db.yml up -d db"';
-		scripts['db:down'] =
-			'docker compose -p postgresql -f db/docker-compose.db.yml down';
-		scripts['db:reset'] =
-			'docker compose -p postgresql -f db/docker-compose.db.yml down -v';
-		scripts['db:psql'] =
-			"docker compose -p postgresql -f db/docker-compose.db.yml exec db bash -lc 'until pg_isready -U user -h localhost --quiet; do sleep 1; done; exec psql -h localhost -U user -d database'";
-		scripts['predev'] = 'bun db:up';
-		scripts['predb:psql'] = 'bun db:up';
-		scripts['postdev'] = 'bun db:down';
-		scripts['postdb:psql'] = 'bun db:down';
-	}
+	if (hasLocalDocker) {
+		const config = dbScripts[databaseEngine];
+		const dockerPrefix = `docker compose -p ${databaseEngine} -f db/docker-compose.db.yml`;
 
-	if (databaseEngine === 'mysql') {
-		dependencies['mysql2'] = resolveVersion('mysql2', '3.14.2');
+		scripts['db:up'] = `${dockerPrefix} up -d db`;
+		scripts['postdb:up'] =
+			`${dockerPrefix} exec db bash -lc '${config.waitCmd}'`;
+		scripts['db:down'] = `${dockerPrefix} down`;
+		scripts['db:reset'] = `${dockerPrefix} down -v`;
+		scripts[`db:${databaseEngine}`] =
+			`${dockerPrefix} exec -it db bash -lc '${config.clientCmd}'`;
+		scripts[`predb:${databaseEngine}`] = 'bun db:up';
+		scripts[`postdb:${databaseEngine}`] = 'bun db:down';
 	}
 
 	if (
-		databaseEngine === 'mysql' &&
-		(!databaseHost || databaseHost === 'none')
+		isLocal &&
+		(databaseEngine === 'mysql' || databaseEngine === 'mariadb') &&
+		orm === 'drizzle'
 	) {
-		scripts['db:up'] =
-			'sh -c "docker info >/dev/null 2>&1 || sudo service docker start; docker compose -p mysql -f db/docker-compose.db.yml up -d db"';
-		scripts['db:down'] =
-			'docker compose -p mysql -f db/docker-compose.db.yml down';
-		scripts['db:reset'] =
-			'docker compose -p mysql -f db/docker-compose.db.yml down -v';
-		scripts['db:mysql'] =
-			"docker compose -p mysql -f db/docker-compose.db.yml exec -e MYSQL_PWD=rootpassword db bash -lc 'until mysqladmin ping -h127.0.0.1 --silent; do sleep 1; done; exec mysql -h127.0.0.1 -uroot'";
-		scripts['predev'] = 'bun db:up';
-		scripts['predb:mysql'] = 'bun db:up';
-		scripts['postdev'] = 'bun db:down';
-		scripts['postdb:mysql'] = 'bun db:down';
+		dependencies['mysql2'] = resolveVersion('mysql2', versions['mysql2']);
 	}
 
-	if (
-		databaseEngine === 'sqlite' &&
-		(!databaseHost || databaseHost === 'none')
-	) {
+	if (isLocal && databaseEngine === 'singlestore') {
+		dependencies['mysql2'] = resolveVersion('mysql2', versions['mysql2']);
+	}
+
+	if (databaseEngine === 'postgresql' && databaseHost === 'planetscale') {
+		dependencies['pg'] = resolveVersion('pg', versions['pg']);
+		devDependencies['@types/pg'] = resolveVersion(
+			'@types/pg',
+			versions['@types/pg']
+		);
+	}
+
+	if (isLocal && databaseEngine === 'mssql') {
+		dependencies['mssql'] = resolveVersion('mssql', versions['mssql']);
+		devDependencies['@types/mssql'] = resolveVersion(
+			'@types/mssql',
+			versions['@types/mssql']
+		);
+	}
+
+	if (isLocal && databaseEngine === 'gel') {
+		dependencies['gel'] = resolveVersion('gel', versions['gel']);
+	}
+
+	if (databaseEngine === 'mongodb') {
+		dependencies['mongodb'] = resolveVersion(
+			'mongodb',
+			versions['mongodb']
+		);
+	}
+
+	if (isLocal && databaseEngine === 'sqlite') {
 		scripts['db:sqlite'] = 'sqlite3 db/database.sqlite';
 		scripts['db:init'] = 'sqlite3 db/database.sqlite < db/init.sql';
 	}
 
+	if (orm === 'drizzle') {
+		scripts['db:studio'] = 'drizzle-kit studio';
+		scripts['db:push'] = 'drizzle-kit push';
+	}
+
 	if (orm === 'prisma') {
-		const schemaPath = databaseDirectory ? `${databaseDirectory}/schema.prisma` : 'db/schema.prisma';
+		const schemaPath = databaseDirectory
+			? `${databaseDirectory}/schema.prisma`
+			: 'db/schema.prisma';
 		scripts['postinstall'] = `prisma generate --schema ${schemaPath}`;
 		scripts['db:generate'] = `prisma generate --schema ${schemaPath}`;
 		scripts['db:push'] = `prisma db push --schema ${schemaPath}`;
 		scripts['db:studio'] = `prisma studio --schema ${schemaPath}`;
 		scripts['db:migrate'] = `prisma migrate dev --schema ${schemaPath}`;
-		scripts['db:migrate:deploy'] = `prisma migrate deploy --schema ${schemaPath}`;
-		scripts['db:migrate:reset'] = `prisma migrate reset --schema ${schemaPath}`;
+		scripts['db:migrate:deploy'] =
+			`prisma migrate deploy --schema ${schemaPath}`;
+		scripts['db:migrate:reset'] =
+			`prisma migrate reset --schema ${schemaPath}`;
 	}
 
 	const packageJson: PackageJson = {
@@ -257,4 +361,3 @@ export const createPackageJson = ({
 		JSON.stringify(packageJson, null, 2)
 	);
 };
-

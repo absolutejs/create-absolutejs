@@ -1,4 +1,4 @@
-import { exit } from 'node:process';
+import { exit } from 'process';
 import { cancel } from '@clack/prompts';
 
 /* eslint-disable */
