@@ -8,6 +8,7 @@ import {
 	getDockerEnv,
 	shutdownDockerDaemon
 } from '../../utils/checkDockerInstalled';
+import { toDockerProjectName } from '../../utils/toDockerProjectName';
 import {
 	countHistoryTables,
 	initTemplates,
@@ -17,6 +18,7 @@ import { generateDockerContainer } from './generateDockerContainer';
 
 type ScaffoldDockerProps = {
 	authOption: AuthOption;
+	databaseDirectory: string;
 	databaseEngine: DatabaseEngine;
 	hostPort: number;
 	projectDatabaseDirectory: string;
@@ -25,6 +27,7 @@ type ScaffoldDockerProps = {
 
 export const scaffoldDocker = async ({
 	authOption,
+	databaseDirectory,
 	databaseEngine,
 	hostPort,
 	projectDatabaseDirectory,
@@ -70,7 +73,8 @@ export const scaffoldDocker = async ({
 			? userTables[dbKey]
 			: countHistoryTables[dbKey];
 		await $`bun db:up`.cwd(projectName).env(dockerEnv);
-		await $`docker compose -p ${databaseEngine} -f db/docker-compose.db.yml exec -T db \
+		const composeFile = `${databaseDirectory}/docker-compose.db.yml`;
+		await $`docker compose -p ${toDockerProjectName(projectName)} -f ${composeFile} exec -T db \
   bash -lc '${wait} && ${cli} "${dbCommand}"'`
 			.cwd(projectName)
 			.env(dockerEnv);

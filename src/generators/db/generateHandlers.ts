@@ -1,12 +1,19 @@
 import type { CreateConfiguration } from '../../types';
-import { getAuthTemplate, getCountTemplate } from './handlerTemplates';
+import {
+	getAuthTemplate,
+	getCountTemplate,
+	type DriverConfigurationKey
+} from './handlerTemplates';
 
 type GenerateDBHandlersProps = Pick<
 	CreateConfiguration,
-	'databaseEngine' | 'databaseHost' | 'orm'
+	'databaseDirectory' | 'databaseEngine' | 'databaseHost' | 'orm'
 > & { usesAuth: boolean };
 
+const defaultDbDir = 'db';
+
 export const generateDBHandlers = ({
+	databaseDirectory = defaultDbDir,
 	databaseEngine,
 	databaseHost,
 	orm,
@@ -23,8 +30,9 @@ export const generateDBHandlers = ({
 	let ormKey = 'sql';
 	if (orm === 'drizzle') ormKey = 'drizzle';
 	else if (orm === 'prisma') ormKey = 'prisma';
-	const key = `${databaseEngine}:${ormKey}:${host}` as const;
+	const key = `${databaseEngine}:${ormKey}:${host}` as DriverConfigurationKey;
 
-	// @ts-expect-error - TODO: Finish the other templates
-	return usesAuth ? getAuthTemplate(key) : getCountTemplate(key);
+	return usesAuth
+		? getAuthTemplate(key, databaseDirectory)
+		: getCountTemplate(key, databaseDirectory);
 };

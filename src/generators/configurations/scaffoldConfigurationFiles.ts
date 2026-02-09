@@ -14,6 +14,7 @@ type AddConfigurationProps = Pick<
 	| 'projectName'
 	| 'databaseEngine'
 	| 'databaseHost'
+	| 'databaseDirectory'
 > & {
 	databasePort?: number;
 	envVariables: string[] | undefined;
@@ -25,6 +26,7 @@ export const scaffoldConfigurationFiles = ({
 	templatesDirectory,
 	databaseEngine,
 	databaseHost,
+	databaseDirectory,
 	databasePort,
 	envVariables,
 	codeQualityTool,
@@ -71,6 +73,7 @@ export const scaffoldConfigurationFiles = ({
 		);
 
 	generateEnv({
+		databaseDirectory,
 		databaseEngine,
 		databaseHost,
 		databasePort,

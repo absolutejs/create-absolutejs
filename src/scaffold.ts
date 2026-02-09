@@ -71,6 +71,7 @@ export const scaffold = async ({
 
 	scaffoldConfigurationFiles({
 		codeQualityTool,
+		databaseDirectory,
 		databaseEngine,
 		databaseHost,
 		databasePort,
@@ -102,6 +103,7 @@ export const scaffold = async ({
 		authOption,
 		backendDirectory,
 		buildDirectory,
+		databaseDirectory,
 		databaseEngine,
 		databaseHost,
 		frontendDirectories,

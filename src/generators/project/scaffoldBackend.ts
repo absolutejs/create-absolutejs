@@ -10,6 +10,7 @@ type ScaffoldBackendProps = Pick<
 	| 'absProviders'
 	| 'authOption'
 	| 'buildDirectory'
+	| 'databaseDirectory'
 	| 'databaseEngine'
 	| 'databaseHost'
 	| 'frontendDirectories'
@@ -26,6 +27,7 @@ export const scaffoldBackend = ({
 	absProviders,
 	backendDirectory,
 	buildDirectory,
+	databaseDirectory,
 	databaseEngine,
 	databaseHost,
 	frontendDirectories,
@@ -38,6 +40,7 @@ export const scaffoldBackend = ({
 		authOption,
 		backendDirectory,
 		buildDirectory,
+		databaseDirectory,
 		databaseEngine,
 		databaseHost,
 		frontendDirectories,

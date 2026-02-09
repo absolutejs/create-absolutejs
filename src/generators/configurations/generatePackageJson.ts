@@ -14,6 +14,7 @@ import {
 } from '../../data';
 import type { CreateConfiguration, PackageJson } from '../../types';
 import { getPackageVersion } from '../../utils/getPackageVersion';
+import { toDockerProjectName } from '../../utils/toDockerProjectName';
 import { versions } from '../../versions';
 import { initTemplates } from '../db/dockerInitTemplates';
 import { computeFlags } from '../project/computeFlags';
@@ -270,7 +271,8 @@ export const createPackageJson = ({
 
 	if (hasLocalDocker) {
 		const config = dbScripts[databaseEngine];
-		const dockerPrefix = `docker compose -p ${databaseEngine} -f db/docker-compose.db.yml`;
+		const composeFile = `${databaseDirectory ?? 'db'}/docker-compose.db.yml`;
+		const dockerPrefix = `docker compose -p ${toDockerProjectName(projectName)} -f ${composeFile}`;
 
 		scripts['db:up'] = `${dockerPrefix} up -d db`;
 		scripts['postdb:up'] =
@@ -323,8 +325,10 @@ export const createPackageJson = ({
 	}
 
 	if (isLocal && databaseEngine === 'sqlite') {
-		scripts['db:sqlite'] = 'sqlite3 db/database.sqlite';
-		scripts['db:init'] = 'sqlite3 db/database.sqlite < db/init.sql';
+		const dbDir = databaseDirectory ?? 'db';
+		scripts['db:sqlite'] = `sqlite3 ${dbDir}/database.sqlite`;
+		scripts['db:init'] =
+			`sqlite3 ${dbDir}/database.sqlite < ${dbDir}/init.sql`;
 	}
 
 	if (orm === 'drizzle') {

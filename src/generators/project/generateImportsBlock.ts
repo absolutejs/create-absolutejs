@@ -12,8 +12,11 @@ type GenerateImportsBlockProps = {
 	authOption: CreateConfiguration['authOption'];
 	databaseEngine: CreateConfiguration['databaseEngine'];
 	databaseHost: CreateConfiguration['databaseHost'];
+	databaseDirectory: CreateConfiguration['databaseDirectory'];
 	frontendDirectories: CreateConfiguration['frontendDirectories'];
 };
+
+const defaultDbDir = 'db';
 
 export const generateImportsBlock = ({
 	backendDirectory,
@@ -23,6 +26,7 @@ export const generateImportsBlock = ({
 	authOption,
 	databaseEngine,
 	databaseHost,
+	databaseDirectory = defaultDbDir,
 	frontendDirectories
 }: GenerateImportsBlockProps) => {
 	const rawImports: string[] = [];
@@ -99,15 +103,15 @@ export const generateImportsBlock = ({
 		databaseEngine !== undefined && databaseEngine !== 'none';
 	const noOrm = orm === undefined || orm === 'none';
 
+	const schemaImport = `import { schema } from '../../${databaseDirectory}/schema'`;
+
 	const ormImports = {
 		drizzle: [
 			`import { Elysia } from 'elysia'`,
 			...(databaseEngine === 'sqlite' && !isRemoteHost
 				? []
 				: [`import { getEnv } from '@absolutejs/absolute'`]),
-			...(authOption === 'abs'
-				? [`import { schema } from '../../db/schema'`]
-				: [`import { schema } from '../../db/schema'`])
+			schemaImport
 		]
 	} as const;
 
@@ -263,41 +267,82 @@ export const generateImportsBlock = ({
 		rawImports.push(`import { vueImports } from './utils/vueImporter'`);
 	}
 
-	const importMap = new Map<
-		string,
-		{ defaultImport: string | null; namedImports: Set<string> }
-	>();
+	type ImportEntry = {
+		defaultImport: string | null;
+		typeOnlyNames: Set<string>;
+		valueNames: Set<string>;
+	};
+
+	const importMap = new Map<string, ImportEntry>();
 
 	for (const stmt of rawImports) {
-		const match = stmt.match(/^import\s+(.+)\s+from\s+['"](.+)['"];?/);
-		if (!match) continue;
-		const [, importClause, modulePath] = match;
+		const typeMatch = stmt.match(
+			/^import\s+type\s+\{([^}]+)\}\s+from\s+['"](.+)['"];?/
+		);
+		const valueMatch = stmt.match(/^import\s+(.+)\s+from\s+['"](.+)['"];?/);
+		if (typeMatch) {
+			const [, names, modulePath] = typeMatch;
+			if (!names || !modulePath) continue;
+			const entry = importMap.get(modulePath) ?? {
+				defaultImport: null,
+				typeOnlyNames: new Set<string>(),
+				valueNames: new Set<string>()
+			};
+			importMap.set(modulePath, entry);
+			names
+				.split(',')
+				.map((s) => s.trim())
+				.filter(Boolean)
+				.forEach((name) => entry.typeOnlyNames.add(name));
+			continue;
+		}
+		if (!valueMatch) continue;
+		const [, importClause, modulePath] = valueMatch;
 		if (!importClause || !modulePath) continue;
 
 		const entry = importMap.get(modulePath) ?? {
 			defaultImport: null,
-			namedImports: new Set<string>()
+			typeOnlyNames: new Set<string>(),
+			valueNames: new Set<string>()
 		};
 		importMap.set(modulePath, entry);
 
-		void (importClause.startsWith('{')
-			? importClause
-					.slice(1, -1)
-					.split(',')
-					.map((segment) => segment.trim())
-					.filter(Boolean)
-					.forEach((name) => entry.namedImports.add(name))
-			: (entry.defaultImport = importClause.trim()));
+		if (importClause.startsWith('{')) {
+			importClause
+				.slice(1, -1)
+				.split(',')
+				.map((segment) => segment.trim())
+				.filter(Boolean)
+				.forEach((name) => entry.valueNames.add(name));
+		} else {
+			entry.defaultImport = importClause.trim();
+		}
 	}
 
 	return Array.from(importMap.entries())
 		.sort(([a], [b]) => a.localeCompare(b))
-		.map(([path, { defaultImport, namedImports }]) => {
+		.map(([path, { defaultImport, typeOnlyNames, valueNames }]) => {
+			const typeOnlyNotValue = [...typeOnlyNames].filter(
+				(name) => !valueNames.has(name)
+			);
+			const hasValues = valueNames.size > 0 || defaultImport !== null;
+			if (!hasValues && typeOnlyNotValue.length > 0) {
+				return `import type { ${typeOnlyNotValue.sort().join(', ')} } from '${path}'`;
+			}
 			const parts: string[] = [];
 			if (defaultImport) parts.push(defaultImport);
-			if (namedImports.size)
-				parts.push(`{ ${[...namedImports].sort().join(', ')} }`);
-
+			if (valueNames.size > 0 || typeOnlyNotValue.length > 0) {
+				const sortedValues = [...valueNames].sort();
+				const named = [
+					...typeOnlyNotValue.map((n) => `type ${n}`),
+					...sortedValues
+				].sort((a, b) => {
+					const aNorm = a.replace(/^type /, '');
+					const bNorm = b.replace(/^type /, '');
+					return aNorm.localeCompare(bNorm);
+				});
+				parts.push(`{ ${named.join(', ')} }`);
+			}
 			return `import ${parts.join(', ')} from '${path}'`;
 		})
 		.join('\n');

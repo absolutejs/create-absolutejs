@@ -19,6 +19,7 @@ type CreateServerFileProps = Pick<
 	| 'orm'
 	| 'assetsDirectory'
 	| 'frontendDirectories'
+	| 'databaseDirectory'
 > & {
 	backendDirectory: string;
 };
@@ -30,6 +31,7 @@ export const generateServerFile = ({
 	buildDirectory,
 	databaseEngine,
 	databaseHost,
+	databaseDirectory,
 	orm,
 	assetsDirectory,
 	frontendDirectories,
@@ -43,6 +45,7 @@ export const generateServerFile = ({
 	const importsBlock = generateImportsBlock({
 		authOption,
 		backendDirectory,
+		databaseDirectory,
 		databaseEngine,
 		databaseHost,
 		deps,
@@ -60,7 +63,12 @@ export const generateServerFile = ({
 
 	let dbBlock = '';
 	if (databaseEngine && databaseEngine !== 'none') {
-		dbBlock = generateDBBlock({ databaseEngine, databaseHost, orm });
+		dbBlock = generateDBBlock({
+			databaseDirectory,
+			databaseEngine,
+			databaseHost,
+			orm
+		});
 	}
 
 	const useBlock = deps

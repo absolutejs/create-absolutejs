@@ -4,7 +4,7 @@ import type { CreateConfiguration, DatabaseEngine } from '../../types';
 
 type GenerateEnvProps = Pick<
 	CreateConfiguration,
-	'databaseEngine' | 'databaseHost' | 'projectName'
+	'databaseEngine' | 'databaseHost' | 'projectName' | 'databaseDirectory'
 > & {
 	databasePort?: number;
 	envVariables?: string[];
@@ -16,8 +16,8 @@ const urlBuilders: Record<
 > = {
 	cockroachdb: (port) => `postgresql://root@localhost:${port}/database`,
 	gel: (port) => `gel://admin@localhost:${port}/main?tls_security=insecure`,
-	mariadb: (port) => `mariadb://user:userpassword@localhost:${port}/database`,
-	mongodb: (port) => `mongodb://user:password@localhost:${port}/database`,
+	mariadb: (port) => `mysql://user:userpassword@localhost:${port}/database`,
+	mongodb: (port) => `mongodb://user:password@localhost:${port}/database?authSource=admin`,
 	mssql: (port) =>
 		`Server=localhost,${port};Database=master;User Id=sa;Password=SApassword1;Encrypt=true;TrustServerCertificate=true`,
 	mysql: (port) => `mysql://user:userpassword@localhost:${port}/database`,
@@ -26,9 +26,18 @@ const urlBuilders: Record<
 	singlestore: (port) => `mysql://root:password@localhost:${port}/database`
 };
 
+const shadowDbUrlBuilders: Record<
+	'mariadb' | 'mysql',
+	(port: number) => string
+> = {
+	mariadb: (port) => `mysql://root:rootpassword@localhost:${port}/`,
+	mysql: (port) => `mysql://root:rootpassword@localhost:${port}/`
+};
+
 export const generateEnv = ({
 	databaseEngine,
 	databaseHost,
+	databaseDirectory = 'db',
 	databasePort,
 	envVariables = [],
 	projectName
@@ -39,7 +48,7 @@ export const generateEnv = ({
 		databaseEngine === 'sqlite' &&
 		(databaseHost === 'none' || databaseHost === undefined)
 	) {
-		vars.push('DATABASE_URL=file:./db/database.sqlite');
+		vars.push(`DATABASE_URL=file:./${databaseDirectory}/database.sqlite`);
 	} else if (
 		databaseEngine !== 'none' &&
 		databaseEngine !== 'sqlite' &&
@@ -49,6 +58,13 @@ export const generateEnv = ({
 	) {
 		const databaseURL = urlBuilders[databaseEngine](databasePort);
 		vars.push(`DATABASE_URL=${databaseURL}`);
+		if (
+			(databaseEngine === 'mysql' || databaseEngine === 'mariadb') &&
+			shadowDbUrlBuilders[databaseEngine]
+		) {
+			const shadowUrl = shadowDbUrlBuilders[databaseEngine](databasePort);
+			vars.push(`SHADOW_DATABASE_URL=${shadowUrl}`);
+		}
 	}
 
 	if (vars.length === 0) return;

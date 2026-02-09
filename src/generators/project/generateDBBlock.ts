@@ -52,10 +52,13 @@ const prismaDialectSet = new Set<string>([...availablePrismaDialects]);
 
 type GenerateDBBlockProps = Pick<
 	CreateConfiguration,
-	'databaseEngine' | 'orm' | 'databaseHost'
+	'databaseDirectory' | 'databaseEngine' | 'orm' | 'databaseHost'
 >;
 
+const defaultDbDir = 'db';
+
 export const generateDBBlock = ({
+	databaseDirectory = defaultDbDir,
 	databaseEngine,
 	orm,
 	databaseHost
@@ -73,14 +76,18 @@ export const generateDBBlock = ({
 	if (orm !== 'drizzle' && orm !== 'prisma') {
 		const hostCfg = engineGroup[hostKey];
 
-		return hostCfg ? `const db = ${hostCfg.expr}` : '';
+		if (!hostCfg) return '';
+		const expr = hostCfg.expr.replace('db/', `${databaseDirectory}/`);
+
+		return `const db = ${expr}`;
 	}
 
 	if (orm === 'drizzle') {
 		if (!drizzleDialectSet.has(databaseEngine)) return '';
 
-		const expr = engineGroup[hostKey]?.expr ?? remoteDrizzleInit[hostKey];
+		let expr = engineGroup[hostKey]?.expr ?? remoteDrizzleInit[hostKey];
 		if (!expr) return '';
+		expr = expr.replace('db/', `${databaseDirectory}/`);
 
 		if (
 			(databaseEngine === 'mysql' || databaseEngine === 'mariadb') &&
@@ -111,7 +118,7 @@ const db = drizzle(pool, { schema, mode: '${mysqlMode}' })
 	if (orm === 'prisma') {
 		if (!prismaDialectSet.has(databaseEngine)) return '';
 
-		return `const prisma = (await import('../../db/client')).default
+		return `const prisma = (await import('../../${databaseDirectory}/client')).default
 const db = prisma`;
 	}
 

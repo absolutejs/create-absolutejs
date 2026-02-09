@@ -3,8 +3,9 @@ import { join } from 'path';
 import { $ } from 'bun';
 import { isDrizzleDialect, isPrismaDialect } from '../../typeGuards';
 import type { CreateConfiguration } from '../../types';
-import { checkSqliteInstalled } from '../../utils/checkSqliteInstalled';
 import { checkDockerInstalled } from '../../utils/checkDockerInstalled';
+import { checkSqliteInstalled } from '../../utils/checkSqliteInstalled';
+import { toDockerProjectName } from '../../utils/toDockerProjectName';
 import { createDrizzleConfig } from '../configurations/generateDrizzleConfig';
 import { generatePrismaClient } from '../configurations/generatePrismaClient';
 import { generateDatabaseTypes } from './generateDatabaseTypes';
@@ -51,6 +52,7 @@ export const scaffoldDatabase = async ({
 		? 'userHandlers.ts'
 		: 'countHistoryHandlers.ts';
 	const dbHandlers = generateDBHandlers({
+		databaseDirectory,
 		databaseEngine,
 		databaseHost,
 		orm,
@@ -68,10 +70,10 @@ export const scaffoldDatabase = async ({
 			join(projectDatabaseDirectory, 'schema.sql'),
 			sqliteSchema
 		);
-		await $`sqlite3 ${databaseDirectory}/database.sqlite ".read ${join(
-			databaseDirectory,
-			'schema.sql'
-		)}"`.cwd(projectName);
+		const schemaPath = `${databaseDirectory}/schema.sql`;
+		await $`sqlite3 ${databaseDirectory}/database.sqlite ".read ${schemaPath}"`.cwd(
+			projectName
+		);
 	}
 
 	// For Prisma, we need to create the docker-compose file but skip schema initialization
@@ -97,6 +99,7 @@ export const scaffoldDatabase = async ({
 		} else {
 			await scaffoldDocker({
 				authOption,
+				databaseDirectory,
 				databaseEngine,
 				hostPort: databasePort,
 				projectDatabaseDirectory,
@@ -166,6 +169,7 @@ export const scaffoldDatabase = async ({
 	// For non-SQLite databases, ensure Docker container is running before migrations
 	if (databaseEngine !== 'sqlite') {
 		try {
+			await $`bun db:reset`.cwd(projectCwd).nothrow();
 			await $`bun db:up`.cwd(projectCwd);
 			// Wait for database to be ready using appropriate wait command
 			const { initTemplates } = await import('./dockerInitTemplates');
@@ -174,7 +178,7 @@ export const scaffoldDatabase = async ({
 					initTemplates[databaseEngine as keyof typeof initTemplates]
 						?.wait;
 				if (waitCommand) {
-					await $`docker compose -p ${databaseEngine} -f ${databaseDirectory}/docker-compose.db.yml exec -T db bash -lc '${waitCommand}'`
+					await $`docker compose -p ${toDockerProjectName(projectName)} -f ${databaseDirectory}/docker-compose.db.yml exec -T db bash -lc '${waitCommand}'`
 						.cwd(projectCwd)
 						.nothrow();
 				}
@@ -187,7 +191,7 @@ export const scaffoldDatabase = async ({
 		}
 	}
 
-	if (databaseEngine === 'sqlite') {
+	if (databaseEngine === 'sqlite' || databaseEngine === 'mongodb') {
 		const result = await $`npx prisma db push --schema ${schemaArg}`
 			.cwd(projectCwd)
 			.nothrow();

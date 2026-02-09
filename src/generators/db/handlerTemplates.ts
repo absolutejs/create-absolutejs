@@ -506,6 +506,11 @@ import { schema } from '../../../db/schema'`,
 		importLines: `import type { PrismaClient } from '@prisma/client'`,
 		queries: prismaQueryOperations
 	},
+	'postgresql:prisma:planetscale': {
+		dbType: 'PrismaClient',
+		importLines: `import type { PrismaClient } from '@prisma/client'`,
+		queries: prismaQueryOperations
+	},
 	'postgresql:sql:local': {
 		dbType: 'SQL',
 		importLines: ``,
@@ -572,20 +577,45 @@ import { schema } from '../../../db/schema'`,
 	}
 } as const;
 
-type DriverConfigurationKey = keyof typeof driverConfigurations;
+export type DriverConfigurationKey = keyof typeof driverConfigurations;
 
-export const getAuthTemplate = (key: DriverConfigurationKey) => {
+const replaceDbPath = (
+	importLines: string,
+	databaseDirectory: string
+): string =>
+	importLines.replace(
+		/\.\.\/\.\.\/\.\.\/db\//g,
+		`../../../${databaseDirectory}/`
+	);
+
+export const getAuthTemplate = (
+	key: DriverConfigurationKey,
+	databaseDirectory = 'db'
+) => {
 	const configuration = driverConfigurations[key];
 	if (!configuration)
 		throw new Error(`Unsupported driver configuration: ${key}`);
 
-	return buildSqlAuthTemplate(configuration);
+	const config = {
+		...configuration,
+		importLines: replaceDbPath(configuration.importLines, databaseDirectory)
+	};
+
+	return buildSqlAuthTemplate(config);
 };
 
-export const getCountTemplate = (key: DriverConfigurationKey) => {
+export const getCountTemplate = (
+	key: DriverConfigurationKey,
+	databaseDirectory = 'db'
+) => {
 	const configuration = driverConfigurations[key];
 	if (!configuration)
 		throw new Error(`Unsupported driver configuration: ${key}`);
 
-	return buildSqlCountTemplate(configuration);
+	const config = {
+		...configuration,
+		importLines: replaceDbPath(configuration.importLines, databaseDirectory)
+	};
+
+	return buildSqlCountTemplate(config);
 };
