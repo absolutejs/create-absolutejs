@@ -1,6 +1,8 @@
 import { writeFileSync } from 'fs';
 import { join } from 'path';
+import { spinner } from '@clack/prompts';
 import { $ } from 'bun';
+import { green, red } from 'picocolors';
 import { AuthOption, DatabaseEngine } from '../../types';
 import {
 	checkDockerInstalled,
@@ -48,29 +50,43 @@ export const scaffoldDocker = async ({
 	);
 
 	const docker = resolveDockerExe();
-	const hasSchemaInit = databaseEngine in userTables;
-	if (hasSchemaInit) {
-		const dbKey = databaseEngine as keyof typeof userTables;
-		const { wait, cli } = initTemplates[dbKey];
-		const usesAuth = authOption !== undefined && authOption !== 'none';
-		const dbCommand = usesAuth
-			? userTables[dbKey]
-			: countHistoryTables[dbKey];
-		await $`${docker} compose -p ${databaseEngine} -f db/docker-compose.db.yml up -d db`.cwd(
-			projectName
-		);
-		await $`${docker} compose -p ${databaseEngine} -f db/docker-compose.db.yml exec -T db \
-  bash -lc '${wait} && ${cli} "${dbCommand}"'`.cwd(projectName);
-		await $`${docker} compose -p ${databaseEngine} -f db/docker-compose.db.yml down`.cwd(
-			projectName
-		);
-	} else {
-		await $`${docker} compose -p ${databaseEngine} -f db/docker-compose.db.yml up -d --wait db`.cwd(
-			projectName
-		);
-		await $`${docker} compose -p ${databaseEngine} -f db/docker-compose.db.yml down`.cwd(
-			projectName
-		);
+	const spin = spinner();
+	spin.start(`Starting ${databaseEngine} container`);
+
+	try {
+		const hasSchemaInit = databaseEngine in userTables;
+		if (hasSchemaInit) {
+			const dbKey = databaseEngine as keyof typeof userTables;
+			const { wait, cli } = initTemplates[dbKey];
+			const usesAuth = authOption !== undefined && authOption !== 'none';
+			const dbCommand = usesAuth
+				? userTables[dbKey]
+				: countHistoryTables[dbKey];
+			await $`${docker} compose -p ${databaseEngine} -f db/docker-compose.db.yml up -d db`
+				.cwd(projectName)
+				.quiet();
+			spin.message(`Initializing ${databaseEngine} schema`);
+			await $`${docker} compose -p ${databaseEngine} -f db/docker-compose.db.yml exec -T db \
+  bash -lc '${wait} && ${cli} "${dbCommand}"'`
+				.cwd(projectName)
+				.quiet();
+			spin.message(`Stopping ${databaseEngine} container`);
+			await $`${docker} compose -p ${databaseEngine} -f db/docker-compose.db.yml down`
+				.cwd(projectName)
+				.quiet();
+		} else {
+			await $`${docker} compose -p ${databaseEngine} -f db/docker-compose.db.yml up -d --wait db`
+				.cwd(projectName)
+				.quiet();
+			spin.message(`Stopping ${databaseEngine} container`);
+			await $`${docker} compose -p ${databaseEngine} -f db/docker-compose.db.yml down`
+				.cwd(projectName)
+				.quiet();
+		}
+		spin.stop(green('Docker container verified'));
+	} catch (err) {
+		spin.cancel(red('Docker setup failed'));
+		throw err;
 	}
 
 	if (daemonWasStarted) {
