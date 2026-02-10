@@ -16,19 +16,17 @@ import {
 import { generateDockerContainer } from './generateDockerContainer';
 
 type ScaffoldDockerProps = {
-	authOption: AuthOption;
 	databaseEngine: DatabaseEngine;
-	hostPort: number;
 	projectDatabaseDirectory: string;
+	authOption: AuthOption;
 	projectName: string;
 };
 
 export const scaffoldDocker = async ({
-	authOption,
 	databaseEngine,
-	hostPort,
 	projectDatabaseDirectory,
-	projectName
+	projectName,
+	authOption
 }: ScaffoldDockerProps): Promise<{ dockerFreshInstall: boolean }> => {
 	if (
 		databaseEngine === undefined ||
@@ -42,24 +40,16 @@ export const scaffoldDocker = async ({
 
 	const { freshInstall } = await checkDockerInstalled(databaseEngine);
 	const { daemonWasStarted } = await ensureDockerDaemonRunning();
-	const dbContainer = generateDockerContainer(databaseEngine, hostPort);
+	const dbContainer = generateDockerContainer(databaseEngine);
 	writeFileSync(
 		join(projectDatabaseDirectory, 'docker-compose.db.yml'),
 		dbContainer,
 		'utf-8'
 	);
+
 	const docker = resolveDockerExe();
 	const hasSchemaInit = databaseEngine in userTables;
-	const runDbUpAndInit = async () => {
-		if (!hasSchemaInit) {
-			await $`${docker} compose -p ${databaseEngine} -f db/docker-compose.db.yml up -d --wait db`.cwd(
-				projectName
-			);
-			await $`${docker} compose -p ${databaseEngine} -f db/docker-compose.db.yml down`.cwd(
-				projectName
-			);
-			return;
-		}
+	if (hasSchemaInit) {
 		const dbKey = databaseEngine as keyof typeof userTables;
 		const { wait, cli } = initTemplates[dbKey];
 		const usesAuth = authOption !== undefined && authOption !== 'none';
@@ -74,9 +64,14 @@ export const scaffoldDocker = async ({
 		await $`${docker} compose -p ${databaseEngine} -f db/docker-compose.db.yml down`.cwd(
 			projectName
 		);
-	};
-
-	await runDbUpAndInit();
+	} else {
+		await $`${docker} compose -p ${databaseEngine} -f db/docker-compose.db.yml up -d --wait db`.cwd(
+			projectName
+		);
+		await $`${docker} compose -p ${databaseEngine} -f db/docker-compose.db.yml down`.cwd(
+			projectName
+		);
+	}
 
 	if (daemonWasStarted) {
 		await shutdownDockerDaemon();
