@@ -2,13 +2,13 @@ import { DatabaseEngine } from '../../types';
 
 interface DatabaseTemplate {
 	command?: string;
+	containerPort: number;
 	env: Record<string, string>;
 	healthcheck: {
 		startPeriod: string;
 		test: string;
 	};
 	image: string;
-	port: string;
 	volumePath: string;
 }
 
@@ -18,6 +18,7 @@ const templates: Record<
 > = {
 	cockroachdb: {
 		command: 'start-single-node --insecure',
+		containerPort: 26257,
 		env: {
 			COCKROACH_DATABASE: 'database'
 		},
@@ -26,10 +27,10 @@ const templates: Record<
 			test: 'cockroach sql --insecure -e "select 1" >/dev/null 2>&1'
 		},
 		image: 'cockroachdb/cockroach:latest-v25.3',
-		port: '26257:26257',
 		volumePath: '/cockroach/cockroach-data'
 	},
 	gel: {
+		containerPort: 5656,
 		env: {
 			GEL_SERVER_SECURITY: 'insecure_dev_mode'
 		},
@@ -38,10 +39,10 @@ const templates: Record<
 			test: 'gel query -H localhost -P 5656 -u admin --tls-security insecure "select 1" >/dev/null 2>&1'
 		},
 		image: 'geldata/gel:latest',
-		port: '5656:5656',
 		volumePath: '/var/lib/gel/data'
 	},
 	mariadb: {
+		containerPort: 3306,
 		env: {
 			MYSQL_DATABASE: 'database',
 			MYSQL_PASSWORD: 'userpassword',
@@ -53,10 +54,10 @@ const templates: Record<
 			test: 'mariadb-admin ping -h127.0.0.1 --silent'
 		},
 		image: 'mariadb:11.4',
-		port: '3306:3306',
 		volumePath: '/var/lib/mysql'
 	},
 	mongodb: {
+		containerPort: 27017,
 		env: {
 			MONGO_INITDB_DATABASE: 'database',
 			MONGO_INITDB_ROOT_PASSWORD: 'password',
@@ -67,10 +68,10 @@ const templates: Record<
 			test: 'mongosh -u user -p password --authenticationDatabase admin --eval "db.adminCommand(\'ping\')" --quiet'
 		},
 		image: 'mongo:7.0',
-		port: '27017:27017',
 		volumePath: '/data/db'
 	},
 	mssql: {
+		containerPort: 1433,
 		env: {
 			ACCEPT_EULA: 'Y',
 			MSSQL_SA_PASSWORD: 'SApassword1'
@@ -80,10 +81,10 @@ const templates: Record<
 			test: '/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P SApassword1 -Q "SELECT 1" >/dev/null 2>&1'
 		},
 		image: 'mcr.microsoft.com/mssql/server:2022-latest',
-		port: '1433:1433',
 		volumePath: '/var/opt/mssql'
 	},
 	mysql: {
+		containerPort: 3306,
 		env: {
 			MYSQL_DATABASE: 'database',
 			MYSQL_PASSWORD: 'userpassword',
@@ -95,10 +96,10 @@ const templates: Record<
 			test: 'mysqladmin ping -h127.0.0.1 --silent'
 		},
 		image: 'mysql:8.0',
-		port: '3306:3306',
 		volumePath: '/var/lib/mysql'
 	},
 	postgresql: {
+		containerPort: 5432,
 		env: {
 			POSTGRES_DB: 'database',
 			POSTGRES_PASSWORD: 'password',
@@ -109,10 +110,10 @@ const templates: Record<
 			test: 'pg_isready -U user -h localhost --quiet'
 		},
 		image: 'postgres:15',
-		port: '5432:5432',
 		volumePath: '/var/lib/postgresql/data'
 	},
 	singlestore: {
+		containerPort: 3306,
 		env: {
 			ROOT_PASSWORD: 'password'
 		},
@@ -121,12 +122,14 @@ const templates: Record<
 			test: 'singlestore -u root -ppassword -e "SELECT 1" >/dev/null 2>&1'
 		},
 		image: 'ghcr.io/singlestore-labs/singlestoredb-dev', // NOTE: No tag specified due to data persistence
-		port: '3306:3306',
 		volumePath: '/data'
 	}
 };
 
-export const generateDockerContainer = (databaseEngine: DatabaseEngine) => {
+export const generateDockerContainer = (
+	databaseEngine: DatabaseEngine,
+	hostPort: number
+) => {
 	if (
 		databaseEngine === undefined ||
 		databaseEngine === 'none' ||
@@ -137,12 +140,13 @@ export const generateDockerContainer = (databaseEngine: DatabaseEngine) => {
 		);
 	}
 
-	const { command, env, healthcheck, image, port, volumePath } =
+	const { command, containerPort, env, healthcheck, image, volumePath } =
 		templates[databaseEngine];
 	const commandLine = command ? `\n        command: ${command}` : '';
 	const envLines = Object.entries(env)
 		.map(([key, value]) => `            ${key}: ${value}`)
 		.join('\n');
+	const portMapping = `${hostPort}:${containerPort}`;
 
 	return `services:
     db:
@@ -151,7 +155,7 @@ export const generateDockerContainer = (databaseEngine: DatabaseEngine) => {
         environment:
 ${envLines}
         ports:
-            - "${port}"${commandLine}
+            - "${portMapping}"${commandLine}
         healthcheck:
             test: ["CMD-SHELL", "${healthcheck.test.replaceAll('"', '\\"')}"]
             interval: 2s

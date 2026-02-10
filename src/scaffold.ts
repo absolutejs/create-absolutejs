@@ -11,6 +11,7 @@ import { scaffoldDatabase } from './generators/db/scaffoldDatabase';
 import { scaffoldBackend } from './generators/project/scaffoldBackend';
 import { scaffoldFrontends } from './generators/project/scaffoldFrontends';
 import type { PackageManager, CreateConfiguration } from './types';
+import { resolveDatabasePort } from './utils/resolveDatabasePort';
 
 type ScaffoldProps = {
 	response: CreateConfiguration;
@@ -59,10 +60,20 @@ export const scaffold = async ({
 		join(projectName, 'README.md')
 	);
 
+	const isLocalDocker =
+		(databaseHost === 'none' || databaseHost === undefined) &&
+		databaseEngine !== 'none' &&
+		databaseEngine !== undefined &&
+		databaseEngine !== 'sqlite';
+	const databasePort = isLocalDocker
+		? await resolveDatabasePort(databaseEngine)
+		: undefined;
+
 	scaffoldConfigurationFiles({
 		codeQualityTool,
 		databaseEngine,
 		databaseHost,
+		databasePort,
 		envVariables,
 		frontends,
 		initializeGitNow,
@@ -110,6 +121,7 @@ export const scaffold = async ({
 			databaseDirectory,
 			databaseEngine,
 			databaseHost,
+			databasePort,
 			orm,
 			projectName,
 			typesDirectory

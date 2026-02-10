@@ -21,8 +21,9 @@ type ScaffoldDatabaseProps = Pick<
 	| 'authOption'
 	| 'databaseEngine'
 > & {
-	databaseDirectory: string;
 	backendDirectory: string;
+	databaseDirectory: string;
+	databasePort?: number;
 	typesDirectory: string;
 };
 
@@ -31,6 +32,7 @@ export const scaffoldDatabase = async ({
 	databaseEngine,
 	databaseHost,
 	databaseDirectory,
+	databasePort,
 	backendDirectory,
 	authOption,
 	orm,
@@ -73,11 +75,13 @@ export const scaffoldDatabase = async ({
 		(databaseHost === 'none' || databaseHost === undefined) &&
 		databaseEngine !== 'sqlite' &&
 		databaseEngine !== undefined &&
-		databaseEngine !== 'none'
+		databaseEngine !== 'none' &&
+		databasePort !== undefined
 	) {
 		const { dockerFreshInstall } = await scaffoldDocker({
 			authOption,
 			databaseEngine,
+			hostPort: databasePort,
 			projectDatabaseDirectory,
 			projectName
 		});

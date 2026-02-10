@@ -13,6 +13,7 @@ import {
 import type { CreateConfiguration, PackageJson } from '../../types';
 import { getPackageVersion } from '../../utils/getPackageVersion';
 import { versions } from '../../versions';
+import { initTemplates } from '../db/dockerInitTemplates';
 import { computeFlags } from '../project/computeFlags';
 
 type CreatePackageJsonProps = Pick<
@@ -30,16 +31,43 @@ type CreatePackageJsonProps = Pick<
 	latest: boolean;
 };
 
-const dbClientCommands = {
-	cockroachdb: 'cockroach sql --insecure --database=database',
-	gel: 'gel -H localhost -P 5656 -u admin --tls-security insecure -b main',
-	mariadb: 'MYSQL_PWD=userpassword mariadb -h127.0.0.1 -u user database',
-	mongodb:
-		'mongosh -u user -p password --authenticationDatabase admin database',
-	mssql: '/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P SApassword1',
-	mysql: 'MYSQL_PWD=userpassword mysql -h127.0.0.1 -u user database',
-	postgresql: 'psql -h localhost -U user -d database',
-	singlestore: 'singlestore -u root -ppassword -D database'
+const dbScripts = {
+	cockroachdb: {
+		clientCmd: 'cockroach sql --insecure --database=database',
+		waitCmd: initTemplates.cockroachdb.wait
+	},
+	gel: {
+		clientCmd:
+			'gel -H localhost -P 5656 -u admin --tls-security insecure -b main',
+		waitCmd: initTemplates.gel.wait
+	},
+	mariadb: {
+		clientCmd:
+			'MYSQL_PWD=userpassword mariadb -h127.0.0.1 -u user database',
+		waitCmd: initTemplates.mariadb.wait
+	},
+	mongodb: {
+		clientCmd:
+			'mongosh -u user -p password --authenticationDatabase admin database',
+		waitCmd: initTemplates.mongodb.wait
+	},
+	mssql: {
+		clientCmd:
+			'/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P SApassword1',
+		waitCmd: initTemplates.mssql.wait
+	},
+	mysql: {
+		clientCmd: 'MYSQL_PWD=userpassword mysql -h127.0.0.1 -u user database',
+		waitCmd: initTemplates.mysql.wait
+	},
+	postgresql: {
+		clientCmd: 'psql -h localhost -U user -d database',
+		waitCmd: initTemplates.postgresql.wait
+	},
+	singlestore: {
+		clientCmd: 'singlestore -u root -ppassword -D database',
+		waitCmd: initTemplates.singlestore.wait
+	}
 } as const;
 
 export const createPackageJson = ({
@@ -194,15 +222,15 @@ export const createPackageJson = ({
 
 	if (latest) s.stop(green('Package versions resolved'));
 
+	const isLocal = !databaseHost || databaseHost === 'none';
+
 	const scripts: PackageJson['scripts'] = {
-		dev: 'absolutejs dev',
+		dev: 'bun run --watch src/backend/server.ts',
 		format: `prettier --write "./**/*.{js,ts,css,json,mjs,md${flags.requiresReact ? ',jsx,tsx' : ''}${flags.requiresSvelte ? ',svelte' : ''}${flags.requiresVue ? ',vue' : ''}${flags.requiresHtml || flags.requiresHtmx ? ',html' : ''}}"`,
 		lint: 'eslint ./src',
 		test: 'echo "Error: no test specified" && exit 1',
 		typecheck: 'bun run tsc --noEmit'
 	};
-
-	const isLocal = !databaseHost || databaseHost === 'none';
 
 	if (
 		isLocal &&
@@ -210,16 +238,20 @@ export const createPackageJson = ({
 		databaseEngine !== 'none' &&
 		databaseEngine !== 'sqlite'
 	) {
-		const clientCmd = dbClientCommands[databaseEngine];
+		const config = dbScripts[databaseEngine];
 		const dockerPrefix = `docker compose -p ${databaseEngine} -f db/docker-compose.db.yml`;
 
-		scripts['db:up'] = `${dockerPrefix} up -d --wait db`;
+		scripts['db:up'] = `${dockerPrefix} up -d db`;
+		scripts['postdb:up'] =
+			`${dockerPrefix} exec db bash -lc '${config.waitCmd}'`;
 		scripts['db:down'] = `${dockerPrefix} down`;
 		scripts['db:reset'] = `${dockerPrefix} down -v`;
 		scripts[`db:${databaseEngine}`] =
-			`${dockerPrefix} exec -it db bash -lc '${clientCmd}'`;
+			`${dockerPrefix} exec -it db bash -lc '${config.clientCmd}'`;
 
+		scripts['predev'] = 'bun db:up';
 		scripts[`predb:${databaseEngine}`] = 'bun db:up';
+		scripts['postdev'] = 'bun db:down';
 		scripts[`postdb:${databaseEngine}`] = 'bun db:down';
 	}
 

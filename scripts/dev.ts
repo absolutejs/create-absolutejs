@@ -97,6 +97,7 @@ const cleanupDocker = async (env: Record<string, string | undefined>) => {
 	if (projectName) {
 		const fallback = `docker compose -p ${projectName} down -v --remove-orphans`;
 		const fallbackRes = await $`${{ raw: fallback }}`
+			.cwd(projectDir)
 			.env(env)
 			.quiet()
 			.nothrow();
@@ -114,12 +115,7 @@ if (existsSync(`${projectDir}/package.json`)) {
 }
 
 // Remove existing project and re-scaffold
-rmSync(projectDir, {
-	force: true,
-	maxRetries: 5,
-	recursive: true,
-	retryDelay: 500
-});
+await removeProjectDir();
 
 const proc = Bun.spawn(['bun', 'run', 'src/index.ts'], {
 	stdio: ['inherit', 'inherit', 'inherit']

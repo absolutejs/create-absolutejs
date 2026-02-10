@@ -1,5 +1,6 @@
 import { existsSync } from 'fs';
 import os from 'os';
+import { delimiter } from 'path';
 import { env, platform } from 'process';
 import { confirm, spinner } from '@clack/prompts';
 import { $ } from 'bun';
@@ -27,6 +28,24 @@ const commandExists = async (cmd: string) =>
 		? await $`where ${cmd}`.quiet().nothrow()
 		: await $`command -v ${cmd}`.quiet().nothrow()
 	).exitCode === 0;
+
+const DOCKER_WIN_PATH = 'C:\\Program Files\\Docker\\Docker\\resources\\bin';
+
+/** Returns env with Docker in PATH on Windows when needed. Use for bun/docker commands. */
+export const getDockerEnv = async (): Promise<
+	Record<string, string | undefined>
+> => {
+	if (platform !== 'win32') return env;
+	const hasDocker = (await $`where docker`.quiet().nothrow()).exitCode === 0;
+	if (hasDocker) return env;
+	if (!existsSync(DOCKER_WIN_PATH)) return env;
+	const pathJoin = env.PATH ?? '';
+
+	return {
+		...env,
+		PATH: `${DOCKER_WIN_PATH}${pathJoin ? delimiter + pathJoin : ''}`
+	};
+};
 
 const ensureSudo = async () => {
 	if ((await $`sudo -n true`.nothrow()).exitCode !== 0) {
