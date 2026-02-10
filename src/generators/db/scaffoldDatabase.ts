@@ -35,7 +35,7 @@ export const scaffoldDatabase = async ({
 	authOption,
 	orm,
 	typesDirectory
-}: ScaffoldDatabaseProps) => {
+}: ScaffoldDatabaseProps): Promise<{ dockerFreshInstall: boolean }> => {
 	const projectDatabaseDirectory = join(projectName, databaseDirectory);
 	const handlerDirectory = join(backendDirectory, 'handlers');
 	mkdirSync(projectDatabaseDirectory, { recursive: true });
@@ -75,12 +75,14 @@ export const scaffoldDatabase = async ({
 		databaseEngine !== undefined &&
 		databaseEngine !== 'none'
 	) {
-		await scaffoldDocker({
+		const { dockerFreshInstall } = await scaffoldDocker({
 			authOption,
 			databaseEngine,
 			projectDatabaseDirectory,
 			projectName
 		});
+
+		return { dockerFreshInstall };
 	}
 
 	if (orm === 'drizzle') {
@@ -105,7 +107,7 @@ export const scaffoldDatabase = async ({
 		});
 		writeFileSync(join(typesDirectory, 'databaseTypes.ts'), drizzleTypes);
 
-		return;
+		return { dockerFreshInstall: false };
 	}
 
 	if (orm === 'prisma') {
@@ -113,4 +115,6 @@ export const scaffoldDatabase = async ({
 			`${dim('│')}\n${yellow('▲')}  Prisma support is not implemented yet`
 		);
 	}
+
+	return { dockerFreshInstall: false };
 };

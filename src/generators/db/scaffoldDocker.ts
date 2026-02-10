@@ -5,6 +5,7 @@ import { AuthOption, DatabaseEngine } from '../../types';
 import {
 	checkDockerInstalled,
 	ensureDockerDaemonRunning,
+	resolveDockerExe,
 	shutdownDockerDaemon
 } from '../../utils/checkDockerInstalled';
 import {
@@ -26,7 +27,7 @@ export const scaffoldDocker = async ({
 	projectDatabaseDirectory,
 	projectName,
 	authOption
-}: ScaffoldDockerProps) => {
+}: ScaffoldDockerProps): Promise<{ dockerFreshInstall: boolean }> => {
 	if (
 		databaseEngine === undefined ||
 		databaseEngine === 'none' ||
@@ -37,7 +38,7 @@ export const scaffoldDocker = async ({
 		);
 	}
 
-	await checkDockerInstalled(databaseEngine);
+	const { freshInstall } = await checkDockerInstalled(databaseEngine);
 	const { daemonWasStarted } = await ensureDockerDaemonRunning();
 	const dbContainer = generateDockerContainer(databaseEngine);
 	writeFileSync(
@@ -46,6 +47,7 @@ export const scaffoldDocker = async ({
 		'utf-8'
 	);
 
+	const docker = resolveDockerExe();
 	const hasSchemaInit = databaseEngine in userTables;
 	if (hasSchemaInit) {
 		const dbKey = databaseEngine as keyof typeof userTables;
@@ -54,16 +56,26 @@ export const scaffoldDocker = async ({
 		const dbCommand = usesAuth
 			? userTables[dbKey]
 			: countHistoryTables[dbKey];
-		await $`bun db:up`.cwd(projectName);
-		await $`docker compose -p ${databaseEngine} -f db/docker-compose.db.yml exec -T db \
+		await $`${docker} compose -p ${databaseEngine} -f db/docker-compose.db.yml up -d db`.cwd(
+			projectName
+		);
+		await $`${docker} compose -p ${databaseEngine} -f db/docker-compose.db.yml exec -T db \
   bash -lc '${wait} && ${cli} "${dbCommand}"'`.cwd(projectName);
-		await $`bun db:down`.cwd(projectName);
+		await $`${docker} compose -p ${databaseEngine} -f db/docker-compose.db.yml down`.cwd(
+			projectName
+		);
 	} else {
-		await $`bun db:up`.cwd(projectName);
-		await $`bun db:down`.cwd(projectName);
+		await $`${docker} compose -p ${databaseEngine} -f db/docker-compose.db.yml up -d --wait db`.cwd(
+			projectName
+		);
+		await $`${docker} compose -p ${databaseEngine} -f db/docker-compose.db.yml down`.cwd(
+			projectName
+		);
 	}
 
 	if (daemonWasStarted) {
 		await shutdownDockerDaemon();
 	}
+
+	return { dockerFreshInstall: freshInstall };
 };

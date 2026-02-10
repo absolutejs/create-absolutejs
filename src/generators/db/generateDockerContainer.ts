@@ -1,11 +1,15 @@
 import { DatabaseEngine } from '../../types';
 
 interface DatabaseTemplate {
+	command?: string;
+	env: Record<string, string>;
+	healthcheck: {
+		startPeriod: string;
+		test: string;
+	};
 	image: string;
 	port: string;
-	env: Record<string, string>;
 	volumePath: string;
-	command?: string;
 }
 
 const templates: Record<
@@ -17,6 +21,10 @@ const templates: Record<
 		env: {
 			COCKROACH_DATABASE: 'database'
 		},
+		healthcheck: {
+			startPeriod: '5s',
+			test: 'cockroach sql --insecure -e "select 1" >/dev/null 2>&1'
+		},
 		image: 'cockroachdb/cockroach:latest-v25.3',
 		port: '26257:26257',
 		volumePath: '/cockroach/cockroach-data'
@@ -24,6 +32,10 @@ const templates: Record<
 	gel: {
 		env: {
 			GEL_SERVER_SECURITY: 'insecure_dev_mode'
+		},
+		healthcheck: {
+			startPeriod: '30s',
+			test: 'gel query -H localhost -P 5656 -u admin --tls-security insecure "select 1" >/dev/null 2>&1'
 		},
 		image: 'geldata/gel:latest',
 		port: '5656:5656',
@@ -36,6 +48,10 @@ const templates: Record<
 			MYSQL_ROOT_PASSWORD: 'rootpassword',
 			MYSQL_USER: 'user'
 		},
+		healthcheck: {
+			startPeriod: '5s',
+			test: 'mariadb-admin ping -h127.0.0.1 --silent'
+		},
 		image: 'mariadb:11.4',
 		port: '3306:3306',
 		volumePath: '/var/lib/mysql'
@@ -46,6 +62,10 @@ const templates: Record<
 			MONGO_INITDB_ROOT_PASSWORD: 'password',
 			MONGO_INITDB_ROOT_USERNAME: 'user'
 		},
+		healthcheck: {
+			startPeriod: '5s',
+			test: 'mongosh -u user -p password --authenticationDatabase admin --eval "db.adminCommand(\'ping\')" --quiet'
+		},
 		image: 'mongo:7.0',
 		port: '27017:27017',
 		volumePath: '/data/db'
@@ -54,6 +74,10 @@ const templates: Record<
 		env: {
 			ACCEPT_EULA: 'Y',
 			MSSQL_SA_PASSWORD: 'SApassword1'
+		},
+		healthcheck: {
+			startPeriod: '30s',
+			test: '/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P SApassword1 -Q "SELECT 1" >/dev/null 2>&1'
 		},
 		image: 'mcr.microsoft.com/mssql/server:2022-latest',
 		port: '1433:1433',
@@ -66,6 +90,10 @@ const templates: Record<
 			MYSQL_ROOT_PASSWORD: 'rootpassword',
 			MYSQL_USER: 'user'
 		},
+		healthcheck: {
+			startPeriod: '5s',
+			test: 'mysqladmin ping -h127.0.0.1 --silent'
+		},
 		image: 'mysql:8.0',
 		port: '3306:3306',
 		volumePath: '/var/lib/mysql'
@@ -76,6 +104,10 @@ const templates: Record<
 			POSTGRES_PASSWORD: 'password',
 			POSTGRES_USER: 'user'
 		},
+		healthcheck: {
+			startPeriod: '5s',
+			test: 'pg_isready -U user -h localhost --quiet'
+		},
 		image: 'postgres:15',
 		port: '5432:5432',
 		volumePath: '/var/lib/postgresql/data'
@@ -83,6 +115,10 @@ const templates: Record<
 	singlestore: {
 		env: {
 			ROOT_PASSWORD: 'password'
+		},
+		healthcheck: {
+			startPeriod: '30s',
+			test: 'singlestore -u root -ppassword -e "SELECT 1" >/dev/null 2>&1'
 		},
 		image: 'ghcr.io/singlestore-labs/singlestoredb-dev', // NOTE: No tag specified due to data persistence
 		port: '3306:3306',
@@ -101,8 +137,9 @@ export const generateDockerContainer = (databaseEngine: DatabaseEngine) => {
 		);
 	}
 
-	const { image, port, env, volumePath, command } = templates[databaseEngine];
-	const commandLines = command ? `        command: ${command}` : '';
+	const { command, env, healthcheck, image, port, volumePath } =
+		templates[databaseEngine];
+	const commandLine = command ? `\n        command: ${command}` : '';
 	const envLines = Object.entries(env)
 		.map(([key, value]) => `            ${key}: ${value}`)
 		.join('\n');
@@ -114,8 +151,13 @@ export const generateDockerContainer = (databaseEngine: DatabaseEngine) => {
         environment:
 ${envLines}
         ports:
-            - "${port}"
-${commandLines}
+            - "${port}"${commandLine}
+        healthcheck:
+            test: ["CMD-SHELL", "${healthcheck.test.replaceAll('"', '\\"')}"]
+            interval: 2s
+            timeout: 5s
+            retries: 30
+            start_period: ${healthcheck.startPeriod}
         volumes:
             - db_data:${volumePath}
 

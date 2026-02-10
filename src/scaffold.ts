@@ -43,7 +43,7 @@ export const scaffold = async ({
 	latest,
 	envVariables,
 	packageManager
-}: ScaffoldProps) => {
+}: ScaffoldProps): Promise<{ dockerFreshInstall: boolean }> => {
 	const __dirname = dirname(fileURLToPath(import.meta.url));
 	const templatesDirectory = join(__dirname, '/templates');
 
@@ -98,11 +98,13 @@ export const scaffold = async ({
 		tailwind
 	});
 
-	void (
+	let dockerFreshInstall = false;
+	if (
 		databaseDirectory !== undefined &&
 		databaseEngine !== 'none' &&
-		databaseEngine !== undefined &&
-		(await scaffoldDatabase({
+		databaseEngine !== undefined
+	) {
+		const result = await scaffoldDatabase({
 			authOption,
 			backendDirectory,
 			databaseDirectory,
@@ -111,8 +113,9 @@ export const scaffold = async ({
 			orm,
 			projectName,
 			typesDirectory
-		}))
-	);
+		});
+		dockerFreshInstall = result.dockerFreshInstall;
+	}
 
 	scaffoldFrontends({
 		absProviders,
@@ -140,4 +143,6 @@ export const scaffold = async ({
 	if (initializeGitNow) {
 		await initializeGit(projectName);
 	}
+
+	return { dockerFreshInstall };
 };

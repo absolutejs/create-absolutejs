@@ -5,7 +5,7 @@
  */
 export const versions = {
 	/* ── Core ─────────────────────────────────────────────── */
-	'@absolutejs/absolute': '0.13.0',
+	'@absolutejs/absolute': '0.13.5',
 	'@absolutejs/auth': '0.22.0',
 	'@elysiajs/static': '1.4.7',
 	elysia: '1.4.22',
