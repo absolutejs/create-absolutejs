@@ -1,13 +1,15 @@
 {
-	"permissions": {
-		"allow": [
-			"Bash(del \"C:\\\\Users\\\\alex\\\\abs\\\\create-absolutejs\\\\src\\\\templates\\\\styles\\\\tailwind.css\")",
-			"Bash(bun run:*)",
-			"Bash(docker compose:*)",
-			"Bash(PATH=\"/c/Program Files/Docker/Docker/resources/bin:$PATH\" docker compose:*)",
-			"Bash(git stash:*)",
-			"Bash(bun -e:*)",
-			"Bash(docker exec:*)"
-		]
-	}
+  "permissions": {
+    "allow": [
+      "Bash(del \"C:\\\\Users\\\\alex\\\\abs\\\\create-absolutejs\\\\src\\\\templates\\\\styles\\\\tailwind.css\")",
+      "Bash(bun run:*)",
+      "Bash(docker compose:*)",
+      "Bash(PATH=\"/c/Program Files/Docker/Docker/resources/bin:$PATH\" docker compose:*)",
+      "Bash(git stash:*)",
+      "Bash(bun -e:*)",
+      "Bash(docker exec:*)",
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nMerge remote-tracking branch ''origin/main''\n\nCo-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>\nEOF\n\\)\")"
+    ]
+  }
 }
