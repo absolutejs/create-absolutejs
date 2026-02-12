@@ -1,11 +1,13 @@
 import { writeFileSync } from 'fs';
 import { join } from 'path';
+import { spinner } from '@clack/prompts';
 import { $ } from 'bun';
+import { green, red } from 'picocolors';
 import { AuthOption, DatabaseEngine } from '../../types';
 import {
 	checkDockerInstalled,
 	ensureDockerDaemonRunning,
-	getDockerEnv,
+	resolveDockerExe,
 	shutdownDockerDaemon
 } from '../../utils/checkDockerInstalled';
 import { toDockerProjectName } from '../../utils/toDockerProjectName';
@@ -20,7 +22,6 @@ type ScaffoldDockerProps = {
 	authOption: AuthOption;
 	databaseDirectory: string;
 	databaseEngine: DatabaseEngine;
-	hostPort: number;
 	projectDatabaseDirectory: string;
 	projectName: string;
 };
@@ -29,10 +30,9 @@ export const scaffoldDocker = async ({
 	authOption,
 	databaseDirectory,
 	databaseEngine,
-	hostPort,
 	projectDatabaseDirectory,
 	projectName
-}: ScaffoldDockerProps) => {
+}: ScaffoldDockerProps): Promise<{ dockerFreshInstall: boolean }> => {
 	if (
 		databaseEngine === undefined ||
 		databaseEngine === 'none' ||
@@ -43,50 +43,60 @@ export const scaffoldDocker = async ({
 		);
 	}
 
-	await checkDockerInstalled(databaseEngine);
+	const { freshInstall } = await checkDockerInstalled(databaseEngine);
 	const { daemonWasStarted } = await ensureDockerDaemonRunning();
-	const dbContainer = generateDockerContainer(databaseEngine, hostPort);
+	const dbContainer = generateDockerContainer(databaseEngine);
 	writeFileSync(
 		join(projectDatabaseDirectory, 'docker-compose.db.yml'),
 		dbContainer,
 		'utf-8'
 	);
 
-	const dockerEnv = await getDockerEnv();
-	const runDbDown = () =>
-		$`bun db:down`.cwd(projectName).env(dockerEnv).quiet().nothrow();
-
-	// Pre-flight: clean up any leftover container from a previous killed scaffold
-	await runDbDown();
-
-	const hasSchemaInit = databaseEngine in userTables;
-	const runDbUpAndInit = async () => {
-		if (!hasSchemaInit) {
-			await $`bun db:up`.cwd(projectName).env(dockerEnv);
-
-			return;
-		}
-		const dbKey = databaseEngine as keyof typeof userTables;
-		const { wait, cli } = initTemplates[dbKey];
-		const usesAuth = authOption !== undefined && authOption !== 'none';
-		const dbCommand = usesAuth
-			? userTables[dbKey]
-			: countHistoryTables[dbKey];
-		await $`bun db:up`.cwd(projectName).env(dockerEnv);
-		const composeFile = `${databaseDirectory}/docker-compose.db.yml`;
-		await $`docker compose -p ${toDockerProjectName(projectName)} -f ${composeFile} exec -T db \
-  bash -lc '${wait} && ${cli} "${dbCommand}"'`
-			.cwd(projectName)
-			.env(dockerEnv);
-	};
+	const docker = resolveDockerExe();
+	const composeFile = `${databaseDirectory}/docker-compose.db.yml`;
+	const projectFlag = toDockerProjectName(projectName);
+	const spin = spinner();
+	spin.start(`Starting ${databaseEngine} container`);
 
 	try {
-		await runDbUpAndInit();
-	} finally {
-		await runDbDown();
+		const hasSchemaInit = databaseEngine in userTables;
+		if (hasSchemaInit) {
+			const dbKey = databaseEngine as keyof typeof userTables;
+			const { wait, cli } = initTemplates[dbKey];
+			const usesAuth = authOption !== undefined && authOption !== 'none';
+			const dbCommand = usesAuth
+				? userTables[dbKey]
+				: countHistoryTables[dbKey];
+			await $`${docker} compose -p ${projectFlag} -f ${composeFile} up -d db`
+				.cwd(projectName)
+				.quiet();
+			spin.message(`Initializing ${databaseEngine} schema`);
+			await $`${docker} compose -p ${projectFlag} -f ${composeFile} exec -T db \
+  bash -lc '${wait} && ${cli} "${dbCommand}"'`
+				.cwd(projectName)
+				.quiet();
+			spin.message(`Stopping ${databaseEngine} container`);
+			await $`${docker} compose -p ${projectFlag} -f ${composeFile} down`
+				.cwd(projectName)
+				.quiet();
+		} else {
+			await $`${docker} compose -p ${projectFlag} -f ${composeFile} up -d --wait db`
+				.cwd(projectName)
+				.quiet();
+			spin.message(`Stopping ${databaseEngine} container`);
+			await $`${docker} compose -p ${projectFlag} -f ${composeFile} down`
+				.cwd(projectName)
+				.quiet();
+		}
+		spin.stop(green('Docker container verified'));
+	} catch (err) {
+		spin.cancel(red('Docker setup failed'));
+		throw err;
 	}
 
 	if (daemonWasStarted) {
 		await shutdownDockerDaemon();
 	}
+
+	return { dockerFreshInstall: freshInstall };
 };

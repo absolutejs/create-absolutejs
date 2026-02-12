@@ -1,4 +1,4 @@
-import { copyFileSync, mkdirSync, writeFileSync } from 'fs';
+import { copyFileSync, writeFileSync } from 'fs';
 import { join } from 'path';
 import { dim, yellow } from 'picocolors';
 import type { CreateConfiguration } from '../../types';
@@ -16,9 +16,8 @@ type AddConfigurationProps = Pick<
 	| 'databaseHost'
 	| 'databaseDirectory'
 > & {
-	databasePort?: number;
-	envVariables: string[] | undefined;
 	templatesDirectory: string;
+	envVariables: string[] | undefined;
 };
 
 export const scaffoldConfigurationFiles = ({
@@ -27,7 +26,6 @@ export const scaffoldConfigurationFiles = ({
 	databaseEngine,
 	databaseHost,
 	databaseDirectory,
-	databasePort,
 	envVariables,
 	codeQualityTool,
 	frontends,
@@ -76,16 +74,7 @@ export const scaffoldConfigurationFiles = ({
 		databaseDirectory,
 		databaseEngine,
 		databaseHost,
-		databasePort,
 		envVariables,
 		projectName
 	});
-
-	if (databasePort !== undefined) {
-		mkdirSync(join(projectName, 'scripts'), { recursive: true });
-		copyFileSync(
-			join(templatesDirectory, 'scripts', 'dev-with-db.ts'),
-			join(projectName, 'scripts', 'dev-with-db.ts')
-		);
-	}
 };

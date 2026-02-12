@@ -1,15 +1,14 @@
 import { existsSync } from 'fs';
 import os from 'os';
-import { delimiter } from 'path';
 import { env, platform } from 'process';
 import { confirm, spinner } from '@clack/prompts';
 import { $ } from 'bun';
 import { dim, yellow } from 'picocolors';
 
 const DOCKER_URL = 'https://www.docker.com/products/docker-desktop';
-// Docker Desktop Windows installer - version from release notes, update periodically
 const DOCKER_WIN_INSTALLER_URL =
-	'https://desktop.docker.com/win/main/amd64/217750/Docker%20Desktop%20Installer.exe';
+	'https://desktop.docker.com/win/main/amd64/Docker%20Desktop%20Installer.exe';
+const DOCKER_WIN_BIN_PATH = 'C:\\Program Files\\Docker\\Docker\\resources\\bin';
 
 const isWSL = () =>
 	env.WSL_DISTRO_NAME !== undefined || /microsoft/i.test(os.release());
@@ -28,24 +27,6 @@ const commandExists = async (cmd: string) =>
 		? await $`where ${cmd}`.quiet().nothrow()
 		: await $`command -v ${cmd}`.quiet().nothrow()
 	).exitCode === 0;
-
-const DOCKER_WIN_PATH = 'C:\\Program Files\\Docker\\Docker\\resources\\bin';
-
-/** Returns env with Docker in PATH on Windows when needed. Use for bun/docker commands. */
-export const getDockerEnv = async (): Promise<
-	Record<string, string | undefined>
-> => {
-	if (platform !== 'win32') return env;
-	const hasDocker = (await $`where docker`.quiet().nothrow()).exitCode === 0;
-	if (hasDocker) return env;
-	if (!existsSync(DOCKER_WIN_PATH)) return env;
-	const pathJoin = env.PATH ?? '';
-
-	return {
-		...env,
-		PATH: `${DOCKER_WIN_PATH}${pathJoin ? delimiter + pathJoin : ''}`
-	};
-};
 
 const ensureSudo = async () => {
 	if ((await $`sudo -n true`.nothrow()).exitCode !== 0) {
@@ -100,21 +81,6 @@ const configureDocker = async () => {
 	spin.stop('Docker daemon running & permissions configured');
 };
 
-const installWindowsWinget = async () => {
-	const spin = spinner();
-	spin.start('Installing Docker Desktop with winget');
-	const res =
-		await $`winget install -e --id Docker.DockerDesktop --accept-package-agreements --accept-source-agreements`
-			.quiet()
-			.nothrow();
-	spin.stop(
-		res.exitCode === 0
-			? 'Docker Desktop installed'
-			: 'winget install failed'
-	);
-	return res.exitCode === 0;
-};
-
 const installWindowsDirectDownload = async () => {
 	const spin = spinner();
 	spin.start('Downloading Docker Desktop installer…');
@@ -154,9 +120,6 @@ const installWindowsOpenBrowser = async () => {
 };
 
 const installWindows = async () => {
-	if (await commandExists('winget')) {
-		if (await installWindowsWinget()) return true;
-	}
 	if (await installWindowsDirectDownload()) return true;
 	await installWindowsOpenBrowser();
 	return false;
@@ -165,20 +128,6 @@ const installWindows = async () => {
 const installWSL = async () => {
 	if ((await $`docker.exe --version`.quiet().nothrow()).exitCode === 0)
 		return true;
-	if (await commandExists('powershell.exe')) {
-		const spin = spinner();
-		spin.start('Installing Docker Desktop on Windows via winget');
-		const res =
-			await $`powershell.exe -NoProfile -Command winget install -e --id Docker.DockerDesktop`
-				.quiet()
-				.nothrow();
-		spin.stop(
-			res.exitCode === 0
-				? 'Docker Desktop installed'
-				: 'winget install failed'
-		);
-		if (res.exitCode === 0) return true;
-	}
 	if (await aptInstall()) return true;
 
 	return runGetDocker();
@@ -240,61 +189,80 @@ const installLinux = async () => {
 	return false;
 };
 
-const DAEMON_MACOS_WAIT_ATTEMPTS = 15;
-const DAEMON_MACOS_WAIT_INTERVAL_MS = 2000;
+const DAEMON_WAIT_ATTEMPTS = 30;
+const DAEMON_WAIT_INTERVAL_MS = 2000;
 
-export const hasDocker = async () =>
-	(await $`docker --version`.quiet().nothrow()).exitCode === 0 &&
-	(await $`docker compose version`.quiet().nothrow()).exitCode === 0;
+export const resolveDockerExe = (): string => {
+	if (platform === 'win32') {
+		const fullPath = `${DOCKER_WIN_BIN_PATH}\\docker.exe`;
+		if (existsSync(fullPath)) return fullPath;
+	}
 
-export const isDockerDaemonRunning = async () =>
-	(await $`docker info`.quiet().nothrow()).exitCode === 0;
+	return 'docker';
+};
+
+export const hasDocker = async () => {
+	const docker = resolveDockerExe();
+
+	return (
+		(await $`${docker} --version`.quiet().nothrow()).exitCode === 0 &&
+		(await $`${docker} compose version`.quiet().nothrow()).exitCode === 0
+	);
+};
+
+export const isDockerDaemonRunning = async () => {
+	const docker = resolveDockerExe();
+
+	return (await $`${docker} info`.quiet().nothrow()).exitCode === 0;
+};
+
+const waitForDaemonReady = async (): Promise<boolean> => {
+	for (let attempt = 0; attempt < DAEMON_WAIT_ATTEMPTS; attempt++) {
+		if (await isDockerDaemonRunning()) return true;
+		await new Promise((resolve) =>
+			setTimeout(resolve, DAEMON_WAIT_INTERVAL_MS)
+		);
+	}
+
+	return false;
+};
 
 const startDockerDaemon = async () => {
 	const spin = spinner();
 	spin.start('Starting Docker daemon…');
+	const docker = resolveDockerExe();
 
-	const desktopRes = await $`docker desktop start`.quiet().nothrow();
-	if (desktopRes.exitCode === 0) {
+	const desktopRes = await $`${docker} desktop start`.quiet().nothrow();
+	if (desktopRes.exitCode === 0 && (await waitForDaemonReady())) {
 		spin.stop('Docker Desktop started');
+
 		return true;
 	}
 
 	if (platform === 'darwin') {
 		await $`open -a Docker`.quiet().nothrow();
-		spin.stop('Docker Desktop launched');
-		for (let attempt = 0; attempt < DAEMON_MACOS_WAIT_ATTEMPTS; attempt++) {
-			if (await isDockerDaemonRunning()) {
-				return true;
-			}
-			await new Promise((resolve) =>
-				setTimeout(resolve, DAEMON_MACOS_WAIT_INTERVAL_MS)
-			);
+		if (await waitForDaemonReady()) {
+			spin.stop('Docker Desktop started');
+
+			return true;
 		}
+		spin.stop('Docker daemon did not start');
 		throw new Error(
 			'Docker daemon did not start. Please start Docker Desktop manually.'
 		);
 	}
 
 	if (platform === 'win32') {
-		const dockerDesktopPath =
+		const dockerDesktopExe =
 			'C:\\Program Files\\Docker\\Docker\\Docker Desktop.exe';
-		if (existsSync(dockerDesktopPath)) {
-			await $`powershell.exe -NoProfile -Command "Start-Process '${dockerDesktopPath}'"`
+		if (existsSync(dockerDesktopExe)) {
+			await $`powershell.exe -NoProfile -Command "Start-Process '${dockerDesktopExe}'"`
 				.quiet()
 				.nothrow();
-			spin.stop('Docker Desktop launched');
-			for (
-				let attempt = 0;
-				attempt < DAEMON_MACOS_WAIT_ATTEMPTS;
-				attempt++
-			) {
-				if (await isDockerDaemonRunning()) {
-					return true;
-				}
-				await new Promise((resolve) =>
-					setTimeout(resolve, DAEMON_MACOS_WAIT_INTERVAL_MS)
-				);
+			if (await waitForDaemonReady()) {
+				spin.stop('Docker Desktop started');
+
+				return true;
 			}
 		}
 		spin.stop('Docker Desktop start failed');
@@ -308,15 +276,13 @@ const startDockerDaemon = async () => {
 	if (systemctlRes.exitCode !== 0) {
 		await $`sudo service docker start`.quiet().nothrow();
 	}
-	spin.stop('Docker daemon started');
-	const isReady = (await $`docker info`.quiet().nothrow()).exitCode === 0;
-	if (!isReady) {
-		throw new Error(
-			'Docker daemon did not start. Please start it manually.'
-		);
-	}
+	if (await waitForDaemonReady()) {
+		spin.stop('Docker daemon started');
 
-	return true;
+		return true;
+	}
+	spin.stop('Docker daemon did not start');
+	throw new Error('Docker daemon did not start. Please start it manually.');
 };
 
 export const ensureDockerDaemonRunning = async (): Promise<{
@@ -326,11 +292,13 @@ export const ensureDockerDaemonRunning = async (): Promise<{
 		return { daemonWasStarted: false };
 	}
 	await startDockerDaemon();
+
 	return { daemonWasStarted: true };
 };
 
 export const shutdownDockerDaemon = async () => {
-	const desktopRes = await $`docker desktop shutdown`.quiet().nothrow();
+	const docker = resolveDockerExe();
+	const desktopRes = await $`${docker} desktop shutdown`.quiet().nothrow();
 	if (desktopRes.exitCode === 0) return;
 	if (platform !== 'win32') {
 		await ensureSudo();
@@ -338,26 +306,36 @@ export const shutdownDockerDaemon = async () => {
 	}
 };
 
-export const checkDockerInstalled = async (databaseEngine?: string) => {
-	if (await hasDocker()) return;
+export const checkDockerInstalled = async (
+	databaseEngine?: string
+): Promise<{ freshInstall: boolean }> => {
+	if (await hasDocker()) return { freshInstall: false };
 	const dbLabel = databaseEngine ?? 'database';
 	const proceed = await confirm({
 		initialValue: true,
 		message: `Docker Engine and Compose plugin are required for your local ${dbLabel}. Install them now?`
 	});
-	if (!proceed) return;
+	if (!proceed) return { freshInstall: false };
 	switch (hostEnv) {
 		case 'windows':
-			if (await installWindows()) return;
+			if (await installWindows()) {
+				if (!env.PATH?.includes(DOCKER_WIN_BIN_PATH)) {
+					env.PATH = `${DOCKER_WIN_BIN_PATH};${env.PATH}`;
+				}
+
+				return { freshInstall: true };
+			}
 			break;
 		case 'wsl':
-			if (await installWSL()) return;
+			if (await installWSL()) return { freshInstall: true };
 			break;
 		case 'linux':
-			if (await installLinux()) return;
+			if (await installLinux()) return { freshInstall: true };
 			break;
 	}
 	console.log(
 		`Couldn't install Docker automatically. Download it from ${DOCKER_URL}`
 	);
+
+	return { freshInstall: false };
 };

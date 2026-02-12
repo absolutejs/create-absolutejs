@@ -11,7 +11,6 @@ import { scaffoldDatabase } from './generators/db/scaffoldDatabase';
 import { scaffoldBackend } from './generators/project/scaffoldBackend';
 import { scaffoldFrontends } from './generators/project/scaffoldFrontends';
 import type { PackageManager, CreateConfiguration } from './types';
-import { resolveDatabasePort } from './utils/resolveDatabasePort';
 
 type ScaffoldProps = {
 	response: CreateConfiguration;
@@ -44,7 +43,7 @@ export const scaffold = async ({
 	latest,
 	envVariables,
 	packageManager
-}: ScaffoldProps) => {
+}: ScaffoldProps): Promise<{ dockerFreshInstall: boolean }> => {
 	const __dirname = dirname(fileURLToPath(import.meta.url));
 	const templatesDirectory = join(__dirname, '/templates');
 
@@ -60,21 +59,11 @@ export const scaffold = async ({
 		join(projectName, 'README.md')
 	);
 
-	const isLocalDocker =
-		(databaseHost === 'none' || databaseHost === undefined) &&
-		databaseEngine !== 'none' &&
-		databaseEngine !== undefined &&
-		databaseEngine !== 'sqlite';
-	const databasePort = isLocalDocker
-		? await resolveDatabasePort(databaseEngine)
-		: undefined;
-
 	scaffoldConfigurationFiles({
 		codeQualityTool,
 		databaseDirectory,
 		databaseEngine,
 		databaseHost,
-		databasePort,
 		envVariables,
 		frontends,
 		initializeGitNow,
@@ -112,22 +101,24 @@ export const scaffold = async ({
 		tailwind
 	});
 
-	void (
+	let dockerFreshInstall = false;
+	if (
 		databaseDirectory !== undefined &&
 		databaseEngine !== 'none' &&
-		databaseEngine !== undefined &&
-		(await scaffoldDatabase({
+		databaseEngine !== undefined
+	) {
+		const result = await scaffoldDatabase({
 			authOption,
 			backendDirectory,
 			databaseDirectory,
 			databaseEngine,
 			databaseHost,
-			databasePort,
 			orm,
 			projectName,
 			typesDirectory
-		}))
-	);
+		});
+		dockerFreshInstall = result.dockerFreshInstall;
+	}
 
 	scaffoldFrontends({
 		absProviders,
@@ -155,4 +146,6 @@ export const scaffold = async ({
 	if (initializeGitNow) {
 		await initializeGit(projectName);
 	}
+
+	return { dockerFreshInstall };
 };

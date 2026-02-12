@@ -25,9 +25,8 @@ type ScaffoldDatabaseProps = Pick<
 	| 'authOption'
 	| 'databaseEngine'
 > & {
-	backendDirectory: string;
 	databaseDirectory: string;
-	databasePort?: number;
+	backendDirectory: string;
 	typesDirectory: string;
 };
 
@@ -36,12 +35,11 @@ export const scaffoldDatabase = async ({
 	databaseEngine,
 	databaseHost,
 	databaseDirectory,
-	databasePort,
 	backendDirectory,
 	authOption,
 	orm,
 	typesDirectory
-}: ScaffoldDatabaseProps) => {
+}: ScaffoldDatabaseProps): Promise<{ dockerFreshInstall: boolean }> => {
 	const projectDatabaseDirectory = join(projectName, databaseDirectory);
 	const handlerDirectory = join(backendDirectory, 'handlers');
 	mkdirSync(projectDatabaseDirectory, { recursive: true });
@@ -82,30 +80,17 @@ export const scaffoldDatabase = async ({
 		(databaseHost === 'none' || databaseHost === undefined) &&
 		databaseEngine !== 'sqlite' &&
 		databaseEngine !== undefined &&
-		databaseEngine !== 'none' &&
-		databasePort !== undefined
+		databaseEngine !== 'none'
 	) {
-		if (orm === 'prisma') {
-			await checkDockerInstalled(databaseEngine);
-			const dbContainer = generateDockerContainer(
-				databaseEngine,
-				databasePort
-			);
-			writeFileSync(
-				join(projectDatabaseDirectory, 'docker-compose.db.yml'),
-				dbContainer,
-				'utf-8'
-			);
-		} else {
-			await scaffoldDocker({
-				authOption,
-				databaseDirectory,
-				databaseEngine,
-				hostPort: databasePort,
-				projectDatabaseDirectory,
-				projectName
-			});
-		}
+		const { dockerFreshInstall } = await scaffoldDocker({
+			authOption,
+			databaseDirectory,
+			databaseEngine,
+			projectDatabaseDirectory,
+			projectName
+		});
+
+		return { dockerFreshInstall };
 	}
 
 	if (orm === 'drizzle') {
@@ -130,10 +115,10 @@ export const scaffoldDatabase = async ({
 		});
 		writeFileSync(join(typesDirectory, 'databaseTypes.ts'), drizzleTypes);
 
-		return;
+		return { dockerFreshInstall: false };
 	}
 
-	if (orm !== 'prisma') return;
+	if (orm !== 'prisma') return { dockerFreshInstall: false };
 
 	if (!isPrismaDialect(databaseEngine)) {
 		throw new Error('Internal type error: Expected a Prisma dialect');
@@ -164,14 +149,13 @@ export const scaffoldDatabase = async ({
 	}
 
 	const isLocalDatabase = !databaseHost || databaseHost === 'none';
-	if (!isLocalDatabase) return;
+	if (!isLocalDatabase) return { dockerFreshInstall: false };
 
 	// For non-SQLite databases, ensure Docker container is running before migrations
 	if (databaseEngine !== 'sqlite') {
 		try {
 			await $`bun db:reset`.cwd(projectCwd).nothrow();
 			await $`bun db:up`.cwd(projectCwd);
-			// Wait for database to be ready using appropriate wait command
 			const { initTemplates } = await import('./dockerInitTemplates');
 			if (databaseEngine in initTemplates) {
 				const waitCommand =
@@ -183,7 +167,6 @@ export const scaffoldDatabase = async ({
 						.nothrow();
 				}
 			} else {
-				// Fallback for databases not in initTemplates (e.g., MongoDB): wait 5 seconds
 				await new Promise((resolve) => setTimeout(resolve, 5000));
 			}
 		} catch (error) {
@@ -198,7 +181,7 @@ export const scaffoldDatabase = async ({
 		if (result.exitCode !== 0)
 			console.error('Error running Prisma migrations:', result.stderr);
 
-		return;
+		return { dockerFreshInstall: false };
 	}
 
 	const result =
@@ -207,4 +190,6 @@ export const scaffoldDatabase = async ({
 			.nothrow();
 	if (result.exitCode !== 0)
 		console.error('Error running Prisma migrations:', result.stderr);
+
+	return { dockerFreshInstall: false };
 };

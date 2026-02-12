@@ -1,38 +1,31 @@
 import { writeFileSync } from 'fs';
 import { join } from 'path';
-import type { CreateConfiguration, DatabaseEngine } from '../../types';
+import { CreateConfiguration } from '../../types';
 
 type GenerateEnvProps = Pick<
 	CreateConfiguration,
 	'databaseEngine' | 'databaseHost' | 'projectName' | 'databaseDirectory'
 > & {
-	databasePort?: number;
 	envVariables?: string[];
 };
 
-const urlBuilders: Record<
-	Exclude<DatabaseEngine, 'none' | 'sqlite' | undefined>,
-	(port: number) => string
-> = {
-	cockroachdb: (port) => `postgresql://root@localhost:${port}/database`,
-	gel: (port) => `gel://admin@localhost:${port}/main?tls_security=insecure`,
-	mariadb: (port) => `mysql://root:rootpassword@localhost:${port}/database`,
-	mongodb: (port) =>
-		`mongodb://root:rootpassword@localhost:${port}/database?authSource=admin`,
-	mssql: (port) =>
-		`Server=localhost,${port};Database=master;User Id=sa;Password=SApassword1;Encrypt=true;TrustServerCertificate=true`,
-	mysql: (port) => `mysql://root:rootpassword@localhost:${port}/database`,
-	postgresql: (port) =>
-		`postgresql://postgres:rootpassword@localhost:${port}/database`,
-	singlestore: (port) =>
-		`mysql://root:rootpassword@localhost:${port}/database`
-};
+const databaseURLS = {
+	cockroachdb: 'postgresql://root@localhost:26257/database',
+	gel: 'gel://admin@localhost:5656/main?tls_security=insecure',
+	mariadb: 'mysql://root:rootpassword@localhost:3306/database',
+	mongodb:
+		'mongodb://root:rootpassword@localhost:27017/database?authSource=admin',
+	mssql:
+		'Server=localhost,1433;Database=master;User Id=sa;Password=SApassword1;Encrypt=true;TrustServerCertificate=true',
+	mysql: 'mysql://root:rootpassword@localhost:3306/database',
+	postgresql: 'postgresql://postgres:rootpassword@localhost:5432/database',
+	singlestore: 'mysql://root:rootpassword@localhost:3306/database'
+} as const;
 
 export const generateEnv = ({
 	databaseEngine,
 	databaseHost,
 	databaseDirectory = 'db',
-	databasePort,
 	envVariables = [],
 	projectName
 }: GenerateEnvProps) => {
@@ -47,11 +40,9 @@ export const generateEnv = ({
 		databaseEngine !== 'none' &&
 		databaseEngine !== 'sqlite' &&
 		databaseEngine !== undefined &&
-		(databaseHost === 'none' || databaseHost === undefined) &&
-		databasePort !== undefined
+		(databaseHost === 'none' || databaseHost === undefined)
 	) {
-		const databaseURL = urlBuilders[databaseEngine](databasePort);
-		vars.push(`DATABASE_URL=${databaseURL}`);
+		vars.push(`DATABASE_URL=${databaseURLS[databaseEngine]}`);
 	}
 
 	if (vars.length === 0) return;
