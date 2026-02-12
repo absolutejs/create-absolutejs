@@ -14,11 +14,12 @@ export const availableAuthProviders = ['abs', 'none'] as const;
 
 export const availableDrizzleDialects = [
 	'gel',
+	'mariadb',
+	'mssql',
 	'mysql',
 	'postgresql',
-	'sqlite',
 	'singlestore',
-	'mariadb'
+	'sqlite'
 ] as const;
 
 export const availablePrismaDialects = [
