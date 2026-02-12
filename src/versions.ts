@@ -55,6 +55,7 @@ export const versions = {
 	'eslint-plugin-react-hooks': '7.0.1',
 
 	/* ── ORM ──────────────────────────────────────────────── */
+	'drizzle-kit': '0.31.8',
 	'drizzle-orm': '0.45.1',
 
 	/* ── Database Hosts ───────────────────────────────────── */

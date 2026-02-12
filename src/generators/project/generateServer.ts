@@ -1,4 +1,4 @@
-import { writeFileSync } from 'fs';
+import { mkdirSync, writeFileSync } from 'fs';
 import { join } from 'path';
 import type { CreateConfiguration } from '../../types';
 import { collectDependencies } from './collectDependencies';
@@ -19,6 +19,7 @@ type CreateServerFileProps = Pick<
 	| 'orm'
 	| 'assetsDirectory'
 	| 'frontendDirectories'
+	| 'databaseDirectory'
 > & {
 	backendDirectory: string;
 };
@@ -30,6 +31,7 @@ export const generateServerFile = ({
 	buildDirectory,
 	databaseEngine,
 	databaseHost,
+	databaseDirectory,
 	orm,
 	assetsDirectory,
 	frontendDirectories,
@@ -43,6 +45,7 @@ export const generateServerFile = ({
 	const importsBlock = generateImportsBlock({
 		authOption,
 		backendDirectory,
+		databaseDirectory,
 		databaseEngine,
 		databaseHost,
 		deps,
@@ -60,7 +63,12 @@ export const generateServerFile = ({
 
 	let dbBlock = '';
 	if (databaseEngine && databaseEngine !== 'none') {
-		dbBlock = generateDBBlock({ databaseEngine, databaseHost, orm });
+		dbBlock = generateDBBlock({
+			databaseDirectory,
+			databaseEngine,
+			databaseHost,
+			orm
+		});
 	}
 
 	const useBlock = deps
@@ -104,6 +112,22 @@ export const generateServerFile = ({
 		frontendDirectories
 	});
 
+	let lifecycleCleanup = '';
+	if (orm === 'prisma' && databaseEngine && databaseEngine !== 'none') {
+		lifecycleCleanup = `
+// Graceful shutdown for Prisma
+process.on('SIGINT', async () => {
+  await prisma.$disconnect()
+  process.exit(0)
+})
+
+process.on('SIGTERM', async () => {
+  await prisma.$disconnect()
+  process.exit(0)
+})
+`;
+	}
+
 	const content = `${importsBlock}
 
 ${manifestBlock}
@@ -116,6 +140,8 @@ ${authOption === 'abs' ? guardBlock : ''}
     const { request } = err
     console.error(\`Server error on \${request.method} \${request.url}: \${err.message}\`)
   });
-`;
+${lifecycleCleanup}`;
+
+	mkdirSync(backendDirectory, { recursive: true });
 	writeFileSync(serverFilePath, content);
 };

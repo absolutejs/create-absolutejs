@@ -135,27 +135,27 @@ export const initTemplates = {
 		wait: 'until gel query -H localhost -P 5656 -u admin --tls-security insecure "select 1"; do sleep 1; done'
 	},
 	mariadb: {
-		cli: 'MYSQL_PWD=userpassword mariadb -h127.0.0.1 -u user database -e',
+		cli: 'MYSQL_PWD=rootpassword mariadb -h127.0.0.1 -u root database -e',
 		wait: 'until mariadb-admin ping -h127.0.0.1 --silent; do sleep 1; done'
 	},
 	mongodb: {
-		cli: 'mongosh -u user -p password --authenticationDatabase admin database --eval',
-		wait: 'for i in $(seq 1 60); do mongosh -u user -p password --authenticationDatabase admin --eval "db.adminCommand(\\"ping\\")" --quiet 2>/dev/null && exit 0; sleep 1; done; exit 1'
+		cli: 'mongosh -u root -p rootpassword --authenticationDatabase admin database --eval',
+		wait: 'for i in $(seq 1 60); do mongosh -u root -p rootpassword --authenticationDatabase admin --eval "db.adminCommand(\\"ping\\")" --quiet 2>/dev/null && exit 0; sleep 1; done; exit 1'
 	},
 	mssql: {
 		cli: '/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P SApassword1 -Q',
 		wait: 'until /opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P SApassword1 -Q "SELECT 1" >/dev/null 2>&1; do sleep 1; done'
 	},
 	mysql: {
-		cli: 'MYSQL_PWD=userpassword mysql -h127.0.0.1 -u user database -e',
+		cli: 'MYSQL_PWD=rootpassword mysql -h127.0.0.1 -u root database -e',
 		wait: 'until mysqladmin ping -h127.0.0.1 --silent; do sleep 1; done'
 	},
 	postgresql: {
-		cli: 'psql -U user -d database -c',
-		wait: 'until pg_isready -U user -h localhost --quiet; do sleep 1; done'
+		cli: 'psql -U postgres -d database -c',
+		wait: 'until pg_isready -U postgres -h localhost --quiet; do sleep 1; done'
 	},
 	singlestore: {
-		cli: 'singlestore -u root -ppassword -e "CREATE DATABASE IF NOT EXISTS \\`database\\`" > /dev/null && singlestore -u root -ppassword -D database -e',
-		wait: 'until singlestore -u root -ppassword -e "SELECT 1" >/dev/null 2>&1; do sleep 1; done'
+		cli: 'singlestore -u root -prootpassword -e "CREATE DATABASE IF NOT EXISTS \\`database\\`" > /dev/null && singlestore -u root -prootpassword -D database -e',
+		wait: 'until singlestore -u root -prootpassword -e "SELECT 1" >/dev/null 2>&1; do sleep 1; done'
 	}
 } as const;

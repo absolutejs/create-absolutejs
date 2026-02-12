@@ -1,3 +1,4 @@
+// @ts-nocheck - Svelte 5 runes ($state) are processed at build time
 export const counter = (initialCount: number) => {
 	let count = $state(initialCount);
 

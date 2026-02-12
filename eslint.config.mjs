@@ -16,7 +16,14 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig([
 	{
-		ignores: ['dist/**', 'absolutejs-project/**', '**/*/htmx.*.min.js']
+		ignores: [
+			'dist/**',
+			'absolutejs-project/**',
+			'**/*/htmx.*.min.js',
+			'test-scaffold/**/*.json',
+			'test-scaffold/**/*.config.*',
+			'test-scaffold/.prettierrc.*'
+		]
 	},
 
 	pluginJs.configs.recommended,
