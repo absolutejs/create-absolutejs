@@ -8,6 +8,7 @@ interface DatabaseTemplate {
 		test: string;
 	};
 	image: string;
+	platform?: string;
 	port: string;
 	volumePath: string;
 }
@@ -121,6 +122,7 @@ const templates: Record<
 			test: 'singlestore -u root -ppassword -e "SELECT 1" >/dev/null 2>&1'
 		},
 		image: 'ghcr.io/singlestore-labs/singlestoredb-dev', // NOTE: No tag specified due to data persistence
+		platform: 'linux/amd64', // Required for ARM64 (Apple Silicon); no-op on amd64
 		port: '3306:3306',
 		volumePath: '/data'
 	}
@@ -137,16 +139,17 @@ export const generateDockerContainer = (databaseEngine: DatabaseEngine) => {
 		);
 	}
 
-	const { command, env, healthcheck, image, port, volumePath } =
+	const { command, env, healthcheck, image, platform, port, volumePath } =
 		templates[databaseEngine];
 	const commandLine = command ? `\n        command: ${command}` : '';
+	const platformLine = platform ? `\n        platform: ${platform}` : '';
 	const envLines = Object.entries(env)
 		.map(([key, value]) => `            ${key}: ${value}`)
 		.join('\n');
 
 	return `services:
     db:
-        image: ${image}
+        image: ${image}${platformLine}
         restart: always
         environment:
 ${envLines}
