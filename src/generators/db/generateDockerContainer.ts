@@ -62,7 +62,7 @@ const templates: Record<
 		},
 		healthcheck: {
 			startPeriod: '5s',
-			test: 'mongosh -u user -p password --authenticationDatabase admin --eval "db.adminCommand(\'ping\')" --quiet'
+			test: 'mongosh -u root -p rootpassword --authenticationDatabase admin --eval "db.adminCommand(\'ping\')" --quiet'
 		},
 		image: 'mongo:7.0',
 		port: '27017:27017',
@@ -102,7 +102,7 @@ const templates: Record<
 		},
 		healthcheck: {
 			startPeriod: '5s',
-			test: 'pg_isready -U user -h localhost --quiet'
+			test: 'pg_isready -U postgres -h localhost --quiet'
 		},
 		image: 'postgres:15',
 		port: '5432:5432',
@@ -114,7 +114,7 @@ const templates: Record<
 		},
 		healthcheck: {
 			startPeriod: '30s',
-			test: 'singlestore -u root -ppassword -e "SELECT 1" >/dev/null 2>&1'
+			test: 'singlestore -u root -prootpassword -e "SELECT 1" >/dev/null 2>&1'
 		},
 		image: 'ghcr.io/singlestore-labs/singlestoredb-dev', // NOTE: No tag specified due to data persistence
 		port: '3306:3306',

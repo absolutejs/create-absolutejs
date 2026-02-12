@@ -14,7 +14,7 @@ const databaseURLS = {
 	gel: 'gel://admin@localhost:5656/main?tls_security=insecure',
 	mariadb: 'mysql://root:rootpassword@localhost:3306/database',
 	mongodb:
-		'mongodb://root:rootpassword@localhost:27017/database?authSource=admin',
+		'mongodb://root:rootpassword@127.0.0.1:27017/database?authSource=admin&directConnection=true',
 	mssql:
 		'Server=localhost,1433;Database=master;User Id=sa;Password=SApassword1;Encrypt=true;TrustServerCertificate=true',
 	mysql: 'mysql://root:rootpassword@localhost:3306/database',

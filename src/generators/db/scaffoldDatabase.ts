@@ -1,10 +1,11 @@
 import { mkdirSync, writeFileSync } from 'fs';
-import { join } from 'path';
+import { join, resolve } from 'path';
 import { $ } from 'bun';
 import { isDrizzleDialect, isPrismaDialect } from '../../typeGuards';
 import type { CreateConfiguration } from '../../types';
 import { checkDockerInstalled } from '../../utils/checkDockerInstalled';
 import { checkSqliteInstalled } from '../../utils/checkSqliteInstalled';
+import { resolveDockerExe } from '../../utils/checkDockerInstalled';
 import { toDockerProjectName } from '../../utils/toDockerProjectName';
 import { createDrizzleConfig } from '../configurations/generateDrizzleConfig';
 import { generatePrismaClient } from '../configurations/generatePrismaClient';
@@ -74,6 +75,7 @@ export const scaffoldDatabase = async ({
 		);
 	}
 
+	let dockerFreshInstall = false;
 	// For Prisma, we need to create the docker-compose file but skip schema initialization
 	// For Drizzle and no ORM, we use scaffoldDocker which handles schema initialization
 	if (
@@ -82,15 +84,14 @@ export const scaffoldDatabase = async ({
 		databaseEngine !== undefined &&
 		databaseEngine !== 'none'
 	) {
-		const { dockerFreshInstall } = await scaffoldDocker({
+		const result = await scaffoldDocker({
 			authOption,
 			databaseDirectory,
 			databaseEngine,
 			projectDatabaseDirectory,
 			projectName
 		});
-
-		return { dockerFreshInstall };
+		dockerFreshInstall = result.dockerFreshInstall;
 	}
 
 	if (orm === 'drizzle') {
@@ -115,10 +116,10 @@ export const scaffoldDatabase = async ({
 		});
 		writeFileSync(join(typesDirectory, 'databaseTypes.ts'), drizzleTypes);
 
-		return { dockerFreshInstall: false };
+		return { dockerFreshInstall };
 	}
 
-	if (orm !== 'prisma') return { dockerFreshInstall: false };
+	if (orm !== 'prisma') return { dockerFreshInstall };
 
 	if (!isPrismaDialect(databaseEngine)) {
 		throw new Error('Internal type error: Expected a Prisma dialect');
@@ -149,7 +150,7 @@ export const scaffoldDatabase = async ({
 	}
 
 	const isLocalDatabase = !databaseHost || databaseHost === 'none';
-	if (!isLocalDatabase) return { dockerFreshInstall: false };
+	if (!isLocalDatabase) return { dockerFreshInstall };
 
 	// For non-SQLite databases, ensure Docker container is running before migrations
 	if (databaseEngine !== 'sqlite') {
@@ -169,27 +170,70 @@ export const scaffoldDatabase = async ({
 			} else {
 				await new Promise((resolve) => setTimeout(resolve, 5000));
 			}
+			// Brief delay for MongoDB to fully stabilize before Prisma connections
+			if (databaseEngine === 'mongodb') {
+				await new Promise((resolve) => setTimeout(resolve, 3000));
+			}
 		} catch (error) {
 			console.error('Error starting database container:', error);
 		}
 	}
 
-	if (databaseEngine === 'sqlite' || databaseEngine === 'mongodb') {
+	if (databaseEngine === 'sqlite') {
 		const result = await $`npx prisma db push --schema ${schemaArg}`
 			.cwd(projectCwd)
 			.nothrow();
 		if (result.exitCode !== 0)
 			console.error('Error running Prisma migrations:', result.stderr);
 
-		return { dockerFreshInstall: false };
+		return { dockerFreshInstall };
 	}
 
-	const result =
-		await $`npx prisma migrate dev --name init --skip-generate --schema ${schemaArg}`
-			.cwd(projectCwd)
-			.nothrow();
-	if (result.exitCode !== 0)
-		console.error('Error running Prisma migrations:', result.stderr);
+	if (databaseEngine === 'mongodb') {
+		const docker = resolveDockerExe();
+		const projectPath = resolve(projectCwd);
+		const network = `${toDockerProjectName(projectName)}_default`;
+		const mongoUrl =
+			'mongodb://root:rootpassword@db:27017/database?authSource=admin';
 
-	return { dockerFreshInstall: false };
+		const result = await $`${docker} run --rm --network ${network} -v ${projectPath}:/app -w /app -e "DATABASE_URL=${mongoUrl}" node:20-slim npx prisma db push --schema ${schemaArg}`
+			.nothrow();
+
+		if (result.exitCode !== 0)
+			console.error('Error running Prisma migrations:', result.stderr);
+
+		return { dockerFreshInstall };
+	}
+
+	// Run prisma migrate from inside Docker to connect via network (avoids host connection auth issues)
+	const dockerNetworkUrls: Record<string, string> = {
+		cockroachdb: 'postgresql://root@db:26257/database',
+		mariadb: 'mysql://root:rootpassword@db:3306/database',
+		mssql:
+			'Server=db,1433;Database=master;User Id=sa;Password=SApassword1;Encrypt=true;TrustServerCertificate=true',
+		mysql: 'mysql://root:rootpassword@db:3306/database',
+		postgresql: 'postgresql://postgres:rootpassword@db:5432/database'
+	};
+	const dbUrl = dockerNetworkUrls[databaseEngine];
+
+	if (dbUrl !== undefined) {
+		const docker = resolveDockerExe();
+		const projectPath = resolve(projectCwd);
+		const network = `${toDockerProjectName(projectName)}_default`;
+
+		const result = await $`${docker} run --rm --network ${network} -v ${projectPath}:/app -w /app -e "DATABASE_URL=${dbUrl}" node:20-slim npx prisma migrate dev --name init --skip-generate --schema ${schemaArg}`
+			.nothrow();
+
+		if (result.exitCode !== 0)
+			console.error('Error running Prisma migrations:', result.stderr);
+	} else {
+		const result =
+			await $`npx prisma migrate dev --name init --skip-generate --schema ${schemaArg}`
+				.cwd(projectCwd)
+				.nothrow();
+		if (result.exitCode !== 0)
+			console.error('Error running Prisma migrations:', result.stderr);
+	}
+
+	return { dockerFreshInstall };
 };
