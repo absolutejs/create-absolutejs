@@ -49,6 +49,11 @@ export const generateDatabaseTypes = ({
 				dbTypeLine =
 					'export type DatabaseType = Mysql2Database<SchemaType>;';
 				break;
+			case 'mssql':
+				dbImport = `import { NodeMssqlDatabase } from 'drizzle-orm/node-mssql';`;
+				dbTypeLine =
+					'export type DatabaseType = NodeMssqlDatabase<SchemaType>;';
+				break;
 			case 'postgresql':
 				dbImport = `import { BunSQLDatabase } from 'drizzle-orm/bun-sql';`;
 				dbTypeLine =
