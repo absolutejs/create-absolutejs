@@ -176,12 +176,14 @@ export const defaultDependencies: AvailableDependency[] = [
 		value: 'elysia'
 	}
 ];
-
 export const defaultPlugins: AvailableDependency[] = [
 	{
 		imports: [
+			{ isPlugin: false, packageName: 'BuildConfig' },
 			{ isPlugin: false, packageName: 'asset' },
 			{ isPlugin: false, packageName: 'build' },
+			{ isPlugin: false, packageName: 'devBuild' },
+			{ isPlugin: false, packageName: 'hmr' },
 			{ isPlugin: true, packageName: 'networking' }
 		],
 		latestVersion: versions['@absolutejs/absolute'],

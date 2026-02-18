@@ -23,8 +23,10 @@ export const initalizeRoot = (
 
 	const frontendDirectory = join(srcDir, 'frontend');
 	const backendDirectory = join(srcDir, 'backend');
+	const publicDirectory = join(projectName, 'public');
 	mkdirSync(frontendDirectory);
 	mkdirSync(backendDirectory);
+	mkdirSync(publicDirectory);
 
 	const projectAssetsDirectory = join(backendDirectory, 'assets');
 	mkdirSync(projectAssetsDirectory);

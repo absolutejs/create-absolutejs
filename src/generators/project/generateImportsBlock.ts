@@ -58,6 +58,8 @@ export const generateImportsBlock = ({
 		);
 	}
 
+	rawImports.push(`import { env } from 'bun'`);
+
 	const buildExamplePath = (dir: string, file: string) =>
 		`../frontend${dir ? `/${dir}` : ''}/pages/${file}`;
 

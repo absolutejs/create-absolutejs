@@ -95,6 +95,7 @@ export const scaffold = async ({
 		frontendDirectories,
 		orm,
 		plugins,
+		publicDirectory: 'public',
 		tailwind
 	});
 
