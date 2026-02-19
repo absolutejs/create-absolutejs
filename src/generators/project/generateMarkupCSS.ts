@@ -95,6 +95,7 @@ header details[open] summary::after {
 }
 
 header details nav {
+	content-visibility: visible;
 	position: absolute;
 	top: 100%;
 	right: -0.5rem;

@@ -12,7 +12,19 @@ export const generateSveltePage = (frontends: Frontend[]) => {
 	import Counter from '../components/Counter.svelte';
 
 	let { initialCount, cssPath }: SvelteExampleProps = $props();
-	let isOpen = $state(false);
+	let dropdown: HTMLDetailsElement;
+
+	const openDropdown = (event: PointerEvent) => {
+		if (event.pointerType === 'mouse') {
+			dropdown.open = true;
+		}
+	};
+
+	const closeDropdown = (event: PointerEvent) => {
+		if (event.pointerType === 'mouse') {
+			dropdown.open = false;
+		}
+	};
 </script>
 
 <svelte:head>
@@ -37,9 +49,9 @@ export const generateSveltePage = (frontends: Frontend[]) => {
 <header>
 	<a href="/">AbsoluteJS</a>
 	<details
-		open={isOpen}
-		onpointerenter={() => (isOpen = true)}
-		onpointerleave={() => (isOpen = false)}
+		bind:this={dropdown}
+		onpointerenter={openDropdown}
+		onpointerleave={closeDropdown}
 	>
 		<summary>Pages</summary>
 		<nav>
@@ -71,10 +83,14 @@ export const generateSveltePage = (frontends: Frontend[]) => {
 		Edit <code>example/svelte/pages/SvelteExample.svelte</code> and save
 		to test HMR.
 	</p>
-${frontends.length > 1 ? `	<p style="margin-top: 2rem;">
+${
+	frontends.length > 1
+		? `	<p style="margin-top: 2rem;">
 		Explore the other pages to see multiple frameworks running
 		together.
-	</p>\n` : ''}	<p style="color: #777; font-size: 1rem; margin-top: 2rem;">
+	</p>\n`
+		: ''
+}	<p style="color: #777; font-size: 1rem; margin-top: 2rem;">
 		Click on the AbsoluteJS and Svelte logos to learn more.
 	</p>
 </main>
@@ -173,6 +189,7 @@ ${frontends.length > 1 ? `	<p style="margin-top: 2rem;">
 	}
 
 	header details nav {
+		content-visibility: visible;
 		position: absolute;
 		top: 100%;
 		right: -0.5rem;

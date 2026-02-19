@@ -27,8 +27,8 @@ export const generateHTMXPage = (isSingle: boolean, frontends: Frontend[]) => {
 		<header>
 			<a href="/">AbsoluteJS</a>
 			<details
-				hx-on:pointerenter="this.open = true"
-				hx-on:pointerleave="this.open = false"
+				onpointerenter="if(event.pointerType==='mouse')this.open=true"
+				onpointerleave="if(event.pointerType==='mouse')this.open=false"
 			>
 				<summary>Pages</summary>
 				<nav>
@@ -79,10 +79,14 @@ export const generateHTMXPage = (isSingle: boolean, frontends: Frontend[]) => {
 				Edit <code>example/htmx/pages/HtmxHome.html</code> and save
 				to test HMR.
 			</p>
-${frontends.length > 1 ? `			<p style="margin-top: 2rem">
+${
+	frontends.length > 1
+		? `			<p style="margin-top: 2rem">
 				Explore the other pages to see multiple frameworks running
 				together.
-			</p>\n` : ''}			<p style="margin-top: 2rem; font-size: 1rem; color: #777">
+			</p>\n`
+		: ''
+}			<p style="margin-top: 2rem; font-size: 1rem; color: #777">
 				Click on the AbsoluteJS and HTML logos to learn more.
 			</p>
 		</main>

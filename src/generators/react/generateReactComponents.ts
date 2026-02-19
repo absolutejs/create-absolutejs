@@ -59,43 +59,47 @@ export const App = ({ initialCount }: AppProps) => {
 export const generateDropdownComponent = (frontends: Frontend[]) => {
 	const navLinks = frontends.map(formatNavLink).join('\n\t\t\t');
 
-	return `import { useState } from 'react';
-      
-      export const Dropdown = () => {
-        const [isOpen, setIsOpen] = useState(false);
-      
-        return (
-            <details
-                onPointerEnter={() => setIsOpen(true)}
-                onPointerLeave={() => setIsOpen(false)}
-                open={isOpen}
-            >
-                <summary>Pages</summary>
-                <nav>
-                    ${navLinks}
-                </nav>
-            </details>
-        );
-      };
-      `;
+	return `export const Dropdown = () => (
+	<details
+		onPointerEnter={(event) => {
+			if (event.pointerType === 'mouse') {
+				event.currentTarget.open = true;
+			}
+		}}
+		onPointerLeave={(event) => {
+			if (event.pointerType === 'mouse') {
+				event.currentTarget.open = false;
+			}
+		}}
+	>
+		<summary>Pages</summary>
+		<nav>
+			${navLinks}
+		</nav>
+	</details>
+);
+`;
 };
 
 export const generateSignInComponent = (
 	absProviders: ProviderOption[] | undefined
-) => `import { useState } from 'react';
-import { OAuthLink } from './OAuthLink';
+) => `import { OAuthLink } from './OAuthLink';
 
-export const SignIn = () => {
-	const [isOpen, setIsOpen] = useState(false);
-	
-	return (
-		<details
-			onPointerEnter={() => setIsOpen(true)}
-			onPointerLeave={() => setIsOpen(false)}
-			open={isOpen}
-		>
-			<summary>Sign In</summary>
-			<nav>
+export const SignIn = () => (
+	<details
+		onPointerEnter={(event) => {
+			if (event.pointerType === 'mouse') {
+				event.currentTarget.open = true;
+			}
+		}}
+		onPointerLeave={(event) => {
+			if (event.pointerType === 'mouse') {
+				event.currentTarget.open = false;
+			}
+		}}
+	>
+		<summary>Sign In</summary>
+		<nav>
 				${
 					absProviders && absProviders.length > 0
 						? absProviders
@@ -112,8 +116,7 @@ export const SignIn = () => {
 				}
 			</nav>
 		</details>
-	);
-}
+);
 `;
 
 export const generateReactExamplePage = (authOption: AuthOption) => {
