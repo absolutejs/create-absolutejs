@@ -32,7 +32,7 @@
 		"dist",
 		"dist/templates"
 	],
-	"license": "CC BY-NC 4.0",
+	"license": "BSL-1.1",
 	"main": "dist/index.js",
 	"name": "create-absolutejs",
 	"peerDependencies": {
@@ -49,5 +49,5 @@
 		"typecheck": "bun run tsc --noEmit"
 	},
 	"type": "module",
-	"version": "0.9.1"
+	"version": "0.10.0"
 }
