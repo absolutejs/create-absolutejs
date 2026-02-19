@@ -1,10 +1,4 @@
 {
-	"angularCompilerOptions": {
-		"enableI18nLegacyMessageIdFormat": false,
-		"fullTemplateTypeCheck": true,
-		"strictInjectionParameters": true,
-		"strictTemplates": true
-	},
 	"compilerOptions": {
 		"allowJs": true,
 		"allowSyntheticDefaultImports": true,
@@ -29,7 +23,8 @@
 		"node_modules",
 		"dist",
 		"absolutejs-project",
-		"src/templates/htmx/htmx.*.min.js"
+		"src/templates/htmx/htmx.*.min.js",
+		"src/templates/svelte/**/*.svelte.ts"
 	],
 	"include": ["src/**/*"]
 }
