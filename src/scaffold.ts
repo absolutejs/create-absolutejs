@@ -127,6 +127,7 @@ export const scaffold = async ({
 		frontends,
 		projectAssetsDirectory,
 		templatesDirectory,
+		typesDirectory,
 		useHTMLScripts,
 		useTailwind
 	});

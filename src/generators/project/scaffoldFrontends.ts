@@ -20,6 +20,7 @@ type ScaffoldFrontendsProps = Pick<
 	frontendDirectory: string;
 	templatesDirectory: string;
 	projectAssetsDirectory: string;
+	typesDirectory: string;
 };
 
 export const scaffoldFrontends = ({
@@ -29,6 +30,7 @@ export const scaffoldFrontends = ({
 	authOption,
 	templatesDirectory,
 	projectAssetsDirectory,
+	typesDirectory,
 	useHTMLScripts,
 	useTailwind,
 	frontendDirectories,
@@ -102,6 +104,10 @@ export const scaffoldFrontends = ({
 					targetDirectory,
 					templatesDirectory
 				});
+				copyFileSync(
+					join(templatesDirectory, 'types', 'vue-shim.d.ts'),
+					join(typesDirectory, 'vue-shim.d.ts')
+				);
 				break;
 			case 'angular':
 				console.warn(
