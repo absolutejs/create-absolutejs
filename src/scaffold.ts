@@ -71,7 +71,7 @@ export const scaffold = async ({
 		templatesDirectory
 	});
 
-	createPackageJson({
+	await createPackageJson({
 		authOption,
 		codeQualityTool,
 		databaseEngine,

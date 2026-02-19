@@ -1,17 +1,25 @@
-import { execSync } from 'child_process';
+export const getPackageVersions = async (
+	packageNames: string[]
+): Promise<Map<string, string>> => {
+	const results = await Promise.all(
+		packageNames.map(async (name) => {
+			try {
+				const res = await fetch(
+					`https://registry.npmjs.org/${name}/latest`
+				);
+				const data = (await res.json()) as { version: string };
 
-export const getPackageVersion = (packageName: string) => {
-	try {
-		const raw = execSync(
-			`curl -s https://registry.npmjs.org/${packageName}/latest`
-		);
+				return [name, data.version] as const;
+			} catch {
+				return [name, null] as const;
+			}
+		})
+	);
 
-		const { version }: { version: string } = JSON.parse(raw.toString());
-
-		return version;
-	} catch (err) {
-		console.error(`Error fetching version for ${packageName}:`, err);
-
-		return null;
+	const map = new Map<string, string>();
+	for (const [name, version] of results) {
+		if (version) map.set(name, version);
 	}
+
+	return map;
 };
