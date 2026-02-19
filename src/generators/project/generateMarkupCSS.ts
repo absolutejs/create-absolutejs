@@ -128,6 +128,29 @@ header details nav a {
 	white-space: nowrap;
 }
 
+@media (max-width: 480px) {
+	header {
+		padding: 1rem;
+	}
+
+	h1 {
+		font-size: 1.75rem;
+	}
+
+	.logo {
+		height: 5rem;
+		width: 5rem;
+	}
+
+	nav {
+		gap: 2rem;
+	}
+
+	header details summary {
+		font-size: 1.2rem;
+	}
+}
+
 @media (prefers-color-scheme: light) {
 	header {
 		background-color: #ffffff;

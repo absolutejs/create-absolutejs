@@ -68,15 +68,13 @@ export const generateSveltePage = (frontends: Frontend[]) => {
 	<h1>AbsoluteJS + Svelte</h1>
 	<Counter {initialCount} />
 	<p>
-		Edit <code>example/svelte/pages/SvelteExample.svelte</code> then save and
-		refresh to update the page.
+		Edit <code>example/svelte/pages/SvelteExample.svelte</code> and save
+		to test HMR.
 	</p>
-	<p style="color: #777">( Hot Module Reloading is coming soon )</p>
-	<p style="margin-top: 2rem;">
-		Explore the other pages to see how AbsoluteJS seamlessly unifies
-		multiple frameworks on a single server.
-	</p>
-	<p style="color: #777; font-size: 1rem; margin-top: 2rem;">
+${frontends.length > 1 ? `	<p style="margin-top: 2rem;">
+		Explore the other pages to see multiple frameworks running
+		together.
+	</p>\n` : ''}	<p style="color: #777; font-size: 1rem; margin-top: 2rem;">
 		Click on the AbsoluteJS and Svelte logos to learn more.
 	</p>
 </main>
@@ -206,6 +204,29 @@ export const generateSveltePage = (frontends: Frontend[]) => {
 		font-size: 1.1rem;
 		padding: 0.25rem 0;
 		white-space: nowrap;
+	}
+
+	@media (max-width: 480px) {
+		header {
+			padding: 1rem;
+		}
+
+		h1 {
+			font-size: 1.75rem;
+		}
+
+		.logo {
+			height: 5rem;
+			width: 5rem;
+		}
+
+		nav {
+			gap: 2rem;
+		}
+
+		header details summary {
+			font-size: 1.2rem;
+		}
 	}
 
 	@media (prefers-color-scheme: light) {
