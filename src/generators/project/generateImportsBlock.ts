@@ -27,14 +27,24 @@ export const generateImportsBlock = ({
 }: GenerateImportsBlockProps) => {
 	const rawImports: string[] = [];
 
-	const pushHandler = (cond: boolean, name: string, pkg = '@absolutejs/absolute') =>
-		cond &&
-		rawImports.push(`import { ${name} } from '${pkg}'`);
+	const pushHandler = (
+		cond: boolean,
+		name: string,
+		pkg = '@absolutejs/absolute'
+	) => cond && rawImports.push(`import { ${name} } from '${pkg}'`);
 
 	pushHandler(flags.requiresHtml, 'handleHTMLPageRequest');
 	pushHandler(flags.requiresReact, 'handleReactPageRequest');
-	pushHandler(flags.requiresSvelte, 'handleSveltePageRequest', '@absolutejs/absolute/svelte');
-	pushHandler(flags.requiresVue, 'handleVuePageRequest', '@absolutejs/absolute/vue');
+	pushHandler(
+		flags.requiresSvelte,
+		'handleSveltePageRequest',
+		'@absolutejs/absolute/svelte'
+	);
+	pushHandler(
+		flags.requiresVue,
+		'handleVuePageRequest',
+		'@absolutejs/absolute/vue'
+	);
 	pushHandler(flags.requiresVue, 'generateHeadElement');
 	pushHandler(flags.requiresHtmx, 'handleHTMXPageRequest');
 
