@@ -2,12 +2,15 @@ import pc from 'picocolors';
 
 import { versions } from '../src/versions';
 
+type Severity = 'major' | 'minor' | 'patch';
+
 type VersionResult = {
 	current: string;
 	latest: string;
 	name: string;
+	segment?: Severity;
+	severity?: Severity;
 	status: 'error' | 'outdated' | 'up-to-date';
-	bump?: 'major' | 'minor' | 'patch';
 };
 
 const parseSemver = (ver: string) => {
@@ -23,13 +26,22 @@ const parseSemver = (ver: string) => {
 const getBump = (
 	current: string,
 	latest: string
-): 'major' | 'minor' | 'patch' => {
+): { segment: Severity; severity: Severity } => {
 	const cur = parseSemver(current);
 	const lat = parseSemver(latest);
-	if (lat.major !== cur.major) return 'major';
-	if (lat.minor !== cur.minor) return 'minor';
 
-	return 'patch';
+	if (lat.major !== cur.major)
+		return { segment: 'major', severity: 'major' };
+
+	if (lat.minor !== cur.minor) {
+		return cur.major === 0
+			? { segment: 'minor', severity: 'major' }
+			: { segment: 'minor', severity: 'minor' };
+	}
+
+	return cur.major === 0
+		? { segment: 'patch', severity: 'minor' }
+		: { segment: 'patch', severity: 'patch' };
 };
 
 const fetchLatest = async (name: string): Promise<string | null> => {
@@ -64,11 +76,14 @@ const results: VersionResult[] = await Promise.all(
 				status: 'up-to-date' as const
 			};
 
+		const { segment, severity } = getBump(current, latest);
+
 		return {
-			bump: getBump(current, latest),
 			current,
 			latest,
 			name,
+			segment,
+			severity,
 			status: 'outdated' as const
 		};
 	})
@@ -84,12 +99,31 @@ const latWidth = Math.max(...results.map((res) => res.latest.length), 6);
 
 const pad = (str: string, len: number) => str.padEnd(len);
 
-const colorLatest = (res: VersionResult) => {
-	const padded = pad(res.latest, latWidth);
-	if (res.bump === 'major') return pc.red(padded);
-	if (res.bump === 'minor') return pc.yellow(padded);
+const severityColor = (severity: Severity) => {
+	if (severity === 'major') return pc.red;
+	if (severity === 'minor') return pc.yellow;
 
-	return pc.green(padded);
+	return pc.green;
+};
+
+const colorLatest = (res: VersionResult) => {
+	const parts = res.latest.split('.');
+	const padded = pad(res.latest, latWidth);
+	const color = severityColor(res.severity ?? 'patch');
+
+	if (res.segment === 'major') return color(padded);
+
+	if (res.segment === 'minor') {
+		const prefix = `${parts[0]}.`;
+		const rest = padded.slice(prefix.length);
+
+		return pc.dim(prefix) + color(rest);
+	}
+
+	const prefix = `${parts[0]}.${parts[1]}.`;
+	const rest = padded.slice(prefix.length);
+
+	return pc.dim(prefix) + color(rest);
 };
 
 if (outdated.length > 0) {
