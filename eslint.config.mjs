@@ -1,6 +1,7 @@
 // eslint.config.mjs
 import { dirname } from 'path';
 import { fileURLToPath } from 'url';
+import { fixupPluginRules } from '@eslint/compat';
 import pluginJs from '@eslint/js';
 import stylisticTs from '@stylistic/eslint-plugin-ts';
 import tsParser from '@typescript-eslint/parser';
@@ -63,7 +64,7 @@ export default defineConfig([
 		ignores: ['example/build/**'],
 		plugins: {
 			absolute: absolutePlugin,
-			import: importPlugin,
+			import: fixupPluginRules(importPlugin),
 			promise: promisePlugin,
 			security: securityPlugin
 		},
