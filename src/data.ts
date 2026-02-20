@@ -113,16 +113,28 @@ export const scopedStatePlugin: AvailableDependency = {
 
 export const eslintAndPrettierDependencies: AvailableDependency[] = [
 	{
+		latestVersion: versions['@eslint/compat'],
+		value: '@eslint/compat'
+	},
+	{
+		latestVersion: versions['@eslint/js'],
+		value: '@eslint/js'
+	},
+	{
 		latestVersion: versions['eslint'],
 		value: 'eslint'
+	},
+	{
+		latestVersion: versions['globals'],
+		value: 'globals'
 	},
 	{
 		latestVersion: versions['prettier'],
 		value: 'prettier'
 	},
 	{
-		latestVersion: versions['@stylistic/eslint-plugin-ts'],
-		value: '@stylistic/eslint-plugin-ts'
+		latestVersion: versions['@stylistic/eslint-plugin'],
+		value: '@stylistic/eslint-plugin'
 	},
 	{
 		latestVersion: versions['@typescript-eslint/parser'],
@@ -166,6 +178,10 @@ export const eslintReactDependencies: AvailableDependency[] = [
 	{
 		latestVersion: versions['eslint-plugin-react-hooks'],
 		value: 'eslint-plugin-react-hooks'
+	},
+	{
+		latestVersion: versions['zod-validation-error'],
+		value: 'zod-validation-error'
 	}
 ];
 

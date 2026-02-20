@@ -3,6 +3,7 @@ import { join } from 'path';
 import { dim, yellow } from 'picocolors';
 import type { CreateConfiguration } from '../../types';
 import { generateEnv } from './generateEnv';
+import { generateEslintConfig } from './generateEslintConfig';
 import { generatePrettierrc } from './generatePrettierrc';
 
 type AddConfigurationProps = Pick<
@@ -52,9 +53,9 @@ export const scaffoldConfigurationFiles = ({
 		);
 
 	if (codeQualityTool === 'eslint+prettier') {
-		copyFileSync(
-			join(templatesDirectory, 'configurations', 'eslint.config.mjs'),
-			join(projectName, 'eslint.config.mjs')
+		writeFileSync(
+			join(projectName, 'eslint.config.mjs'),
+			generateEslintConfig(frontends)
 		);
 		copyFileSync(
 			join(templatesDirectory, 'configurations', '.prettierignore'),

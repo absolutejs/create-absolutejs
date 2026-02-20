@@ -30,8 +30,7 @@ const getBump = (
 	const cur = parseSemver(current);
 	const lat = parseSemver(latest);
 
-	if (lat.major !== cur.major)
-		return { segment: 'major', severity: 'major' };
+	if (lat.major !== cur.major) return { segment: 'major', severity: 'major' };
 
 	if (lat.minor !== cur.minor) {
 		return cur.major === 0
