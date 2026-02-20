@@ -9,6 +9,8 @@
 		"forceConsistentCasingInFileNames": true,
 		"jsx": "react-jsx",
 		"lib": ["DOM", "DOM.Iterable", "ESNext"],
+		"incremental": true,
+		"tsBuildInfoFile": ".absolutejs/tsconfig.tsbuildinfo",
 		"module": "ESNext",
 		"moduleResolution": "bundler",
 		"noImplicitAny": true,

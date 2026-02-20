@@ -281,8 +281,8 @@ export const createPackageJson = async ({
 
 	const scripts: PackageJson['scripts'] = {
 		dev: 'absolutejs dev',
-		format: `prettier --write "./**/*.{js,ts,css,json,mjs,md${flags.requiresReact ? ',jsx,tsx' : ''}${flags.requiresSvelte ? ',svelte' : ''}${flags.requiresVue ? ',vue' : ''}${flags.requiresHtml || flags.requiresHtmx ? ',html' : ''}}"`,
-		lint: 'eslint ./src',
+		format: `absolutejs prettier --write "./**/*.{js,ts,css,json,mjs,md${flags.requiresReact ? ',jsx,tsx' : ''}${flags.requiresSvelte ? ',svelte' : ''}${flags.requiresVue ? ',vue' : ''}${flags.requiresHtml || flags.requiresHtmx ? ',html' : ''}}"`,
+		lint: 'absolutejs eslint',
 		test: 'echo "Error: no test specified" && exit 1',
 		typecheck: 'bun run tsc --noEmit'
 	};
