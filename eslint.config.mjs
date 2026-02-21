@@ -24,7 +24,9 @@ export default defineConfig([
 			'absolutejs-project/**',
 			'dist/**',
 			'scripts/**',
-			'**/*/htmx.*.min.js'
+			'**/*/htmx.*.min.js',
+			'src/templates/types/**',
+			'src/templates/svelte/**'
 		]
 	},
 

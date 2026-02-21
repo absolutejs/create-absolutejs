@@ -15,7 +15,6 @@ export const scaffoldReact = ({
 	targetDirectory,
 	templatesDirectory,
 	frontends,
-	assetsDirectory,
 	projectAssetsDirectory,
 	absProviders
 }: ScaffoldFrontendProps) => {

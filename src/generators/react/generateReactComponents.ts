@@ -55,7 +55,6 @@ export const App = ({ initialCount }: AppProps) => {
 };
 `;
 };
-
 export const generateDropdownComponent = (frontends: Frontend[]) => {
 	const navLinks = frontends.map(formatNavLink).join('\n\t\t\t');
 
@@ -80,45 +79,6 @@ export const generateDropdownComponent = (frontends: Frontend[]) => {
 );
 `;
 };
-
-export const generateSignInComponent = (
-	absProviders: ProviderOption[] | undefined
-) => `import { OAuthLink } from './OAuthLink';
-
-export const SignIn = () => (
-	<details
-		onPointerEnter={(event) => {
-			if (event.pointerType === 'mouse') {
-				event.currentTarget.open = true;
-			}
-		}}
-		onPointerLeave={(event) => {
-			if (event.pointerType === 'mouse') {
-				event.currentTarget.open = false;
-			}
-		}}
-	>
-		<summary>Sign In</summary>
-		<nav>
-				${
-					absProviders && absProviders.length > 0
-						? absProviders
-								.map((provider) => {
-									const logoUrl = `/assets/svg/google-logo.svg`;
-									const name =
-										provider.charAt(0).toUpperCase() +
-										provider.slice(1).toLowerCase();
-
-									return `<OAuthLink provider="${provider}" logoUrl="${logoUrl}" name="${name}" mode="in" />`;
-								})
-								.join('\n\t\t\t')
-						: `<p>No OAuth providers configured</p>`
-				}
-			</nav>
-		</details>
-);
-`;
-
 export const generateReactExamplePage = (authOption: AuthOption) => {
 	const useBlockReturn = authOption === 'abs';
 
@@ -203,3 +163,40 @@ ${authOption === 'abs' ? extractProps : ''}
 ${closing}
 `;
 };
+export const generateSignInComponent = (
+	absProviders: ProviderOption[] | undefined
+) => `import { OAuthLink } from './OAuthLink';
+
+export const SignIn = () => (
+	<details
+		onPointerEnter={(event) => {
+			if (event.pointerType === 'mouse') {
+				event.currentTarget.open = true;
+			}
+		}}
+		onPointerLeave={(event) => {
+			if (event.pointerType === 'mouse') {
+				event.currentTarget.open = false;
+			}
+		}}
+	>
+		<summary>Sign In</summary>
+		<nav>
+				${
+					absProviders && absProviders.length > 0
+						? absProviders
+								.map((provider) => {
+									const logoUrl = `/assets/svg/google-logo.svg`;
+									const name =
+										provider.charAt(0).toUpperCase() +
+										provider.slice(1).toLowerCase();
+
+									return `<OAuthLink provider="${provider}" logoUrl="${logoUrl}" name="${name}" mode="in" />`;
+								})
+								.join('\n\t\t\t')
+						: `<p>No OAuth providers configured</p>`
+				}
+			</nav>
+		</details>
+);
+`;

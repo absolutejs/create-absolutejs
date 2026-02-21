@@ -44,8 +44,8 @@
 		"build": "rm -rf dist && tsc --project tsconfig.build.json && cp -R src/templates dist/templates",
 		"check-versions": "bun scripts/check-versions.ts",
 		"dev": "bun scripts/dev.ts",
-		"format": "prettier --write \"./**/*.{js,jsx,ts,tsx,css,json,mjs,md,svelte,html,vue}\"",
-		"lint": "absolutejs eslint",
+		"format": "absolutejs prettier --write",
+		"lint": "absolutejs eslint --ignore-pattern 'absolutejs-project/**'",
 		"release": "bun run format && bun run build && bun publish",
 		"test": "cd absolutejs-project && bun dev",
 		"typecheck": "bun run tsc --noEmit"

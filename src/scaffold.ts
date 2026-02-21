@@ -115,7 +115,7 @@ export const scaffold = async ({
 			projectName,
 			typesDirectory
 		});
-		dockerFreshInstall = result.dockerFreshInstall;
+		({ dockerFreshInstall } = result);
 	}
 
 	scaffoldFrontends({

@@ -77,6 +77,7 @@ export const generateServerFile = ({
 			if (pluginImport.packageName === 'absoluteAuth') {
 				const hasDatabase =
 					databaseEngine !== undefined && databaseEngine !== 'none';
+
 				return hasDatabase
 					? `.use(absoluteAuth(absoluteAuthConfig(db)))`
 					: `.use(absoluteAuth(absoluteAuthConfig()))`;

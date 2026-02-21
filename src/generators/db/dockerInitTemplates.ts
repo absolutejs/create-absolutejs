@@ -105,16 +105,6 @@ create type count_history {
   };
 };`;
 
-export const userTables = {
-	cockroachdb: cockroachdbUsers,
-	gel: gelUsers,
-	mariadb: mariadbUsers,
-	mssql: mssqlUsers,
-	mysql: mysqlUsers,
-	postgresql: postgresqlUsers,
-	singlestore: singlestoreUsers
-} as const;
-
 export const countHistoryTables = {
 	cockroachdb: cockroachdbCountHistory,
 	gel: gelCountHistory,
@@ -124,7 +114,6 @@ export const countHistoryTables = {
 	postgresql: postgresqlCountHistory,
 	singlestore: singlestoreCountHistory
 } as const;
-
 export const initTemplates = {
 	cockroachdb: {
 		cli: 'sleep 1; cockroach sql --insecure --host localhost --database=database -e',
@@ -158,4 +147,13 @@ export const initTemplates = {
 		cli: 'singlestore -u root -ppassword -e "CREATE DATABASE IF NOT EXISTS \\`database\\`" > /dev/null && singlestore -u root -ppassword -D database -e',
 		wait: 'until singlestore -u root -ppassword -e "SELECT 1" >/dev/null 2>&1; do sleep 1; done'
 	}
+} as const;
+export const userTables = {
+	cockroachdb: cockroachdbUsers,
+	gel: gelUsers,
+	mariadb: mariadbUsers,
+	mssql: mssqlUsers,
+	mysql: mysqlUsers,
+	postgresql: postgresqlUsers,
+	singlestore: singlestoreUsers
 } as const;

@@ -1,6 +1,4 @@
-export const getPackageVersions = async (
-	packageNames: string[]
-): Promise<Map<string, string>> => {
+export const getPackageVersions = async (packageNames: string[]) => {
 	const results = await Promise.all(
 		packageNames.map(async (name) => {
 			try {
