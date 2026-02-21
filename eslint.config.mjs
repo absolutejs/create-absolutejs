@@ -3,7 +3,7 @@ import { dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { fixupPluginRules } from '@eslint/compat';
 import pluginJs from '@eslint/js';
-import stylisticTs from '@stylistic/eslint-plugin-ts';
+import stylistic from '@stylistic/eslint-plugin';
 import tsParser from '@typescript-eslint/parser';
 import { defineConfig } from 'eslint/config';
 import absolutePlugin from 'eslint-plugin-absolute';
@@ -17,7 +17,15 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig([
 	{
-		ignores: ['dist/**', 'absolutejs-project/**', '**/*/htmx.*.min.js']
+		ignores: [
+			'**/node_modules/**',
+			'.absolutejs/**',
+			'.claude/**',
+			'absolutejs-project/**',
+			'dist/**',
+			'scripts/**',
+			'**/*/htmx.*.min.js'
+		]
 	},
 
 	pluginJs.configs.recommended,
@@ -48,9 +56,9 @@ export default defineConfig([
 				tsconfigRootDir: __dirname
 			}
 		},
-		plugins: { '@stylistic/ts': stylisticTs },
+		plugins: { '@stylistic': stylistic },
 		rules: {
-			'@stylistic/ts/padding-line-between-statements': [
+			'@stylistic/padding-line-between-statements': [
 				'error',
 				{ blankLine: 'always', next: 'return', prev: '*' }
 			],
@@ -185,7 +193,7 @@ export default defineConfig([
 	{
 		files: [
 			'eslint.config.mjs',
-			'src/templates/configurations/eslint.config.mjs',
+			'src/templates/configurations/eslint.config.example.mjs',
 			'src/constants.ts',
 			'src/templates/constants.ts'
 		],
