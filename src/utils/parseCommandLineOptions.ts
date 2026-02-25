@@ -95,25 +95,27 @@ export const parseCommandLineOptions = () => {
 	}
 
 	const absProviders: ProviderOption[] = [];
-	if (values['abs-provider'] !== undefined) {
-		if (authOption === undefined || authOption === 'none') {
-			authOption = 'abs';
-		} else if (authOption !== 'abs') {
-			errors.push(
-				`Invalid auth configuration: "--abs-provider" specified but auth provider is set to "${authOption}". "--abs-provider" can only be used with "abs" auth provider.`
-			);
-		}
-		for (const provider of values['abs-provider']) {
-			if (!isValidProviderOption(provider)) {
-				errors.push(
-					`Invalid Absolute-Auth provider: "${provider}". Expected: ${Object.keys(providers).join(', ')}`
-				);
-				continue;
-			} else {
-				absProviders.push(provider);
-			}
-		}
+	if (
+		values['abs-provider'] !== undefined &&
+		(authOption === undefined || authOption === 'none')
+	) {
+		authOption = 'abs';
+	} else if (values['abs-provider'] !== undefined && authOption !== 'abs') {
+		errors.push(
+			`Invalid auth configuration: "--abs-provider" specified but auth provider is set to "${authOption}". "--abs-provider" can only be used with "abs" auth provider.`
+		);
 	}
+	const rawProviders = values['abs-provider'] ?? [];
+	const validProviders = rawProviders.filter(isValidProviderOption);
+	const invalidProviders = rawProviders.filter(
+		(provider) => !isValidProviderOption(provider)
+	);
+	for (const provider of invalidProviders) {
+		errors.push(
+			`Invalid Absolute-Auth provider: "${provider}". Expected: ${Object.keys(providers).join(', ')}`
+		);
+	}
+	absProviders.push(...validProviders);
 
 	let databaseEngine: DatabaseEngine;
 	if (values.db !== undefined && !isDatabaseEngine(values.db)) {

@@ -21,6 +21,7 @@ type CreateServerFileProps = Pick<
 	| 'frontendDirectories'
 > & {
 	backendDirectory: string;
+	publicDirectory: string;
 };
 
 export const generateServerFile = ({
@@ -33,7 +34,8 @@ export const generateServerFile = ({
 	orm,
 	assetsDirectory,
 	frontendDirectories,
-	backendDirectory
+	backendDirectory,
+	publicDirectory
 }: CreateServerFileProps) => {
 	const serverFilePath = join(backendDirectory, 'server.ts');
 
@@ -55,6 +57,7 @@ export const generateServerFile = ({
 		assetsDirectory,
 		buildDirectory,
 		frontendDirectories,
+		publicDirectory,
 		tailwind
 	});
 
@@ -65,11 +68,16 @@ export const generateServerFile = ({
 
 	const useBlock = deps
 		.flatMap((dependency) => dependency.imports ?? [])
-		.filter((pluginImport) => pluginImport.isPlugin)
+		.filter(
+			(pluginImport) =>
+				pluginImport.isPlugin &&
+				pluginImport.packageName !== 'networking'
+		)
 		.map((pluginImport) => {
 			if (pluginImport.packageName === 'absoluteAuth') {
 				const hasDatabase =
 					databaseEngine !== undefined && databaseEngine !== 'none';
+
 				return hasDatabase
 					? `.use(absoluteAuth(absoluteAuthConfig(db)))`
 					: `.use(absoluteAuth(absoluteAuthConfig()))`;
@@ -104,18 +112,27 @@ export const generateServerFile = ({
 		frontendDirectories
 	});
 
+	const hmrBlock = `
+if (
+  typeof result.hmrState !== 'string' &&
+  typeof result.manifest === 'object'
+) {
+  server.use(hmr(result.hmrState, result.manifest));
+}`;
+
 	const content = `${importsBlock}
 
 ${manifestBlock}
-${dbBlock}
-new Elysia()
-${useBlock}
-${authOption === 'abs' ? guardBlock : ''}
+${dbBlock ? `${dbBlock}\n` : ''}
+const server = new Elysia()
+${useBlock}${authOption === 'abs' ? `\n${guardBlock}` : ''}
   ${routesBlock}
+  .use(networking)
   .on('error', err => {
     const { request } = err
     console.error(\`Server error on \${request.method} \${request.url}: \${err.message}\`)
   });
+${hmrBlock}
 `;
 	writeFileSync(serverFilePath, content);
 };

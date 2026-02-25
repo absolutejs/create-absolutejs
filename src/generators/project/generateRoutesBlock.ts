@@ -53,12 +53,12 @@ export const generateRoutesBlock = ({
 		if (frontend === 'react') {
 			const reactProps =
 				authOption === 'abs'
-					? `{ initialCount: 0, cssPath: asset(manifest, 'ReactExampleCSS'), user, providerConfiguration }`
-					: `{ initialCount: 0, cssPath: asset(manifest, 'ReactExampleCSS') }`;
+					? `{ initialCount: 0, cssPath: asset(result, 'ReactExampleCSS'), user, providerConfiguration }`
+					: `{ initialCount: 0, cssPath: asset(result, 'ReactExampleCSS') }`;
 
 			return `handleReactPageRequest(
     ReactExample,
-    asset(manifest, 'ReactExampleIndex'),
+    asset(result, 'ReactExampleIndex'),
     ${reactProps}
   )`;
 		}
@@ -66,9 +66,9 @@ export const generateRoutesBlock = ({
 		if (frontend === 'svelte')
 			return `handleSveltePageRequest(
     SvelteExample,
-    asset(manifest, 'SvelteExample'),
-    asset(manifest, 'SvelteExampleIndex'),
-    { initialCount: 0, cssPath: asset(manifest, 'SvelteExampleCSS') }
+    asset(result, 'SvelteExample'),
+    asset(result, 'SvelteExampleIndex'),
+    { initialCount: 0, cssPath: asset(result, 'SvelteExampleCSS') }
   )`;
 
 		if (frontend === 'vue') {
@@ -78,10 +78,10 @@ export const generateRoutesBlock = ({
 
 			return `handleVuePageRequest(
     ${vueComponent},
-    asset(manifest, 'VueExample'),
-    asset(manifest, 'VueExampleIndex'),
+    asset(result, 'VueExample'),
+    asset(result, 'VueExampleIndex'),
     generateHeadElement({
-      cssPath: asset(manifest, 'VueExampleCSS'),
+      cssPath: asset(result, 'VueExampleCSS'),
       title: 'AbsoluteJS + Vue',
       description: 'A Vue.js example with AbsoluteJS'
     }),

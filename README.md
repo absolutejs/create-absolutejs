@@ -176,4 +176,4 @@ Contributions are welcome! Feel free to open issues or submit pull requests to i
 
 ## License
 
-Licensed under CC BY-NC 4.0.
+**Business Source License 1.1 (BSL-1.1)** – see [`LICENSE`](./LICENSE) for details.

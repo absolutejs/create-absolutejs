@@ -18,6 +18,7 @@ type ScaffoldBackendProps = Pick<
 	| 'tailwind'
 > & {
 	backendDirectory: string;
+	publicDirectory: string;
 };
 
 export const scaffoldBackend = ({
@@ -31,6 +32,7 @@ export const scaffoldBackend = ({
 	frontendDirectories,
 	orm,
 	plugins,
+	publicDirectory,
 	tailwind
 }: ScaffoldBackendProps) => {
 	generateServerFile({
@@ -43,6 +45,7 @@ export const scaffoldBackend = ({
 		frontendDirectories,
 		orm,
 		plugins,
+		publicDirectory,
 		tailwind
 	});
 

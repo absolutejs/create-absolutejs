@@ -3,6 +3,7 @@ import { join } from 'path';
 import { ScaffoldFrontendProps } from '../../types';
 import { generateMarkupCSS } from '../project/generateMarkupCSS';
 import {
+	generateAppComponent,
 	generateDropdownComponent,
 	generateReactExamplePage,
 	generateSignInComponent
@@ -14,7 +15,6 @@ export const scaffoldReact = ({
 	targetDirectory,
 	templatesDirectory,
 	frontends,
-	assetsDirectory,
 	projectAssetsDirectory,
 	absProviders
 }: ScaffoldFrontendProps) => {
@@ -33,6 +33,13 @@ export const scaffoldReact = ({
 	cpSync(join(templatesDirectory, 'react'), targetDirectory, {
 		recursive: true
 	});
+
+	const appComponent = generateAppComponent(frontends);
+	writeFileSync(
+		join(targetDirectory, 'components', 'App.tsx'),
+		appComponent,
+		'utf-8'
+	);
 
 	const dropdownComponent = generateDropdownComponent(frontends);
 	writeFileSync(

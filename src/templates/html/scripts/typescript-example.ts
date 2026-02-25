@@ -12,10 +12,14 @@ button.addEventListener('click', () => {
 	counter.textContent = (++count).toString();
 });
 
-details.addEventListener('pointerenter', () => {
-	details.open = true;
+details.addEventListener('pointerenter', (event) => {
+	if (event.pointerType === 'mouse') {
+		details.open = true;
+	}
 });
 
-details.addEventListener('pointerleave', () => {
-	details.open = false;
+details.addEventListener('pointerleave', (event) => {
+	if (event.pointerType === 'mouse') {
+		details.open = false;
+	}
 });

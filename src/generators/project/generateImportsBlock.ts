@@ -27,14 +27,24 @@ export const generateImportsBlock = ({
 }: GenerateImportsBlockProps) => {
 	const rawImports: string[] = [];
 
-	const pushHandler = (cond: boolean, name: string) =>
-		cond &&
-		rawImports.push(`import { ${name} } from '@absolutejs/absolute'`);
+	const pushHandler = (
+		cond: boolean,
+		name: string,
+		pkg = '@absolutejs/absolute'
+	) => cond && rawImports.push(`import { ${name} } from '${pkg}'`);
 
 	pushHandler(flags.requiresHtml, 'handleHTMLPageRequest');
 	pushHandler(flags.requiresReact, 'handleReactPageRequest');
-	pushHandler(flags.requiresSvelte, 'handleSveltePageRequest');
-	pushHandler(flags.requiresVue, 'handleVuePageRequest');
+	pushHandler(
+		flags.requiresSvelte,
+		'handleSveltePageRequest',
+		'@absolutejs/absolute/svelte'
+	);
+	pushHandler(
+		flags.requiresVue,
+		'handleVuePageRequest',
+		'@absolutejs/absolute/vue'
+	);
 	pushHandler(flags.requiresVue, 'generateHeadElement');
 	pushHandler(flags.requiresHtmx, 'handleHTMXPageRequest');
 
@@ -57,6 +67,8 @@ export const generateImportsBlock = ({
 				.join(', ')} } from '${dependency.value}'`
 		);
 	}
+
+	rawImports.push(`import { env } from 'bun'`);
 
 	const buildExamplePath = (dir: string, file: string) =>
 		`../frontend${dir ? `/${dir}` : ''}/pages/${file}`;
@@ -111,6 +123,21 @@ export const generateImportsBlock = ({
 		]
 	} as const;
 
+	const getPostgresqlOrmDatabaseImports = () => {
+		if (!isRemoteHost)
+			return [
+				`import { SQL } from 'bun'`,
+				`import { drizzle } from 'drizzle-orm/bun-sql'`
+			];
+		if (databaseHost === 'planetscale')
+			return [
+				`import { drizzle } from 'drizzle-orm/node-postgres'`,
+				`import { Pool } from 'pg'`
+			];
+
+		return [] as const;
+	};
+
 	const ormDatabaseImports = {
 		drizzle: {
 			gel: [
@@ -131,17 +158,7 @@ export const generateImportsBlock = ({
 						`import { createPool } from 'mysql2/promise'`
 					]
 				: [],
-			postgresql: !isRemoteHost
-				? [
-						`import { SQL } from 'bun'`,
-						`import { drizzle } from 'drizzle-orm/bun-sql'`
-					]
-				: isRemoteHost && databaseHost === 'planetscale'
-					? [
-							`import { drizzle } from 'drizzle-orm/node-postgres'`,
-							`import { Pool } from 'pg'`
-						]
-					: [],
+			postgresql: getPostgresqlOrmDatabaseImports(),
 			singlestore: [
 				`import { drizzle } from 'drizzle-orm/singlestore'`,
 				`import { createPool } from 'mysql2/promise'`
@@ -154,6 +171,24 @@ export const generateImportsBlock = ({
 				: []
 		}
 	} as const;
+
+	const getPostgresqlNoOrmImports = () => {
+		if (isRemoteHost && databaseHost === 'neon')
+			return [
+				...connectorImports[databaseHost as 'neon'],
+				`import { getEnv } from '@absolutejs/absolute'`
+			];
+		if (isRemoteHost && databaseHost === 'planetscale')
+			return [
+				`import { Pool } from 'pg'`,
+				`import { getEnv } from '@absolutejs/absolute'`
+			];
+
+		return [
+			`import { SQL } from 'bun'`,
+			`import { getEnv } from '@absolutejs/absolute'`
+		];
+	};
 
 	const noOrmImports = {
 		cockroachdb: [
@@ -185,21 +220,7 @@ export const generateImportsBlock = ({
 					`import { SQL } from 'bun'`,
 					`import { getEnv } from '@absolutejs/absolute'`
 				],
-		postgresql:
-			isRemoteHost && databaseHost === 'neon'
-				? [
-						...connectorImports[databaseHost as 'neon'],
-						`import { getEnv } from '@absolutejs/absolute'`
-					]
-				: isRemoteHost && databaseHost === 'planetscale'
-					? [
-							`import { Pool } from 'pg'`,
-							`import { getEnv } from '@absolutejs/absolute'`
-						]
-					: [
-							`import { SQL } from 'bun'`,
-							`import { getEnv } from '@absolutejs/absolute'`
-						],
+		postgresql: getPostgresqlNoOrmImports(),
 		singlestore: [
 			`import { createPool } from 'mysql2/promise'`,
 			`import { getEnv } from '@absolutejs/absolute'`
@@ -217,7 +238,7 @@ export const generateImportsBlock = ({
 	}
 
 	if (
-		orm == 'drizzle' &&
+		orm === 'drizzle' &&
 		isRemoteHost &&
 		!(databaseEngine === 'postgresql' && databaseHost === 'planetscale')
 	) {

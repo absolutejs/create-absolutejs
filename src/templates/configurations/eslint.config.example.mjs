@@ -1,8 +1,9 @@
 // eslint.config.mjs
 import { dirname } from 'path';
 import { fileURLToPath } from 'url';
+import { fixupPluginRules } from '@eslint/compat';
 import pluginJs from '@eslint/js';
-import stylisticTs from '@stylistic/eslint-plugin-ts';
+import stylistic from '@stylistic/eslint-plugin';
 import tsParser from '@typescript-eslint/parser';
 import { defineConfig } from 'eslint/config';
 import absolutePlugin from 'eslint-plugin-absolute';
@@ -38,9 +39,9 @@ export default defineConfig([
 
 	{
 		files: ['**/*.{ts,tsx}'],
-		plugins: { '@stylistic/ts': stylisticTs },
+		plugins: { '@stylistic': stylistic },
 		rules: {
-			'@stylistic/ts/padding-line-between-statements': [
+			'@stylistic/padding-line-between-statements': [
 				'error',
 				{ blankLine: 'always', next: 'return', prev: '*' }
 			]
@@ -51,10 +52,10 @@ export default defineConfig([
 		files: ['**/*.{js,mjs,cjs,ts,tsx,jsx}'],
 		ignores: ['example/build/**'],
 		plugins: {
-			absolute: absolutePlugin,
-			import: importPlugin,
-			promise: promisePlugin,
-			security: securityPlugin
+			absolute: fixupPluginRules(absolutePlugin),
+			import: fixupPluginRules(importPlugin),
+			promise: fixupPluginRules(promisePlugin),
+			security: fixupPluginRules(securityPlugin)
 		},
 		rules: {
 			'absolute/explicit-object-types': 'error',
@@ -72,7 +73,6 @@ export default defineConfig([
 			'absolute/no-nested-jsx-return': 'error',
 			'absolute/no-or-none-component': 'error',
 			'absolute/no-transition-cssproperties': 'error',
-			'absolute/no-type-cast': 'error',
 			'absolute/no-unnecessary-div': 'error',
 			'absolute/no-unnecessary-key': 'error',
 			'absolute/no-useless-function': 'error',
@@ -180,8 +180,8 @@ export default defineConfig([
 	{
 		files: ['example/**/*.{js,jsx,ts,tsx}'],
 		plugins: {
-			'jsx-a11y': jsxA11yPlugin,
-			react: reactPlugin,
+			'jsx-a11y': fixupPluginRules(jsxA11yPlugin),
+			react: fixupPluginRules(reactPlugin),
 			'react-compiler': reactCompilerPlugin,
 			'react-hooks': reactHooksPlugin
 		},
