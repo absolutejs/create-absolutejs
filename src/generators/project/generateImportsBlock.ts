@@ -148,6 +148,10 @@ export const generateImportsBlock = ({
 				`import { drizzle } from 'drizzle-orm/mysql2'`,
 				`import { createPool } from 'mysql2/promise'`
 			],
+			mssql: [
+				`import { connect } from 'mssql'`,
+				`import { drizzle } from 'drizzle-orm/node-mssql'`
+			],
 			mysql: !isRemoteHost
 				? [
 						`import { drizzle } from 'drizzle-orm/mysql2'`,
