@@ -99,6 +99,13 @@ const db = drizzle(pool, { schema, mode: 'default' })
 `;
 		}
 
+		if (databaseEngine === 'mssql' && hostKey === 'none') {
+			return `
+const pool = await connect(getEnv("DATABASE_URL"))
+const db = drizzle({ client: pool }, { schema })
+`;
+		}
+
 		if (databaseEngine === 'postgresql' && databaseHost === 'neon') {
 			return `
 const sql = neon(getEnv('DATABASE_URL'));

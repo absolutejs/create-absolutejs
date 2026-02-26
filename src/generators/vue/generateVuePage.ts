@@ -5,24 +5,36 @@ export const generateVuePage = (frontends: Frontend[]) => {
 	const navLinks = frontends.map(formatNavLink).join('\n\t\t\t');
 
 	return `<script setup lang="ts">
-import { ref } from 'vue';
 import CountButton from '../components/CountButton.vue';
+import { ref } from 'vue';
 
 const props = defineProps<{
 	initialCount: number;
 }>();
 
 const count = ref(props.initialCount);
-const isOpen = ref(false);
+const dropdown = ref<HTMLDetailsElement>();
+
+const openDropdown = (event: PointerEvent) => {
+	if (event.pointerType === 'mouse' && dropdown.value) {
+		dropdown.value.open = true;
+	}
+};
+
+const closeDropdown = (event: PointerEvent) => {
+	if (event.pointerType === 'mouse' && dropdown.value) {
+		dropdown.value.open = false;
+	}
+};
 </script>
 
 <template>
 	<header>
 		<a href="/">AbsoluteJS</a>
 		<details
-			:open="isOpen"
-			@pointerenter="isOpen = true"
-			@pointerleave="isOpen = false"
+			ref="dropdown"
+			@pointerenter="openDropdown"
+			@pointerleave="closeDropdown"
 		>
 			<summary>Pages</summary>
 			<nav>
@@ -51,15 +63,17 @@ const isOpen = ref(false);
 		<h1>AbsoluteJS + Vue</h1>
 		<CountButton :initialCount="count" />
 		<p>
-			Edit <code>example/vue/pages/VueExample.vue</code> then save and
-			refresh to update the page.
+			Edit <code>example/vue/pages/VueExample.vue</code> and save
+			to test HMR.
 		</p>
-		<p style="color: #777">( Hot Module Reloading is coming soon )</p>
-		<p style="margin-top: 2rem">
-			Explore the other pages to see how AbsoluteJS seamlessly unifies
-			multiple frameworks on a single server.
-		</p>
-		<p style="color: #777; font-size: 1rem; margin-top: 2rem">
+${
+	frontends.length > 1
+		? `		<p style="margin-top: 2rem">
+			Explore the other pages to see multiple frameworks running
+			together.
+		</p>\n`
+		: ''
+}		<p style="color: #777; font-size: 1rem; margin-top: 2rem">
 			Click on the AbsoluteJS and Vue logos to learn more.
 		</p>
 	</main>
@@ -217,6 +231,7 @@ header details[open] summary::after {
 }
 
 header details nav {
+	content-visibility: visible;
 	position: absolute;
 	top: 100%;
 	right: -0.5rem;
@@ -248,6 +263,41 @@ header details nav a {
 	font-size: 1.1rem;
 	padding: 0.25rem 0;
 	white-space: nowrap;
+}
+
+@media (max-width: 480px) {
+	:global(main) {
+		padding: 1rem;
+	}
+
+	:global(p) {
+		font-size: 1rem;
+	}
+
+	header {
+		padding: 1rem;
+	}
+
+	a {
+		font-size: 1.2rem;
+	}
+
+	h1 {
+		font-size: 1.75rem;
+	}
+
+	.logo {
+		height: 5rem;
+		width: 5rem;
+	}
+
+	nav {
+		gap: 2rem;
+	}
+
+	header details summary {
+		font-size: 1.2rem;
+	}
 }
 
 @media (prefers-color-scheme: light) {

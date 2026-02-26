@@ -18,6 +18,57 @@ import {
 } from './dockerInitTemplates';
 import { generateDockerContainer } from './generateDockerContainer';
 
+type DockerCommandProps = {
+	databaseEngine: DatabaseEngine;
+	docker: string;
+	projectName: string;
+	spin: ReturnType<typeof spinner>;
+};
+
+type InitDockerSchemaProps = DockerCommandProps & {
+	authOption: AuthOption;
+};
+
+const initDockerSchema = async ({
+	authOption,
+	databaseEngine,
+	docker,
+	projectName,
+	spin
+}: InitDockerSchemaProps) => {
+	const dbKey = databaseEngine as keyof typeof userTables;
+	const { wait, cli } = initTemplates[dbKey];
+	const usesAuth = authOption !== undefined && authOption !== 'none';
+	const dbCommand = usesAuth ? userTables[dbKey] : countHistoryTables[dbKey];
+	await $`${docker} compose -p ${databaseEngine} -f db/docker-compose.db.yml up -d db`
+		.cwd(projectName)
+		.quiet();
+	spin.message(`Initializing ${databaseEngine} schema`);
+	await $`${docker} compose -p ${databaseEngine} -f db/docker-compose.db.yml exec -T db \
+  bash -lc '${wait} && ${cli} "${dbCommand}"'`
+		.cwd(projectName)
+		.quiet();
+	spin.message(`Stopping ${databaseEngine} container`);
+	await $`${docker} compose -p ${databaseEngine} -f db/docker-compose.db.yml down`
+		.cwd(projectName)
+		.quiet();
+};
+
+const verifyDockerContainer = async ({
+	databaseEngine,
+	docker,
+	projectName,
+	spin
+}: DockerCommandProps) => {
+	await $`${docker} compose -p ${databaseEngine} -f db/docker-compose.db.yml up -d --wait db`
+		.cwd(projectName)
+		.quiet();
+	spin.message(`Stopping ${databaseEngine} container`);
+	await $`${docker} compose -p ${databaseEngine} -f db/docker-compose.db.yml down`
+		.cwd(projectName)
+		.quiet();
+};
+
 type ScaffoldDockerProps = {
 	authOption: AuthOption;
 	databaseDirectory: string;
@@ -57,6 +108,24 @@ export const scaffoldDocker = async ({
 	const projectFlag = toDockerProjectName(projectName);
 	const spin = spinner();
 	spin.start(`Starting ${databaseEngine} container`);
+
+	const dockerAction =
+		databaseEngine in userTables
+			? () =>
+					initDockerSchema({
+						authOption,
+						databaseEngine,
+						docker,
+						projectName,
+						spin
+					})
+			: () =>
+					verifyDockerContainer({
+						databaseEngine,
+						docker,
+						projectName,
+						spin
+					});
 
 	try {
 		const hasSchemaInit = databaseEngine in userTables;

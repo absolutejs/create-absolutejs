@@ -28,7 +28,10 @@ export const generateHTMLPage = (
     <body>
         <header>
             <a href="/">AbsoluteJS</a>
-            <details>
+            <details
+                onpointerenter="if(event.pointerType==='mouse')this.open=true"
+                onpointerleave="if(event.pointerType==='mouse')this.open=false"
+            >
                 <summary>Pages</summary>
                 <nav>
                     ${navLinks}
@@ -57,15 +60,17 @@ export const generateHTMLPage = (
                 count is <span id="counter">${initialCount}</span>
             </button>
             <p>
-                Edit <code>example/html/pages/HtmlExample.html</code> save and
-                rebuild to update the page.
+                Edit <code>example/html/pages/HtmlExample.html</code> and save
+                to test HMR.
             </p>
-            <p style="color: #777">( Hot Module Reloading is coming soon )</p>
-            <p style="margin-top: 2rem">
-                Explore the other pages to see how AbsoluteJS seamlessly unifies
-                multiple frameworks on a single server.
-            </p>
-            <p style="margin-top: 2rem; font-size: 1rem; color: #777">
+${
+	frontends.length > 1
+		? `            <p style="margin-top: 2rem">
+                Explore the other pages to see multiple frameworks running
+                together.
+            </p>\n`
+		: ''
+}            <p style="margin-top: 2rem; font-size: 1rem; color: #777">
                 Click on the AbsoluteJS and HTML logos to learn more.
             </p>
         </main>

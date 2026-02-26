@@ -1,4 +1,4 @@
-import { existsSync } from 'fs';
+import { existsSync, writeFileSync } from 'fs';
 import os from 'os';
 import { env, platform } from 'process';
 import { confirm, spinner } from '@clack/prompts';
@@ -84,13 +84,13 @@ const configureDocker = async () => {
 const installWindowsDirectDownload = async () => {
 	const spin = spinner();
 	spin.start('Downloading Docker Desktop installer…');
-	const tmpDir = await import('os').then((os) => os.tmpdir());
+	const tmpDir = os.tmpdir();
 	const installerPath = `${tmpDir}\\DockerDesktopInstaller.exe`;
 	try {
-		const res = await Bun.fetch(DOCKER_WIN_INSTALLER_URL);
+		const res = await fetch(DOCKER_WIN_INSTALLER_URL);
 		if (!res.ok) return false;
 		const buffer = await res.arrayBuffer();
-		await Bun.write(installerPath, buffer);
+		writeFileSync(installerPath, new Uint8Array(buffer));
 		spin.stop('Docker Desktop installer downloaded');
 		spin.start('Running Docker Desktop installer…');
 		const runRes =
@@ -102,9 +102,11 @@ const installWindowsDirectDownload = async () => {
 				? 'Docker Desktop installed'
 				: 'Installer failed'
 		);
+
 		return runRes.exitCode === 0;
 	} catch {
 		spin.stop('Direct download failed');
+
 		return false;
 	}
 };
@@ -116,12 +118,14 @@ const installWindowsOpenBrowser = async () => {
 	console.log(
 		`Opened Docker Desktop download page. Install it, then run this again.`
 	);
+
 	return false;
 };
 
 const installWindows = async () => {
 	if (await installWindowsDirectDownload()) return true;
 	await installWindowsOpenBrowser();
+
 	return false;
 };
 
@@ -189,17 +193,16 @@ const installLinux = async () => {
 	return false;
 };
 
+const installDockerForHost = async (host: string) => {
+	if (host === 'windows') return installWindows();
+	if (host === 'wsl') return installWSL();
+	if (host === 'linux') return installLinux();
+
+	return false;
+};
+
 const DAEMON_WAIT_ATTEMPTS = 30;
 const DAEMON_WAIT_INTERVAL_MS = 2000;
-
-export const resolveDockerExe = (): string => {
-	if (platform === 'win32') {
-		const fullPath = `${DOCKER_WIN_BIN_PATH}\\docker.exe`;
-		if (existsSync(fullPath)) return fullPath;
-	}
-
-	return 'docker';
-};
 
 export const hasDocker = async () => {
 	const docker = resolveDockerExe();
@@ -209,22 +212,66 @@ export const hasDocker = async () => {
 		(await $`${docker} compose version`.quiet().nothrow()).exitCode === 0
 	);
 };
-
 export const isDockerDaemonRunning = async () => {
 	const docker = resolveDockerExe();
 
 	return (await $`${docker} info`.quiet().nothrow()).exitCode === 0;
 };
-
-const waitForDaemonReady = async (): Promise<boolean> => {
-	for (let attempt = 0; attempt < DAEMON_WAIT_ATTEMPTS; attempt++) {
-		if (await isDockerDaemonRunning()) return true;
-		await new Promise((resolve) =>
-			setTimeout(resolve, DAEMON_WAIT_INTERVAL_MS)
-		);
+export const resolveDockerExe = () => {
+	if (platform === 'win32') {
+		const fullPath = `${DOCKER_WIN_BIN_PATH}\\docker.exe`;
+		if (existsSync(fullPath)) return fullPath;
 	}
 
-	return false;
+	return 'docker';
+};
+
+const sleep = (milliseconds: number) =>
+	new Promise<void>((resolve) => setTimeout(resolve, milliseconds));
+
+const waitForDaemonReady = async (attempt = 0) => {
+	if (attempt >= DAEMON_WAIT_ATTEMPTS) return false;
+	if (await isDockerDaemonRunning()) return true;
+	await sleep(DAEMON_WAIT_INTERVAL_MS);
+
+	return waitForDaemonReady(attempt + 1);
+};
+
+const startDarwinDockerDesktop = async (spin: ReturnType<typeof spinner>) => {
+	await $`open -a Docker`.quiet().nothrow();
+	if (await waitForDaemonReady()) {
+		spin.stop('Docker Desktop started');
+
+		return true;
+	}
+	spin.stop('Docker daemon did not start');
+	throw new Error(
+		'Docker daemon did not start. Please start Docker Desktop manually.'
+	);
+};
+
+const startWin32DockerDesktop = async (spin: ReturnType<typeof spinner>) => {
+	const started = await startWindowsDockerDesktop();
+	if (started) {
+		spin.stop('Docker Desktop started');
+
+		return true;
+	}
+	spin.stop('Docker Desktop start failed');
+	throw new Error(
+		'Docker Desktop failed to start. Please start it manually.'
+	);
+};
+
+const startWindowsDockerDesktop = async () => {
+	const dockerDesktopExe =
+		'C:\\Program Files\\Docker\\Docker\\Docker Desktop.exe';
+	if (!existsSync(dockerDesktopExe)) return false;
+	await $`powershell.exe -NoProfile -Command "Start-Process '${dockerDesktopExe}'"`
+		.quiet()
+		.nothrow();
+
+	return waitForDaemonReady();
 };
 
 const startDockerDaemon = async () => {
@@ -239,37 +286,9 @@ const startDockerDaemon = async () => {
 		return true;
 	}
 
-	if (platform === 'darwin') {
-		await $`open -a Docker`.quiet().nothrow();
-		if (await waitForDaemonReady()) {
-			spin.stop('Docker Desktop started');
+	if (platform === 'darwin') return startDarwinDockerDesktop(spin);
 
-			return true;
-		}
-		spin.stop('Docker daemon did not start');
-		throw new Error(
-			'Docker daemon did not start. Please start Docker Desktop manually.'
-		);
-	}
-
-	if (platform === 'win32') {
-		const dockerDesktopExe =
-			'C:\\Program Files\\Docker\\Docker\\Docker Desktop.exe';
-		if (existsSync(dockerDesktopExe)) {
-			await $`powershell.exe -NoProfile -Command "Start-Process '${dockerDesktopExe}'"`
-				.quiet()
-				.nothrow();
-			if (await waitForDaemonReady()) {
-				spin.stop('Docker Desktop started');
-
-				return true;
-			}
-		}
-		spin.stop('Docker Desktop start failed');
-		throw new Error(
-			'Docker Desktop failed to start. Please start it manually.'
-		);
-	}
+	if (platform === 'win32') return startWin32DockerDesktop(spin);
 
 	await ensureSudo();
 	const systemctlRes = await $`sudo systemctl start docker`.quiet().nothrow();
@@ -285,27 +304,6 @@ const startDockerDaemon = async () => {
 	throw new Error('Docker daemon did not start. Please start it manually.');
 };
 
-export const ensureDockerDaemonRunning = async (): Promise<{
-	daemonWasStarted: boolean;
-}> => {
-	if (await isDockerDaemonRunning()) {
-		return { daemonWasStarted: false };
-	}
-	await startDockerDaemon();
-
-	return { daemonWasStarted: true };
-};
-
-export const shutdownDockerDaemon = async () => {
-	const docker = resolveDockerExe();
-	const desktopRes = await $`${docker} desktop shutdown`.quiet().nothrow();
-	if (desktopRes.exitCode === 0) return;
-	if (platform !== 'win32') {
-		await ensureSudo();
-		await $`sudo systemctl stop docker`.quiet().nothrow();
-	}
-};
-
 export const checkDockerInstalled = async (
 	databaseEngine?: string
 ): Promise<{ freshInstall: boolean }> => {
@@ -316,26 +314,36 @@ export const checkDockerInstalled = async (
 		message: `Docker Engine and Compose plugin are required for your local ${dbLabel}. Install them now?`
 	});
 	if (!proceed) return { freshInstall: false };
-	switch (hostEnv) {
-		case 'windows':
-			if (await installWindows()) {
-				if (!env.PATH?.includes(DOCKER_WIN_BIN_PATH)) {
-					env.PATH = `${DOCKER_WIN_BIN_PATH};${env.PATH}`;
-				}
+	const installed = await installDockerForHost(hostEnv);
+	if (!installed) {
+		console.log(
+			`Couldn't install Docker automatically. Download it from ${DOCKER_URL}`
+		);
 
-				return { freshInstall: true };
-			}
-			break;
-		case 'wsl':
-			if (await installWSL()) return { freshInstall: true };
-			break;
-		case 'linux':
-			if (await installLinux()) return { freshInstall: true };
-			break;
+		return { freshInstall: false };
 	}
-	console.log(
-		`Couldn't install Docker automatically. Download it from ${DOCKER_URL}`
-	);
+	if (hostEnv === 'windows' && !env.PATH?.includes(DOCKER_WIN_BIN_PATH)) {
+		env.PATH = `${DOCKER_WIN_BIN_PATH};${env.PATH}`;
+	}
 
-	return { freshInstall: false };
+	return { freshInstall: true };
+};
+export const ensureDockerDaemonRunning = async (): Promise<{
+	daemonWasStarted: boolean;
+}> => {
+	if (await isDockerDaemonRunning()) {
+		return { daemonWasStarted: false };
+	}
+	await startDockerDaemon();
+
+	return { daemonWasStarted: true };
+};
+export const shutdownDockerDaemon = async () => {
+	const docker = resolveDockerExe();
+	const desktopRes = await $`${docker} desktop shutdown`.quiet().nothrow();
+	if (desktopRes.exitCode === 0) return;
+	if (platform !== 'win32') {
+		await ensureSudo();
+		await $`sudo systemctl stop docker`.quiet().nothrow();
+	}
 };

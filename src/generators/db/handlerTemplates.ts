@@ -436,6 +436,12 @@ import { schema } from '../../../db/schema'`,
 		importLines: ``,
 		queries: mongodbQueryOperations
 	},
+	'mssql:drizzle:local': {
+		dbType: 'NodeMssqlDatabase<SchemaType>',
+		importLines: `import { eq } from 'drizzle-orm'
+import { schema } from '../../../db/schema'`,
+		queries: drizzleQueryOperations
+	},
 	'mssql:prisma:local': {
 		dbType: 'PrismaClient',
 		importLines: `import type { PrismaClient } from '@prisma/client'`,

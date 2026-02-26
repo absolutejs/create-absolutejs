@@ -13,7 +13,7 @@ import {
 	prismaRuntimeDependencies
 } from '../../data';
 import type { CreateConfiguration, PackageJson } from '../../types';
-import { getPackageVersion } from '../../utils/getPackageVersion';
+import { getPackageVersions } from '../../utils/getPackageVersion';
 import { toDockerProjectName } from '../../utils/toDockerProjectName';
 import { versions } from '../../versions';
 import { computeFlags } from '../project/computeFlags';
@@ -46,7 +46,7 @@ const dbClientCommands = {
 	singlestore: 'singlestore -u root -prootpassword -D database'
 } as const;
 
-export const createPackageJson = ({
+export const createPackageJson = async ({
 	projectName,
 	authOption,
 	plugins,
@@ -59,20 +59,105 @@ export const createPackageJson = ({
 	codeQualityTool,
 	databaseDirectory
 }: CreatePackageJsonProps) => {
+	const flags = computeFlags(frontendDirectories);
+	const isLocal = !databaseHost || databaseHost === 'none';
+
+	/* ── Collect all package names that need versions ─────────── */
+	const packageNames = new Set<string>();
+	packageNames.add('typescript');
+
+	for (const p of defaultPlugins) packageNames.add(p.value);
+	for (const dep of defaultDependencies) packageNames.add(dep.value);
+
+	if (authOption === 'abs') packageNames.add(absoluteAuthPlugin.value);
+
+	for (const pluginValue of plugins) {
+		const meta = availablePlugins.find((p) => p.value === pluginValue);
+		if (meta) packageNames.add(meta.value);
+	}
+
+	if (codeQualityTool === 'eslint+prettier') {
+		for (const dep of eslintAndPrettierDependencies)
+			packageNames.add(dep.value);
+	}
+
+	if (useTailwind) {
+		packageNames.add('autoprefixer');
+		packageNames.add('postcss');
+		packageNames.add('tailwindcss');
+		packageNames.add('@tailwindcss/cli');
+	}
+
+	if (flags.requiresReact) {
+		packageNames.add('react');
+		packageNames.add('react-dom');
+		packageNames.add('@types/react');
+	}
+
+	if (flags.requiresReact && codeQualityTool === 'eslint+prettier') {
+		for (const dep of eslintReactDependencies) packageNames.add(dep.value);
+	}
+
+	if (flags.requiresSvelte) packageNames.add('svelte');
+	if (flags.requiresSvelte && codeQualityTool === 'eslint+prettier')
+		packageNames.add('prettier-plugin-svelte');
+	if (flags.requiresVue) packageNames.add('vue');
+	if (flags.requiresHtmx) packageNames.add('elysia-scoped-state');
+	if (orm === 'drizzle') packageNames.add('drizzle-orm');
+
+	switch (databaseHost) {
+		case 'neon':
+			packageNames.add('@neondatabase/serverless');
+			break;
+		case 'planetscale':
+			packageNames.add('@planetscale/database');
+			break;
+		case 'turso':
+			packageNames.add('@libsql/client');
+			break;
+	}
+
+	if (
+		isLocal &&
+		(databaseEngine === 'mysql' || databaseEngine === 'mariadb') &&
+		orm === 'drizzle'
+	)
+		packageNames.add('mysql2');
+
+	if (isLocal && databaseEngine === 'singlestore') packageNames.add('mysql2');
+
+	if (databaseEngine === 'postgresql' && databaseHost === 'planetscale') {
+		packageNames.add('pg');
+		packageNames.add('@types/pg');
+	}
+
+	if (isLocal && databaseEngine === 'mssql') {
+		packageNames.add('mssql');
+		packageNames.add('@types/mssql');
+	}
+
+	if (isLocal && databaseEngine === 'gel') packageNames.add('gel');
+	if (databaseEngine === 'mongodb') packageNames.add('mongodb');
+
+	/* ── Fetch all versions in parallel ──────────────────────── */
 	const s = spinner();
-	if (latest) s.start('Resolving package versions…');
+	let latestVersions = new Map<string, string>();
+
+	if (latest) {
+		s.start('Resolving package versions…');
+		latestVersions = await getPackageVersions([...packageNames]);
+	}
 
 	const resolveVersion = (name: string, listed: string) =>
-		latest ? (getPackageVersion(name) ?? listed) : listed;
+		latest ? (latestVersions.get(name) ?? listed) : listed;
 
+	/* ── Build dependency maps ───────────────────────────────── */
 	const dependencies: PackageJson['dependencies'] = {};
 	const devDependencies: PackageJson['devDependencies'] = {};
 	devDependencies['typescript'] = resolveVersion(
 		'typescript',
 		versions['typescript']
 	);
-
-	const flags = computeFlags(frontendDirectories);
 
 	for (const p of defaultPlugins) {
 		dependencies[p.value] = resolveVersion(p.value, p.latestVersion);
@@ -226,16 +311,16 @@ export const createPackageJson = ({
 
 	const scripts: PackageJson['scripts'] = {
 		dev: 'absolutejs dev',
-		format: `prettier --write "./**/*.{js,ts,css,json,mjs,md${flags.requiresReact ? ',jsx,tsx' : ''}${flags.requiresSvelte ? ',svelte' : ''}${flags.requiresVue ? ',vue' : ''}${flags.requiresHtml || flags.requiresHtmx ? ',html' : ''}}"`,
-		lint: 'eslint ./src',
+		format: `absolutejs prettier --write "./**/*.{js,ts,css,json,mjs,md${flags.requiresReact ? ',jsx,tsx' : ''}${flags.requiresSvelte ? ',svelte' : ''}${flags.requiresVue ? ',vue' : ''}${flags.requiresHtml || flags.requiresHtmx ? ',html' : ''}}"`,
+		lint: 'absolutejs eslint',
 		test: 'echo "Error: no test specified" && exit 1',
 		typecheck: 'bun run tsc --noEmit'
 	};
 
-	const isLocal = !databaseHost || databaseHost === 'none';
+	const isLocalDb = isLocal;
 
 	if (
-		isLocal &&
+		isLocalDb &&
 		databaseEngine !== undefined &&
 		databaseEngine !== 'none' &&
 		databaseEngine !== 'sqlite'
@@ -255,14 +340,14 @@ export const createPackageJson = ({
 	}
 
 	if (
-		isLocal &&
+		isLocalDb &&
 		(databaseEngine === 'mysql' || databaseEngine === 'mariadb') &&
 		orm === 'drizzle'
 	) {
 		dependencies['mysql2'] = resolveVersion('mysql2', versions['mysql2']);
 	}
 
-	if (isLocal && databaseEngine === 'singlestore') {
+	if (isLocalDb && databaseEngine === 'singlestore') {
 		dependencies['mysql2'] = resolveVersion('mysql2', versions['mysql2']);
 	}
 
@@ -274,7 +359,7 @@ export const createPackageJson = ({
 		);
 	}
 
-	if (isLocal && databaseEngine === 'mssql') {
+	if (isLocalDb && databaseEngine === 'mssql') {
 		dependencies['mssql'] = resolveVersion('mssql', versions['mssql']);
 		devDependencies['@types/mssql'] = resolveVersion(
 			'@types/mssql',
@@ -282,7 +367,7 @@ export const createPackageJson = ({
 		);
 	}
 
-	if (isLocal && databaseEngine === 'gel') {
+	if (isLocalDb && databaseEngine === 'gel') {
 		dependencies['gel'] = resolveVersion('gel', versions['gel']);
 	}
 

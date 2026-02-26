@@ -17,6 +17,14 @@ const DIALECTS = {
 		table: 'mysqlTable',
 		time: 'timestamp()'
 	},
+	mssql: {
+		builders: ['datetime2', 'int', 'mssqlTable', 'nvarchar', 'json'],
+		json: "nvarchar({ length: 'max', mode: 'json' })",
+		pkg: 'mssql-core',
+		string: 'nvarchar({ length: 255 })',
+		table: 'mssqlTable',
+		time: 'datetime2()'
+	},
 	mysql: {
 		builders: ['json', 'mysqlTable', 'timestamp', 'varchar', 'int'],
 		json: 'json()',
@@ -64,9 +72,10 @@ export const generateDrizzleSchema = ({
 }: GenerateSchemaProps) => {
 	const cfg = DIALECTS[databaseEngine];
 	const intBuilder =
+		databaseEngine === 'mariadb' ||
+		databaseEngine === 'mssql' ||
 		databaseEngine === 'mysql' ||
-		databaseEngine === 'singlestore' ||
-		databaseEngine === 'mariadb'
+		databaseEngine === 'singlestore'
 			? 'int'
 			: 'integer';
 	const timeBuilder = builder(cfg.time);
@@ -89,9 +98,10 @@ export const generateDrizzleSchema = ({
 
 	let uidColumn: string;
 	if (
+		databaseEngine === 'mariadb' ||
+		databaseEngine === 'mssql' ||
 		databaseEngine === 'mysql' ||
-		databaseEngine === 'singlestore' ||
-		databaseEngine === 'mariadb'
+		databaseEngine === 'singlestore'
 	) {
 		uidColumn = `${intBuilder}('uid').primaryKey().autoincrement()`;
 	} else if (databaseEngine === 'sqlite') {

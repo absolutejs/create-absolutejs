@@ -1,10 +1,4 @@
 {
-	"angularCompilerOptions": {
-		"enableI18nLegacyMessageIdFormat": false,
-		"fullTemplateTypeCheck": true,
-		"strictInjectionParameters": true,
-		"strictTemplates": true
-	},
 	"compilerOptions": {
 		"allowJs": true,
 		"allowSyntheticDefaultImports": true,
@@ -13,6 +7,7 @@
 		"esModuleInterop": true,
 		"experimentalDecorators": true,
 		"forceConsistentCasingInFileNames": true,
+		"incremental": true,
 		"jsx": "react-jsx",
 		"lib": ["DOM", "DOM.Iterable", "ESNext"],
 		"module": "ESNext",
@@ -23,13 +18,15 @@
 		"skipLibCheck": true,
 		"strict": true,
 		"target": "ESNext",
+		"tsBuildInfoFile": ".absolutejs/tsconfig.tsbuildinfo",
 		"useDefineForClassFields": false
 	},
 	"exclude": [
 		"node_modules",
 		"dist",
 		"absolutejs-project",
-		"src/templates/htmx/htmx.*.min.js"
+		"src/templates/htmx/htmx.*.min.js",
+		"src/templates/svelte/**/*.svelte.ts"
 	],
 	"include": ["src/**/*", "tests/**/*", "test-scaffold/**/*"]
 }

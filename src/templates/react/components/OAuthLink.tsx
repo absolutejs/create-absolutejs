@@ -17,18 +17,18 @@ export const OAuthLink = ({
 
 	return (
 		<a
+			href={provider ? `/oauth2/${provider}/authorization` : undefined}
 			style={{
 				alignItems: 'center',
 				display: 'flex',
 				gap: '0.5rem'
 			}}
-			href={provider ? `/oauth2/${provider}/authorization` : undefined}
 		>
 			{provider ? (
 				<img
-					style={{ height: '2rem', width: '2rem' }}
 					alt={`${name} logo`}
 					src={logoUrl}
+					style={{ height: '2rem', width: '2rem' }}
 				/>
 			) : (
 				<p>Provider not configured</p>

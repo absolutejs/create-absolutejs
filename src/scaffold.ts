@@ -72,7 +72,7 @@ export const scaffold = async ({
 		templatesDirectory
 	});
 
-	createPackageJson({
+	await createPackageJson({
 		authOption,
 		codeQualityTool,
 		databaseEngine,
@@ -98,6 +98,7 @@ export const scaffold = async ({
 		frontendDirectories,
 		orm,
 		plugins,
+		publicDirectory: 'public',
 		tailwind
 	});
 
@@ -117,7 +118,7 @@ export const scaffold = async ({
 			projectName,
 			typesDirectory
 		});
-		dockerFreshInstall = result.dockerFreshInstall;
+		({ dockerFreshInstall } = result);
 	}
 
 	scaffoldFrontends({
@@ -129,6 +130,7 @@ export const scaffold = async ({
 		frontends,
 		projectAssetsDirectory,
 		templatesDirectory,
+		typesDirectory,
 		useHTMLScripts,
 		useTailwind
 	});
