@@ -187,6 +187,24 @@ export const eslintReactDependencies: AvailableDependency[] = [
 		value: 'zod-validation-error'
 	}
 ];
+
+export const prismaRuntimeDependencies: AvailableDependency[] = [
+	{
+		latestVersion: '6.2.0',
+		value: '@prisma/client'
+	}
+];
+
+export const prismaDevDependencies: AvailableDependency[] = [
+	{
+		latestVersion: '6.2.0',
+		value: 'prisma'
+	},
+	{
+		latestVersion: '1.2.1',
+		value: '@prisma/extension-accelerate'
+	}
+];
 export const frontendLabels: FrontendLabels = {
 	html: 'HTML',
 	htmx: 'HTMX',

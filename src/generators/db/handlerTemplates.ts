@@ -277,6 +277,27 @@ const mysqlSqlQueryOperations: QueryOperations = {
   `
 };
 
+const prismaQueryOperations: QueryOperations = {
+	insertHistory: `const newHistory = await db.countHistory.create({
+  data: { count }
+})
+  return newHistory`,
+	insertUser: `const newUser = await db.user.upsert({
+  where: { auth_sub: authSub },
+  update: { metadata: userIdentity },
+  create: { auth_sub: authSub, metadata: userIdentity }
+})
+  return newUser`,
+	selectHistory: `const history = await db.countHistory.findUnique({
+  where: { uid }
+})
+  return history`,
+	selectUser: `const user = await db.user.findUnique({
+  where: { auth_sub: authSub }
+})
+  return user`
+};
+
 const mysqlDrizzleQueryOperations: QueryOperations = {
 	insertHistory: `const [row] = await db
     .insert(schema.countHistory)
@@ -367,6 +388,11 @@ const mysqlPlanetScaleQueryOperations: QueryOperations = {
 };
 
 const driverConfigurations = {
+	'cockroachdb:prisma:local': {
+		dbType: 'PrismaClient',
+		importLines: `import type { PrismaClient } from '@prisma/client'`,
+		queries: prismaQueryOperations
+	},
 	'cockroachdb:sql:local': {
 		dbType: 'SQL',
 		importLines: ``,
@@ -390,10 +416,20 @@ import { schema } from '../../../db/schema'
 import { schema } from '../../../db/schema'`,
 		queries: mysqlDrizzleQueryOperations
 	},
+	'mariadb:prisma:local': {
+		dbType: 'PrismaClient',
+		importLines: `import type { PrismaClient } from '@prisma/client'`,
+		queries: prismaQueryOperations
+	},
 	'mariadb:sql:local': {
 		dbType: 'SQL',
 		importLines: ``,
 		queries: mysqlSqlQueryOperations
+	},
+	'mongodb:prisma:local': {
+		dbType: 'PrismaClient',
+		importLines: `import type { PrismaClient } from '@prisma/client'`,
+		queries: prismaQueryOperations
 	},
 	'mongodb:sql:local': {
 		dbType: 'Db',
@@ -405,6 +441,11 @@ import { schema } from '../../../db/schema'`,
 		importLines: `import { eq } from 'drizzle-orm'
 import { schema } from '../../../db/schema'`,
 		queries: drizzleQueryOperations
+	},
+	'mssql:prisma:local': {
+		dbType: 'PrismaClient',
+		importLines: `import type { PrismaClient } from '@prisma/client'`,
+		queries: prismaQueryOperations
 	},
 	'mssql:sql:local': {
 		dbType: 'ConnectionPool',
@@ -422,6 +463,16 @@ import { schema } from '../../../db/schema'`,
 		importLines: `import { eq } from 'drizzle-orm'
 import { schema } from '../../../db/schema'`,
 		queries: mysqlDrizzleQueryOperations
+	},
+	'mysql:prisma:local': {
+		dbType: 'PrismaClient',
+		importLines: `import type { PrismaClient } from '@prisma/client'`,
+		queries: prismaQueryOperations
+	},
+	'mysql:prisma:planetscale': {
+		dbType: 'PrismaClient',
+		importLines: `import type { PrismaClient } from '@prisma/client'`,
+		queries: prismaQueryOperations
 	},
 	'mysql:sql:local': {
 		dbType: 'SQL',
@@ -451,6 +502,21 @@ import { schema } from '../../../db/schema'`,
 import { schema } from '../../../db/schema'`,
 		queries: drizzleQueryOperations
 	},
+	'postgresql:prisma:local': {
+		dbType: 'PrismaClient',
+		importLines: `import type { PrismaClient } from '@prisma/client'`,
+		queries: prismaQueryOperations
+	},
+	'postgresql:prisma:neon': {
+		dbType: 'PrismaClient',
+		importLines: `import type { PrismaClient } from '@prisma/client'`,
+		queries: prismaQueryOperations
+	},
+	'postgresql:prisma:planetscale': {
+		dbType: 'PrismaClient',
+		importLines: `import type { PrismaClient } from '@prisma/client'`,
+		queries: prismaQueryOperations
+	},
 	'postgresql:sql:local': {
 		dbType: 'SQL',
 		importLines: ``,
@@ -472,6 +538,11 @@ import { schema } from '../../../db/schema'`,
 import { schema } from '../../../db/schema'`,
 		queries: mysqlDrizzleQueryOperations
 	},
+	'singlestore:prisma:local': {
+		dbType: 'PrismaClient',
+		importLines: `import type { PrismaClient } from '@prisma/client'`,
+		queries: prismaQueryOperations
+	},
 	'singlestore:sql:local': {
 		dbType: 'Pool',
 		importLines: `import { RowDataPacket } from 'mysql2/promise'
@@ -490,6 +561,16 @@ import { schema } from '../../../db/schema'`,
 import { schema } from '../../../db/schema'`,
 		queries: drizzleQueryOperations
 	},
+	'sqlite:prisma:local': {
+		dbType: 'PrismaClient',
+		importLines: `import type { PrismaClient } from '@prisma/client'`,
+		queries: prismaQueryOperations
+	},
+	'sqlite:prisma:turso': {
+		dbType: 'PrismaClient',
+		importLines: `import type { PrismaClient } from '@prisma/client'`,
+		queries: prismaQueryOperations
+	},
 	'sqlite:sql:local': {
 		dbType: 'Database',
 		importLines: ``,
@@ -502,20 +583,45 @@ import { schema } from '../../../db/schema'`,
 	}
 } as const;
 
-type DriverConfigurationKey = keyof typeof driverConfigurations;
+export type DriverConfigurationKey = keyof typeof driverConfigurations;
 
-export const getAuthTemplate = (key: DriverConfigurationKey) => {
+const replaceDbPath = (
+	importLines: string,
+	databaseDirectory: string
+): string =>
+	importLines.replace(
+		/\.\.\/\.\.\/\.\.\/db\//g,
+		`../../../${databaseDirectory}/`
+	);
+
+export const getAuthTemplate = (
+	key: DriverConfigurationKey,
+	databaseDirectory = 'db'
+) => {
 	const configuration = driverConfigurations[key];
 	if (!configuration)
 		throw new Error(`Unsupported driver configuration: ${key}`);
 
-	return buildSqlAuthTemplate(configuration);
+	const config = {
+		...configuration,
+		importLines: replaceDbPath(configuration.importLines, databaseDirectory)
+	};
+
+	return buildSqlAuthTemplate(config);
 };
 
-export const getCountTemplate = (key: DriverConfigurationKey) => {
+export const getCountTemplate = (
+	key: DriverConfigurationKey,
+	databaseDirectory = 'db'
+) => {
 	const configuration = driverConfigurations[key];
 	if (!configuration)
 		throw new Error(`Unsupported driver configuration: ${key}`);
 
-	return buildSqlCountTemplate(configuration);
+	const config = {
+		...configuration,
+		importLines: replaceDbPath(configuration.importLines, databaseDirectory)
+	};
+
+	return buildSqlCountTemplate(config);
 };

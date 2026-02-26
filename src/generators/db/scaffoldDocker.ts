@@ -10,6 +10,7 @@ import {
 	resolveDockerExe,
 	shutdownDockerDaemon
 } from '../../utils/checkDockerInstalled';
+import { toDockerProjectName } from '../../utils/toDockerProjectName';
 import {
 	countHistoryTables,
 	initTemplates,
@@ -69,17 +70,19 @@ const verifyDockerContainer = async ({
 };
 
 type ScaffoldDockerProps = {
+	authOption: AuthOption;
+	databaseDirectory: string;
 	databaseEngine: DatabaseEngine;
 	projectDatabaseDirectory: string;
-	authOption: AuthOption;
 	projectName: string;
 };
 
 export const scaffoldDocker = async ({
+	authOption,
+	databaseDirectory,
 	databaseEngine,
 	projectDatabaseDirectory,
-	projectName,
-	authOption
+	projectName
 }: ScaffoldDockerProps): Promise<{ dockerFreshInstall: boolean }> => {
 	if (
 		databaseEngine === undefined ||
@@ -101,6 +104,8 @@ export const scaffoldDocker = async ({
 	);
 
 	const docker = resolveDockerExe();
+	const composeFile = `${databaseDirectory}/docker-compose.db.yml`;
+	const projectFlag = toDockerProjectName(projectName);
 	const spin = spinner();
 	spin.start(`Starting ${databaseEngine} container`);
 
@@ -123,7 +128,35 @@ export const scaffoldDocker = async ({
 					});
 
 	try {
-		await dockerAction();
+		const hasSchemaInit = databaseEngine in userTables;
+		if (hasSchemaInit) {
+			const dbKey = databaseEngine as keyof typeof userTables;
+			const { wait, cli } = initTemplates[dbKey];
+			const usesAuth = authOption !== undefined && authOption !== 'none';
+			const dbCommand = usesAuth
+				? userTables[dbKey]
+				: countHistoryTables[dbKey];
+			await $`${docker} compose -p ${projectFlag} -f ${composeFile} up -d db`
+				.cwd(projectName)
+				.quiet();
+			spin.message(`Initializing ${databaseEngine} schema`);
+			await $`${docker} compose -p ${projectFlag} -f ${composeFile} exec -T db \
+  bash -lc '${wait} && ${cli} "${dbCommand}"'`
+				.cwd(projectName)
+				.quiet();
+			spin.message(`Stopping ${databaseEngine} container`);
+			await $`${docker} compose -p ${projectFlag} -f ${composeFile} down`
+				.cwd(projectName)
+				.quiet();
+		} else {
+			await $`${docker} compose -p ${projectFlag} -f ${composeFile} up -d --wait db`
+				.cwd(projectName)
+				.quiet();
+			spin.message(`Stopping ${databaseEngine} container`);
+			await $`${docker} compose -p ${projectFlag} -f ${composeFile} down`
+				.cwd(projectName)
+				.quiet();
+		}
 		spin.stop(green('Docker container verified'));
 	} catch (err) {
 		spin.cancel(red('Docker setup failed'));

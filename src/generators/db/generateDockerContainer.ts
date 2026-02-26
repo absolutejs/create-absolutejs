@@ -45,9 +45,7 @@ const templates: Record<
 	mariadb: {
 		env: {
 			MYSQL_DATABASE: 'database',
-			MYSQL_PASSWORD: 'userpassword',
-			MYSQL_ROOT_PASSWORD: 'rootpassword',
-			MYSQL_USER: 'user'
+			MYSQL_ROOT_PASSWORD: 'rootpassword'
 		},
 		healthcheck: {
 			startPeriod: '5s',
@@ -60,12 +58,12 @@ const templates: Record<
 	mongodb: {
 		env: {
 			MONGO_INITDB_DATABASE: 'database',
-			MONGO_INITDB_ROOT_PASSWORD: 'password',
-			MONGO_INITDB_ROOT_USERNAME: 'user'
+			MONGO_INITDB_ROOT_PASSWORD: 'rootpassword',
+			MONGO_INITDB_ROOT_USERNAME: 'root'
 		},
 		healthcheck: {
 			startPeriod: '5s',
-			test: 'mongosh -u user -p password --authenticationDatabase admin --eval "db.adminCommand(\'ping\')" --quiet'
+			test: 'mongosh -u root -p rootpassword --authenticationDatabase admin --eval "db.adminCommand(\'ping\')" --quiet'
 		},
 		image: 'mongo:7.0',
 		port: '27017:27017',
@@ -87,9 +85,7 @@ const templates: Record<
 	mysql: {
 		env: {
 			MYSQL_DATABASE: 'database',
-			MYSQL_PASSWORD: 'userpassword',
-			MYSQL_ROOT_PASSWORD: 'rootpassword',
-			MYSQL_USER: 'user'
+			MYSQL_ROOT_PASSWORD: 'rootpassword'
 		},
 		healthcheck: {
 			startPeriod: '5s',
@@ -102,12 +98,12 @@ const templates: Record<
 	postgresql: {
 		env: {
 			POSTGRES_DB: 'database',
-			POSTGRES_PASSWORD: 'password',
-			POSTGRES_USER: 'user'
+			POSTGRES_PASSWORD: 'rootpassword',
+			POSTGRES_USER: 'postgres'
 		},
 		healthcheck: {
 			startPeriod: '5s',
-			test: 'pg_isready -U user -h localhost --quiet'
+			test: 'pg_isready -U postgres -h localhost --quiet'
 		},
 		image: 'postgres:15',
 		port: '5432:5432',
@@ -115,11 +111,11 @@ const templates: Record<
 	},
 	singlestore: {
 		env: {
-			ROOT_PASSWORD: 'password'
+			ROOT_PASSWORD: 'rootpassword'
 		},
 		healthcheck: {
 			startPeriod: '30s',
-			test: 'singlestore -u root -ppassword -e "SELECT 1" >/dev/null 2>&1'
+			test: 'singlestore -u root -prootpassword -e "SELECT 1" >/dev/null 2>&1'
 		},
 		image: 'ghcr.io/singlestore-labs/singlestoredb-dev', // NOTE: No tag specified due to data persistence
 		platform: 'linux/amd64', // Required for ARM64 (Apple Silicon); no-op on amd64

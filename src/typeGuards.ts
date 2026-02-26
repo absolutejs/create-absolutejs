@@ -8,6 +8,7 @@ import {
 import type {
 	AuthOption,
 	AvailableDrizzleDialect,
+	AvailablePrismaDialect,
 	CodeQualityTool,
 	DatabaseEngine,
 	DatabaseHost,
@@ -38,7 +39,9 @@ export const isFrontend = (value: string | undefined): value is Frontend =>
 	value !== undefined && Object.keys(frontendLabels).includes(value);
 export const isORM = (value: string | undefined): value is ORM =>
 	value === 'drizzle' || value === 'prisma' || value === undefined;
-export const isPrismaDialect = (value: string | undefined): value is string =>
+export const isPrismaDialect = (
+	value: string | undefined
+): value is AvailablePrismaDialect =>
 	availablePrismaDialects.some((dialect) => dialect === value);
 export const isValidAuthOption = (
 	value: string | undefined

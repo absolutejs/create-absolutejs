@@ -28,5 +28,5 @@
 		"src/templates/htmx/htmx.*.min.js",
 		"src/templates/svelte/**/*.svelte.ts"
 	],
-	"include": ["src/**/*"]
+	"include": ["src/**/*", "tests/**/*", "test-scaffold/**/*"]
 }

@@ -29,6 +29,7 @@ export const versions = {
 	'@typescript-eslint/parser': '8.56.0',
 	autoprefixer: '10.4.24',
 	/* ── ORM ──────────────────────────────────────────────── */
+	'drizzle-kit': '0.31.8',
 	'drizzle-orm': '0.45.1',
 	elysia: '1.4.25',
 	'elysia-rate-limit': '4.5.0',

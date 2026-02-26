@@ -26,7 +26,10 @@ export default defineConfig([
 			'scripts/**',
 			'**/*/htmx.*.min.js',
 			'src/templates/types/**',
-			'src/templates/svelte/**'
+			'src/templates/svelte/**',
+			'test-scaffold/**/*.json',
+			'test-scaffold/**/*.config.*',
+			'test-scaffold/.prettierrc.*'
 		]
 	},
 

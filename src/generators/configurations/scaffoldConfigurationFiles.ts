@@ -15,6 +15,7 @@ type AddConfigurationProps = Pick<
 	| 'projectName'
 	| 'databaseEngine'
 	| 'databaseHost'
+	| 'databaseDirectory'
 > & {
 	templatesDirectory: string;
 	envVariables: string[] | undefined;
@@ -24,8 +25,9 @@ export const scaffoldConfigurationFiles = ({
 	tailwind,
 	templatesDirectory,
 	databaseEngine,
-	envVariables,
 	databaseHost,
+	databaseDirectory,
+	envVariables,
 	codeQualityTool,
 	frontends,
 	initializeGitNow,
@@ -70,6 +72,7 @@ export const scaffoldConfigurationFiles = ({
 		);
 
 	generateEnv({
+		databaseDirectory,
 		databaseEngine,
 		databaseHost,
 		envVariables,

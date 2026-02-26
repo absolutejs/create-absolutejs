@@ -8,10 +8,13 @@ import {
 	defaultDependencies,
 	defaultPlugins,
 	eslintAndPrettierDependencies,
-	eslintReactDependencies
+	eslintReactDependencies,
+	prismaDevDependencies,
+	prismaRuntimeDependencies
 } from '../../data';
 import type { CreateConfiguration, PackageJson } from '../../types';
 import { getPackageVersions } from '../../utils/getPackageVersion';
+import { toDockerProjectName } from '../../utils/toDockerProjectName';
 import { versions } from '../../versions';
 import { computeFlags } from '../project/computeFlags';
 
@@ -25,6 +28,7 @@ type CreatePackageJsonProps = Pick<
 	| 'orm'
 	| 'frontendDirectories'
 	| 'codeQualityTool'
+	| 'databaseDirectory'
 > & {
 	projectName: string;
 	latest: boolean;
@@ -33,13 +37,13 @@ type CreatePackageJsonProps = Pick<
 const dbClientCommands = {
 	cockroachdb: 'cockroach sql --insecure --database=database',
 	gel: 'gel -H localhost -P 5656 -u admin --tls-security insecure -b main',
-	mariadb: 'MYSQL_PWD=userpassword mariadb -h127.0.0.1 -u user database',
+	mariadb: 'MYSQL_PWD=rootpassword mariadb -h127.0.0.1 -u root database',
 	mongodb:
-		'mongosh -u user -p password --authenticationDatabase admin database',
+		'mongosh -u root -p rootpassword --authenticationDatabase admin database',
 	mssql: '/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P SApassword1',
-	mysql: 'MYSQL_PWD=userpassword mysql -h127.0.0.1 -u user database',
-	postgresql: 'psql -h localhost -U user -d database',
-	singlestore: 'singlestore -u root -ppassword -D database'
+	mysql: 'MYSQL_PWD=rootpassword mysql -h127.0.0.1 -u root database',
+	postgresql: 'psql -h localhost -U postgres -d database',
+	singlestore: 'singlestore -u root -prootpassword -D database'
 } as const;
 
 export const createPackageJson = async ({
@@ -52,7 +56,8 @@ export const createPackageJson = async ({
 	useTailwind,
 	latest,
 	frontendDirectories,
-	codeQualityTool
+	codeQualityTool,
+	databaseDirectory
 }: CreatePackageJsonProps) => {
 	const flags = computeFlags(frontendDirectories);
 	const isLocal = !databaseHost || databaseHost === 'none';
@@ -248,33 +253,58 @@ export const createPackageJson = async ({
 			versions['elysia-scoped-state']
 		);
 	}
-
 	if (orm === 'drizzle') {
 		dependencies['drizzle-orm'] = resolveVersion(
 			'drizzle-orm',
 			versions['drizzle-orm']
 		);
+		devDependencies['drizzle-kit'] = resolveVersion(
+			'drizzle-kit',
+			versions['drizzle-kit']
+		);
 	}
+	const usesAccelerate =
+		orm === 'prisma' &&
+		(databaseHost === 'neon' || databaseHost === 'planetscale');
 
-	switch (databaseHost) {
-		case 'neon':
-			dependencies['@neondatabase/serverless'] = resolveVersion(
-				'@neondatabase/serverless',
-				versions['@neondatabase/serverless']
+	if (orm === 'prisma') {
+		prismaRuntimeDependencies.forEach((dep) => {
+			dependencies[dep.value] = resolveVersion(
+				dep.value,
+				dep.latestVersion
 			);
-			break;
-		case 'planetscale':
-			dependencies['@planetscale/database'] = resolveVersion(
-				'@planetscale/database',
-				versions['@planetscale/database']
+		});
+
+		prismaDevDependencies.forEach((dep) => {
+			if (dep.value === '@prisma/extension-accelerate' && !usesAccelerate)
+				return;
+			devDependencies[dep.value] = resolveVersion(
+				dep.value,
+				dep.latestVersion
 			);
-			break;
-		case 'turso':
-			dependencies['@libsql/client'] = resolveVersion(
-				'@libsql/client',
-				versions['@libsql/client']
-			);
-			break;
+		});
+	}
+	if (orm === 'drizzle') {
+		switch (databaseHost) {
+			case 'neon':
+				dependencies['@neondatabase/serverless'] = resolveVersion(
+					'@neondatabase/serverless',
+					versions['@neondatabase/serverless']
+				);
+				break;
+			case 'planetscale':
+				dependencies['@planetscale/database'] = resolveVersion(
+					'@planetscale/database',
+					versions['@planetscale/database']
+				);
+				break;
+			case 'turso':
+				dependencies['@libsql/client'] = resolveVersion(
+					'@libsql/client',
+					versions['@libsql/client']
+				);
+				break;
+		}
 	}
 
 	if (latest) s.stop(green('Package versions resolved'));
@@ -296,7 +326,8 @@ export const createPackageJson = async ({
 		databaseEngine !== 'sqlite'
 	) {
 		const clientCmd = dbClientCommands[databaseEngine];
-		const dockerPrefix = `docker compose -p ${databaseEngine} -f db/docker-compose.db.yml`;
+		const composeFile = `${databaseDirectory ?? 'db'}/docker-compose.db.yml`;
+		const dockerPrefix = `docker compose -p ${toDockerProjectName(projectName)} -f ${composeFile}`;
 
 		scripts['db:up'] = `${dockerPrefix} up -d --wait db`;
 		scripts['db:down'] = `${dockerPrefix} down`;
@@ -347,14 +378,31 @@ export const createPackageJson = async ({
 		);
 	}
 
-	if (isLocalDb && databaseEngine === 'sqlite') {
-		scripts['db:sqlite'] = 'sqlite3 db/database.sqlite';
-		scripts['db:init'] = 'sqlite3 db/database.sqlite < db/init.sql';
+	if (isLocal && databaseEngine === 'sqlite') {
+		const dbDir = databaseDirectory ?? 'db';
+		scripts['db:sqlite'] = `sqlite3 ${dbDir}/database.sqlite`;
+		scripts['db:init'] =
+			`sqlite3 ${dbDir}/database.sqlite < ${dbDir}/init.sql`;
 	}
 
 	if (orm === 'drizzle') {
 		scripts['db:studio'] = 'drizzle-kit studio';
 		scripts['db:push'] = 'drizzle-kit push';
+	}
+
+	if (orm === 'prisma') {
+		const schemaPath = databaseDirectory
+			? `${databaseDirectory}/schema.prisma`
+			: 'db/schema.prisma';
+		scripts['postinstall'] = `prisma generate --schema ${schemaPath}`;
+		scripts['db:generate'] = `prisma generate --schema ${schemaPath}`;
+		scripts['db:push'] = `prisma db push --schema ${schemaPath}`;
+		scripts['db:studio'] = `prisma studio --schema ${schemaPath}`;
+		scripts['db:migrate'] = `prisma migrate dev --schema ${schemaPath}`;
+		scripts['db:migrate:deploy'] =
+			`prisma migrate deploy --schema ${schemaPath}`;
+		scripts['db:migrate:reset'] =
+			`prisma migrate reset --schema ${schemaPath}`;
 	}
 
 	const packageJson: PackageJson = {
