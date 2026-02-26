@@ -1,0 +1,16 @@
+node_modules
+dist
+build
+coverage
+.next
+.turbo
+.vercel
+.cache
+.output
+tmp
+out
+pnpm-lock.yaml
+yarn.lock
+.DS_Store
+tsconfig.json
+tsconfig.*.json

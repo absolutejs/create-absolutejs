@@ -83,6 +83,10 @@ export const availablePrismaDialects = [
 	'cockroachdb',
 	'mssql'
 ] as const;
+export const biomeDependency: AvailableDependency = {
+	latestVersion: '2.3.5',
+	value: '@biomejs/biome'
+};
 export const defaultDependencies: AvailableDependency[] = [
 	{
 		imports: [{ isPlugin: false, packageName: 'Elysia' }],

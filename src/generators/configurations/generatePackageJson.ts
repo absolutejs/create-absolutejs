@@ -8,6 +8,7 @@ import {
 	defaultDependencies,
 	defaultPlugins,
 	eslintAndPrettierDependencies,
+	biomeDependency,
 	eslintReactDependencies
 } from '../../data';
 import type { CreateConfiguration, PackageJson } from '../../types';
@@ -186,6 +187,13 @@ export const createPackageJson = async ({
 			);
 		});
 	}
+	
+	else if (codeQualityTool === 'biome') {
+		devDependencies[biomeDependency.value] = resolveVersion(
+			biomeDependency.value,
+			biomeDependency.latestVersion
+		);
+	}
 
 	if (useTailwind) {
 		devDependencies['autoprefixer'] = resolveVersion(
@@ -279,13 +287,21 @@ export const createPackageJson = async ({
 
 	if (latest) s.stop(green('Package versions resolved'));
 
+	// ---- Scripts ----
 	const scripts: PackageJson['scripts'] = {
 		dev: 'absolutejs dev',
-		format: `absolutejs prettier --write "./**/*.{js,ts,css,json,mjs,md${flags.requiresReact ? ',jsx,tsx' : ''}${flags.requiresSvelte ? ',svelte' : ''}${flags.requiresVue ? ',vue' : ''}${flags.requiresHtml || flags.requiresHtmx ? ',html' : ''}}"`,
-		lint: 'absolutejs eslint',
 		test: 'echo "Error: no test specified" && exit 1',
 		typecheck: 'bun run tsc --noEmit'
 	};
+
+	if (codeQualityTool === 'biome') {
+		scripts.format = 'biome format . --write';
+		scripts.lint = 'biome lint .';
+		scripts.check = 'biome check .';
+	} else {
+		scripts.format = `absolutejs prettier --write "./**/*.{js,ts,css,json,mjs,md${flags.requiresReact ? ',jsx,tsx' : ''}${flags.requiresSvelte ? ',svelte' : ''}${flags.requiresVue ? ',vue' : ''}${flags.requiresHtml || flags.requiresHtmx ? ',html' : ''}}"`;
+		scripts.lint = 'absolutejs eslint';
+	}
 
 	const isLocalDb = isLocal;
 
