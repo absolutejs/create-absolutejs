@@ -14,7 +14,7 @@ export const initializeGit = async (projectName: string) => {
 
 		spin.stop(green('Git repo initialized'));
 	} catch (err) {
-		spin.stop(red('Failed to initialize git'), 1);
+		spin.cancel(red('Failed to initialize git'));
 		throw err;
 	}
 };

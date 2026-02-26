@@ -105,16 +105,6 @@ create type count_history {
   };
 };`;
 
-export const userTables = {
-	cockroachdb: cockroachdbUsers,
-	gel: gelUsers,
-	mariadb: mariadbUsers,
-	mssql: mssqlUsers,
-	mysql: mysqlUsers,
-	postgresql: postgresqlUsers,
-	singlestore: singlestoreUsers
-} as const;
-
 export const countHistoryTables = {
 	cockroachdb: cockroachdbCountHistory,
 	gel: gelCountHistory,
@@ -124,7 +114,6 @@ export const countHistoryTables = {
 	postgresql: postgresqlCountHistory,
 	singlestore: singlestoreCountHistory
 } as const;
-
 export const initTemplates = {
 	cockroachdb: {
 		cli: 'sleep 1; cockroach sql --insecure --host localhost --database=database -e',
@@ -137,6 +126,10 @@ export const initTemplates = {
 	mariadb: {
 		cli: 'MYSQL_PWD=userpassword mariadb -h127.0.0.1 -u user database -e',
 		wait: 'until mariadb-admin ping -h127.0.0.1 --silent; do sleep 1; done'
+	},
+	mongodb: {
+		cli: 'mongosh -u user -p password --authenticationDatabase admin database --eval',
+		wait: 'for i in $(seq 1 60); do mongosh -u user -p password --authenticationDatabase admin --eval "db.adminCommand(\\"ping\\")" --quiet 2>/dev/null && exit 0; sleep 1; done; exit 1'
 	},
 	mssql: {
 		cli: '/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P SApassword1 -Q',
@@ -154,4 +147,13 @@ export const initTemplates = {
 		cli: 'singlestore -u root -ppassword -e "CREATE DATABASE IF NOT EXISTS \\`database\\`" > /dev/null && singlestore -u root -ppassword -D database -e',
 		wait: 'until singlestore -u root -ppassword -e "SELECT 1" >/dev/null 2>&1; do sleep 1; done'
 	}
+} as const;
+export const userTables = {
+	cockroachdb: cockroachdbUsers,
+	gel: gelUsers,
+	mariadb: mariadbUsers,
+	mssql: mssqlUsers,
+	mysql: mysqlUsers,
+	postgresql: postgresqlUsers,
+	singlestore: singlestoreUsers
 } as const;

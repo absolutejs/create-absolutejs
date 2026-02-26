@@ -77,30 +77,29 @@ const apkInstallSqlite = async () => {
 	return res.exitCode === 0;
 };
 
+const hasWinget = async () =>
+	(
+		await $`powershell.exe -NoProfile -Command "Get-Command winget"`
+			.quiet()
+			.nothrow()
+	).exitCode === 0;
+
 const installWindowsSqlite = async () => {
-	if (await commandExists('winget')) {
+	if (await hasWinget()) {
 		const spin = spinner();
-		spin.start('Installing sqlite3 with winget');
-		const res = await $`winget install -e --id SQLite.SQLite`
+		spin.start('Updating winget sources');
+		await $`powershell.exe -NoProfile -Command winget source update`
 			.quiet()
 			.nothrow();
-		spin.stop(
-			res.exitCode === 0 ? 'sqlite3 installed' : 'winget install failed'
-		);
+		spin.stop('winget sources updated');
+		spin.start('Installing sqlite3 with winget');
+		await $`powershell.exe -NoProfile -Command "Start-Process winget -ArgumentList 'install','-e','--id','SQLite.SQLite','--accept-package-agreements','--accept-source-agreements' -Verb RunAs -Wait"`
+			.quiet()
+			.nothrow();
+		const installed = await hasSqlite();
+		spin.stop(installed ? 'sqlite3 installed' : 'winget install failed');
 
-		return res.exitCode === 0;
-	}
-	if (await commandExists('choco')) {
-		const spin = spinner();
-		spin.start('Installing sqlite3 with Chocolatey');
-		const res = await $`choco install sqlite -y`.quiet().nothrow();
-		spin.stop(
-			res.exitCode === 0
-				? 'sqlite3 installed'
-				: 'Chocolatey install failed'
-		);
-
-		return res.exitCode === 0;
+		return installed;
 	}
 	console.log(
 		`Automatic Windows install failed. Get sqlite3 from ${SQLITE_URL}`

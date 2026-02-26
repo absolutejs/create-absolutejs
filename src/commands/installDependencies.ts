@@ -13,11 +13,12 @@ export const installDependencies = async (
 	const cmd = installCommands[packageManager];
 
 	try {
-		spin.start('Installing dependencies…');
-		await $`sh -c ${cmd}`.cwd(projectName).quiet();
+		spin.start('Installing dependencies');
+		const [bin, ...args] = cmd.split(' ');
+		await $`${bin} ${args}`.cwd(projectName).quiet();
 		spin.stop(green('Dependencies installed'));
 	} catch (err) {
-		spin.stop(red('Installation failed'), 1);
+		spin.cancel(red('Installation failed'));
 		console.error('Error installing dependencies:', err);
 		exit(1);
 	}

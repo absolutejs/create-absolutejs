@@ -1,5 +1,5 @@
-import { cpSync, mkdirSync } from 'node:fs';
-import { join } from 'node:path';
+import { copyFileSync, cpSync, mkdirSync } from 'fs';
+import { join } from 'path';
 import type { CreateConfiguration } from '../../types';
 import { scaffoldHTML } from '../html/scaffoldHTML';
 import { scaffoldHTMX } from '../htmx/scaffoldHTMX';
@@ -9,18 +9,30 @@ import { scaffoldVue } from '../vue/scaffoldVue';
 
 type ScaffoldFrontendsProps = Pick<
 	CreateConfiguration,
-	'useHTMLScripts' | 'frontendDirectories' | 'frontends'
+	| 'useHTMLScripts'
+	| 'frontendDirectories'
+	| 'assetsDirectory'
+	| 'frontends'
+	| 'authOption'
+	| 'absProviders'
+	| 'useTailwind'
 > & {
 	frontendDirectory: string;
 	templatesDirectory: string;
 	projectAssetsDirectory: string;
+	typesDirectory: string;
 };
 
 export const scaffoldFrontends = ({
 	frontendDirectory,
+	assetsDirectory,
+	absProviders,
+	authOption,
 	templatesDirectory,
 	projectAssetsDirectory,
+	typesDirectory,
 	useHTMLScripts,
+	useTailwind,
 	frontendDirectories,
 	frontends
 }: ScaffoldFrontendsProps) => {
@@ -28,6 +40,13 @@ export const scaffoldFrontends = ({
 	cpSync(join(templatesDirectory, 'styles'), stylesTargetDirectory, {
 		recursive: true
 	});
+
+	if (useTailwind) {
+		copyFileSync(
+			join(templatesDirectory, 'tailwind', 'tailwind.css'),
+			join(stylesTargetDirectory, 'tailwind.css')
+		);
+	}
 
 	const frontendEntries = Object.entries(frontendDirectories);
 	const isSingleFrontend = frontendEntries.length === 1;
@@ -53,6 +72,9 @@ export const scaffoldFrontends = ({
 		switch (frontendName) {
 			case 'react':
 				scaffoldReact({
+					absProviders,
+					assetsDirectory,
+					authOption,
 					frontends,
 					isSingleFrontend,
 					projectAssetsDirectory,
@@ -62,6 +84,9 @@ export const scaffoldFrontends = ({
 				break;
 			case 'svelte':
 				scaffoldSvelte({
+					absProviders,
+					assetsDirectory,
+					authOption,
 					frontends,
 					isSingleFrontend,
 					projectAssetsDirectory,
@@ -71,11 +96,18 @@ export const scaffoldFrontends = ({
 				break;
 			case 'vue':
 				scaffoldVue({
+					absProviders,
+					assetsDirectory,
+					authOption,
 					frontends,
 					projectAssetsDirectory,
 					targetDirectory,
 					templatesDirectory
 				});
+				copyFileSync(
+					join(templatesDirectory, 'types', 'vue-shim.d.ts'),
+					join(typesDirectory, 'vue-shim.d.ts')
+				);
 				break;
 			case 'angular':
 				console.warn(
@@ -84,6 +116,9 @@ export const scaffoldFrontends = ({
 				break;
 			case 'html':
 				scaffoldHTML({
+					absProviders,
+					assetsDirectory,
+					authOption,
 					frontends,
 					isSingleFrontend,
 					projectAssetsDirectory,
@@ -94,6 +129,9 @@ export const scaffoldFrontends = ({
 				break;
 			case 'htmx':
 				scaffoldHTMX({
+					absProviders,
+					assetsDirectory,
+					authOption,
 					frontends,
 					isSingleFrontend,
 					projectAssetsDirectory,

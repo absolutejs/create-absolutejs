@@ -53,3 +53,8 @@ package-lock.json
 
 #test output
 /absolutejs-project
+
+#claude
+/.claude
+
+.absolutejs/

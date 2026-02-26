@@ -21,13 +21,16 @@ const connectionMap: Record<string, Record<string, DBExpr>> = {
 	},
 	mysql: {
 		none: { expr: 'new SQL(getEnv("DATABASE_URL"))' },
-		planetscale: { expr: 'connect({ url: getEnv("DATABASE_URL") })' }
+		planetscale: { expr: 'new Client({ url: getEnv("DATABASE_URL") })' }
 	},
 	postgresql: {
 		neon: {
-			expr: 'new Pool({ connectionString: getEnv("DATABASE_URL") })'
+			expr: 'neon(getEnv("DATABASE_URL"));'
 		},
-		none: { expr: 'new SQL(getEnv("DATABASE_URL"))' }
+		none: { expr: 'new SQL(getEnv("DATABASE_URL"))' },
+		planetscale: {
+			expr: 'new Pool({ connectionString: getEnv("DATABASE_URL") })'
+		}
 	},
 	singlestore: {
 		none: { expr: 'createPool(getEnv("DATABASE_URL"))' }
@@ -39,8 +42,8 @@ const connectionMap: Record<string, Record<string, DBExpr>> = {
 };
 
 const remoteDrizzleInit: Record<string, string> = {
-	neon: 'new Pool({ connectionString: getEnv("DATABASE_URL") })',
-	planetscale: 'connect({ url: getEnv("DATABASE_URL") })',
+	neon: 'neon(getEnv("DATABASE_URL"));',
+	planetscale: 'new Client({ url: getEnv("DATABASE_URL") })',
 	turso: 'createClient({ url: getEnv("DATABASE_URL") })'
 };
 
@@ -77,15 +80,27 @@ export const generateDBBlock = ({
 	const expr = engineGroup[hostKey]?.expr ?? remoteDrizzleInit[hostKey];
 	if (!expr) return '';
 
-	if (databaseEngine === 'mysql' || databaseEngine === 'mariadb') {
-		const mode =
-			databaseHost === 'planetscale' && databaseEngine === 'mysql'
-				? 'planetscale'
-				: 'default';
-
+	if (
+		(databaseEngine === 'mysql' || databaseEngine === 'mariadb') &&
+		databaseHost !== 'planetscale'
+	) {
 		return `
 const pool = createPool(getEnv("DATABASE_URL"))
-const db = drizzle(pool, { schema, mode: '${mode}' })
+const db = drizzle(pool, { schema, mode: 'default' })
+`;
+	}
+
+	if (databaseEngine === 'mssql' && hostKey === 'none') {
+		return `
+const pool = await connect(getEnv("DATABASE_URL"))
+const db = drizzle({ client: pool }, { schema })
+`;
+	}
+
+	if (databaseEngine === 'postgresql' && databaseHost === 'neon') {
+		return `
+		const sql = neon(getEnv('DATABASE_URL'));
+const db = drizzle(sql, { schema });
 `;
 	}
 

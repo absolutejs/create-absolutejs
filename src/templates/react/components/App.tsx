@@ -10,16 +10,16 @@ export const App = ({ initialCount }: AppProps) => {
 			<nav>
 				<a href="https://absolutejs.com" target="_blank">
 					<img
+						alt="AbsoluteJS Logo"
 						className="logo"
 						src="/assets/png/absolutejs-temp.png"
-						alt="AbsoluteJS Logo"
 					/>
 				</a>
 				<a href="https://react.dev/">
 					<img
+						alt="React Logo"
 						className="logo react"
 						src="/assets/svg/react.svg"
-						alt="React Logo"
 					/>
 				</a>
 			</nav>
@@ -28,15 +28,12 @@ export const App = ({ initialCount }: AppProps) => {
 				count is {count}
 			</button>
 			<p>
-				Edit <code>example/react/pages/ReactExample.tsx</code> then save
-				and refresh to update the page.
-			</p>
-			<p style={{ color: '#777' }}>
-				( Hot Module Reloading is coming soon )
+				Edit <code>example/react/pages/ReactExample.tsx</code> and save
+				to test HMR.
 			</p>
 			<p style={{ marginTop: '2rem' }}>
-				Explore the other pages to see how AbsoluteJS seamlessly unifies
-				multiple frameworks on a single server.
+				Explore the other pages to see multiple frameworks running
+				together.
 			</p>
 			<p
 				style={{

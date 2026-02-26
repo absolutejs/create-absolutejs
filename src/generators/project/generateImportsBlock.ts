@@ -9,7 +9,7 @@ type GenerateImportsBlockProps = {
 	deps: AvailableDependency[];
 	flags: FrameworkFlags;
 	orm: CreateConfiguration['orm'];
-	authProvider: CreateConfiguration['authProvider'];
+	authOption: CreateConfiguration['authOption'];
 	databaseEngine: CreateConfiguration['databaseEngine'];
 	databaseHost: CreateConfiguration['databaseHost'];
 	frontendDirectories: CreateConfiguration['frontendDirectories'];
@@ -20,21 +20,31 @@ export const generateImportsBlock = ({
 	deps,
 	flags,
 	orm,
-	authProvider,
+	authOption,
 	databaseEngine,
 	databaseHost,
 	frontendDirectories
 }: GenerateImportsBlockProps) => {
 	const rawImports: string[] = [];
 
-	const pushHandler = (cond: boolean, name: string) =>
-		cond &&
-		rawImports.push(`import { ${name} } from '@absolutejs/absolute'`);
+	const pushHandler = (
+		cond: boolean,
+		name: string,
+		pkg = '@absolutejs/absolute'
+	) => cond && rawImports.push(`import { ${name} } from '${pkg}'`);
 
 	pushHandler(flags.requiresHtml, 'handleHTMLPageRequest');
 	pushHandler(flags.requiresReact, 'handleReactPageRequest');
-	pushHandler(flags.requiresSvelte, 'handleSveltePageRequest');
-	pushHandler(flags.requiresVue, 'handleVuePageRequest');
+	pushHandler(
+		flags.requiresSvelte,
+		'handleSveltePageRequest',
+		'@absolutejs/absolute/svelte'
+	);
+	pushHandler(
+		flags.requiresVue,
+		'handleVuePageRequest',
+		'@absolutejs/absolute/vue'
+	);
 	pushHandler(flags.requiresVue, 'generateHeadElement');
 	pushHandler(flags.requiresHtmx, 'handleHTMXPageRequest');
 
@@ -57,6 +67,8 @@ export const generateImportsBlock = ({
 				.join(', ')} } from '${dependency.value}'`
 		);
 	}
+
+	rawImports.push(`import { env } from 'bun'`);
 
 	const buildExamplePath = (dir: string, file: string) =>
 		`../frontend${dir ? `/${dir}` : ''}/pages/${file}`;
@@ -81,13 +93,13 @@ export const generateImportsBlock = ({
 		);
 
 	const connectorImports = {
-		neon: [`import { Pool } from '@neondatabase/serverless'`],
-		planetscale: [`import { connect } from '@planetscale/database'`],
+		neon: [`import { neon } from '@neondatabase/serverless'`],
+		planetscale: [`import { Client } from '@planetscale/database'`],
 		turso: [`import { createClient } from '@libsql/client'`]
 	} as const;
 
 	const dialectImports = {
-		neon: [`import { drizzle } from 'drizzle-orm/neon-serverless'`],
+		neon: [`import { drizzle } from 'drizzle-orm/neon-http'`],
 		planetscale: [
 			`import { drizzle } from 'drizzle-orm/planetscale-serverless'`
 		],
@@ -105,14 +117,26 @@ export const generateImportsBlock = ({
 			...(databaseEngine === 'sqlite' && !isRemoteHost
 				? []
 				: [`import { getEnv } from '@absolutejs/absolute'`]),
-			...(authProvider === 'absoluteAuth'
-				? [
-						`import { schema } from '../../db/schema'`,
-						`import { User } from '../types/databaseTypes'`
-					]
+			...(authOption === 'abs'
+				? [`import { schema } from '../../db/schema'`]
 				: [`import { schema } from '../../db/schema'`])
 		]
 	} as const;
+
+	const getPostgresqlOrmDatabaseImports = () => {
+		if (!isRemoteHost)
+			return [
+				`import { SQL } from 'bun'`,
+				`import { drizzle } from 'drizzle-orm/bun-sql'`
+			];
+		if (databaseHost === 'planetscale')
+			return [
+				`import { drizzle } from 'drizzle-orm/node-postgres'`,
+				`import { Pool } from 'pg'`
+			];
+
+		return [] as const;
+	};
 
 	const ormDatabaseImports = {
 		drizzle: {
@@ -124,18 +148,17 @@ export const generateImportsBlock = ({
 				`import { drizzle } from 'drizzle-orm/mysql2'`,
 				`import { createPool } from 'mysql2/promise'`
 			],
+			mssql: [
+				`import { connect } from 'mssql'`,
+				`import { drizzle } from 'drizzle-orm/node-mssql'`
+			],
 			mysql: !isRemoteHost
 				? [
 						`import { drizzle } from 'drizzle-orm/mysql2'`,
 						`import { createPool } from 'mysql2/promise'`
 					]
 				: [],
-			postgresql: !isRemoteHost
-				? [
-						`import { SQL } from 'bun'`,
-						`import { drizzle } from 'drizzle-orm/bun-sql'`
-					]
-				: [],
+			postgresql: getPostgresqlOrmDatabaseImports(),
 			singlestore: [
 				`import { drizzle } from 'drizzle-orm/singlestore'`,
 				`import { createPool } from 'mysql2/promise'`
@@ -148,6 +171,24 @@ export const generateImportsBlock = ({
 				: []
 		}
 	} as const;
+
+	const getPostgresqlNoOrmImports = () => {
+		if (isRemoteHost && databaseHost === 'neon')
+			return [
+				...connectorImports[databaseHost as 'neon'],
+				`import { getEnv } from '@absolutejs/absolute'`
+			];
+		if (isRemoteHost && databaseHost === 'planetscale')
+			return [
+				`import { Pool } from 'pg'`,
+				`import { getEnv } from '@absolutejs/absolute'`
+			];
+
+		return [
+			`import { SQL } from 'bun'`,
+			`import { getEnv } from '@absolutejs/absolute'`
+		];
+	};
 
 	const noOrmImports = {
 		cockroachdb: [
@@ -162,7 +203,10 @@ export const generateImportsBlock = ({
 			`import { SQL } from 'bun'`,
 			`import { getEnv } from '@absolutejs/absolute'`
 		],
-		mongodb: [],
+		mongodb: [
+			`import { MongoClient } from 'mongodb'`,
+			`import { getEnv } from '@absolutejs/absolute'`
+		],
 		mssql: [
 			`import { connect } from 'mssql'`,
 			`import { getEnv } from '@absolutejs/absolute'`
@@ -176,15 +220,7 @@ export const generateImportsBlock = ({
 					`import { SQL } from 'bun'`,
 					`import { getEnv } from '@absolutejs/absolute'`
 				],
-		postgresql: isRemoteHost
-			? [
-					...connectorImports[databaseHost as 'neon'],
-					`import { getEnv } from '@absolutejs/absolute'`
-				]
-			: [
-					`import { SQL } from 'bun'`,
-					`import { getEnv } from '@absolutejs/absolute'`
-				],
+		postgresql: getPostgresqlNoOrmImports(),
 		singlestore: [
 			`import { createPool } from 'mysql2/promise'`,
 			`import { getEnv } from '@absolutejs/absolute'`
@@ -201,7 +237,11 @@ export const generateImportsBlock = ({
 		rawImports.push(...ormImports[orm]);
 	}
 
-	if (orm === 'drizzle' && isRemoteHost) {
+	if (
+		orm === 'drizzle' &&
+		isRemoteHost &&
+		!(databaseEngine === 'postgresql' && databaseHost === 'planetscale')
+	) {
 		rawImports.push(
 			...connectorImports[databaseHost],
 			...dialectImports[databaseHost]
@@ -216,17 +256,14 @@ export const generateImportsBlock = ({
 		rawImports.push(...noOrmImports[databaseEngine]);
 	}
 
-	if (authProvider === 'absoluteAuth')
+	if (authOption === 'abs')
 		rawImports.push(
-			`import { absoluteAuth, instantiateUserSession } from '@absolutejs/auth'`,
-			...(hasDatabase
-				? [
-						`import { createUser, getUser } from './handlers/userHandlers'`
-					]
-				: [])
+			`import { absoluteAuthConfig } from './utils/absoluteAuthConfig'`,
+			`import { t } from 'elysia'`,
+			`import { authProviderOption, providers, userSessionIdTypebox, getStatus } from '@absolutejs/auth'`
 		);
 
-	if (hasDatabase && (authProvider === undefined || authProvider === 'none'))
+	if (hasDatabase && (authOption === undefined || authOption === 'none'))
 		rawImports.push(
 			`import { getCountHistory, createCountHistory } from './handlers/countHistoryHandlers'`,
 			`import { t } from 'elysia'`

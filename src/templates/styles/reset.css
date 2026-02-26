@@ -76,6 +76,20 @@ button:focus-visible {
 	outline: 4px auto -webkit-focus-ring-color;
 }
 
+@media (max-width: 480px) {
+	main {
+		padding: 1rem;
+	}
+
+	p {
+		font-size: 1rem;
+	}
+
+	a {
+		font-size: 1.2rem;
+	}
+}
+
 @media (prefers-color-scheme: light) {
 	body {
 		background-color: #f5f5f5;

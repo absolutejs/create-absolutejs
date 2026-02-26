@@ -1,5 +1,5 @@
-import { copyFileSync, existsSync, mkdirSync } from 'node:fs';
-import { join } from 'node:path';
+import { copyFileSync, existsSync, mkdirSync } from 'fs';
+import { join } from 'path';
 
 export const initalizeRoot = (
 	projectName: string,
@@ -23,8 +23,10 @@ export const initalizeRoot = (
 
 	const frontendDirectory = join(srcDir, 'frontend');
 	const backendDirectory = join(srcDir, 'backend');
+	const publicDirectory = join(projectName, 'public');
 	mkdirSync(frontendDirectory);
 	mkdirSync(backendDirectory);
+	mkdirSync(publicDirectory);
 
 	const projectAssetsDirectory = join(backendDirectory, 'assets');
 	mkdirSync(projectAssetsDirectory);

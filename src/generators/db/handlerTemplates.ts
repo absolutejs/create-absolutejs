@@ -7,47 +7,23 @@ type QueryOperations = {
 
 type AuthTemplateOptions = {
 	importLines: string;
-	dbType: string;
 	queries: QueryOperations;
 };
 
 const buildSqlAuthTemplate = ({
 	importLines,
-	dbType,
 	queries
 }: AuthTemplateOptions) => `
-import { isValidProviderOption, providers, extractPropFromIdentity } from 'citra'
+import { DatabaseType, NewUser } from '../../types/databaseTypes';
 ${importLines}
-type UserHandlerProps = {
-  authProvider: string
-  db: ${dbType}
-  userIdentity: Record<string, unknown>
-}
 
-export const getUser = async ({ authProvider, db, userIdentity }: UserHandlerProps) => {
-	const providerConfiguration = providers[authProvider]
+export const getUser = async (db: DatabaseType, authSub: string) => {
+	${queries.selectUser}
+};
 
-	const subject = extractPropFromIdentity(
-		userIdentity,
-		providerConfiguration.subject,
-		providerConfiguration.subjectType
-	)
-	const authSub = \`\${authProvider.toUpperCase()}|\${subject}\`;
-  ${queries.selectUser}
-}
-
-export const createUser = async ({ authProvider, db, userIdentity }: UserHandlerProps) => {
-	const providerConfiguration = providers[authProvider]
-
-	const subject = extractPropFromIdentity(
-		userIdentity,
-		providerConfiguration.subject,
-		providerConfiguration.subjectType
-	)
-	const authSub = \`\${authProvider.toUpperCase()}|\${subject}\`;
-  ${queries.insertUser}
-}
-`;
+export const createUser = async (db: DatabaseType, newUserData: NewUser) => {
+	${queries.insertUser}
+}`;
 
 type CountTemplateOptions = {
 	importLines: string;
@@ -73,13 +49,21 @@ export const createCountHistory = async (db: ${dbType}, count: number) => {
 const drizzleQueryOperations: QueryOperations = {
 	insertHistory: `const [newHistory] = await db.insert(schema.countHistory).values({ count }).returning()
   return newHistory`,
-	insertUser: `const [newUser] = await db.insert(schema.users).values({ auth_sub: authSub, metadata: userIdentity }).returning()
-  if (!newUser) throw new Error('Failed to create user')
-  return newUser`,
+	insertUser: `const [newUser] = await db
+		.insert(schema.users)
+		.values(newUserData)
+		.returning();
+	if (!newUser) throw new Error('Failed to create user');
+	return newUser;
+`,
 	selectHistory: `const [history] = await db.select().from(schema.countHistory).where(eq(schema.countHistory.uid, uid)).execute()
   return history`,
-	selectUser: `const [user] = await db.select().from(schema.users).where(eq(schema.users.auth_sub, authSub)).execute()
-  return user`
+	selectUser: `const [user] = await db
+		.select()
+		.from(schema.users)
+		.where(eq(schema.users.auth_sub, authSub))
+		.execute();
+	return user;`
 };
 
 const libsqlQueryOperations: QueryOperations = {
@@ -113,7 +97,7 @@ const bunSqliteQueryOperations: QueryOperations = {
   return user ?? null`
 };
 
-const postgresNeonQueryOperations: QueryOperations = {
+const postgresQueryOperations: QueryOperations = {
 	insertHistory: `const { rows } = await db.query(
     'INSERT INTO count_history (count) VALUES ($1) RETURNING *',
     [count]
@@ -259,12 +243,10 @@ const mysqlSqlQueryOperations: QueryOperations = {
       VALUES (\${authSub}, \${JSON.stringify(userIdentity)})
     \`;
 
-    const insertId = result.lastInsertRowid;
-
     const [row] = await db\`
       SELECT *
       FROM users
-      WHERE uid = \${insertId}
+      WHERE auth_sub = \${authSub}
       LIMIT 1
     \`;
 
@@ -313,16 +295,12 @@ const mysqlDrizzleQueryOperations: QueryOperations = {
 
 	insertUser: `const [row] = await db
     .insert(schema.users)
-    .values({ auth_sub: authSub, metadata: userIdentity })
-    .$returningId();
-
-  if (!row) throw new Error('insert failed: no uid returned');
-  const { uid } = row;
+    .values({ auth_sub: authSub, metadata: userIdentity });
 
   const [newUser] = await db
     .select()
     .from(schema.users)
-    .where(eq(schema.users.uid, uid));
+    .where(eq(schema.users.auth_sub, authSub));
 
   if (!newUser) throw new Error('Failed to create user');
   return newUser;`,
@@ -331,125 +309,195 @@ const mysqlDrizzleQueryOperations: QueryOperations = {
 	selectUser: drizzleQueryOperations.selectUser
 };
 
+const mysqlPlanetScaleQueryOperations: QueryOperations = {
+	insertHistory: `
+    const result = await db.execute(
+      \`INSERT INTO count_history (count) VALUES (?)\`,
+      [count]
+    );
+
+    const insertId = result.insertId;
+    if (!insertId) throw new Error("Could not insert count history");
+
+    const { rows } = await db.execute(
+      \`SELECT * FROM count_history WHERE uid = ? LIMIT 1\`,
+      [insertId]
+    );
+
+    const row = rows[0] ?? null;
+    if (!row) throw new Error("Could not retrieve the newly-inserted history");
+
+    return row;
+  `,
+
+	insertUser: `
+    const result = await db.execute(
+      \`INSERT INTO users (auth_sub, metadata) VALUES (?, ?)\`,
+      [authSub, JSON.stringify(userIdentity)]
+    );
+
+    const { rows } = await db.execute(
+      \`SELECT * FROM users WHERE auth_sub = ? LIMIT 1\`,
+      [authSub]
+    );
+
+    const row = rows[0] ?? null;
+    if (!row) throw new Error("Failed to create user");
+
+    return row;
+  `,
+
+	selectHistory: `
+    const { rows } = await db.execute(
+      \`SELECT * FROM count_history WHERE uid = ? LIMIT 1\`,
+      [uid]
+    );
+
+    return rows[0] ?? null;
+  `,
+
+	selectUser: `
+    const { rows } = await db.execute(
+      \`SELECT * FROM users WHERE auth_sub = ? LIMIT 1\`,
+      [authSub]
+    );
+
+    return rows[0] ?? null;
+  `
+};
+
 const driverConfigurations = {
 	'cockroachdb:sql:local': {
 		dbType: 'SQL',
-		importLines: `import { SQL } from 'bun'`,
+		importLines: ``,
 		queries: postgresSqlQueryOperations
 	},
 	'gel:drizzle:local': {
 		dbType: 'GelJsDatabase<SchemaType>',
-		importLines: `
-import { eq } from 'drizzle-orm'
-import { GelJsDatabase } from 'drizzle-orm/gel'
-import { schema, type SchemaType } from '../../../db/schema'
+		importLines: `import { eq } from 'drizzle-orm'
+import { schema } from '../../../db/schema'
 `,
 		queries: drizzleQueryOperations
 	},
 	'gel:sql:local': {
 		dbType: 'Client',
-		importLines: `import { Client } from 'gel'`,
+		importLines: ``,
 		queries: gelClientQueryOperations
 	},
 	'mariadb:drizzle:local': {
 		dbType: 'MySql2Database<SchemaType>',
-		importLines: `
-import { eq } from 'drizzle-orm'
-import { MySql2Database } from 'drizzle-orm/mysql2'
-import { schema, type SchemaType } from '../../../db/schema'`,
+		importLines: `import { eq } from 'drizzle-orm'
+import { schema } from '../../../db/schema'`,
 		queries: mysqlDrizzleQueryOperations
 	},
 	'mariadb:sql:local': {
 		dbType: 'SQL',
-		importLines: `import { SQL } from 'bun'`,
+		importLines: ``,
 		queries: mysqlSqlQueryOperations
 	},
-	'mongodb:native:local': {
+	'mongodb:sql:local': {
 		dbType: 'Db',
-		importLines: `import { Db } from 'mongodb'`,
+		importLines: ``,
 		queries: mongodbQueryOperations
+	},
+	'mssql:drizzle:local': {
+		dbType: 'NodeMssqlDatabase<SchemaType>',
+		importLines: `import { eq } from 'drizzle-orm'
+import { schema } from '../../../db/schema'`,
+		queries: drizzleQueryOperations
 	},
 	'mssql:sql:local': {
 		dbType: 'ConnectionPool',
-		importLines: `import { ConnectionPool } from 'mssql'`,
+		importLines: ``,
 		queries: mssqlSqlQueryOperations
 	},
 	'mysql:drizzle:local': {
 		dbType: 'MySql2Database<SchemaType>',
-		importLines: `
-import { eq } from 'drizzle-orm'
-import { MySql2Database } from 'drizzle-orm/mysql2'
-import { schema, type SchemaType } from '../../../db/schema'`,
+		importLines: `import { eq } from 'drizzle-orm'
+import { schema } from '../../../db/schema'`,
+		queries: mysqlDrizzleQueryOperations
+	},
+	'mysql:drizzle:planetscale': {
+		dbType: 'PlanetScaleDatabase<SchemaType>',
+		importLines: `import { eq } from 'drizzle-orm'
+import { schema } from '../../../db/schema'`,
 		queries: mysqlDrizzleQueryOperations
 	},
 	'mysql:sql:local': {
 		dbType: 'SQL',
-		importLines: `import { SQL } from 'bun'`,
+		importLines: ``,
 		queries: mysqlSqlQueryOperations
+	},
+	'mysql:sql:planetscale': {
+		dbType: 'Client',
+		importLines: ``,
+		queries: mysqlPlanetScaleQueryOperations
 	},
 	'postgresql:drizzle:local': {
 		dbType: 'BunSQLDatabase<SchemaType>',
-		importLines: `
-import { eq } from 'drizzle-orm'
-import { BunSQLDatabase } from 'drizzle-orm/bun-sql'
-import { schema, type SchemaType } from '../../../db/schema'`,
+		importLines: `import { eq } from 'drizzle-orm'
+import { schema } from '../../../db/schema'`,
 		queries: drizzleQueryOperations
 	},
 	'postgresql:drizzle:neon': {
 		dbType: 'NeonDatabase<SchemaType>',
-		importLines: `
-import { eq } from 'drizzle-orm'
-import { NeonDatabase } from 'drizzle-orm/neon-serverless'
-import { schema, type SchemaType } from '../../../db/schema'`,
+		importLines: `import { eq } from 'drizzle-orm'
+import { schema } from '../../../db/schema'`,
+		queries: drizzleQueryOperations
+	},
+	'postgresql:drizzle:planetscale': {
+		dbType: 'NodePgDatabase<SchemaType>',
+		importLines: `import { eq } from 'drizzle-orm'
+import { schema } from '../../../db/schema'`,
 		queries: drizzleQueryOperations
 	},
 	'postgresql:sql:local': {
 		dbType: 'SQL',
-		importLines: `import { SQL } from 'bun'`,
+		importLines: ``,
 		queries: postgresSqlQueryOperations
 	},
 	'postgresql:sql:neon': {
 		dbType: 'Pool',
-		importLines: `import { Pool } from '@neondatabase/serverless'`,
-		queries: postgresNeonQueryOperations
+		importLines: ``,
+		queries: postgresQueryOperations
 	},
-	'singlestore:sql:local': {
+	'postgresql:sql:planetscale': {
 		dbType: 'Pool',
-		importLines: `import { Pool, RowDataPacket } from 'mysql2/promise'`,
-		queries: singlestoreSqlQueryOperations
+		importLines: ``,
+		queries: postgresQueryOperations
 	},
 	'singlestore:drizzle:local': {
 		dbType: 'SingleStoreDriverDatabase<SchemaType>',
-		importLines: `
-import { eq } from 'drizzle-orm'
-import { SingleStoreDriverDatabase } from 'drizzle-orm/singlestore'
-import { schema, type SchemaType } from '../../../db/schema'`,
+		importLines: `import { eq } from 'drizzle-orm'
+import { schema } from '../../../db/schema'`,
 		queries: mysqlDrizzleQueryOperations
+	},
+	'singlestore:sql:local': {
+		dbType: 'Pool',
+		importLines: `import { RowDataPacket } from 'mysql2/promise'
+`,
+		queries: singlestoreSqlQueryOperations
 	},
 	'sqlite:drizzle:local': {
 		dbType: 'BunSQLiteDatabase<SchemaType>',
-		importLines: `
-import { eq } from 'drizzle-orm'
-import { BunSQLiteDatabase } from 'drizzle-orm/bun-sqlite'
-import { schema, type SchemaType } from '../../../db/schema'`,
+		importLines: `import { eq } from 'drizzle-orm'
+import { schema } from '../../../db/schema'`,
 		queries: drizzleQueryOperations
 	},
 	'sqlite:drizzle:turso': {
 		dbType: 'LibSQLDatabase<SchemaType>',
-		importLines: `
-import { eq } from 'drizzle-orm'
-import { LibSQLDatabase } from 'drizzle-orm/libsql'
-import { schema, type SchemaType } from '../../../db/schema'`,
+		importLines: `import { eq } from 'drizzle-orm'
+import { schema } from '../../../db/schema'`,
 		queries: drizzleQueryOperations
 	},
 	'sqlite:sql:local': {
 		dbType: 'Database',
-		importLines: `import { Database } from 'bun:sqlite'`,
+		importLines: ``,
 		queries: bunSqliteQueryOperations
 	},
 	'sqlite:sql:turso': {
 		dbType: 'Client',
-		importLines: `import { Client } from '@libsql/client'`,
+		importLines: ``,
 		queries: libsqlQueryOperations
 	}
 } as const;

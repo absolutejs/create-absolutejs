@@ -1,5 +1,10 @@
-import { argv, exit } from 'node:process';
-import { parseArgs } from 'node:util';
+import { argv, exit } from 'process';
+import { parseArgs } from 'util';
+import {
+	ProviderOption,
+	isValidProviderOption,
+	providers
+} from '@absolutejs/auth';
 import { DEFAULT_ARG_LENGTH } from '../constants';
 import {
 	availableAuthProviders,
@@ -11,7 +16,7 @@ import {
 	availablePrismaDialects
 } from '../data';
 import {
-	isAuthProvider,
+	isValidAuthOption,
 	isDatabaseEngine,
 	isDatabaseHost,
 	isDirectoryConfig,
@@ -21,7 +26,7 @@ import {
 } from '../typeGuards';
 import type {
 	ArgumentConfiguration,
-	AuthProvider,
+	AuthOption,
 	DatabaseEngine,
 	DatabaseHost,
 	Frontend,
@@ -35,6 +40,7 @@ export const parseCommandLineOptions = () => {
 		allowPositionals: true,
 		args: argv.slice(DEFAULT_ARG_LENGTH),
 		options: {
+			'abs-provider': { multiple: true, type: 'string' },
 			angular: { type: 'boolean' },
 			'angular-dir': { type: 'string' },
 			assets: { type: 'string' },
@@ -75,18 +81,41 @@ export const parseCommandLineOptions = () => {
 	const errors: string[] = [];
 
 	const projectName =
-		positionals[0] ?? (values.skip ? undefined : 'absolutejs-project');
+		positionals[0] ?? (values.skip ? 'absolutejs-project' : undefined);
 
-	let authProvider: AuthProvider;
-	if (values.auth !== undefined && !isAuthProvider(values.auth)) {
+	let authOption: AuthOption;
+	if (values.auth !== undefined && !isValidAuthOption(values.auth)) {
 		errors.push(
 			`Invalid auth provider: "${values.auth}". Expected: [ ${availableAuthProviders.join(', ')} ]`
 		);
 	} else if (values.auth !== undefined) {
-		authProvider = values.auth;
+		authOption = values.auth;
 	} else if (values.skip) {
-		authProvider = 'none';
+		authOption = 'none';
 	}
+
+	const absProviders: ProviderOption[] = [];
+	if (
+		values['abs-provider'] !== undefined &&
+		(authOption === undefined || authOption === 'none')
+	) {
+		authOption = 'abs';
+	} else if (values['abs-provider'] !== undefined && authOption !== 'abs') {
+		errors.push(
+			`Invalid auth configuration: "--abs-provider" specified but auth provider is set to "${authOption}". "--abs-provider" can only be used with "abs" auth provider.`
+		);
+	}
+	const rawProviders = values['abs-provider'] ?? [];
+	const validProviders = rawProviders.filter(isValidProviderOption);
+	const invalidProviders = rawProviders.filter(
+		(provider) => !isValidProviderOption(provider)
+	);
+	for (const provider of invalidProviders) {
+		errors.push(
+			`Invalid Absolute-Auth provider: "${provider}". Expected: ${Object.keys(providers).join(', ')}`
+		);
+	}
+	absProviders.push(...validProviders);
 
 	let databaseEngine: DatabaseEngine;
 	if (values.db !== undefined && !isDatabaseEngine(values.db)) {
@@ -302,8 +331,9 @@ export const parseCommandLineOptions = () => {
 	values.env = validEnv.length ? validEnv : undefined;
 
 	const argumentConfiguration: ArgumentConfiguration = {
+		absProviders: absProviders.length ? absProviders : undefined,
 		assetsDirectory: values.assets,
-		authProvider,
+		authOption,
 		buildDirectory: values.build,
 		codeQualityTool,
 		databaseDirectory,

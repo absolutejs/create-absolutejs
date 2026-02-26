@@ -95,6 +95,7 @@ header details[open] summary::after {
 }
 
 header details nav {
+	content-visibility: visible;
 	position: absolute;
 	top: 100%;
 	right: -0.5rem;
@@ -126,6 +127,29 @@ header details nav a {
 	font-size: 1.1rem;
 	padding: 0.25rem 0;
 	white-space: nowrap;
+}
+
+@media (max-width: 480px) {
+	header {
+		padding: 1rem;
+	}
+
+	h1 {
+		font-size: 1.75rem;
+	}
+
+	.logo {
+		height: 5rem;
+		width: 5rem;
+	}
+
+	nav {
+		gap: 2rem;
+	}
+
+	header details summary {
+		font-size: 1.2rem;
+	}
 }
 
 @media (prefers-color-scheme: light) {

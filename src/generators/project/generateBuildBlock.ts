@@ -1,13 +1,10 @@
-import type {
-	CreateConfiguration,
-	Frontend,
-	FrontendDirectories
-} from '../../types';
+import type { CreateConfiguration, FrontendDirectories } from '../../types';
 
 type GenerateBuildBlockProps = {
 	assetsDirectory: string;
 	buildDirectory: string;
 	frontendDirectories: FrontendDirectories;
+	publicDirectory: string;
 	tailwind: CreateConfiguration['tailwind'];
 };
 
@@ -15,23 +12,25 @@ export const generateBuildBlock = ({
 	assetsDirectory,
 	buildDirectory,
 	frontendDirectories,
+	publicDirectory,
 	tailwind
 }: GenerateBuildBlockProps) => {
-	const opts = [
+	const configEntries = [
 		`assetsDirectory: '${assetsDirectory}'`,
 		`buildDirectory: '${buildDirectory}'`,
 		...Object.entries(frontendDirectories).map(
 			([f, dir]) => `${f}Directory: 'src/frontend${dir ? `/${dir}` : ''}'`
 		),
+		`publicDirectory: '${publicDirectory}'`,
 		tailwind ? `tailwind: ${JSON.stringify(tailwind)}` : ''
 	]
 		.filter(Boolean)
 		.join(',\n  ');
 
-	const frameworks: Frontend[] = ['react', 'svelte', 'vue'];
-	const nonFrameworkOnly = frameworks.every(
-		(f) => frontendDirectories[f] === undefined
-	);
+	return `const buildConfig: BuildConfig = {
+  ${configEntries}
+};
 
-	return `${nonFrameworkOnly ? '' : 'const manifest = '}await build({\n  ${opts}\n});`;
+const isDev = env.NODE_ENV === 'development';
+const result = isDev ? await devBuild(buildConfig) : await build(buildConfig);`;
 };

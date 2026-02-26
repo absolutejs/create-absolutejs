@@ -1,4 +1,4 @@
-import { env } from 'node:process';
+import { env } from 'process';
 import type { PackageManager } from '../types';
 
 /**

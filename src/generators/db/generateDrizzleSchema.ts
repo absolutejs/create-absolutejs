@@ -1,4 +1,4 @@
-import { AuthProvider, AvailableDrizzleDialect } from '../../types';
+import { AuthOption, AvailableDrizzleDialect } from '../../types';
 
 const DIALECTS = {
 	gel: {
@@ -16,6 +16,14 @@ const DIALECTS = {
 		string: 'varchar({ length: 255 })',
 		table: 'mysqlTable',
 		time: 'timestamp()'
+	},
+	mssql: {
+		builders: ['datetime2', 'int', 'mssqlTable', 'nvarchar', 'json'],
+		json: "nvarchar({ length: 'max', mode: 'json' })",
+		pkg: 'mssql-core',
+		string: 'nvarchar({ length: 255 })',
+		table: 'mssqlTable',
+		time: 'datetime2()'
 	},
 	mysql: {
 		builders: ['json', 'mysqlTable', 'timestamp', 'varchar', 'int'],
@@ -53,20 +61,21 @@ const DIALECTS = {
 
 type GenerateSchemaProps = {
 	databaseEngine: AvailableDrizzleDialect;
-	authProvider: AuthProvider;
+	authOption: AuthOption;
 };
 
 const builder = (expr: string) => expr.split('(')[0];
 
 export const generateDrizzleSchema = ({
 	databaseEngine,
-	authProvider
+	authOption
 }: GenerateSchemaProps) => {
 	const cfg = DIALECTS[databaseEngine];
 	const intBuilder =
+		databaseEngine === 'mariadb' ||
+		databaseEngine === 'mssql' ||
 		databaseEngine === 'mysql' ||
-		databaseEngine === 'singlestore' ||
-		databaseEngine === 'mariadb'
+		databaseEngine === 'singlestore'
 			? 'int'
 			: 'integer';
 	const timeBuilder = builder(cfg.time);
@@ -74,7 +83,7 @@ export const generateDrizzleSchema = ({
 	const stringBuilder = builder(cfg.string);
 
 	const importBuilders =
-		authProvider === 'absoluteAuth'
+		authOption === 'abs'
 			? [cfg.table, stringBuilder, timeBuilder, jsonBuilder]
 			: [cfg.table, intBuilder, timeBuilder];
 	const uniqueBuilders = Array.from(new Set(importBuilders));
@@ -89,9 +98,10 @@ export const generateDrizzleSchema = ({
 
 	let uidColumn: string;
 	if (
+		databaseEngine === 'mariadb' ||
+		databaseEngine === 'mssql' ||
 		databaseEngine === 'mysql' ||
-		databaseEngine === 'singlestore' ||
-		databaseEngine === 'mariadb'
+		databaseEngine === 'singlestore'
 	) {
 		uidColumn = `${intBuilder}('uid').primaryKey().autoincrement()`;
 	} else if (databaseEngine === 'sqlite') {
@@ -112,7 +122,7 @@ const MILLIS_PER_DAY = 86400000;\n\n`
 			: `${cfg.time}.notNull().defaultNow()`;
 
 	const tableBlock =
-		authProvider === 'absoluteAuth'
+		authOption === 'abs'
 			? `export const users = ${cfg.table}('users', {
   auth_sub: ${cfg.string}.primaryKey(),
   created_at: ${timestampColumn},
@@ -124,8 +134,7 @@ const MILLIS_PER_DAY = 86400000;\n\n`
   created_at: ${timestampColumn}
 });`;
 
-	const schemaKey =
-		authProvider === 'absoluteAuth' ? 'users' : 'countHistory';
+	const schemaKey = authOption === 'abs' ? 'users' : 'countHistory';
 
 	return `
 ${sqliteImports}${builderImport}
@@ -135,7 +144,5 @@ ${constsBlock}${tableBlock}
 export const schema = {
   ${schemaKey}
 };
-
-export type SchemaType = typeof schema;
 `;
 };

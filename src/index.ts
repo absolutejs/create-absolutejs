@@ -1,6 +1,7 @@
 #!/usr/bin/env bun
-import { exit } from 'node:process';
+import { exit, platform } from 'process';
 import { outro } from '@clack/prompts';
+import { cyan, yellow } from 'picocolors';
 import { getDebugMessage, getOutroMessage, helpMessage } from './messages';
 import { prompt } from './prompt';
 import { scaffold } from './scaffold';
@@ -19,7 +20,12 @@ if (help === true) {
 
 const response = await prompt(argumentConfiguration);
 
-await scaffold({ envVariables, latest, packageManager, response });
+const { dockerFreshInstall } = await scaffold({
+	envVariables,
+	latest,
+	packageManager,
+	response
+});
 
 const debugMessage =
 	debug !== false
@@ -36,3 +42,9 @@ const outroMessage = getOutroMessage({
 });
 
 outro(outroMessage + debugMessage);
+
+if (dockerFreshInstall && platform === 'win32') {
+	console.log(
+		`\n${yellow('▲')}  Docker was freshly installed. Restart your terminal for ${cyan('docker')} to be available in PATH.\n`
+	);
+}

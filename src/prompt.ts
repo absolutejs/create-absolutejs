@@ -1,4 +1,4 @@
-import { getAuthProvider } from './questions/authProvider';
+import { getAuthOption } from './questions/authOption';
 import { getCodeQualityTool } from './questions/codeQualityTool';
 import { getConfigurationType } from './questions/configurationType';
 import { getDatabaseEngine } from './questions/databaseEngine';
@@ -80,8 +80,8 @@ export const prompt = async (argumentConfiguration: ArgumentConfiguration) => {
 		directoryConfig = 'custom';
 
 	// 12. Auth provider
-	const authProvider =
-		argumentConfiguration.authProvider ?? (await getAuthProvider());
+	const authOption =
+		argumentConfiguration.authOption ?? (await getAuthOption());
 
 	// 13. Additional plugins
 	const plugins =
@@ -99,8 +99,11 @@ export const prompt = async (argumentConfiguration: ArgumentConfiguration) => {
 		(await getInstallDependencies());
 
 	const values: CreateConfiguration = {
+		absProviders: argumentConfiguration.absProviders?.filter(
+			(provider) => provider !== undefined
+		),
 		assetsDirectory,
-		authProvider,
+		authOption,
 		buildDirectory,
 		codeQualityTool,
 		databaseDirectory,

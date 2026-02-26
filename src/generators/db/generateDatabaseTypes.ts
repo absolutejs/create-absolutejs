@@ -1,16 +1,16 @@
 import { isDrizzleDialect } from '../../typeGuards';
-import { AuthProvider, DatabaseEngine, DatabaseHost } from '../../types';
+import { AuthOption, DatabaseEngine, DatabaseHost } from '../../types';
 
 type GenerateTypesProps = {
 	databaseEngine: DatabaseEngine;
 	databaseHost: DatabaseHost;
-	authProvider: AuthProvider;
+	authOption: AuthOption;
 };
 
 export const generateDatabaseTypes = ({
 	databaseEngine,
 	databaseHost,
-	authProvider
+	authOption
 }: GenerateTypesProps) => {
 	let dbImport = '';
 	let dbTypeLine = '';
@@ -18,10 +18,16 @@ export const generateDatabaseTypes = ({
 	if (databaseHost === 'neon') {
 		dbImport = `import { NeonHttpDatabase } from 'drizzle-orm/neon-http';`;
 		dbTypeLine = 'export type DatabaseType = NeonHttpDatabase<SchemaType>;';
-	} else if (databaseHost === 'planetscale') {
+	} else if (databaseHost === 'planetscale' && databaseEngine === 'mysql') {
 		dbImport = `import { PlanetScaleDatabase } from 'drizzle-orm/planetscale-serverless';`;
 		dbTypeLine =
 			'export type DatabaseType = PlanetScaleDatabase<SchemaType>;';
+	} else if (
+		databaseHost === 'planetscale' &&
+		databaseEngine === 'postgresql'
+	) {
+		dbImport = `import { NodePgDatabase } from 'drizzle-orm/node-postgres';`;
+		dbTypeLine = 'export type DatabaseType = NodePgDatabase<SchemaType>;';
 	} else if (databaseHost === 'turso') {
 		dbImport = `import { LibSQLDatabase } from 'drizzle-orm/libsql';`;
 		dbTypeLine = 'export type DatabaseType = LibSQLDatabase<SchemaType>;';
@@ -43,6 +49,11 @@ export const generateDatabaseTypes = ({
 				dbTypeLine =
 					'export type DatabaseType = Mysql2Database<SchemaType>;';
 				break;
+			case 'mssql':
+				dbImport = `import { NodeMssqlDatabase } from 'drizzle-orm/node-mssql';`;
+				dbTypeLine =
+					'export type DatabaseType = NodeMssqlDatabase<SchemaType>;';
+				break;
 			case 'postgresql':
 				dbImport = `import { BunSQLDatabase } from 'drizzle-orm/bun-sql';`;
 				dbTypeLine =
@@ -62,11 +73,11 @@ export const generateDatabaseTypes = ({
 	}
 
 	const schemaImport =
-		authProvider === 'absoluteAuth'
-			? `import { users, SchemaType } from '../../db/schema';`
-			: `import { countHistory, SchemaType } from '../../db/schema';`;
+		authOption === 'abs'
+			? `import { users, schema } from '../../db/schema';`
+			: `import { countHistory } from '../../db/schema';`;
 	const extraTypes =
-		authProvider === 'absoluteAuth'
+		authOption === 'abs'
 			? `export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;`
 			: `export type CountHistory = typeof countHistory.$inferSelect;
@@ -75,6 +86,6 @@ export type NewCountHistory = typeof countHistory.$inferInsert;`;
 	return `${schemaImport}
 ${dbImport}
 
-${dbTypeLine ? `${dbTypeLine}\n\n` : '\n'}${extraTypes}
+${`${dbTypeLine}\n`}export type SchemaType = typeof schema;\n\n${extraTypes}
 `;
 };
