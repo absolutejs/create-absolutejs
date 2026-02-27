@@ -94,7 +94,6 @@ export const defaultPlugins: AvailableDependency[] = [
 	{
 		imports: [
 			{ isPlugin: false, packageName: 'asset' },
-			{ isPlugin: false, packageName: 'defineConfig' },
 			{ isPlugin: true, packageName: 'networking' },
 			{ isPlugin: false, packageName: 'prepare' }
 		],
