@@ -4,6 +4,9 @@
  * Run `bun run check-versions` to compare against latest npm versions.
  */
 export const versions = {
+	/* ── Core ─────────────────────────────────────────────── */
+	'@absolutejs/absolute': '0.17.12',
+	'@absolutejs/auth': '0.22.4',
 	/* ── Angular ─────────────────────────────────────────── */
 	'@angular/common': '21.0.0',
 	'@angular/compiler': '21.0.0',
@@ -12,12 +15,9 @@ export const versions = {
 	'@angular/platform-browser': '21.0.0',
 	'@angular/platform-server': '21.0.0',
 	'@angular/ssr': '21.0.0',
-	/* ── Core ─────────────────────────────────────────────── */
-	'@absolutejs/absolute': '0.17.12',
-	'@absolutejs/auth': '0.22.4',
+	'@elysiajs/cors': '1.4.1',
 	/* ── Plugins ──────────────────────────────────────────── */
 	'@elysiajs/eden': '1.4.8',
-	'@elysiajs/cors': '1.4.1',
 	'@elysiajs/static': '1.4.7',
 	'@elysiajs/swagger': '1.3.1',
 	/* ── ESLint + Prettier ────────────────────────────────── */

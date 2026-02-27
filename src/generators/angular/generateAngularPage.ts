@@ -53,38 +53,6 @@ export const factory = (props: AngularPageProps) => {
 };
 `;
 };
-
-export const generateDropdownComponent = (frontends: Frontend[]) => {
-	const navLinks = frontends.map(formatNavLink).join('\n\t\t\t\t');
-
-	return `import { Component } from '@angular/core';
-import { CommonModule } from '@angular/common';
-
-@Component({
-	selector: 'app-dropdown',
-	standalone: true,
-	imports: [CommonModule],
-	template: \`
-		<details
-			class="dropdown"
-			[attr.open]="isOpen ? '' : null"
-			(mouseenter)="isOpen = true"
-			(mouseleave)="isOpen = false"
-		>
-			<summary>Pages</summary>
-			<nav class="menu">
-				${navLinks}
-			</nav>
-		</details>
-	\`,
-	styles: []
-})
-export class DropdownComponent {
-	isOpen = false;
-}
-`;
-};
-
 export const generateAppComponent =
 	() => `import { Component, Input, ViewEncapsulation } from '@angular/core';
 import { CommonModule } from '@angular/common';
@@ -102,7 +70,7 @@ export class AppComponent {
 	@Input() initialCount: number = 0;
 }
 `;
-
+export const generateAppComponentCss = () => ``;
 export const generateAppComponentHtml = (
 	frontends: Frontend[],
 	editBasePath: string
@@ -141,9 +109,6 @@ export const generateAppComponentHtml = (
 </main>
 `;
 };
-
-export const generateAppComponentCss = () => ``;
-
 export const generateCounterComponent =
 	() => `import { Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
@@ -201,3 +166,33 @@ export class CounterComponent {
 	}
 }
 `;
+export const generateDropdownComponent = (frontends: Frontend[]) => {
+	const navLinks = frontends.map(formatNavLink).join('\n\t\t\t\t');
+
+	return `import { Component } from '@angular/core';
+import { CommonModule } from '@angular/common';
+
+@Component({
+	selector: 'app-dropdown',
+	standalone: true,
+	imports: [CommonModule],
+	template: \`
+		<details
+			class="dropdown"
+			[attr.open]="isOpen ? '' : null"
+			(mouseenter)="isOpen = true"
+			(mouseleave)="isOpen = false"
+		>
+			<summary>Pages</summary>
+			<nav class="menu">
+				${navLinks}
+			</nav>
+		</details>
+	\`,
+	styles: []
+})
+export class DropdownComponent {
+	isOpen = false;
+}
+`;
+};
