@@ -52,7 +52,7 @@ export const scaffoldConfigurationFiles = ({
 		tsconfig.compilerOptions['experimentalDecorators'] = true;
 		tsconfig.compilerOptions['useDefineForClassFields'] = false;
 
-		const withAngular = {
+		const withAngular: Record<string, unknown> = {
 			angularCompilerOptions: {
 				enableI18nLegacyMessageIdFormat: false,
 				strictInjectionParameters: true,

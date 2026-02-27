@@ -248,9 +248,9 @@ export const createPackageJson = async ({
 			'@angular/ssr'
 		] as const;
 
-		for (const pkg of angularPackages) {
+		angularPackages.forEach((pkg) => {
 			dependencies[pkg] = resolveVersion(pkg, versions[pkg]);
-		}
+		});
 	}
 
 	if (flags.requiresSvelte) {

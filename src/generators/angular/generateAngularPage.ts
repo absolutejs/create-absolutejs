@@ -1,20 +1,9 @@
 import { Frontend } from '../../types';
 import { formatNavLink } from '../../utils/formatNavLink';
 
-export const generateAngularPage = (frontends: Frontend[]) => {
-	const navLinks = frontends
-		.map(
-			(frontend) =>
-				`<a href="/${frontend}">${frontend === 'html' || frontend === 'htmx' ? frontend.toUpperCase() : frontend.charAt(0).toUpperCase() + frontend.slice(1)}</a>`
-		)
-		.join('\n\t\t\t\t');
-
-	const exploreBlock =
-		frontends.length > 1
-			? `\n\t<p style="margin-top: 2rem">\n\t\tExplore the other pages to see multiple frameworks running\n\t\ttogether.\n\t</p>`
-			: '';
-
-	return `import { Component, inject, InjectionToken } from '@angular/core';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export const generateAngularPage = (_frontends: Frontend[]) =>
+	`import { Component, inject, InjectionToken } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DropdownComponent } from '../components/dropdown.component';
 import { AppComponent } from '../components/app.component';
@@ -52,7 +41,6 @@ export const factory = (props: AngularPageProps) => {
 	return component;
 };
 `;
-};
 export const generateAppComponent =
 	() => `import { Component, Input, ViewEncapsulation } from '@angular/core';
 import { CommonModule } from '@angular/common';
