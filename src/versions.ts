@@ -5,8 +5,8 @@
  */
 export const versions = {
 	/* ── Core ─────────────────────────────────────────────── */
-	'@absolutejs/absolute': '0.16.10',
-	'@absolutejs/auth': '0.22.0',
+	'@absolutejs/absolute': '0.17.12',
+	'@absolutejs/auth': '0.22.4',
 	/* ── Plugins ──────────────────────────────────────────── */
 	'@elysiajs/cors': '1.4.1',
 	'@elysiajs/static': '1.4.7',
