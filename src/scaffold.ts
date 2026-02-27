@@ -1,4 +1,4 @@
-import { copyFileSync } from 'fs';
+import { copyFileSync, mkdirSync, writeFileSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { formatProject } from './commands/formatProject';
@@ -131,6 +131,22 @@ export const scaffold = async ({
 		useHTMLScripts,
 		useTailwind
 	});
+
+	const utilsDirectory = join(frontendDirectory, 'utils');
+	mkdirSync(utilsDirectory, { recursive: true });
+	writeFileSync(
+		join(utilsDirectory, 'edenTreaty.ts'),
+		`import { treaty } from '@elysiajs/eden'
+import type { Server } from '../../backend/server'
+
+const serverUrl =
+	typeof window !== 'undefined'
+		? window.location.origin
+		: 'http://localhost:3000'
+
+export const server = treaty<Server>(serverUrl)
+`
+	);
 
 	if (installDependenciesNow) {
 		await installDependencies(packageManager, projectName);

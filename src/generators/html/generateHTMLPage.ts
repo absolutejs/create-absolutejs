@@ -3,7 +3,8 @@ import { formatNavLink } from '../../utils/formatNavLink';
 
 export const generateHTMLPage = (
 	frontends: Frontend[],
-	useHTMLScripts: CreateConfiguration['useHTMLScripts']
+	useHTMLScripts: CreateConfiguration['useHTMLScripts'],
+	editBasePath: string
 ) => {
 	const navLinks = frontends.map(formatNavLink).join('\n\t\t\t');
 	const initialCount = useHTMLScripts ? '0' : 'disabled';
@@ -60,7 +61,7 @@ export const generateHTMLPage = (
                 count is <span id="counter">${initialCount}</span>
             </button>
             <p>
-                Edit <code>example/html/pages/HtmlExample.html</code> and save
+                Edit <code>${editBasePath}/pages/HTMLExample.html</code> and save
                 to test HMR.
             </p>
 ${

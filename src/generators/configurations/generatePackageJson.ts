@@ -93,6 +93,16 @@ export const createPackageJson = async ({
 		for (const dep of eslintReactDependencies) packageNames.add(dep.value);
 	}
 
+	if (flags.requiresAngular) {
+		packageNames.add('@angular/common');
+		packageNames.add('@angular/compiler');
+		packageNames.add('@angular/compiler-cli');
+		packageNames.add('@angular/core');
+		packageNames.add('@angular/platform-browser');
+		packageNames.add('@angular/platform-server');
+		packageNames.add('@angular/ssr');
+	}
+
 	if (flags.requiresSvelte) packageNames.add('svelte');
 	if (flags.requiresSvelte && codeQualityTool === 'eslint+prettier')
 		packageNames.add('prettier-plugin-svelte');
@@ -227,6 +237,22 @@ export const createPackageJson = async ({
 		});
 	}
 
+	if (flags.requiresAngular) {
+		const angularPackages = [
+			'@angular/common',
+			'@angular/compiler',
+			'@angular/compiler-cli',
+			'@angular/core',
+			'@angular/platform-browser',
+			'@angular/platform-server',
+			'@angular/ssr'
+		] as const;
+
+		for (const pkg of angularPackages) {
+			dependencies[pkg] = resolveVersion(pkg, versions[pkg]);
+		}
+	}
+
 	if (flags.requiresSvelte) {
 		dependencies['svelte'] = resolveVersion('svelte', versions['svelte']);
 	}
@@ -280,9 +306,9 @@ export const createPackageJson = async ({
 	if (latest) s.stop(green('Package versions resolved'));
 
 	const scripts: PackageJson['scripts'] = {
-		dev: 'absolutejs dev',
-		format: `absolutejs prettier --write "./**/*.{js,ts,css,json,mjs,md${flags.requiresReact ? ',jsx,tsx' : ''}${flags.requiresSvelte ? ',svelte' : ''}${flags.requiresVue ? ',vue' : ''}${flags.requiresHtml || flags.requiresHtmx ? ',html' : ''}}"`,
-		lint: 'absolutejs eslint',
+		dev: 'absolute dev',
+		format: `absolute prettier --write "./**/*.{js,ts,css,json,mjs,md${flags.requiresReact ? ',jsx,tsx' : ''}${flags.requiresSvelte ? ',svelte' : ''}${flags.requiresVue ? ',vue' : ''}${flags.requiresHtml || flags.requiresHtmx ? ',html' : ''}}"`,
+		lint: 'absolute eslint',
 		test: 'echo "Error: no test specified" && exit 1',
 		typecheck: 'bun run tsc --noEmit'
 	};

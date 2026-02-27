@@ -55,6 +55,7 @@ export const generateServerFile = ({
 
 	const manifestBlock = generateBuildBlock({
 		assetsDirectory,
+		backendDirectory,
 		buildDirectory,
 		frontendDirectories,
 		publicDirectory,
@@ -106,33 +107,26 @@ export const generateServerFile = ({
 
 	const routesBlock = generateRoutesBlock({
 		authOption,
-		buildDirectory,
 		databaseEngine,
 		flags,
 		frontendDirectories
 	});
-
-	const hmrBlock = `
-if (
-  typeof result.hmrState !== 'string' &&
-  typeof result.manifest === 'object'
-) {
-  server.use(hmr(result.hmrState, result.manifest));
-}`;
 
 	const content = `${importsBlock}
 
 ${manifestBlock}
 ${dbBlock ? `${dbBlock}\n` : ''}
 const server = new Elysia()
+.use(absolutejs)
 ${useBlock}${authOption === 'abs' ? `\n${guardBlock}` : ''}
   ${routesBlock}
   .use(networking)
   .on('error', err => {
     const { request } = err
     console.error(\`Server error on \${request.method} \${request.url}: \${err.message}\`)
-  });
-${hmrBlock}
+  })
+
+export type Server = typeof server
 `;
 	writeFileSync(serverFilePath, content);
 };

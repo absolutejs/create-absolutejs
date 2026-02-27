@@ -6,6 +6,7 @@ import { generateMarkupCSS } from '../project/generateMarkupCSS';
 import { generateHTMXPage } from './generateHTMXPage';
 
 export const scaffoldHTMX = ({
+	editBasePath,
 	targetDirectory,
 	templatesDirectory,
 	projectAssetsDirectory,
@@ -31,7 +32,11 @@ export const scaffoldHTMX = ({
 		break;
 	}
 
-	const htmxPage = generateHTMXPage(isSingleFrontend, frontends);
+	const htmxPage = generateHTMXPage(
+		isSingleFrontend,
+		frontends,
+		editBasePath
+	);
 	const pagesDirectory = join(targetDirectory, 'pages');
 	mkdirSync(pagesDirectory, { recursive: true });
 	const htmxFilePath = join(pagesDirectory, 'HTMXExample.html');

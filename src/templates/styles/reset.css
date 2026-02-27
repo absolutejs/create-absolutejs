@@ -76,6 +76,16 @@ button:focus-visible {
 	outline: 4px auto -webkit-focus-ring-color;
 }
 
+code {
+	background-color: rgba(255, 255, 255, 0.08);
+	border: 1px solid rgba(255, 255, 255, 0.1);
+	border-radius: 0.375rem;
+	font-family:
+		'SF Mono', SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
+	font-size: 0.875em;
+	padding: 0.2rem 0.5rem;
+}
+
 @media (max-width: 480px) {
 	main {
 		padding: 1rem;
@@ -94,5 +104,10 @@ button:focus-visible {
 	body {
 		background-color: #f5f5f5;
 		color: #1a1a1a;
+	}
+
+	code {
+		background-color: rgba(0, 0, 0, 0.06);
+		border-color: rgba(0, 0, 0, 0.1);
 	}
 }

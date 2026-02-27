@@ -11,6 +11,10 @@
 <button onclick={increment}>count is {getCount()}</button>
 
 <style>
+	button:hover {
+		border-color: #ff3e00;
+	}
+
 	@media (prefers-color-scheme: light) {
 		button {
 			background-color: #ffffff;

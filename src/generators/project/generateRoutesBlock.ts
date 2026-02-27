@@ -11,21 +11,19 @@ type GenerateRoutesBlockProps = {
 	flags: FrameworkFlags;
 	frontendDirectories: FrontendDirectories;
 	authOption: AuthOption;
-	buildDirectory: string;
 };
 
 export const generateRoutesBlock = ({
 	databaseEngine,
 	flags,
 	frontendDirectories,
-	authOption,
-	buildDirectory
+	authOption
 }: GenerateRoutesBlockProps) => {
 	const hasDatabase =
 		databaseEngine !== undefined && databaseEngine !== 'none';
 	const routes: string[] = [];
 
-	const wrap = (handlerCall: string) =>
+	const wrap = (handlerCall: string, isAsync = false) =>
 		authOption === 'abs'
 			? `async ({ cookie: { auth_provider, user_session_id }, store: { session }, status }) => {
     const { user, error } = await getStatus(session, user_session_id);
@@ -39,26 +37,36 @@ export const generateRoutesBlock = ({
 
     return ${handlerCall};
   }`
-			: `() => ${handlerCall}`;
+			: `${isAsync ? 'async ' : ''}() => ${handlerCall}`;
 
 	const createHandlerCall = (frontend: string, directory: string) => {
-		const base = `${buildDirectory}${directory ? `/${directory}` : ''}/pages`;
+		if (frontend === 'angular')
+			return `handleAngularPageRequest(
+    () => import('../frontend${directory ? `/${directory}` : ''}/pages/angular-example'),
+    asset(manifest, 'AngularExample'),
+    asset(manifest, 'AngularExampleIndex'),
+    generateHeadElement({
+      cssPath: asset(manifest, 'AngularExampleCSS'),
+      title: 'AbsoluteJS + Angular'
+    }),
+    { initialCount: 0 }
+  )`;
 
 		if (frontend === 'html')
-			return `handleHTMLPageRequest(\`${base}/HTMLExample.html\`)`;
+			return `handleHTMLPageRequest(asset(manifest, 'HTMLExample'))`;
 
 		if (frontend === 'htmx')
-			return `handleHTMXPageRequest(\`${base}/HTMXExample.html\`)`;
+			return `handleHTMXPageRequest(asset(manifest, 'HTMXExample'))`;
 
 		if (frontend === 'react') {
 			const reactProps =
 				authOption === 'abs'
-					? `{ initialCount: 0, cssPath: asset(result, 'ReactExampleCSS'), user, providerConfiguration }`
-					: `{ initialCount: 0, cssPath: asset(result, 'ReactExampleCSS') }`;
+					? `{ initialCount: 0, cssPath: asset(manifest, 'ReactExampleCSS'), user, providerConfiguration }`
+					: `{ initialCount: 0, cssPath: asset(manifest, 'ReactExampleCSS') }`;
 
 			return `handleReactPageRequest(
     ReactExample,
-    asset(result, 'ReactExampleIndex'),
+    asset(manifest, 'ReactExampleIndex'),
     ${reactProps}
   )`;
 		}
@@ -66,9 +74,9 @@ export const generateRoutesBlock = ({
 		if (frontend === 'svelte')
 			return `handleSveltePageRequest(
     SvelteExample,
-    asset(result, 'SvelteExample'),
-    asset(result, 'SvelteExampleIndex'),
-    { initialCount: 0, cssPath: asset(result, 'SvelteExampleCSS') }
+    asset(manifest, 'SvelteExample'),
+    asset(manifest, 'SvelteExampleIndex'),
+    { initialCount: 0, cssPath: asset(manifest, 'SvelteExampleCSS') }
   )`;
 
 		if (frontend === 'vue') {
@@ -78,10 +86,10 @@ export const generateRoutesBlock = ({
 
 			return `handleVuePageRequest(
     ${vueComponent},
-    asset(result, 'VueExample'),
-    asset(result, 'VueExampleIndex'),
+    asset(manifest, 'VueExample'),
+    asset(manifest, 'VueExampleIndex'),
     generateHeadElement({
-      cssPath: asset(result, 'VueExampleCSS'),
+      cssPath: asset(manifest, 'VueExampleCSS'),
       title: 'AbsoluteJS + Vue',
       description: 'A Vue.js example with AbsoluteJS'
     }),
@@ -96,10 +104,11 @@ export const generateRoutesBlock = ({
 		([frontend, directory], entryIndex) => {
 			if (!isFrontend(frontend)) return;
 
-			const handlerCall = createHandlerCall(frontend, directory);
+			const handlerCall = createHandlerCall(frontend, directory ?? '');
 			if (!handlerCall) return;
 
-			const handler = wrap(handlerCall);
+			const isAsync = frontend === 'angular';
+			const handler = wrap(handlerCall, isAsync);
 
 			if (entryIndex === 0) {
 				routes.push(`.get('/', ${handler})`);

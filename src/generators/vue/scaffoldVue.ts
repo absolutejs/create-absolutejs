@@ -6,6 +6,7 @@ import { generateVuePage } from './generateVuePage';
 type ScaffoldVueProps = Omit<ScaffoldFrontendProps, 'isSingleFrontend'>;
 
 export const scaffoldVue = ({
+	editBasePath,
 	targetDirectory,
 	templatesDirectory,
 	frontends,
@@ -19,7 +20,7 @@ export const scaffoldVue = ({
 		recursive: true
 	});
 
-	const vuePage = generateVuePage(frontends);
+	const vuePage = generateVuePage(frontends, editBasePath);
 	const pagesDirectory = join(targetDirectory, 'pages');
 	mkdirSync(pagesDirectory, { recursive: true });
 	const vueFilePath = join(pagesDirectory, 'VueExample.vue');

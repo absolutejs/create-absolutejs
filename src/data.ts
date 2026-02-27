@@ -1,4 +1,4 @@
-import { cyan, green, magenta } from 'picocolors';
+import { cyan, green, magenta, red } from 'picocolors';
 import type { FrontendLabels, AvailableDependency } from './types';
 import { versions } from './versions';
 
@@ -49,9 +49,9 @@ export const availableFrontends = [
 	'react',
 	'html',
 	'svelte',
-	// 'angular',
 	'vue',
-	'htmx'
+	'htmx',
+	'angular'
 ] as const;
 export const availableORMs = ['drizzle', 'prisma', 'none'] as const;
 export const availablePlugins: AvailableDependency[] = [
@@ -93,24 +93,19 @@ export const defaultDependencies: AvailableDependency[] = [
 export const defaultPlugins: AvailableDependency[] = [
 	{
 		imports: [
-			{ isPlugin: false, packageName: 'BuildConfig' },
 			{ isPlugin: false, packageName: 'asset' },
-			{ isPlugin: false, packageName: 'build' },
-			{ isPlugin: false, packageName: 'devBuild' },
-			{ isPlugin: false, packageName: 'hmr' },
-			{ isPlugin: true, packageName: 'networking' }
+			{ isPlugin: false, packageName: 'defineConfig' },
+			{ isPlugin: true, packageName: 'networking' },
+			{ isPlugin: false, packageName: 'prepare' }
 		],
 		latestVersion: versions['@absolutejs/absolute'],
 		value: '@absolutejs/absolute'
 	},
 	{
-		imports: [
-			{
-				config: { assets: './build', prefix: '' },
-				isPlugin: true,
-				packageName: 'staticPlugin'
-			}
-		],
+		latestVersion: versions['@elysiajs/eden'],
+		value: '@elysiajs/eden'
+	},
+	{
 		latestVersion: versions['@elysiajs/static'],
 		value: '@elysiajs/static'
 	}
@@ -188,12 +183,12 @@ export const eslintReactDependencies: AvailableDependency[] = [
 	}
 ];
 export const frontendLabels: FrontendLabels = {
+	angular: red('Angular'),
 	html: 'HTML',
 	htmx: 'HTMX',
 	react: cyan('React'),
 	svelte: magenta('Svelte'),
 	vue: green('Vue')
-	// angular: red('Angular'),
 };
 export const scopedStatePlugin: AvailableDependency = {
 	imports: [

@@ -1,7 +1,10 @@
 import { Frontend } from '../../types';
 import { formatNavLink } from '../../utils/formatNavLink';
 
-export const generateVuePage = (frontends: Frontend[]) => {
+export const generateVuePage = (
+	frontends: Frontend[],
+	editBasePath: string
+) => {
 	const navLinks = frontends.map(formatNavLink).join('\n\t\t\t');
 
 	return `<script setup lang="ts">
@@ -63,7 +66,7 @@ const closeDropdown = (event: PointerEvent) => {
 		<h1>AbsoluteJS + Vue</h1>
 		<CountButton :initialCount="count" />
 		<p>
-			Edit <code>example/vue/pages/VueExample.vue</code> and save
+			Edit <code>${editBasePath}/pages/VueExample.vue</code> and save
 			to test HMR.
 		</p>
 ${
@@ -196,6 +199,10 @@ h1 {
 	filter: drop-shadow(0 0 2rem #42b883);
 }
 
+button:hover {
+	border-color: #42b883;
+}
+
 nav {
 	display: flex;
 	gap: 4rem;
@@ -300,6 +307,15 @@ header details nav a {
 	}
 }
 
+code {
+	background-color: rgba(255, 255, 255, 0.08);
+	border: 1px solid rgba(255, 255, 255, 0.1);
+	border-radius: 0.375rem;
+	font-family: 'SF Mono', SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
+	font-size: 0.875em;
+	padding: 0.2rem 0.5rem;
+}
+
 @media (prefers-color-scheme: light) {
 	:global(body) {
 		background-color: #f5f5f5;
@@ -312,6 +328,11 @@ header details nav a {
 
 	button {
 		background-color: #ffffff;
+	}
+
+	code {
+		background-color: rgba(0, 0, 0, 0.06);
+		border-color: rgba(0, 0, 0, 0.1);
 	}
 }
 </style>

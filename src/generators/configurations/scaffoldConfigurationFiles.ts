@@ -1,4 +1,4 @@
-import { copyFileSync, writeFileSync } from 'fs';
+import { copyFileSync, readFileSync, writeFileSync } from 'fs';
 import { join } from 'path';
 import { dim, yellow } from 'picocolors';
 import type { CreateConfiguration } from '../../types';
@@ -31,10 +31,46 @@ export const scaffoldConfigurationFiles = ({
 	initializeGitNow,
 	projectName
 }: AddConfigurationProps) => {
-	copyFileSync(
-		join(templatesDirectory, 'configurations', 'tsconfig.example.json'),
-		join(projectName, 'tsconfig.json')
-	);
+	const hasAngular = frontends.includes('angular');
+
+	if (hasAngular) {
+		const templatePath = join(
+			templatesDirectory,
+			'configurations',
+			'tsconfig.example.json'
+		);
+		const raw = readFileSync(templatePath, 'utf-8');
+		const stripped = raw
+			.replace(/\/\*[\s\S]*?\*\//g, '')
+			.replace(/\/\/[^\n]*/g, '')
+			.replace(/,\s*([}\]])/g, '$1');
+		const tsconfig = JSON.parse(stripped) as {
+			compilerOptions: Record<string, unknown>;
+		};
+
+		tsconfig.compilerOptions['emitDecoratorMetadata'] = true;
+		tsconfig.compilerOptions['experimentalDecorators'] = true;
+		tsconfig.compilerOptions['useDefineForClassFields'] = false;
+
+		const withAngular = {
+			angularCompilerOptions: {
+				enableI18nLegacyMessageIdFormat: false,
+				strictInjectionParameters: true,
+				strictTemplates: true
+			},
+			...tsconfig
+		};
+
+		writeFileSync(
+			join(projectName, 'tsconfig.json'),
+			JSON.stringify(withAngular, null, '\t')
+		);
+	} else {
+		copyFileSync(
+			join(templatesDirectory, 'configurations', 'tsconfig.example.json'),
+			join(projectName, 'tsconfig.json')
+		);
+	}
 
 	if (tailwind) {
 		copyFileSync(

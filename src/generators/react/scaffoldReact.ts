@@ -12,6 +12,7 @@ import {
 export const scaffoldReact = ({
 	isSingleFrontend,
 	authOption,
+	editBasePath,
 	targetDirectory,
 	templatesDirectory,
 	frontends,
@@ -34,7 +35,7 @@ export const scaffoldReact = ({
 		recursive: true
 	});
 
-	const appComponent = generateAppComponent(frontends);
+	const appComponent = generateAppComponent(frontends, editBasePath);
 	writeFileSync(
 		join(targetDirectory, 'components', 'App.tsx'),
 		appComponent,

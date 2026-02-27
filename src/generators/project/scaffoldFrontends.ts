@@ -1,6 +1,7 @@
 import { copyFileSync, cpSync, mkdirSync } from 'fs';
 import { join } from 'path';
 import type { CreateConfiguration } from '../../types';
+import { scaffoldAngular } from '../angular/scaffoldAngular';
 import { scaffoldHTML } from '../html/scaffoldHTML';
 import { scaffoldHTMX } from '../htmx/scaffoldHTMX';
 import { scaffoldReact } from '../react/scaffoldReact';
@@ -69,12 +70,17 @@ export const scaffoldFrontends = ({
 		const targetDirectory = join(frontendDirectory, directory);
 		if (!isSingleFrontend) mkdirSync(targetDirectory);
 
+		const editBasePath = directory
+			? `src/frontend/${directory}`
+			: 'src/frontend';
+
 		switch (frontendName) {
 			case 'react':
 				scaffoldReact({
 					absProviders,
 					assetsDirectory,
 					authOption,
+					editBasePath,
 					frontends,
 					isSingleFrontend,
 					projectAssetsDirectory,
@@ -87,6 +93,7 @@ export const scaffoldFrontends = ({
 					absProviders,
 					assetsDirectory,
 					authOption,
+					editBasePath,
 					frontends,
 					isSingleFrontend,
 					projectAssetsDirectory,
@@ -99,6 +106,7 @@ export const scaffoldFrontends = ({
 					absProviders,
 					assetsDirectory,
 					authOption,
+					editBasePath,
 					frontends,
 					projectAssetsDirectory,
 					targetDirectory,
@@ -110,15 +118,24 @@ export const scaffoldFrontends = ({
 				);
 				break;
 			case 'angular':
-				console.warn(
-					'Angular is not yet supported. Refer to the documentation for more information.'
-				);
+				scaffoldAngular({
+					absProviders,
+					assetsDirectory,
+					authOption,
+					editBasePath,
+					frontends,
+					isSingleFrontend,
+					projectAssetsDirectory,
+					targetDirectory,
+					templatesDirectory
+				});
 				break;
 			case 'html':
 				scaffoldHTML({
 					absProviders,
 					assetsDirectory,
 					authOption,
+					editBasePath,
 					frontends,
 					isSingleFrontend,
 					projectAssetsDirectory,
@@ -132,6 +149,7 @@ export const scaffoldFrontends = ({
 					absProviders,
 					assetsDirectory,
 					authOption,
+					editBasePath,
 					frontends,
 					isSingleFrontend,
 					projectAssetsDirectory,

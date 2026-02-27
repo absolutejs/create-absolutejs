@@ -1,7 +1,11 @@
 import { Frontend } from '../../types';
 import { formatNavLink } from '../../utils/formatNavLink';
 
-export const generateHTMXPage = (isSingle: boolean, frontends: Frontend[]) => {
+export const generateHTMXPage = (
+	isSingle: boolean,
+	frontends: Frontend[],
+	editBasePath: string
+) => {
 	const navLinks = frontends.map(formatNavLink).join('\n\t\t\t');
 
 	return `<!doctype html>
@@ -76,7 +80,7 @@ export const generateHTMXPage = (isSingle: boolean, frontends: Frontend[]) => {
 				>
 			</button>
 			<p>
-				Edit <code>example/htmx/pages/HtmxHome.html</code> and save
+				Edit <code>${editBasePath}/pages/HTMXExample.html</code> and save
 				to test HMR.
 			</p>
 ${

@@ -1,7 +1,10 @@
+import { writeFileSync } from 'fs';
+import { join } from 'path';
 import type { CreateConfiguration, FrontendDirectories } from '../../types';
 
 type GenerateBuildBlockProps = {
 	assetsDirectory: string;
+	backendDirectory: string;
 	buildDirectory: string;
 	frontendDirectories: FrontendDirectories;
 	publicDirectory: string;
@@ -10,6 +13,7 @@ type GenerateBuildBlockProps = {
 
 export const generateBuildBlock = ({
 	assetsDirectory,
+	backendDirectory,
 	buildDirectory,
 	frontendDirectories,
 	publicDirectory,
@@ -25,12 +29,19 @@ export const generateBuildBlock = ({
 		tailwind ? `tailwind: ${JSON.stringify(tailwind)}` : ''
 	]
 		.filter(Boolean)
-		.join(',\n  ');
+		.join(',\n\t');
 
-	return `const buildConfig: BuildConfig = {
-  ${configEntries}
-};
+	const configContent = `import { defineConfig } from '@absolutejs/absolute'
 
-const isDev = env.NODE_ENV === 'development';
-const result = isDev ? await devBuild(buildConfig) : await build(buildConfig);`;
+export default defineConfig({
+\t${configEntries}
+})
+`;
+
+	writeFileSync(
+		join(backendDirectory, '..', '..', 'absolute.config.ts'),
+		configContent
+	);
+
+	return `const { absolutejs, manifest } = await prepare()`;
 };

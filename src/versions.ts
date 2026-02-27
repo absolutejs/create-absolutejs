@@ -4,10 +4,19 @@
  * Run `bun run check-versions` to compare against latest npm versions.
  */
 export const versions = {
+	/* ── Angular ─────────────────────────────────────────── */
+	'@angular/common': '21.0.0',
+	'@angular/compiler': '21.0.0',
+	'@angular/compiler-cli': '21.0.0',
+	'@angular/core': '21.0.0',
+	'@angular/platform-browser': '21.0.0',
+	'@angular/platform-server': '21.0.0',
+	'@angular/ssr': '21.0.0',
 	/* ── Core ─────────────────────────────────────────────── */
 	'@absolutejs/absolute': '0.17.12',
 	'@absolutejs/auth': '0.22.4',
 	/* ── Plugins ──────────────────────────────────────────── */
+	'@elysiajs/eden': '1.4.8',
 	'@elysiajs/cors': '1.4.1',
 	'@elysiajs/static': '1.4.7',
 	'@elysiajs/swagger': '1.3.1',

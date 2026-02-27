@@ -4,6 +4,7 @@ import { ScaffoldFrontendProps } from '../../types';
 import { generateSveltePage } from './generateSveltePage';
 
 export const scaffoldSvelte = ({
+	editBasePath,
 	isSingleFrontend,
 	targetDirectory,
 	frontends,
@@ -18,7 +19,7 @@ export const scaffoldSvelte = ({
 		recursive: true
 	});
 
-	const sveltePage = generateSveltePage(frontends);
+	const sveltePage = generateSveltePage(frontends, editBasePath);
 	const pagesDirectory = join(targetDirectory, 'pages');
 	mkdirSync(pagesDirectory, { recursive: true });
 	const svelteFilePath = join(pagesDirectory, 'SvelteExample.svelte');

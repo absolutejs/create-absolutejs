@@ -15,6 +15,7 @@ export type ScaffoldFrontendProps = {
 	absProviders: ProviderOption[] | undefined;
 	assetsDirectory: string;
 	authOption: AuthOption;
+	editBasePath: string;
 	targetDirectory: string;
 	templatesDirectory: string;
 	projectAssetsDirectory: string;

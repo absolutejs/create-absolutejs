@@ -2,7 +2,10 @@ import { ProviderOption } from '@absolutejs/auth';
 import { AuthOption, Frontend } from '../../types';
 import { formatNavLink } from '../../utils/formatNavLink';
 
-export const generateAppComponent = (frontends: Frontend[]) => {
+export const generateAppComponent = (
+	frontends: Frontend[],
+	editBasePath: string
+) => {
 	const exploreBlock =
 		frontends.length > 1
 			? `\n\t\t\t<p style={{ marginTop: '2rem' }}>\n\t\t\t\tExplore the other pages to see multiple frameworks running\n\t\t\t\ttogether.\n\t\t\t</p>`
@@ -38,7 +41,7 @@ export const App = ({ initialCount }: AppProps) => {
 				count is {count}
 			</button>
 			<p>
-				Edit <code>example/react/pages/ReactExample.tsx</code> and save
+				Edit <code>${editBasePath}/pages/ReactExample.tsx</code> and save
 				to test HMR.
 			</p>${exploreBlock}
 			<p

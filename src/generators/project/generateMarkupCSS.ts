@@ -60,6 +60,10 @@ h1 {
 	filter: drop-shadow(0 0 2rem ${color});
 }
 
+button:hover {
+	border-color: ${color};
+}
+
 nav {
 	display: flex;
 	gap: 4rem;

@@ -33,6 +33,12 @@ export const generateImportsBlock = ({
 		pkg = '@absolutejs/absolute'
 	) => cond && rawImports.push(`import { ${name} } from '${pkg}'`);
 
+	pushHandler(
+		flags.requiresAngular,
+		'handleAngularPageRequest',
+		'@absolutejs/absolute/angular'
+	);
+	pushHandler(flags.requiresAngular, 'generateHeadElement');
 	pushHandler(flags.requiresHtml, 'handleHTMLPageRequest');
 	pushHandler(flags.requiresReact, 'handleReactPageRequest');
 	pushHandler(
@@ -50,6 +56,7 @@ export const generateImportsBlock = ({
 
 	const nonFrameworkOnly =
 		(flags.requiresHtml || flags.requiresHtmx) &&
+		!flags.requiresAngular &&
 		!flags.requiresReact &&
 		!flags.requiresSvelte &&
 		!flags.requiresVue;
@@ -67,8 +74,6 @@ export const generateImportsBlock = ({
 				.join(', ')} } from '${dependency.value}'`
 		);
 	}
-
-	rawImports.push(`import { env } from 'bun'`);
 
 	const buildExamplePath = (dir: string, file: string) =>
 		`../frontend${dir ? `/${dir}` : ''}/pages/${file}`;

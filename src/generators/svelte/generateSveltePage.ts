@@ -1,7 +1,10 @@
 import { Frontend } from '../../types';
 import { formatNavLink } from '../../utils/formatNavLink';
 
-export const generateSveltePage = (frontends: Frontend[]) => {
+export const generateSveltePage = (
+	frontends: Frontend[],
+	editBasePath: string
+) => {
 	const navLinks = frontends.map(formatNavLink).join('\n\t\t\t');
 
 	return `<script lang="ts">
@@ -80,7 +83,7 @@ export const generateSveltePage = (frontends: Frontend[]) => {
 	<h1>AbsoluteJS + Svelte</h1>
 	<Counter {initialCount} />
 	<p>
-		Edit <code>example/svelte/pages/SvelteExample.svelte</code> and save
+		Edit <code>${editBasePath}/pages/SvelteExample.svelte</code> and save
 		to test HMR.
 	</p>
 ${
@@ -152,6 +155,10 @@ ${
 
 	.logo.svelte:hover {
 		filter: drop-shadow(0 0 2rem #ff3e00);
+	}
+
+	button:hover {
+		border-color: #ff3e00;
 	}
 
 	nav {
@@ -246,9 +253,23 @@ ${
 		}
 	}
 
+	code {
+		background-color: rgba(255, 255, 255, 0.08);
+		border: 1px solid rgba(255, 255, 255, 0.1);
+		border-radius: 0.375rem;
+		font-family: 'SF Mono', SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
+		font-size: 0.875em;
+		padding: 0.2rem 0.5rem;
+	}
+
 	@media (prefers-color-scheme: light) {
 		header {
 			background-color: #ffffff;
+		}
+
+		code {
+			background-color: rgba(0, 0, 0, 0.06);
+			border-color: rgba(0, 0, 0, 0.1);
 		}
 	}
 </style>
