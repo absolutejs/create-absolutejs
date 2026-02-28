@@ -5,16 +5,16 @@
  */
 export const versions = {
 	/* ── Core ─────────────────────────────────────────────── */
-	'@absolutejs/absolute': '0.17.12',
+	'@absolutejs/absolute': '0.17.17',
 	'@absolutejs/auth': '0.22.4',
 	/* ── Angular ─────────────────────────────────────────── */
-	'@angular/common': '21.0.0',
-	'@angular/compiler': '21.0.0',
-	'@angular/compiler-cli': '21.0.0',
-	'@angular/core': '21.0.0',
-	'@angular/platform-browser': '21.0.0',
-	'@angular/platform-server': '21.0.0',
-	'@angular/ssr': '21.0.0',
+	'@angular/common': '21.2.0',
+	'@angular/compiler': '21.2.0',
+	'@angular/compiler-cli': '21.2.0',
+	'@angular/core': '21.2.0',
+	'@angular/platform-browser': '21.2.0',
+	'@angular/platform-server': '21.2.0',
+	'@angular/ssr': '21.2.0',
 	'@elysiajs/cors': '1.4.1',
 	/* ── Plugins ──────────────────────────────────────────── */
 	'@elysiajs/eden': '1.4.8',
