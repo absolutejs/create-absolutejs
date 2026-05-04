@@ -18,13 +18,7 @@ type AngularPageProps = {
 	selector: 'angular-page',
 	standalone: true,
 	imports: [CommonModule, DropdownComponent, AppComponent],
-	template: \`
-		<header>
-			<a href="/">AbsoluteJS</a>
-			<app-dropdown></app-dropdown>
-		</header>
-		<app-root [initialCount]="initialCount"></app-root>
-	\`
+	templateUrl: '../templates/angular-example.html'
 })
 export class AngularExampleComponent {
 	initialCount: number = 0;
@@ -41,8 +35,17 @@ export const factory = (props: AngularPageProps) => {
 	return component;
 };
 `;
-export const generateAppComponent =
-	() => `import { Component, Input, ViewEncapsulation } from '@angular/core';
+
+export const generateAngularPageHtml = () => `<header>
+	<a href="/">AbsoluteJS</a>
+	<app-dropdown></app-dropdown>
+</header>
+<app-root [initialCount]="initialCount"></app-root>
+`;
+
+export const generateAppComponent = (
+	isSingleFrontend: boolean
+) => `import { Component, Input, ViewEncapsulation } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { CounterComponent } from './counter.component';
 
@@ -50,15 +53,17 @@ import { CounterComponent } from './counter.component';
 	selector: 'app-root',
 	standalone: true,
 	imports: [CommonModule, CounterComponent],
-	templateUrl: './app.component.html',
-	styleUrls: ['./app.component.css'],
+	templateUrl: '../templates/app.component.html',
+	styleUrl: '${isSingleFrontend ? '../' : '../../'}styles/app.component.css',
 	encapsulation: ViewEncapsulation.None
 })
 export class AppComponent {
 	@Input() initialCount: number = 0;
 }
 `;
+
 export const generateAppComponentCss = () => ``;
+
 export const generateAppComponentHtml = (
 	frontends: Frontend[],
 	editBasePath: string
@@ -97,49 +102,18 @@ export const generateAppComponentHtml = (
 </main>
 `;
 };
-export const generateCounterComponent =
-	() => `import { Component, Input } from '@angular/core';
+
+export const generateCounterComponent = (
+	isSingleFrontend: boolean
+) => `import { Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 @Component({
 	selector: 'app-counter',
 	standalone: true,
 	imports: [CommonModule],
-	template: \`
-		<button (click)="increment()">
-			count is <span class="counter-value">{{ count }}</span>
-		</button>
-	\`,
-	styles: [
-		\`
-			button {
-				background-color: #1a1a1a;
-				border: 1px solid transparent;
-				border-radius: 0.5rem;
-				box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-				cursor: pointer;
-				font-family: inherit;
-				font-size: 1.1rem;
-				font-weight: 500;
-				margin: 2rem 0;
-				padding: 0.6rem 1.2rem;
-				transition: border-color 0.25s;
-			}
-			button:hover {
-				border-color: #dd0031;
-			}
-			button:focus,
-			button:focus-visible {
-				outline: 4px auto -webkit-focus-ring-color;
-			}
-
-			@media (prefers-color-scheme: light) {
-				button {
-					background-color: #ffffff;
-				}
-			}
-		\`
-	]
+	templateUrl: '../templates/counter.component.html',
+	styleUrl: '${isSingleFrontend ? '../' : '../../'}styles/counter.component.css'
 })
 export class CounterComponent {
 	@Input() initialCount: number = 0;
@@ -154,9 +128,43 @@ export class CounterComponent {
 	}
 }
 `;
-export const generateDropdownComponent = (frontends: Frontend[]) => {
-	const navLinks = frontends.map(formatNavLink).join('\n\t\t\t\t');
 
+export const generateCounterComponentHtml =
+	() => `<button (click)="increment()">
+	count is <span class="counter-value">{{ count }}</span>
+</button>
+`;
+
+export const generateCounterComponentCss = () => `button {
+	background-color: #1a1a1a;
+	border: 1px solid transparent;
+	border-radius: 0.5rem;
+	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+	cursor: pointer;
+	font-family: inherit;
+	font-size: 1.1rem;
+	font-weight: 500;
+	margin: 2rem 0;
+	padding: 0.6rem 1.2rem;
+	transition: border-color 0.25s;
+}
+button:hover {
+	border-color: #dd0031;
+}
+button:focus,
+button:focus-visible {
+	outline: 4px auto -webkit-focus-ring-color;
+}
+
+@media (prefers-color-scheme: light) {
+	button {
+		background-color: #ffffff;
+	}
+}
+`;
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export const generateDropdownComponent = (_frontends: Frontend[]) => {
 	return `import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
@@ -164,23 +172,27 @@ import { CommonModule } from '@angular/common';
 	selector: 'app-dropdown',
 	standalone: true,
 	imports: [CommonModule],
-	template: \`
-		<details
-			class="dropdown"
-			[attr.open]="isOpen ? '' : null"
-			(mouseenter)="isOpen = true"
-			(mouseleave)="isOpen = false"
-		>
-			<summary>Pages</summary>
-			<nav class="menu">
-				${navLinks}
-			</nav>
-		</details>
-	\`,
-	styles: []
+	templateUrl: '../templates/dropdown.component.html'
 })
 export class DropdownComponent {
 	isOpen = false;
 }
+`;
+};
+
+export const generateDropdownComponentHtml = (frontends: Frontend[]) => {
+	const navLinks = frontends.map(formatNavLink).join('\n\t\t');
+
+	return `<details
+	class="dropdown"
+	[attr.open]="isOpen ? '' : null"
+	(mouseenter)="isOpen = true"
+	(mouseleave)="isOpen = false"
+>
+	<summary>Pages</summary>
+	<nav class="menu">
+		${navLinks}
+	</nav>
+</details>
 `;
 };

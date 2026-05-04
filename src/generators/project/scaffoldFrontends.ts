@@ -84,6 +84,7 @@ export const scaffoldFrontends = ({
 					frontends,
 					isSingleFrontend,
 					projectAssetsDirectory,
+					stylesDirectory: stylesTargetDirectory,
 					targetDirectory,
 					templatesDirectory
 				});
@@ -97,6 +98,7 @@ export const scaffoldFrontends = ({
 					frontends,
 					isSingleFrontend,
 					projectAssetsDirectory,
+					stylesDirectory: stylesTargetDirectory,
 					targetDirectory,
 					templatesDirectory
 				});
@@ -109,6 +111,7 @@ export const scaffoldFrontends = ({
 					editBasePath,
 					frontends,
 					projectAssetsDirectory,
+					stylesDirectory: stylesTargetDirectory,
 					targetDirectory,
 					templatesDirectory
 				});
@@ -126,6 +129,7 @@ export const scaffoldFrontends = ({
 					frontends,
 					isSingleFrontend,
 					projectAssetsDirectory,
+					stylesDirectory: stylesTargetDirectory,
 					targetDirectory,
 					templatesDirectory
 				});
@@ -139,6 +143,7 @@ export const scaffoldFrontends = ({
 					frontends,
 					isSingleFrontend,
 					projectAssetsDirectory,
+					stylesDirectory: stylesTargetDirectory,
 					targetDirectory,
 					templatesDirectory,
 					useHTMLScripts
@@ -153,6 +158,7 @@ export const scaffoldFrontends = ({
 					frontends,
 					isSingleFrontend,
 					projectAssetsDirectory,
+					stylesDirectory: stylesTargetDirectory,
 					targetDirectory,
 					templatesDirectory
 				});

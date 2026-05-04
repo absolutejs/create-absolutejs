@@ -4,11 +4,15 @@ import { ScaffoldFrontendProps } from '../../types';
 import { generateMarkupCSS } from '../project/generateMarkupCSS';
 import {
 	generateAngularPage,
+	generateAngularPageHtml,
 	generateAppComponent,
 	generateAppComponentCss,
 	generateAppComponentHtml,
 	generateCounterComponent,
-	generateDropdownComponent
+	generateCounterComponentCss,
+	generateCounterComponentHtml,
+	generateDropdownComponent,
+	generateDropdownComponentHtml
 } from './generateAngularPage';
 
 export const scaffoldAngular = ({
@@ -17,7 +21,8 @@ export const scaffoldAngular = ({
 	targetDirectory,
 	frontends,
 	templatesDirectory,
-	projectAssetsDirectory
+	projectAssetsDirectory,
+	stylesDirectory
 }: ScaffoldFrontendProps) => {
 	copyFileSync(
 		join(templatesDirectory, 'assets', 'svg', 'angular.svg'),
@@ -30,12 +35,18 @@ export const scaffoldAngular = ({
 	const pagesDirectory = join(targetDirectory, 'pages');
 	mkdirSync(pagesDirectory, { recursive: true });
 
-	const stylesDirectory = join(targetDirectory, 'styles');
-	mkdirSync(stylesDirectory, { recursive: true });
+	const templatesDir = join(targetDirectory, 'templates');
+	mkdirSync(templatesDir, { recursive: true });
 
 	writeFileSync(
 		join(pagesDirectory, 'angular-example.ts'),
 		generateAngularPage(frontends),
+		'utf-8'
+	);
+
+	writeFileSync(
+		join(templatesDir, 'angular-example.html'),
+		generateAngularPageHtml(),
 		'utf-8'
 	);
 
@@ -46,26 +57,44 @@ export const scaffoldAngular = ({
 	);
 
 	writeFileSync(
-		join(componentsDirectory, 'app.component.ts'),
-		generateAppComponent(),
+		join(templatesDir, 'dropdown.component.html'),
+		generateDropdownComponentHtml(frontends),
 		'utf-8'
 	);
 
 	writeFileSync(
-		join(componentsDirectory, 'app.component.html'),
+		join(componentsDirectory, 'app.component.ts'),
+		generateAppComponent(isSingleFrontend),
+		'utf-8'
+	);
+
+	writeFileSync(
+		join(templatesDir, 'app.component.html'),
 		generateAppComponentHtml(frontends, editBasePath),
 		'utf-8'
 	);
 
 	writeFileSync(
-		join(componentsDirectory, 'app.component.css'),
+		join(stylesDirectory, 'app.component.css'),
 		generateAppComponentCss(),
 		'utf-8'
 	);
 
 	writeFileSync(
 		join(componentsDirectory, 'counter.component.ts'),
-		generateCounterComponent(),
+		generateCounterComponent(isSingleFrontend),
+		'utf-8'
+	);
+
+	writeFileSync(
+		join(templatesDir, 'counter.component.html'),
+		generateCounterComponentHtml(),
+		'utf-8'
+	);
+
+	writeFileSync(
+		join(stylesDirectory, 'counter.component.css'),
+		generateCounterComponentCss(),
 		'utf-8'
 	);
 
