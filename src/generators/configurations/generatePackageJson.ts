@@ -86,6 +86,7 @@ export const createPackageJson = async ({
 	if (flags.requiresReact) {
 		packageNames.add('react');
 		packageNames.add('react-dom');
+		packageNames.add('react-refresh');
 		packageNames.add('@types/react');
 	}
 
@@ -225,6 +226,10 @@ export const createPackageJson = async ({
 		devDependencies['@types/react'] = resolveVersion(
 			'@types/react',
 			versions['@types/react']
+		);
+		devDependencies['react-refresh'] = resolveVersion(
+			'react-refresh',
+			versions['react-refresh']
 		);
 	}
 

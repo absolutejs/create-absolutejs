@@ -64,6 +64,7 @@ export const versions = {
 	'prettier-plugin-svelte': '3.5.0',
 	react: '19.2.4',
 	'react-dom': '19.2.4',
+	'react-refresh': '0.18.0',
 	svelte: '5.53.0',
 	tailwindcss: '4.2.0',
 	/* ── Build / TypeScript ───────────────────────────────── */
