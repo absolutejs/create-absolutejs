@@ -77,7 +77,10 @@ export const generateRoutesBlock = ({
 		if (frontend === 'vue')
 			return `handleVuePageRequest<typeof VueExample>({
     headTag: generateHeadElement({
-      cssPath: asset(manifest, 'VueExampleCompiledCSS'),
+      cssPath: [
+        asset(manifest, 'VueExampleCSS'),
+        asset(manifest, 'VueExampleCompiledCSS')
+      ],
       title: 'AbsoluteJS + Vue'
     }),
     indexPath: asset(manifest, 'VueExampleIndex'),
