@@ -1,5 +1,5 @@
 import { copyFileSync, cpSync, mkdirSync } from 'fs';
-import { join } from 'path';
+import { dirname, join } from 'path';
 import type { CreateConfiguration } from '../../types';
 import { scaffoldAngular } from '../angular/scaffoldAngular';
 import { scaffoldHTML } from '../html/scaffoldHTML';
@@ -37,10 +37,16 @@ export const scaffoldFrontends = ({
 	frontendDirectories,
 	frontends
 }: ScaffoldFrontendsProps) => {
-	const stylesTargetDirectory = join(frontendDirectory, 'styles');
-	cpSync(join(templatesDirectory, 'styles'), stylesTargetDirectory, {
+	const srcDirectory = dirname(frontendDirectory);
+	const globalStylesDirectory = join(srcDirectory, 'styles');
+	const stylesIndexesDirectory = join(globalStylesDirectory, 'indexes');
+	cpSync(join(templatesDirectory, 'styles'), globalStylesDirectory, {
 		recursive: true
 	});
+	mkdirSync(stylesIndexesDirectory, { recursive: true });
+
+	const stylesTargetDirectory = join(frontendDirectory, 'styles');
+	mkdirSync(stylesTargetDirectory, { recursive: true });
 
 	if (useTailwind) {
 		copyFileSync(
@@ -85,6 +91,7 @@ export const scaffoldFrontends = ({
 					isSingleFrontend,
 					projectAssetsDirectory,
 					stylesDirectory: stylesTargetDirectory,
+					stylesIndexesDirectory,
 					targetDirectory,
 					templatesDirectory
 				});
@@ -99,6 +106,7 @@ export const scaffoldFrontends = ({
 					isSingleFrontend,
 					projectAssetsDirectory,
 					stylesDirectory: stylesTargetDirectory,
+					stylesIndexesDirectory,
 					targetDirectory,
 					templatesDirectory
 				});
@@ -112,6 +120,7 @@ export const scaffoldFrontends = ({
 					frontends,
 					projectAssetsDirectory,
 					stylesDirectory: stylesTargetDirectory,
+					stylesIndexesDirectory,
 					targetDirectory,
 					templatesDirectory
 				});
@@ -130,6 +139,7 @@ export const scaffoldFrontends = ({
 					isSingleFrontend,
 					projectAssetsDirectory,
 					stylesDirectory: stylesTargetDirectory,
+					stylesIndexesDirectory,
 					targetDirectory,
 					templatesDirectory
 				});
@@ -144,6 +154,7 @@ export const scaffoldFrontends = ({
 					isSingleFrontend,
 					projectAssetsDirectory,
 					stylesDirectory: stylesTargetDirectory,
+					stylesIndexesDirectory,
 					targetDirectory,
 					templatesDirectory,
 					useHTMLScripts
@@ -159,6 +170,7 @@ export const scaffoldFrontends = ({
 					isSingleFrontend,
 					projectAssetsDirectory,
 					stylesDirectory: stylesTargetDirectory,
+					stylesIndexesDirectory,
 					targetDirectory,
 					templatesDirectory
 				});

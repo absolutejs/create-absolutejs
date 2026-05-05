@@ -26,6 +26,7 @@ export const generateBuildBlock = ({
 			([f, dir]) => `${f}Directory: 'src/frontend${dir ? `/${dir}` : ''}'`
 		),
 		`publicDirectory: '${publicDirectory}'`,
+		`stylesConfig: 'src/styles/indexes'`,
 		tailwind ? `tailwind: ${JSON.stringify(tailwind)}` : ''
 	]
 		.filter(Boolean)

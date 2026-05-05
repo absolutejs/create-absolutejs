@@ -11,7 +11,8 @@ export const scaffoldHTMX = ({
 	templatesDirectory,
 	projectAssetsDirectory,
 	frontends,
-	isSingleFrontend
+	isSingleFrontend,
+	stylesIndexesDirectory
 }: ScaffoldFrontendProps) => {
 	copyFileSync(
 		join(templatesDirectory, 'assets', 'svg', 'htmx-logo-black.svg'),
@@ -42,10 +43,7 @@ export const scaffoldHTMX = ({
 	const htmxFilePath = join(pagesDirectory, 'HTMXExample.html');
 	writeFileSync(htmxFilePath, htmxPage, 'utf-8');
 
-	const cssOutputDir = join(targetDirectory, 'styles');
-	mkdirSync(cssOutputDir, { recursive: true });
-
-	const cssOutputFile = join(cssOutputDir, 'htmx-example.css');
-	const htmxCSS = generateMarkupCSS('htmx', '#3465a4', isSingleFrontend);
+	const cssOutputFile = join(stylesIndexesDirectory, 'htmx-example.css');
+	const htmxCSS = generateMarkupCSS('htmx', '#3465a4');
 	writeFileSync(cssOutputFile, htmxCSS, 'utf-8');
 };

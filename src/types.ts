@@ -20,6 +20,7 @@ export type ScaffoldFrontendProps = {
 	templatesDirectory: string;
 	projectAssetsDirectory: string;
 	stylesDirectory: string;
+	stylesIndexesDirectory: string;
 	isSingleFrontend: boolean;
 	frontends: Frontend[];
 };

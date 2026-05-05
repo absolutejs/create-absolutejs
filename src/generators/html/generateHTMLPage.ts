@@ -4,7 +4,8 @@ import { formatNavLink } from '../../utils/formatNavLink';
 export const generateHTMLPage = (
 	frontends: Frontend[],
 	useHTMLScripts: CreateConfiguration['useHTMLScripts'],
-	editBasePath: string
+	editBasePath: string,
+	isSingleFrontend: boolean
 ) => {
 	const navLinks = frontends.map(formatNavLink).join('\n\t\t\t');
 	const initialCount = useHTMLScripts ? '0' : 'disabled';
@@ -22,7 +23,7 @@ export const generateHTMLPage = (
         <link
             rel="stylesheet"
             type="text/css"
-            href="../styles/html-example.css"
+            href="${isSingleFrontend ? '../../' : '../../../'}styles/indexes/html-example.css"
         />
         <link rel="icon" href="/assets/ico/favicon.ico" />
     </head>

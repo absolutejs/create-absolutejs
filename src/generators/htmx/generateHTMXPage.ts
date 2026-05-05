@@ -18,7 +18,7 @@ export const generateHTMXPage = (
 		<link
 			rel="stylesheet"
 			type="text/css"
-			href="../styles/htmx-example.css"
+			href="${isSingle ? '../../' : '../../../'}styles/indexes/htmx-example.css"
 		/>
 		<link rel="icon" href="/assets/ico/favicon.ico" />
 		<script src="${isSingle ? '' : '/htmx'}/htmx.min.js"></script>

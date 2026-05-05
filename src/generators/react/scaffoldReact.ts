@@ -10,14 +10,14 @@ import {
 } from './generateReactComponents';
 
 export const scaffoldReact = ({
-	isSingleFrontend,
 	authOption,
 	editBasePath,
 	targetDirectory,
 	templatesDirectory,
 	frontends,
 	projectAssetsDirectory,
-	absProviders
+	absProviders,
+	stylesIndexesDirectory
 }: ScaffoldFrontendProps) => {
 	mkdirSync(join(projectAssetsDirectory, 'svg'), { recursive: true });
 
@@ -66,10 +66,7 @@ export const scaffoldReact = ({
 		'utf-8'
 	);
 
-	const cssOutputDir = join(targetDirectory, 'styles');
-	mkdirSync(cssOutputDir, { recursive: true });
-
-	const cssOutputFile = join(cssOutputDir, 'react-example.css');
-	const reactCSS = generateMarkupCSS('react', '#61dafbaa', isSingleFrontend);
+	const cssOutputFile = join(stylesIndexesDirectory, 'react-example.css');
+	const reactCSS = generateMarkupCSS('react', '#61dafbaa');
 	writeFileSync(cssOutputFile, reactCSS, 'utf-8');
 };

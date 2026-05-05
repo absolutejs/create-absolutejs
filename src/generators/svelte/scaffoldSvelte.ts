@@ -5,11 +5,11 @@ import { generateSveltePage } from './generateSveltePage';
 
 export const scaffoldSvelte = ({
 	editBasePath,
-	isSingleFrontend,
 	targetDirectory,
 	frontends,
 	templatesDirectory,
-	projectAssetsDirectory
+	projectAssetsDirectory,
+	stylesIndexesDirectory
 }: ScaffoldFrontendProps) => {
 	copyFileSync(
 		join(templatesDirectory, 'assets', 'svg', 'svelte-logo.svg'),
@@ -25,10 +25,7 @@ export const scaffoldSvelte = ({
 	const svelteFilePath = join(pagesDirectory, 'SvelteExample.svelte');
 	writeFileSync(svelteFilePath, sveltePage, 'utf-8');
 
-	const cssOutputDirectory = join(targetDirectory, 'styles');
-	mkdirSync(cssOutputDirectory, { recursive: true });
-
-	const cssOutputFile = join(cssOutputDirectory, 'svelte-example.css');
-	const svelteCSS = `@import url('${isSingleFrontend ? '../' : '../../'}styles/reset.css');`;
+	const cssOutputFile = join(stylesIndexesDirectory, 'svelte-example.css');
+	const svelteCSS = `@import url('../reset.css');`;
 	writeFileSync(cssOutputFile, svelteCSS, 'utf-8');
 };

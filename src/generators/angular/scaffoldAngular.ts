@@ -22,7 +22,8 @@ export const scaffoldAngular = ({
 	frontends,
 	templatesDirectory,
 	projectAssetsDirectory,
-	stylesDirectory
+	stylesDirectory,
+	stylesIndexesDirectory
 }: ScaffoldFrontendProps) => {
 	copyFileSync(
 		join(templatesDirectory, 'assets', 'svg', 'angular.svg'),
@@ -98,11 +99,7 @@ export const scaffoldAngular = ({
 		'utf-8'
 	);
 
-	const angularCSS = generateMarkupCSS(
-		'angular',
-		'#dd0031',
-		isSingleFrontend
-	);
+	const angularCSS = generateMarkupCSS('angular', '#dd0031');
 
 	const customElementCSS = `
 /* Flex wrappers for Angular custom elements */
@@ -119,7 +116,7 @@ app-root {
 }`;
 
 	writeFileSync(
-		join(stylesDirectory, 'angular-example.css'),
+		join(stylesIndexesDirectory, 'angular-example.css'),
 		angularCSS + customElementCSS,
 		'utf-8'
 	);

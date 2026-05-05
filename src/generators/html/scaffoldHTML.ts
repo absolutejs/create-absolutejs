@@ -15,14 +15,20 @@ export const scaffoldHTML = ({
 	frontends,
 	useHTMLScripts,
 	templatesDirectory,
-	projectAssetsDirectory
+	projectAssetsDirectory,
+	stylesIndexesDirectory
 }: ScaffoldHTMLProps) => {
 	copyFileSync(
 		join(templatesDirectory, 'assets', 'svg', 'HTML5_Badge.svg'),
 		join(projectAssetsDirectory, 'svg', 'HTML5_Badge.svg')
 	);
 
-	const htmlPage = generateHTMLPage(frontends, useHTMLScripts, editBasePath);
+	const htmlPage = generateHTMLPage(
+		frontends,
+		useHTMLScripts,
+		editBasePath,
+		isSingleFrontend
+	);
 	const pagesDirectory = join(targetDirectory, 'pages');
 	mkdirSync(pagesDirectory, { recursive: true });
 	const htmlFilePath = join(pagesDirectory, 'HTMLExample.html');
@@ -33,10 +39,7 @@ export const scaffoldHTML = ({
 		recursive: true
 	});
 
-	const cssOutputDir = join(targetDirectory, 'styles');
-	mkdirSync(cssOutputDir, { recursive: true });
-
-	const cssOutputFile = join(cssOutputDir, 'html-example.css');
-	const htmlCSS = generateMarkupCSS('html', '#e34f26', isSingleFrontend);
+	const cssOutputFile = join(stylesIndexesDirectory, 'html-example.css');
+	const htmlCSS = generateMarkupCSS('html', '#e34f26');
 	writeFileSync(cssOutputFile, htmlCSS, 'utf-8');
 };

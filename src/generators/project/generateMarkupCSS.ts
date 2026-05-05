@@ -1,11 +1,7 @@
 import { Frontend } from '../../types';
 
-export const generateMarkupCSS = (
-	frontend: Frontend,
-	color: string,
-	isSingleFrontend: boolean
-) =>
-	`@import url('${isSingleFrontend ? '../styles/reset.css' : '../../styles/reset.css'}');
+export const generateMarkupCSS = (frontend: Frontend, color: string) =>
+	`@import url('../reset.css');
 
 header {
 	align-items: center;
