@@ -44,7 +44,6 @@ export const generateServerFile = ({
 
 	const importsBlock = generateImportsBlock({
 		authOption,
-		backendDirectory,
 		databaseEngine,
 		databaseHost,
 		deps,
@@ -108,7 +107,6 @@ export const generateServerFile = ({
 	const routesBlock = generateRoutesBlock({
 		authOption,
 		databaseEngine,
-		flags,
 		frontendDirectories
 	});
 

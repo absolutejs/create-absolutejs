@@ -5,6 +5,7 @@ import { formatNavLink } from '../../utils/formatNavLink';
 export const generateAngularPage = (_frontends: Frontend[]) =>
 	`import { Component, inject, InjectionToken } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { defineAngularPage } from '@absolutejs/absolute/angular';
 import { DropdownComponent } from '../components/dropdown.component';
 import { AppComponent } from '../components/app.component';
 
@@ -15,9 +16,9 @@ type AngularPageProps = {
 };
 
 @Component({
+	imports: [CommonModule, DropdownComponent, AppComponent],
 	selector: 'angular-page',
 	standalone: true,
-	imports: [CommonModule, DropdownComponent, AppComponent],
 	templateUrl: '../templates/angular-example.html'
 })
 export class AngularExampleComponent {
@@ -29,11 +30,9 @@ export class AngularExampleComponent {
 	}
 }
 
-export const factory = (props: AngularPageProps) => {
-	const component = new AngularExampleComponent();
-	component.initialCount = props.initialCount;
-	return component;
-};
+export const page = defineAngularPage<AngularPageProps>({
+	component: AngularExampleComponent
+});
 `;
 
 export const generateAngularPageHtml = () => `<header>

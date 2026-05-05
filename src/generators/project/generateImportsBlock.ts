@@ -1,11 +1,8 @@
-import { mkdirSync, writeFileSync } from 'fs';
-import { join } from 'path';
 import { isDrizzleDialect } from '../../typeGuards';
 import type { AvailableDependency, CreateConfiguration } from '../../types';
 import type { FrameworkFlags } from './computeFlags';
 
 type GenerateImportsBlockProps = {
-	backendDirectory: string;
 	deps: AvailableDependency[];
 	flags: FrameworkFlags;
 	orm: CreateConfiguration['orm'];
@@ -16,7 +13,6 @@ type GenerateImportsBlockProps = {
 };
 
 export const generateImportsBlock = ({
-	backendDirectory,
 	deps,
 	flags,
 	orm,
@@ -40,7 +36,11 @@ export const generateImportsBlock = ({
 	);
 	pushHandler(flags.requiresAngular, 'generateHeadElement');
 	pushHandler(flags.requiresHtml, 'handleHTMLPageRequest');
-	pushHandler(flags.requiresReact, 'handleReactPageRequest');
+	pushHandler(
+		flags.requiresReact,
+		'handleReactPageRequest',
+		'@absolutejs/absolute/react'
+	);
 	pushHandler(
 		flags.requiresSvelte,
 		'handleSveltePageRequest',
@@ -54,21 +54,11 @@ export const generateImportsBlock = ({
 	pushHandler(flags.requiresVue, 'generateHeadElement');
 	pushHandler(flags.requiresHtmx, 'handleHTMXPageRequest');
 
-	const nonFrameworkOnly =
-		(flags.requiresHtml || flags.requiresHtmx) &&
-		!flags.requiresAngular &&
-		!flags.requiresReact &&
-		!flags.requiresSvelte &&
-		!flags.requiresVue;
-
 	for (const dependency of deps) {
 		const importsList = dependency.imports ?? [];
-		const relevantImports = nonFrameworkOnly
-			? importsList.filter((imp) => imp.packageName !== 'asset')
-			: importsList;
-		if (relevantImports.length === 0) continue;
+		if (importsList.length === 0) continue;
 		rawImports.push(
-			`import { ${relevantImports
+			`import { ${importsList
 				.map((imp) => imp.packageName)
 				.sort()
 				.join(', ')} } from '${dependency.value}'`
@@ -82,6 +72,8 @@ export const generateImportsBlock = ({
 	const svelteDir = frontendDirectories.svelte;
 	const vueDir = frontendDirectories.vue;
 
+	const angularDir = frontendDirectories.angular;
+
 	if (flags.requiresReact && reactDir !== undefined)
 		rawImports.push(
 			`import { ReactExample } from '${buildExamplePath(reactDir, 'ReactExample')}'`
@@ -89,12 +81,17 @@ export const generateImportsBlock = ({
 
 	if (flags.requiresSvelte && svelteDir !== undefined)
 		rawImports.push(
-			`import SvelteExample from '${buildExamplePath(svelteDir, 'SvelteExample.svelte')}'`
+			`import type SvelteExample from '${buildExamplePath(svelteDir, 'SvelteExample.svelte')}'`
 		);
 
-	if (flags.requiresVue && !flags.requiresSvelte && vueDir !== undefined)
+	if (flags.requiresVue && vueDir !== undefined)
 		rawImports.push(
-			`import VueExample from '${buildExamplePath(vueDir, 'VueExample.vue')}'`
+			`import type VueExample from '${buildExamplePath(vueDir, 'VueExample.vue')}'`
+		);
+
+	if (flags.requiresAngular && angularDir !== undefined)
+		rawImports.push(
+			`import type * as AngularExamplePage from '${buildExamplePath(angularDir, 'angular-example')}'`
 		);
 
 	const connectorImports = {
@@ -273,17 +270,6 @@ export const generateImportsBlock = ({
 			`import { getCountHistory, createCountHistory } from './handlers/countHistoryHandlers'`,
 			`import { t } from 'elysia'`
 		);
-
-	if (flags.requiresVue && flags.requiresSvelte) {
-		const utilsDir = join(backendDirectory, 'utils');
-		mkdirSync(utilsDir, { recursive: true });
-		const vuePathForUtils = `../../frontend${vueDir ? `/${vueDir}` : ''}/pages/VueExample.vue`;
-		writeFileSync(
-			join(utilsDir, 'vueImporter.ts'),
-			`import VueExample from "${vuePathForUtils}"\n\nexport const vueImports = { VueExample } as const\n`
-		);
-		rawImports.push(`import { vueImports } from './utils/vueImporter'`);
-	}
 
 	const importMap = new Map<
 		string,

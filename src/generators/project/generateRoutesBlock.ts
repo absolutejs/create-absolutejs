@@ -4,18 +4,15 @@ import type {
 	CreateConfiguration,
 	FrontendDirectories
 } from '../../types';
-import type { FrameworkFlags } from './computeFlags';
 
 type GenerateRoutesBlockProps = {
 	databaseEngine: CreateConfiguration['databaseEngine'];
-	flags: FrameworkFlags;
 	frontendDirectories: FrontendDirectories;
 	authOption: AuthOption;
 };
 
 export const generateRoutesBlock = ({
 	databaseEngine,
-	flags,
 	frontendDirectories,
 	authOption
 }: GenerateRoutesBlockProps) => {
@@ -39,18 +36,17 @@ export const generateRoutesBlock = ({
   }`
 			: `${isAsync ? 'async ' : ''}() => ${handlerCall}`;
 
-	const createHandlerCall = (frontend: string, directory: string) => {
+	const createHandlerCall = (frontend: string) => {
 		if (frontend === 'angular')
-			return `handleAngularPageRequest(
-    () => import('../frontend${directory ? `/${directory}` : ''}/pages/angular-example'),
-    asset(manifest, 'AngularExample'),
-    asset(manifest, 'AngularExampleIndex'),
-    generateHeadElement({
+			return `handleAngularPageRequest<typeof AngularExamplePage>({
+    headTag: generateHeadElement({
       cssPath: asset(manifest, 'AngularExampleCSS'),
       title: 'AbsoluteJS + Angular'
     }),
-    { initialCount: 0 }
-  )`;
+    indexPath: asset(manifest, 'AngularExampleIndex'),
+    pagePath: asset(manifest, 'AngularExample'),
+    props: { initialCount: 0 }
+  })`;
 
 		if (frontend === 'html')
 			return `handleHTMLPageRequest(asset(manifest, 'HTMLExample'))`;
@@ -61,71 +57,61 @@ export const generateRoutesBlock = ({
 		if (frontend === 'react') {
 			const reactProps =
 				authOption === 'abs'
-					? `{ initialCount: 0, cssPath: asset(manifest, 'ReactExampleCSS'), user, providerConfiguration }`
-					: `{ initialCount: 0, cssPath: asset(manifest, 'ReactExampleCSS') }`;
+					? `{ cssPath: asset(manifest, 'ReactExampleCSS'), initialCount: 0, providerConfiguration, user }`
+					: `{ cssPath: asset(manifest, 'ReactExampleCSS'), initialCount: 0 }`;
 
-			return `handleReactPageRequest(
-    ReactExample,
-    asset(manifest, 'ReactExampleIndex'),
-    ${reactProps}
-  )`;
+			return `handleReactPageRequest({
+    Page: ReactExample,
+    index: asset(manifest, 'ReactExampleIndex'),
+    props: ${reactProps}
+  })`;
 		}
 
 		if (frontend === 'svelte')
-			return `handleSveltePageRequest(
-    SvelteExample,
-    asset(manifest, 'SvelteExample'),
-    asset(manifest, 'SvelteExampleIndex'),
-    { initialCount: 0, cssPath: asset(manifest, 'SvelteExampleCSS') }
-  )`;
+			return `handleSveltePageRequest<typeof SvelteExample>({
+    indexPath: asset(manifest, 'SvelteExampleIndex'),
+    pagePath: asset(manifest, 'SvelteExample'),
+    props: { cssPath: asset(manifest, 'SvelteExampleCSS'), initialCount: 0 }
+  })`;
 
-		if (frontend === 'vue') {
-			const vueComponent = flags.requiresSvelte
-				? 'vueImports.VueExample'
-				: 'VueExample';
-
-			return `handleVuePageRequest(
-    ${vueComponent},
-    asset(manifest, 'VueExample'),
-    asset(manifest, 'VueExampleIndex'),
-    generateHeadElement({
+		if (frontend === 'vue')
+			return `handleVuePageRequest<typeof VueExample>({
+    headTag: generateHeadElement({
       cssPath: asset(manifest, 'VueExampleCSS'),
-      title: 'AbsoluteJS + Vue',
-      description: 'A Vue.js example with AbsoluteJS'
+      title: 'AbsoluteJS + Vue'
     }),
-    { initialCount: 0 }
-  )`;
-		}
+    indexPath: asset(manifest, 'VueExampleIndex'),
+    pagePath: asset(manifest, 'VueExample'),
+    props: { initialCount: 0 }
+  })`;
 
 		return '';
 	};
 
-	Object.entries(frontendDirectories).forEach(
-		([frontend, directory], entryIndex) => {
-			if (!isFrontend(frontend)) return;
+	Object.entries(frontendDirectories).forEach(([frontend], entryIndex) => {
+		if (!isFrontend(frontend)) return;
 
-			const handlerCall = createHandlerCall(frontend, directory ?? '');
-			if (!handlerCall) return;
+		const handlerCall = createHandlerCall(frontend);
+		if (!handlerCall) return;
 
-			const isAsync = frontend === 'angular';
-			const handler = wrap(handlerCall, isAsync);
+		const isAsync = frontend === 'angular';
+		const handler = wrap(handlerCall, isAsync);
 
-			if (entryIndex === 0) {
-				routes.push(`.get('/', ${handler})`);
-			}
-
-			if (frontend === 'htmx') {
-				routes.push(`.get('/htmx', ${handler})`);
-				routes.push(
-					`.post('/htmx/reset', ({ resetScopedStore }) => resetScopedStore())`,
-					`.get('/htmx/count', ({ scopedStore }) => scopedStore.count)`,
-					`.post('/htmx/increment', ({ scopedStore }) => ++scopedStore.count)`
-				);
-			} else {
-				routes.push(`.get('/${frontend}', ${handler})`);
-			}
+		if (entryIndex === 0) {
+			routes.push(`.get('/', ${handler})`);
 		}
-	);
+
+		if (frontend === 'htmx') {
+			routes.push(`.get('/htmx', ${handler})`);
+			routes.push(
+				`.post('/htmx/reset', ({ resetScopedStore }) => resetScopedStore())`,
+				`.get('/htmx/count', ({ scopedStore }) => scopedStore.count)`,
+				`.post('/htmx/increment', ({ scopedStore }) => ++scopedStore.count)`
+			);
+		} else {
+			routes.push(`.get('/${frontend}', ${handler})`);
+		}
+	});
 
 	if (hasDatabase && (authOption === undefined || authOption === 'none')) {
 		routes.push(
