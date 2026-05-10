@@ -262,7 +262,7 @@ export const generateImportsBlock = ({
 		rawImports.push(
 			`import { absoluteAuthConfig } from './utils/absoluteAuthConfig'`,
 			`import { t } from 'elysia'`,
-			`import { authProviderOption, providers, userSessionIdTypebox, getStatus } from '@absolutejs/auth'`
+			`import { authClientOption, authIntentOption, getStatus, providers, ProviderOption, userSessionIdTypebox } from '@absolutejs/auth'`
 		);
 
 	if (hasDatabase && (authOption === undefined || authOption === 'none'))

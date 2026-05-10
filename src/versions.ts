@@ -6,7 +6,7 @@
 export const versions = {
 	/* ── Core ─────────────────────────────────────────────── */
 	'@absolutejs/absolute': '0.19.0-beta.948',
-	'@absolutejs/auth': '0.22.4',
+	'@absolutejs/auth': '0.22.7',
 	/* ── Angular ─────────────────────────────────────────── */
 	'@angular/common': '21.2.0',
 	'@angular/compiler': '21.2.0',
@@ -39,7 +39,7 @@ export const versions = {
 	autoprefixer: '10.4.24',
 	/* ── ORM ──────────────────────────────────────────────── */
 	'drizzle-orm': '0.45.1',
-	elysia: '1.4.25',
+	elysia: '1.4.28',
 	'elysia-rate-limit': '4.5.0',
 	'elysia-scoped-state': '0.1.1',
 	eslint: '10.0.0',

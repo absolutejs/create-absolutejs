@@ -22,7 +22,7 @@ export const generateRoutesBlock = ({
 
 	const wrap = (handlerCall: string, isAsync = false) =>
 		authOption === 'abs'
-			? `async ({ cookie: { auth_provider, user_session_id }, store: { session }, status }) => {
+			? `async ({ cookie: { auth_client, user_session_id }, store: { session }, status }) => {
     const { user, error } = await getStatus(session, user_session_id);
 
     if (error) {
@@ -30,7 +30,7 @@ export const generateRoutesBlock = ({
     }
 
     const providerConfiguration =
-      auth_provider.value && providers[auth_provider.value];
+      auth_client.value && providers[auth_client.value as ProviderOption];
 
     return ${handlerCall};
   }`

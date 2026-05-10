@@ -75,9 +75,13 @@ ${credentialsLines}
 
 	if (!hasDatabase) {
 		return `import { getEnv } from '@absolutejs/absolute';
-import { AbsoluteAuthProps } from '@absolutejs/auth';
+import {
+	AbsoluteAuthProps,
+	createInMemoryAuthSessionStore
+} from '@absolutejs/auth';
 
 export const absoluteAuthConfig = (): AbsoluteAuthProps => ({
+	authSessionStore: createInMemoryAuthSessionStore(),
 	providersConfiguration: {
 ${providerConfigs}
 	}
@@ -88,6 +92,7 @@ ${providerConfigs}
 	return `import { getEnv } from '@absolutejs/absolute';
 import {
 	AbsoluteAuthProps,
+	createInMemoryAuthSessionStore,
 	extractPropFromIdentity,
 	instantiateUserSession,
 	providers
@@ -98,6 +103,7 @@ import { createUser, getUser } from '../handlers/userHandlers';
 export const absoluteAuthConfig = (
 	db: DatabaseType
 ): AbsoluteAuthProps<User> => ({
+	authSessionStore: createInMemoryAuthSessionStore(),
 	providersConfiguration: {
 ${providerConfigs}
 	},

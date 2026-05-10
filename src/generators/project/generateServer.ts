@@ -99,7 +99,8 @@ export const generateServerFile = ({
 
 	const guardBlock = `.guard({
 			cookie: t.Cookie({
-				auth_provider: t.Optional(authProviderOption),
+				auth_client: authClientOption,
+				auth_intent: authIntentOption,
 				user_session_id: userSessionIdTypebox
 			})
 		})`;
