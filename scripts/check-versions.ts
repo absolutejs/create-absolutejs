@@ -2,6 +2,14 @@ import pc from 'picocolors';
 
 import { versions } from '../src/versions';
 
+// Opportunistic HTTP/2 multiplexing — npm registry is HTTPS + the script
+// fans out one fetch per package via Promise.all, so all calls share one
+// TLS connection. The `protocol` option lands in @types/bun 1.3.14; widen
+// locally for now.
+type H2Init = RequestInit & { protocol?: 'http2' };
+const h2IfHttps = (url: string): H2Init =>
+	url.startsWith('https://') ? { protocol: 'http2' } : {};
+
 type Severity = 'major' | 'minor' | 'patch';
 
 type VersionResult = {
@@ -45,7 +53,8 @@ const getBump = (
 
 const fetchLatest = async (name: string): Promise<string | null> => {
 	try {
-		const res = await fetch(`https://registry.npmjs.org/${name}/latest`);
+		const target = `https://registry.npmjs.org/${name}/latest`;
+		const res = await fetch(target, h2IfHttps(target));
 		const data = (await res.json()) as { version: string };
 
 		return data.version;
