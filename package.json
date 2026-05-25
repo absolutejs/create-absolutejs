@@ -43,6 +43,7 @@
 	"scripts": {
 		"build": "rm -rf dist && tsc --project tsconfig.build.json && cp -R src/templates dist/templates",
 		"check-versions": "bun scripts/check-versions.ts",
+		"config": "absolute config",
 		"dev": "bun scripts/dev.ts",
 		"format": "absolute prettier --write",
 		"lint": "absolute eslint --ignore-pattern 'absolutejs-project/**'",
