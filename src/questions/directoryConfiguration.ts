@@ -31,7 +31,7 @@ export const getDirectoryConfiguration = async ({
 							'./src/frontend/styles/tailwind.css',
 						output:
 							argumentConfiguration.tailwind?.output ??
-							'/assets/css/tailwind.generated.css'
+							'assets/css/tailwind.generated.css'
 					}
 				: undefined
 		};
@@ -70,7 +70,7 @@ export const getDirectoryConfiguration = async ({
 			argumentConfiguration.tailwind?.output ??
 			(await text({
 				message: 'Tailwind output CSS file:',
-				placeholder: '/assets/css/tailwind.generated.css'
+				placeholder: 'assets/css/tailwind.generated.css'
 			}));
 		if (isCancel(output)) abort();
 
