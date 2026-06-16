@@ -28,6 +28,7 @@ type CreatePackageJsonProps = Pick<
 > & {
 	projectName: string;
 	latest: boolean;
+	repositoryUrl: string | undefined;
 };
 
 const dbClientCommands = {
@@ -52,7 +53,8 @@ export const createPackageJson = async ({
 	useTailwind,
 	latest,
 	frontendDirectories,
-	codeQualityTool
+	codeQualityTool,
+	repositoryUrl
 }: CreatePackageJsonProps) => {
 	const flags = computeFlags(frontendDirectories);
 	const isLocal = !databaseHost || databaseHost === 'none';
@@ -394,7 +396,16 @@ export const createPackageJson = async ({
 		name: projectName,
 		scripts,
 		type: 'module',
-		version: '0.0.0'
+		version: '0.0.0',
+		// When the project is linked to a GitHub repo, ship the standard npm
+		// support metadata up front so the package never reads as incomplete.
+		...(repositoryUrl
+			? {
+					bugs: { url: `${repositoryUrl}/issues` },
+					homepage: repositoryUrl,
+					repository: { type: 'git', url: `${repositoryUrl}.git` }
+				}
+			: {})
 	};
 
 	writeFileSync(

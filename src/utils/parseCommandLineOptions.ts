@@ -21,6 +21,7 @@ import {
 	isDatabaseHost,
 	isDirectoryConfig,
 	isDrizzleDialect,
+	isGithubLinkOption,
 	isORM,
 	isPrismaDialect
 } from '../typeGuards';
@@ -33,6 +34,7 @@ import type {
 	FrontendDirectories,
 	ORM
 } from '../types';
+import { normalizeRepoInput } from './github';
 
 export const parseCommandLineOptions = () => {
 	const { values, positionals } = parseArgs({
@@ -55,6 +57,7 @@ export const parseCommandLineOptions = () => {
 			env: { multiple: true, type: 'string' },
 			'eslint+prettier': { type: 'boolean' },
 			git: { type: 'boolean' },
+			github: { type: 'string' },
 			help: { default: false, short: 'h', type: 'boolean' },
 			html: { type: 'boolean' },
 			'html-dir': { type: 'string' },
@@ -67,6 +70,8 @@ export const parseCommandLineOptions = () => {
 			plugin: { multiple: true, type: 'string' },
 			react: { type: 'boolean' },
 			'react-dir': { type: 'string' },
+			repo: { type: 'string' },
+			'repo-visibility': { type: 'string' },
 			skip: { type: 'boolean' },
 			svelte: { type: 'boolean' },
 			'svelte-dir': { type: 'string' },
@@ -330,6 +335,12 @@ export const parseCommandLineOptions = () => {
 
 	values.env = validEnv.length ? validEnv : undefined;
 
+	const repoVisibility = values['repo-visibility'];
+	const githubVisibility =
+		repoVisibility === 'public' || repoVisibility === 'private'
+			? repoVisibility
+			: undefined;
+
 	const argumentConfiguration: ArgumentConfiguration = {
 		absProviders: absProviders.length ? absProviders : undefined,
 		assetsDirectory: values.assets,
@@ -342,6 +353,9 @@ export const parseCommandLineOptions = () => {
 		directoryConfig,
 		frontendDirectories,
 		frontends: selectedFrontends.length ? selectedFrontends : undefined,
+		githubLink: isGithubLinkOption(values.github) ? values.github : undefined,
+		githubRepoUrl: normalizeRepoInput(values.repo)?.httpsUrl,
+		githubVisibility,
 		initializeGitNow: values.git,
 		installDependenciesNow: values.install,
 		orm,

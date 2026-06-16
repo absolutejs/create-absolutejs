@@ -24,6 +24,9 @@ export const scaffold = async ({
 		projectName,
 		codeQualityTool,
 		initializeGitNow,
+		githubLink,
+		githubRepoUrl,
+		githubVisibility,
 		databaseEngine,
 		databaseHost,
 		useHTMLScripts,
@@ -81,6 +84,7 @@ export const scaffold = async ({
 		orm,
 		plugins,
 		projectName,
+		repositoryUrl: githubRepoUrl,
 		useTailwind
 	});
 
@@ -159,7 +163,12 @@ export const server = treaty<Server>(serverUrl)
 	});
 
 	if (initializeGitNow) {
-		await initializeGit(projectName);
+		await initializeGit({
+			githubLink,
+			githubRepoUrl,
+			githubVisibility,
+			projectName
+		});
 	}
 
 	return { dockerFreshInstall };

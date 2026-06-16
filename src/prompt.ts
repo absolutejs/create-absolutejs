@@ -6,6 +6,7 @@ import { getDatabaseHost } from './questions/databaseHost';
 import { getDirectoryConfiguration } from './questions/directoryConfiguration';
 import { getFrontendDirectoryConfigurations } from './questions/frontendDirectoryConfigurations';
 import { getFrontends } from './questions/frontends';
+import { getGithubLink } from './questions/githubLink';
 import { getHtmlScriptingOption } from './questions/htmlScriptingOption';
 import { getInitializeGit } from './questions/initializeGitNow';
 import { getInstallDependencies } from './questions/installDependenciesNow';
@@ -93,6 +94,28 @@ export const prompt = async (argumentConfiguration: ArgumentConfiguration) => {
 	const initializeGitNow =
 		argumentConfiguration.initializeGitNow ?? (await getInitializeGit());
 
+	// 14b. Optionally connect the new project to GitHub
+	const resolveGithubLink = async () => {
+		if (!initializeGitNow) {
+			return {
+				githubLink: 'skip' as const,
+				githubRepoUrl: undefined,
+				githubVisibility: undefined
+			};
+		}
+		if (argumentConfiguration.githubLink) {
+			return {
+				githubLink: argumentConfiguration.githubLink,
+				githubRepoUrl: argumentConfiguration.githubRepoUrl,
+				githubVisibility: argumentConfiguration.githubVisibility
+			};
+		}
+
+		return getGithubLink(projectName);
+	};
+	const { githubLink, githubRepoUrl, githubVisibility } =
+		await resolveGithubLink();
+
 	// 15. Install dependencies
 	const installDependenciesNow =
 		argumentConfiguration.installDependenciesNow ??
@@ -112,6 +135,9 @@ export const prompt = async (argumentConfiguration: ArgumentConfiguration) => {
 		directoryConfig,
 		frontendDirectories,
 		frontends,
+		githubLink,
+		githubRepoUrl,
+		githubVisibility,
 		initializeGitNow,
 		installDependenciesNow,
 		orm,

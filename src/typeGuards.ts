@@ -12,6 +12,7 @@ import type {
 	DatabaseEngine,
 	DatabaseHost,
 	Frontend,
+	GithubLinkOption,
 	ORM
 } from './types';
 
@@ -36,6 +37,10 @@ export const isDrizzleDialect = (
 	availableDrizzleDialects.some((dialect) => dialect === value);
 export const isFrontend = (value: string | undefined): value is Frontend =>
 	value !== undefined && Object.keys(frontendLabels).includes(value);
+export const isGithubLinkOption = (
+	value: string | undefined
+): value is GithubLinkOption =>
+	value === 'existing' || value === 'create' || value === 'skip';
 export const isORM = (value: string | undefined): value is ORM =>
 	value === 'drizzle' || value === 'prisma' || value === undefined;
 export const isPrismaDialect = (value: string | undefined): value is string =>

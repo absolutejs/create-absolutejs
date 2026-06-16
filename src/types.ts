@@ -65,6 +65,8 @@ export type TailwindConfig =
 	  }
 	| undefined;
 
+export type GithubLinkOption = 'existing' | 'create' | 'skip';
+
 export type CreateConfiguration = {
 	absProviders: ProviderOption[] | undefined;
 	assetsDirectory: string;
@@ -76,6 +78,9 @@ export type CreateConfiguration = {
 	frontends: Frontend[];
 	useHTMLScripts: boolean;
 	initializeGitNow: boolean;
+	githubLink: GithubLinkOption;
+	githubRepoUrl: string | undefined;
+	githubVisibility: 'public' | 'private' | undefined;
 	installDependenciesNow: boolean;
 	codeQualityTool: CodeQualityTool;
 	orm: ORM;
