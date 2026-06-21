@@ -353,7 +353,9 @@ export const parseCommandLineOptions = () => {
 		directoryConfig,
 		frontendDirectories,
 		frontends: selectedFrontends.length ? selectedFrontends : undefined,
-		githubLink: isGithubLinkOption(values.github) ? values.github : undefined,
+		githubLink: isGithubLinkOption(values.github)
+			? values.github
+			: undefined,
 		githubRepoUrl: normalizeRepoInput(values.repo)?.httpsUrl,
 		githubVisibility,
 		initializeGitNow: values.git,

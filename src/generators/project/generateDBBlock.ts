@@ -24,8 +24,11 @@ const connectionMap: Record<string, Record<string, DBExpr>> = {
 		planetscale: { expr: 'new Client({ url: getEnv("DATABASE_URL") })' }
 	},
 	postgresql: {
+		// Raw-SQL (no-ORM) neon uses the driver's `Pool`, whose `.query(text,
+		// params)` → `{ rows }` API matches the generated handler. The drizzle
+		// path is handled separately below and still uses `neon()` http.
 		neon: {
-			expr: 'neon(getEnv("DATABASE_URL"));'
+			expr: 'new Pool({ connectionString: getEnv("DATABASE_URL") })'
 		},
 		none: { expr: 'new SQL(getEnv("DATABASE_URL"))' },
 		planetscale: {

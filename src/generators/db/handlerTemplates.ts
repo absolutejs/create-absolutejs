@@ -22,6 +22,7 @@ export const getUser = async (db: DatabaseType, authSub: string) => {
 };
 
 export const createUser = async (db: DatabaseType, newUserData: NewUser) => {
+	const { auth_sub: authSub, metadata: userIdentity } = newUserData;
 	${queries.insertUser}
 }`;
 

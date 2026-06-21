@@ -9,6 +9,10 @@ import { createDrizzleConfig } from '../configurations/generateDrizzleConfig';
 import { generateDatabaseTypes } from './generateDatabaseTypes';
 import { generateDrizzleSchema } from './generateDrizzleSchema';
 import { generateDBHandlers } from './generateHandlers';
+import {
+	generateRelationalSchema,
+	supportsRelationalSchema
+} from './generateRelationalSchema';
 import { generateSqliteSchema } from './generateSqliteSchema';
 import { scaffoldDocker } from './scaffoldDocker';
 
@@ -52,6 +56,37 @@ export const scaffoldDatabase = async ({
 		usesAuth
 	});
 	writeFileSync(join(handlerDirectory, handlerFileName), dbHandlers, 'utf-8');
+
+	// Raw-SQL (no-ORM) auth handlers import `DatabaseType`/`NewUser` from
+	// types/databaseTypes (so do the auth config and the example page), but
+	// the drizzle-backed type module below is only written on the drizzle
+	// path. Generate a self-contained, driver-typed version here so the
+	// non-drizzle auth scaffold actually type-checks and builds.
+	if (usesAuth && orm !== 'drizzle') {
+		mkdirSync(typesDirectory, { recursive: true });
+		const sqlTypes = generateDatabaseTypes({
+			authOption,
+			databaseEngine,
+			databaseHost,
+			orm
+		});
+		writeFileSync(join(typesDirectory, 'databaseTypes.ts'), sqlTypes);
+	}
+
+	// Hosted relational engines on the raw-SQL path get no migration tooling
+	// (no drizzle-kit, no local sqlite3). Emit a plain DDL file so the tables
+	// the handlers query can be created against the hosted database.
+	const isRemoteHost = databaseHost !== undefined && databaseHost !== 'none';
+	if (
+		isRemoteHost &&
+		orm !== 'drizzle' &&
+		supportsRelationalSchema(databaseEngine)
+	) {
+		writeFileSync(
+			join(projectDatabaseDirectory, 'schema.sql'),
+			generateRelationalSchema(databaseEngine, authOption)
+		);
+	}
 
 	if (databaseEngine === 'sqlite') {
 		void (
@@ -103,7 +138,8 @@ export const scaffoldDatabase = async ({
 		const drizzleTypes = generateDatabaseTypes({
 			authOption,
 			databaseEngine,
-			databaseHost
+			databaseHost,
+			orm
 		});
 		writeFileSync(join(typesDirectory, 'databaseTypes.ts'), drizzleTypes);
 

@@ -141,7 +141,7 @@ export const generateReactExamplePage = (authOption: AuthOption) => {
 	const closing = authOption === 'abs' ? `};` : `);`;
 
 	return `
-${authOption === 'abs' ? `import { User } from '../../../types/databaseTypes';\nimport { extractPropFromIdentity, ProviderConfiguration } from '@absolutejs/auth';` : ''}
+${authOption === 'abs' ? `import type { User } from '../../../types/databaseTypes';\nimport { extractPropFromIdentity } from '@absolutejs/auth';\nimport type { ProviderConfiguration } from '@absolutejs/auth';` : ''}
 import { App } from '../components/App';
 import { Dropdown } from '../components/Dropdown';
 import { Head } from '../components/Head';

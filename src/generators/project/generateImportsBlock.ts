@@ -177,7 +177,10 @@ export const generateImportsBlock = ({
 	const getPostgresqlNoOrmImports = () => {
 		if (isRemoteHost && databaseHost === 'neon')
 			return [
-				...connectorImports[databaseHost as 'neon'],
+				// No-ORM neon constructs `new Pool(...)` (see generateDBBlock),
+				// whose `.query()` API matches the generated SQL handler. The
+				// `neon()` http client is only used on the drizzle path.
+				`import { Pool } from '@neondatabase/serverless'`,
 				`import { getEnv } from '@absolutejs/absolute'`
 			];
 		if (isRemoteHost && databaseHost === 'planetscale')
