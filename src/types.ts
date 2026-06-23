@@ -16,6 +16,7 @@ export type ScaffoldFrontendProps = {
 	assetsDirectory: string;
 	authOption: AuthOption;
 	editBasePath: string;
+	includeExamples: boolean;
 	targetDirectory: string;
 	templatesDirectory: string;
 	projectAssetsDirectory: string;
@@ -76,6 +77,7 @@ export type CreateConfiguration = {
 	databaseEngine: DatabaseEngine;
 	frontendDirectories: FrontendDirectories;
 	frontends: Frontend[];
+	includeExamples: boolean;
 	useHTMLScripts: boolean;
 	initializeGitNow: boolean;
 	githubLink: GithubLinkOption;

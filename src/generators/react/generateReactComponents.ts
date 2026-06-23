@@ -82,7 +82,38 @@ export const generateDropdownComponent = (frontends: Frontend[]) => {
 );
 `;
 };
-export const generateReactExamplePage = (authOption: AuthOption) => {
+export const generateReactExamplePage = (
+	authOption: AuthOption,
+	includeExamples: boolean
+) => {
+	if (!includeExamples) {
+		const authImports =
+			authOption === 'abs'
+				? `import type { User } from '../../../types/databaseTypes';\nimport type { ProviderConfiguration } from '@absolutejs/auth';\n`
+				: '';
+		const authProps =
+			authOption === 'abs'
+				? '\n\tuser: User | null;\n\tproviderConfiguration: ProviderConfiguration | undefined;'
+				: '';
+
+		return `${authImports}import { Head } from '../components/Head';
+
+type ReactExampleProps = {
+	initialCount: number;
+	cssPath: string;${authProps}
+};
+
+export const ReactExample = ({ cssPath }: ReactExampleProps) => (
+	<html>
+		<Head cssPath={cssPath} />
+		<body>
+			<main></main>
+		</body>
+	</html>
+);
+`;
+	}
+
 	const useBlockReturn = authOption === 'abs';
 
 	const propsType = `

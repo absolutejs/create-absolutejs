@@ -2,8 +2,33 @@ import { Frontend } from '../../types';
 import { formatNavLink } from '../../utils/formatNavLink';
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-export const generateAngularPage = (_frontends: Frontend[]) =>
-	`import { Component, inject, InjectionToken } from '@angular/core';
+export const generateAngularPage = (
+	_frontends: Frontend[],
+	includeExamples: boolean
+) => {
+	if (!includeExamples)
+		return `import { Component } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { defineAngularPage } from '@absolutejs/absolute/angular';
+
+type AngularPageProps = {
+	initialCount: number;
+};
+
+@Component({
+	imports: [CommonModule],
+	selector: 'angular-page',
+	standalone: true,
+	templateUrl: '../templates/angular-example.html'
+})
+export class AngularExampleComponent {}
+
+export const page = defineAngularPage<AngularPageProps>({
+	component: AngularExampleComponent
+});
+`;
+
+	return `import { Component, inject, InjectionToken } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { defineAngularPage } from '@absolutejs/absolute/angular';
 import { DropdownComponent } from '../components/dropdown.component';
@@ -34,13 +59,18 @@ export const page = defineAngularPage<AngularPageProps>({
 	component: AngularExampleComponent
 });
 `;
+};
 
-export const generateAngularPageHtml = () => `<header>
+export const generateAngularPageHtml = (includeExamples: boolean) => {
+	if (!includeExamples) return `<main></main>\n`;
+
+	return `<header>
 	<a href="/">AbsoluteJS</a>
 	<app-dropdown></app-dropdown>
 </header>
 <app-root [initialCount]="initialCount"></app-root>
 `;
+};
 
 export const generateAppComponent = (
 	isSingleFrontend: boolean

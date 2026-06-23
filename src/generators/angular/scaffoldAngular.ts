@@ -17,6 +17,7 @@ import {
 
 export const scaffoldAngular = ({
 	editBasePath,
+	includeExamples,
 	isSingleFrontend,
 	targetDirectory,
 	frontends,
@@ -25,6 +26,32 @@ export const scaffoldAngular = ({
 	stylesDirectory,
 	stylesIndexesDirectory
 }: ScaffoldFrontendProps) => {
+	const pagesDirectory = join(targetDirectory, 'pages');
+	const templatesDir = join(targetDirectory, 'templates');
+
+	if (!includeExamples) {
+		mkdirSync(pagesDirectory, { recursive: true });
+		mkdirSync(templatesDir, { recursive: true });
+
+		writeFileSync(
+			join(pagesDirectory, 'angular-example.ts'),
+			generateAngularPage(frontends, false),
+			'utf-8'
+		);
+		writeFileSync(
+			join(templatesDir, 'angular-example.html'),
+			generateAngularPageHtml(false),
+			'utf-8'
+		);
+		writeFileSync(
+			join(stylesIndexesDirectory, 'angular-example.css'),
+			`@import url('../reset.css');\n\nangular-page {\n\tdisplay: flex;\n\tflex: 1;\n\tflex-direction: column;\n}\n`,
+			'utf-8'
+		);
+
+		return;
+	}
+
 	copyFileSync(
 		join(templatesDirectory, 'assets', 'svg', 'angular.svg'),
 		join(projectAssetsDirectory, 'svg', 'angular.svg')
@@ -33,21 +60,19 @@ export const scaffoldAngular = ({
 	const componentsDirectory = join(targetDirectory, 'components');
 	mkdirSync(componentsDirectory, { recursive: true });
 
-	const pagesDirectory = join(targetDirectory, 'pages');
 	mkdirSync(pagesDirectory, { recursive: true });
 
-	const templatesDir = join(targetDirectory, 'templates');
 	mkdirSync(templatesDir, { recursive: true });
 
 	writeFileSync(
 		join(pagesDirectory, 'angular-example.ts'),
-		generateAngularPage(frontends),
+		generateAngularPage(frontends, true),
 		'utf-8'
 	);
 
 	writeFileSync(
 		join(templatesDir, 'angular-example.html'),
-		generateAngularPageHtml(),
+		generateAngularPageHtml(true),
 		'utf-8'
 	);
 

@@ -12,6 +12,7 @@ import {
 export const scaffoldReact = ({
 	authOption,
 	editBasePath,
+	includeExamples,
 	targetDirectory,
 	templatesDirectory,
 	frontends,
@@ -19,6 +20,29 @@ export const scaffoldReact = ({
 	absProviders,
 	stylesIndexesDirectory
 }: ScaffoldFrontendProps) => {
+	if (!includeExamples) {
+		mkdirSync(join(targetDirectory, 'components'), { recursive: true });
+		copyFileSync(
+			join(templatesDirectory, 'react', 'components', 'Head.tsx'),
+			join(targetDirectory, 'components', 'Head.tsx')
+		);
+
+		mkdirSync(join(targetDirectory, 'pages'), { recursive: true });
+		writeFileSync(
+			join(targetDirectory, 'pages', 'ReactExample.tsx'),
+			generateReactExamplePage(authOption, false),
+			'utf-8'
+		);
+
+		writeFileSync(
+			join(stylesIndexesDirectory, 'react-example.css'),
+			`@import url('../reset.css');`,
+			'utf-8'
+		);
+
+		return;
+	}
+
 	mkdirSync(join(projectAssetsDirectory, 'svg'), { recursive: true });
 
 	copyFileSync(
@@ -58,7 +82,7 @@ export const scaffoldReact = ({
 		);
 	}
 
-	const pageComponent = generateReactExamplePage(authOption);
+	const pageComponent = generateReactExamplePage(authOption, true);
 	mkdirSync(join(targetDirectory, 'pages'), { recursive: true });
 	writeFileSync(
 		join(targetDirectory, 'pages', 'ReactExample.tsx'),

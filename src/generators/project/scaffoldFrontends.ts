@@ -16,6 +16,7 @@ type ScaffoldFrontendsProps = Pick<
 	| 'frontends'
 	| 'authOption'
 	| 'absProviders'
+	| 'includeExamples'
 	| 'useTailwind'
 > & {
 	frontendDirectory: string;
@@ -29,6 +30,7 @@ export const scaffoldFrontends = ({
 	assetsDirectory,
 	absProviders,
 	authOption,
+	includeExamples,
 	templatesDirectory,
 	projectAssetsDirectory,
 	typesDirectory,
@@ -88,6 +90,7 @@ export const scaffoldFrontends = ({
 					authOption,
 					editBasePath,
 					frontends,
+					includeExamples,
 					isSingleFrontend,
 					projectAssetsDirectory,
 					stylesDirectory: stylesTargetDirectory,
@@ -103,6 +106,7 @@ export const scaffoldFrontends = ({
 					authOption,
 					editBasePath,
 					frontends,
+					includeExamples,
 					isSingleFrontend,
 					projectAssetsDirectory,
 					stylesDirectory: stylesTargetDirectory,
@@ -118,6 +122,7 @@ export const scaffoldFrontends = ({
 					authOption,
 					editBasePath,
 					frontends,
+					includeExamples,
 					projectAssetsDirectory,
 					stylesDirectory: stylesTargetDirectory,
 					stylesIndexesDirectory,
@@ -136,6 +141,7 @@ export const scaffoldFrontends = ({
 					authOption,
 					editBasePath,
 					frontends,
+					includeExamples,
 					isSingleFrontend,
 					projectAssetsDirectory,
 					stylesDirectory: stylesTargetDirectory,
@@ -151,6 +157,7 @@ export const scaffoldFrontends = ({
 					authOption,
 					editBasePath,
 					frontends,
+					includeExamples,
 					isSingleFrontend,
 					projectAssetsDirectory,
 					stylesDirectory: stylesTargetDirectory,
@@ -167,6 +174,7 @@ export const scaffoldFrontends = ({
 					authOption,
 					editBasePath,
 					frontends,
+					includeExamples,
 					isSingleFrontend,
 					projectAssetsDirectory,
 					stylesDirectory: stylesTargetDirectory,

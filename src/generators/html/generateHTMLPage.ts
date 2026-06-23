@@ -5,8 +5,28 @@ export const generateHTMLPage = (
 	frontends: Frontend[],
 	useHTMLScripts: CreateConfiguration['useHTMLScripts'],
 	editBasePath: string,
-	isSingleFrontend: boolean
+	isSingleFrontend: boolean,
+	includeExamples: boolean
 ) => {
+	const cssHref = `${isSingleFrontend ? '../../' : '../../../'}styles/indexes/html-example.css`;
+
+	if (!includeExamples) {
+		return `<!doctype html>
+<html>
+    <head>
+        <title>AbsoluteJS + HTML</title>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <link rel="stylesheet" type="text/css" href="${cssHref}" />
+        <link rel="icon" href="/assets/ico/favicon.ico" />
+    </head>
+    <body>
+        <main></main>
+    </body>
+</html>
+`;
+	}
+
 	const navLinks = frontends.map(formatNavLink).join('\n\t\t\t');
 	const initialCount = useHTMLScripts ? '0' : 'disabled';
 	const scriptTagBlock = useHTMLScripts

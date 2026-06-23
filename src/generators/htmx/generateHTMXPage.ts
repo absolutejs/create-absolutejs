@@ -4,8 +4,31 @@ import { formatNavLink } from '../../utils/formatNavLink';
 export const generateHTMXPage = (
 	isSingle: boolean,
 	frontends: Frontend[],
-	editBasePath: string
+	editBasePath: string,
+	includeExamples: boolean
 ) => {
+	if (!includeExamples) {
+		return `<!doctype html>
+<html>
+	<head>
+		<title>AbsoluteJS + HTMX</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<link
+			rel="stylesheet"
+			type="text/css"
+			href="${isSingle ? '../../' : '../../../'}styles/indexes/htmx-example.css"
+		/>
+		<link rel="icon" href="/assets/ico/favicon.ico" />
+		<script src="${isSingle ? '' : '/htmx'}/htmx.min.js"></script>
+	</head>
+	<body>
+		<main></main>
+	</body>
+</html>
+`;
+	}
+
 	const navLinks = frontends.map(formatNavLink).join('\n\t\t\t');
 
 	return `<!doctype html>

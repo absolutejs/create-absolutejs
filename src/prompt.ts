@@ -8,6 +8,7 @@ import { getFrontendDirectoryConfigurations } from './questions/frontendDirector
 import { getFrontends } from './questions/frontends';
 import { getGithubLink } from './questions/githubLink';
 import { getHtmlScriptingOption } from './questions/htmlScriptingOption';
+import { getIncludeExamples } from './questions/includeExamples';
 import { getInitializeGit } from './questions/initializeGitNow';
 import { getInstallDependencies } from './questions/installDependenciesNow';
 import { getORM } from './questions/orm';
@@ -40,6 +41,10 @@ export const prompt = async (argumentConfiguration: ArgumentConfiguration) => {
 		? (argumentConfiguration.useHTMLScripts ??
 			(await getHtmlScriptingOption()))
 		: false;
+
+	// 5b. Include example pages/components, or generate a bare skeleton
+	const includeExamples =
+		argumentConfiguration.includeExamples ?? (await getIncludeExamples());
 
 	// 6. Database engine
 	const databaseEngine =
@@ -138,6 +143,7 @@ export const prompt = async (argumentConfiguration: ArgumentConfiguration) => {
 		githubLink,
 		githubRepoUrl,
 		githubVisibility,
+		includeExamples,
 		initializeGitNow,
 		installDependenciesNow,
 		orm,

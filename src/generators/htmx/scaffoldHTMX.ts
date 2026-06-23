@@ -7,6 +7,7 @@ import { generateHTMXPage } from './generateHTMXPage';
 
 export const scaffoldHTMX = ({
 	editBasePath,
+	includeExamples,
 	targetDirectory,
 	templatesDirectory,
 	projectAssetsDirectory,
@@ -14,15 +15,10 @@ export const scaffoldHTMX = ({
 	isSingleFrontend,
 	stylesIndexesDirectory
 }: ScaffoldFrontendProps) => {
-	copyFileSync(
-		join(templatesDirectory, 'assets', 'svg', 'htmx-logo-black.svg'),
-		join(projectAssetsDirectory, 'svg', 'htmx-logo-black.svg')
-	);
-	copyFileSync(
-		join(templatesDirectory, 'assets', 'svg', 'htmx-logo-white.svg'),
-		join(projectAssetsDirectory, 'svg', 'htmx-logo-white.svg')
-	);
+	const pagesDirectory = join(targetDirectory, 'pages');
+	const cssOutputFile = join(stylesIndexesDirectory, 'htmx-example.css');
 
+	// htmx.min.js is the framework runtime, copied in both modes.
 	const glob = new Glob('htmx*.min.js');
 	for (const relativePath of glob.scanSync({
 		cwd: join(templatesDirectory, 'htmx')
@@ -33,17 +29,37 @@ export const scaffoldHTMX = ({
 		break;
 	}
 
+	if (!includeExamples) {
+		mkdirSync(pagesDirectory, { recursive: true });
+		writeFileSync(
+			join(pagesDirectory, 'HTMXExample.html'),
+			generateHTMXPage(isSingleFrontend, frontends, editBasePath, false),
+			'utf-8'
+		);
+		writeFileSync(cssOutputFile, `@import url('../reset.css');`, 'utf-8');
+
+		return;
+	}
+
+	copyFileSync(
+		join(templatesDirectory, 'assets', 'svg', 'htmx-logo-black.svg'),
+		join(projectAssetsDirectory, 'svg', 'htmx-logo-black.svg')
+	);
+	copyFileSync(
+		join(templatesDirectory, 'assets', 'svg', 'htmx-logo-white.svg'),
+		join(projectAssetsDirectory, 'svg', 'htmx-logo-white.svg')
+	);
+
 	const htmxPage = generateHTMXPage(
 		isSingleFrontend,
 		frontends,
-		editBasePath
+		editBasePath,
+		true
 	);
-	const pagesDirectory = join(targetDirectory, 'pages');
 	mkdirSync(pagesDirectory, { recursive: true });
 	const htmxFilePath = join(pagesDirectory, 'HTMXExample.html');
 	writeFileSync(htmxFilePath, htmxPage, 'utf-8');
 
-	const cssOutputFile = join(stylesIndexesDirectory, 'htmx-example.css');
 	const htmxCSS = generateMarkupCSS('htmx', '#3465a4');
 	writeFileSync(cssOutputFile, htmxCSS, 'utf-8');
 };

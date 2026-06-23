@@ -3,8 +3,31 @@ import { formatNavLink } from '../../utils/formatNavLink';
 
 export const generateSveltePage = (
 	frontends: Frontend[],
-	editBasePath: string
+	editBasePath: string,
+	includeExamples: boolean
 ) => {
+	if (!includeExamples) {
+		return `<script lang="ts">
+	type SvelteExampleProps = {
+		initialCount: number;
+		cssPath: string;
+	};
+
+	let { cssPath }: SvelteExampleProps = $props();
+</script>
+
+<svelte:head>
+	<meta charset="utf-8" />
+	<title>AbsoluteJS + Svelte</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<link rel="icon" href="/assets/ico/favicon.ico" />
+	<link rel="stylesheet" href={cssPath} type="text/css" />
+</svelte:head>
+
+<main></main>
+`;
+	}
+
 	const navLinks = frontends.map(formatNavLink).join('\n\t\t\t');
 
 	return `<script lang="ts">

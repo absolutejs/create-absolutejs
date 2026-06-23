@@ -56,6 +56,7 @@ export const parseCommandLineOptions = () => {
 			directory: { type: 'string' },
 			env: { multiple: true, type: 'string' },
 			'eslint+prettier': { type: 'boolean' },
+			examples: { type: 'boolean' },
 			git: { type: 'boolean' },
 			github: { type: 'string' },
 			help: { default: false, short: 'h', type: 'boolean' },
@@ -335,6 +336,8 @@ export const parseCommandLineOptions = () => {
 
 	values.env = validEnv.length ? validEnv : undefined;
 
+	const includeExamples = values.examples ?? (values.skip ? true : undefined);
+
 	const repoVisibility = values['repo-visibility'];
 	const githubVisibility =
 		repoVisibility === 'public' || repoVisibility === 'private'
@@ -358,6 +361,7 @@ export const parseCommandLineOptions = () => {
 			: undefined,
 		githubRepoUrl: normalizeRepoInput(values.repo)?.httpsUrl,
 		githubVisibility,
+		includeExamples,
 		initializeGitNow: values.git,
 		installDependenciesNow: values.install,
 		orm,

@@ -8,12 +8,28 @@ type ScaffoldVueProps = Omit<ScaffoldFrontendProps, 'isSingleFrontend'>;
 
 export const scaffoldVue = ({
 	editBasePath,
+	includeExamples,
 	targetDirectory,
 	templatesDirectory,
 	frontends,
 	projectAssetsDirectory,
 	stylesIndexesDirectory
 }: ScaffoldVueProps) => {
+	const cssOutputFile = join(stylesIndexesDirectory, 'vue-example.css');
+	const pagesDirectory = join(targetDirectory, 'pages');
+
+	if (!includeExamples) {
+		mkdirSync(pagesDirectory, { recursive: true });
+		writeFileSync(
+			join(pagesDirectory, 'VueExample.vue'),
+			generateVuePage(frontends, editBasePath, false),
+			'utf-8'
+		);
+		writeFileSync(cssOutputFile, `@import url('../reset.css');`, 'utf-8');
+
+		return;
+	}
+
 	copyFileSync(
 		join(templatesDirectory, 'assets', 'svg', 'vue-logo.svg'),
 		join(projectAssetsDirectory, 'svg', 'vue-logo.svg')
@@ -22,13 +38,11 @@ export const scaffoldVue = ({
 		recursive: true
 	});
 
-	const vuePage = generateVuePage(frontends, editBasePath);
-	const pagesDirectory = join(targetDirectory, 'pages');
+	const vuePage = generateVuePage(frontends, editBasePath, true);
 	mkdirSync(pagesDirectory, { recursive: true });
 	const vueFilePath = join(pagesDirectory, 'VueExample.vue');
 	writeFileSync(vueFilePath, vuePage, 'utf-8');
 
-	const cssOutputFile = join(stylesIndexesDirectory, 'vue-example.css');
 	const vueCSS = generateMarkupCSS('vue', '#42b883');
 	writeFileSync(cssOutputFile, vueCSS, 'utf-8');
 };

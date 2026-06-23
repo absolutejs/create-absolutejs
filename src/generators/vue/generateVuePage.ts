@@ -3,8 +3,32 @@ import { formatNavLink } from '../../utils/formatNavLink';
 
 export const generateVuePage = (
 	frontends: Frontend[],
-	editBasePath: string
+	editBasePath: string,
+	includeExamples: boolean
 ) => {
+	if (!includeExamples) {
+		return `<script setup lang="ts">
+defineProps<{
+	initialCount: number;
+}>();
+</script>
+
+<template>
+	<main></main>
+</template>
+
+<style scoped>
+:global(#root) {
+	display: flex;
+	flex-direction: column;
+	margin: 0 auto;
+	height: 100%;
+	width: 100%;
+}
+</style>
+`;
+	}
+
 	const navLinks = frontends.map(formatNavLink).join('\n\t\t\t');
 
 	return `<script setup lang="ts">

@@ -33,6 +33,7 @@ Options:
   ${cyan('--htmx-dir')} ${dim(cyan('<directory>'))}          Specify the directory for and use the HTMX frontend
   ${cyan('--install')}                       Use the same package manager to install dependencies
   ${cyan('--lts')}                           Use LTS versions of required packages
+  ${cyan('--no-examples')}                   Generate a bare, bootable skeleton without example pages, components, or demo styles
   ${cyan('--orm')} ${dim(cyan('<orm>'))}                     ORM to configure: "drizzle" | "prisma" | 'none'
   ${cyan('--plugin')} ${dim(cyan('<plugin>'))}               Elysia plugin(s) to include (repeatable); 'none' skips plugin setup
   ${cyan('--react')}                         Include a React frontend
@@ -76,6 +77,7 @@ export const getDebugMessage = ({
 		useTailwind,
 		tailwind,
 		frontends,
+		includeExamples,
 		useHTMLScripts,
 		frontendDirectories,
 		buildDirectory,
@@ -118,6 +120,7 @@ export const getDebugMessage = ({
 		['Tailwind Configuration', tailwindSection],
 		[frontends.length === 1 ? 'Frontend' : 'Frontends', frontends.map((name) => frontendLabels[name]).join(', ')],
 		['HTML Scripting',       frontends.includes('html') ? htmlScriptingValue : dim('None')],
+		['Example Content',      includeExamples ? green('Yes') : red('No')],
 		['Build Directory',      buildDirectory],
 		['Assets Directory',     assetsDirectory],
 		['Database Engine',      databaseEngine && databaseEngine !== 'none' ? databaseEngine : dim('None')],
