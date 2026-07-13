@@ -6,6 +6,7 @@ import type {
 	FrontendDirectories
 } from '../types';
 import { abort } from '../utils/abort';
+import { orPrompt } from '../utils/interactive';
 
 const getDirectoryForFrontend = async (
 	directoryConfiguration: DirectoryConfiguration,
@@ -15,10 +16,14 @@ const getDirectoryForFrontend = async (
 	if (directoryConfiguration !== 'custom')
 		return isSingleFrontend ? '' : frontend;
 
-	const response = await text({
-		message: `${frontendLabels[frontend]} directory:`,
-		placeholder: isSingleFrontend ? '' : frontend
-	});
+	const response = await orPrompt(
+		`the ${frontendLabels[frontend]} directory (pass --<frontend>-dir)`,
+		() =>
+			text({
+				message: `${frontendLabels[frontend]} directory:`,
+				placeholder: isSingleFrontend ? '' : frontend
+			})
+	);
 	if (isCancel(response)) abort();
 
 	return response;

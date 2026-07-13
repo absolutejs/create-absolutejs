@@ -165,6 +165,10 @@ export const parseCommandLineOptions = () => {
 		codeQualityTool = 'eslint+prettier';
 	} else if (useBiome) {
 		codeQualityTool = 'biome';
+	} else if (values.skip) {
+		// --skip must default EVERY prompted axis — a missing default here
+		// hangs headless callers (the Studio container) on a clack prompt.
+		codeQualityTool = 'eslint+prettier';
 	} else {
 		codeQualityTool = undefined;
 	}
@@ -172,7 +176,9 @@ export const parseCommandLineOptions = () => {
 	const directoryConfig =
 		values.directory !== undefined && isDirectoryConfig(values.directory)
 			? values.directory
-			: undefined;
+			: // --skip defaults every prompted axis (headless callers hang on
+				// missing ones).
+				(values.skip ? ('default' as const) : undefined);
 	if (values.directory !== undefined && directoryConfig === undefined) {
 		errors.push(
 			`Invalid directory configuration: "${values.directory}". Expected: [ ${availableDirectoryConfigurations.join(', ')} ]`

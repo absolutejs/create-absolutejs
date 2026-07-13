@@ -1,5 +1,5 @@
 import os from 'os';
-import { env, platform } from 'process';
+import { env, platform, stdin, stdout } from 'process';
 import { confirm, spinner } from '@clack/prompts';
 import { $ } from 'bun';
 import { dim, yellow } from 'picocolors';
@@ -135,10 +135,21 @@ const installLinuxSqlite = async () => {
 
 export const checkSqliteInstalled = async () => {
 	if (await hasSqlite()) return;
+	// Non-interactive contexts (the Studio container, CI, any piped stdin)
+	// must never block on a prompt — and sudo-based installs can't work
+	// there anyway. The CLI is optional (scaffolding seeds via bun:sqlite);
+	// mention it and move on.
+	if (!stdin.isTTY || !stdout.isTTY || env.CI) {
+		console.log(
+			`${dim('│')}\n${yellow('▲')}  sqlite3 CLI not found — optional; your database still works. Install it later for a db shell: ${SQLITE_URL}`
+		);
+
+		return;
+	}
 	const proceed = await confirm({
 		initialValue: true,
 		message:
-			'sqlite3 CLI is required for local SQLite databases. Install now?'
+			'sqlite3 CLI is optional (handy as a db shell). Install now?'
 	});
 	if (!proceed) return;
 	switch (hostEnv) {

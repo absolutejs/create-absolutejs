@@ -16,54 +16,56 @@ import { getPlugins } from './questions/plugins';
 import { getProjectName } from './questions/projectName';
 import { getUseTailwind } from './questions/useTailwind';
 import type { ArgumentConfiguration, CreateConfiguration } from './types';
+import { orPrompt } from './utils/interactive';
+
 
 export const prompt = async (argumentConfiguration: ArgumentConfiguration) => {
 	// 1. Project name
 	const projectName =
-		argumentConfiguration.projectName ?? (await getProjectName());
+		argumentConfiguration.projectName ?? (await orPrompt('a project name', getProjectName));
 
 	// 2. Linting/formatting tool
 	const codeQualityTool =
-		argumentConfiguration.codeQualityTool ?? (await getCodeQualityTool());
+		argumentConfiguration.codeQualityTool ?? (await orPrompt('--eslint+prettier/--biome', getCodeQualityTool));
 
 	// 3. Tailwind support?
 	const useTailwind =
-		argumentConfiguration.useTailwind ?? (await getUseTailwind());
+		argumentConfiguration.useTailwind ?? (await orPrompt('--tailwind/--no-tailwind', getUseTailwind));
 
 	// 4. Frontend(s)
 	const frontends =
 		argumentConfiguration.frontends?.filter(
 			(frontend) => frontend !== undefined
-		) ?? (await getFrontends());
+		) ?? (await orPrompt('--react/--vue/--svelte/…', getFrontends));
 
 	// 5. HTML scripting option (if HTML was selected)
 	const useHTMLScripts = frontends.includes('html')
 		? (argumentConfiguration.useHTMLScripts ??
-			(await getHtmlScriptingOption()))
+			(await orPrompt('--html-scripts/--no-html-scripts', getHtmlScriptingOption)))
 		: false;
 
 	// 5b. Include example pages/components, or generate a bare skeleton
 	const includeExamples =
-		argumentConfiguration.includeExamples ?? (await getIncludeExamples());
+		argumentConfiguration.includeExamples ?? (await orPrompt('--examples/--no-examples', getIncludeExamples));
 
 	// 6. Database engine
 	const databaseEngine =
-		argumentConfiguration.databaseEngine ?? (await getDatabaseEngine());
+		argumentConfiguration.databaseEngine ?? (await orPrompt('--db', getDatabaseEngine));
 
 	// 7. Database host
 	const databaseHost =
 		argumentConfiguration.databaseHost ??
-		(await getDatabaseHost(databaseEngine));
+		(await orPrompt('--db-host', () => getDatabaseHost(databaseEngine)));
 
 	// 8. ORM choice
 	const orm =
 		databaseEngine !== undefined && databaseEngine !== 'none'
-			? (argumentConfiguration.orm ?? (await getORM(databaseEngine)))
+			? (argumentConfiguration.orm ?? (await orPrompt('--orm', () => getORM(databaseEngine))))
 			: undefined;
 
 	// 9. Configuration type
 	let directoryConfig =
-		argumentConfiguration.directoryConfig ?? (await getConfigurationType());
+		argumentConfiguration.directoryConfig ?? (await orPrompt('--directory', getConfigurationType));
 
 	// 10. Directory configurations
 	const { buildDirectory, assetsDirectory, tailwind, databaseDirectory } =
@@ -87,17 +89,17 @@ export const prompt = async (argumentConfiguration: ArgumentConfiguration) => {
 
 	// 12. Auth provider
 	const authOption =
-		argumentConfiguration.authOption ?? (await getAuthOption());
+		argumentConfiguration.authOption ?? (await orPrompt('--auth', getAuthOption));
 
 	// 13. Additional plugins
 	const plugins =
 		argumentConfiguration.plugins?.filter(
 			(plugin) => plugin !== undefined
-		) ?? (await getPlugins());
+		) ?? (await orPrompt('--plugin', getPlugins));
 
 	// 14. Initialize Git repository
 	const initializeGitNow =
-		argumentConfiguration.initializeGitNow ?? (await getInitializeGit());
+		argumentConfiguration.initializeGitNow ?? (await orPrompt('--git/--no-git', getInitializeGit));
 
 	// 14b. Optionally connect the new project to GitHub
 	const resolveGithubLink = async () => {
@@ -116,7 +118,7 @@ export const prompt = async (argumentConfiguration: ArgumentConfiguration) => {
 			};
 		}
 
-		return getGithubLink(projectName);
+		return orPrompt('--repo/--repo-visibility', () => getGithubLink(projectName));
 	};
 	const { githubLink, githubRepoUrl, githubVisibility } =
 		await resolveGithubLink();
@@ -124,7 +126,7 @@ export const prompt = async (argumentConfiguration: ArgumentConfiguration) => {
 	// 15. Install dependencies
 	const installDependenciesNow =
 		argumentConfiguration.installDependenciesNow ??
-		(await getInstallDependencies());
+		(await orPrompt('--install/--no-install', getInstallDependencies));
 
 	const values: CreateConfiguration = {
 		absProviders: argumentConfiguration.absProviders?.filter(

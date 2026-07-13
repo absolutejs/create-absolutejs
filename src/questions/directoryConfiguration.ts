@@ -1,6 +1,10 @@
 import { text, isCancel } from '@clack/prompts';
 import type { ArgumentConfiguration, CreateConfiguration } from '../types';
 import { abort } from '../utils/abort';
+import { orPrompt } from '../utils/interactive';
+
+const orPromptText = (options: Parameters<typeof text>[0]) =>
+	orPrompt(`a value for "${String(options.message)}" (pass the matching --*-dir flag)`, () => text(options));
 
 type GetDirectoryConfigurationProps = Pick<
 	CreateConfiguration,
@@ -40,7 +44,7 @@ export const getDirectoryConfiguration = async ({
 	// Build directory
 	const buildDirectory =
 		argumentConfiguration.buildDirectory ??
-		(await text({
+		(await orPromptText({
 			message: 'Build directory:',
 			placeholder: 'build'
 		}));
@@ -49,7 +53,7 @@ export const getDirectoryConfiguration = async ({
 	// Assets directory
 	const assetsDirectory =
 		argumentConfiguration.assetsDirectory ??
-		(await text({
+		(await orPromptText({
 			message: 'Assets directory:',
 			placeholder: 'src/backend/assets'
 		}));
@@ -60,7 +64,7 @@ export const getDirectoryConfiguration = async ({
 	if (useTailwind) {
 		const input =
 			argumentConfiguration.tailwind?.input ??
-			(await text({
+			(await orPromptText({
 				message: 'Tailwind input CSS file:',
 				placeholder: './src/frontend/styles/tailwind.css'
 			}));
@@ -68,7 +72,7 @@ export const getDirectoryConfiguration = async ({
 
 		const output =
 			argumentConfiguration.tailwind?.output ??
-			(await text({
+			(await orPromptText({
 				message: 'Tailwind output CSS file:',
 				placeholder: 'assets/css/tailwind.generated.css'
 			}));
@@ -84,7 +88,7 @@ export const getDirectoryConfiguration = async ({
 	if (databaseEngine !== undefined && databaseEngine !== 'none') {
 		databaseDirectory =
 			argumentConfiguration.databaseDirectory ??
-			(await text({
+			(await orPromptText({
 				message: 'Database directory:',
 				placeholder: 'db'
 			}));

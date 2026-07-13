@@ -1,6 +1,5 @@
 import { mkdirSync, writeFileSync } from 'fs';
 import { join } from 'path';
-import { $ } from 'bun';
 import { dim, yellow } from 'picocolors';
 import { isDrizzleDialect } from '../../typeGuards';
 import type { CreateConfiguration } from '../../types';
@@ -89,6 +88,10 @@ export const scaffoldDatabase = async ({
 	}
 
 	if (databaseEngine === 'sqlite') {
+		// The sqlite3 CLI is a developer convenience (a db shell), never a
+		// scaffold requirement — seeding goes through bun:sqlite below, which
+		// ships with the runtime. The check only nudges interactive users;
+		// headless runs (the Studio container, CI) skip it entirely.
 		void (
 			(orm === undefined || orm === 'none') &&
 			(await checkSqliteInstalled())
@@ -98,10 +101,12 @@ export const scaffoldDatabase = async ({
 			join(projectDatabaseDirectory, 'schema.sql'),
 			sqliteSchema
 		);
-		await $`sqlite3 ${databaseDirectory}/database.sqlite ".read ${join(
-			databaseDirectory,
-			'schema.sql'
-		)}"`.cwd(projectName);
+		const { Database } = await import('bun:sqlite');
+		const seeded = new Database(
+			join(projectName, databaseDirectory, 'database.sqlite')
+		);
+		seeded.run(sqliteSchema);
+		seeded.close();
 	}
 
 	if (
