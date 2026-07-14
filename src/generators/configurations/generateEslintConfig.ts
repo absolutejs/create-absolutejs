@@ -100,7 +100,9 @@ export default defineConfig([
 			security: fixupPluginRules(securityPlugin)
 		},
 		rules: {
+			'absolute/button-icon-is-hidden': 'error',
 			'absolute/explicit-object-types': 'error',
+			'absolute/icon-button-has-accessible-name': 'error',
 			'absolute/localize-react-props': 'error',
 			'absolute/max-depth-extended': ['error', 1],
 			'absolute/max-jsxnesting': ['error', 5],
@@ -218,6 +220,12 @@ export default defineConfig([
 			'promise/no-return-wrap': 'error',
 			'promise/param-names': 'error'
 		}
+	},
+	{
+		files: ['**/*.{html,vue,svelte,gjs,gts}'],
+		ignores: ['example/build/**'],
+		plugins: { absolute: fixupPluginRules(absolutePlugin) },
+		processor: 'absolute/template-source'
 	},
 ${reactBlock}	{
 		files: [
