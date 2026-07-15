@@ -8,7 +8,7 @@ export const versions = {
 	'@absolutejs/absolute': '0.19.0-beta.1081',
 	'@absolutejs/agency': '0.2.0',
 	'@absolutejs/agent-conformance': '0.1.0',
-	'@absolutejs/auth': '0.54.6',
+	'@absolutejs/auth': '0.54.7',
 	'@absolutejs/manifest': '0.2.0',
 	'@absolutejs/mcp': '0.5.1',
 	'@absolutejs/secrets': '0.6.1',
