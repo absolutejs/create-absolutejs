@@ -10,9 +10,9 @@ export const versions = {
 	'@absolutejs/agent-conformance': '0.1.0',
 	'@absolutejs/auth': '0.54.6',
 	'@absolutejs/manifest': '0.2.0',
-	'@absolutejs/mcp': '0.5.0',
-	'@absolutejs/secrets': '0.6.0',
-	'@absolutejs/wallet': '0.2.0',
+	'@absolutejs/mcp': '0.5.1',
+	'@absolutejs/secrets': '0.6.1',
+	'@absolutejs/wallet': '0.2.1',
 	/* ── Angular ─────────────────────────────────────────── */
 	'@angular/common': '21.2.0',
 	'@angular/compiler': '21.2.0',
