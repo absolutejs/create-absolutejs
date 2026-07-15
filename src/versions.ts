@@ -6,7 +6,13 @@
 export const versions = {
 	/* ── Core ─────────────────────────────────────────────── */
 	'@absolutejs/absolute': '0.19.0-beta.1081',
-	'@absolutejs/auth': '0.22.7',
+	'@absolutejs/agency': '0.2.0',
+	'@absolutejs/agent-conformance': '0.1.0',
+	'@absolutejs/auth': '0.54.6',
+	'@absolutejs/manifest': '0.2.0',
+	'@absolutejs/mcp': '0.5.0',
+	'@absolutejs/secrets': '0.6.0',
+	'@absolutejs/wallet': '0.2.0',
 	/* ── Angular ─────────────────────────────────────────── */
 	'@angular/common': '21.2.0',
 	'@angular/compiler': '21.2.0',

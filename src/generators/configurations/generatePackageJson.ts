@@ -18,6 +18,7 @@ import { computeFlags } from '../project/computeFlags';
 type CreatePackageJsonProps = Pick<
 	CreateConfiguration,
 	| 'authOption'
+	| 'agentic'
 	| 'useTailwind'
 	| 'databaseEngine'
 	| 'databaseHost'
@@ -44,6 +45,7 @@ const dbClientCommands = {
 } as const;
 
 export const createPackageJson = async ({
+	agentic,
 	projectName,
 	authOption,
 	plugins,
@@ -67,6 +69,15 @@ export const createPackageJson = async ({
 	for (const dep of defaultDependencies) packageNames.add(dep.value);
 
 	if (authOption === 'abs') packageNames.add(absoluteAuthPlugin.value);
+	if (agentic) {
+		packageNames.add('@absolutejs/agency');
+		packageNames.add('@absolutejs/agent-conformance');
+		packageNames.add('@absolutejs/auth');
+		packageNames.add('@absolutejs/manifest');
+		packageNames.add('@absolutejs/mcp');
+		packageNames.add('@absolutejs/secrets');
+		packageNames.add('@absolutejs/wallet');
+	}
 
 	for (const pluginValue of plugins) {
 		const meta = availablePlugins.find((p) => p.value === pluginValue);
@@ -179,6 +190,23 @@ export const createPackageJson = async ({
 		dependencies[absoluteAuthPlugin.value] = resolveVersion(
 			absoluteAuthPlugin.value,
 			absoluteAuthPlugin.latestVersion
+		);
+	}
+
+	if (agentic) {
+		for (const name of [
+			'@absolutejs/agency',
+			'@absolutejs/auth',
+			'@absolutejs/manifest',
+			'@absolutejs/mcp',
+			'@absolutejs/secrets',
+			'@absolutejs/wallet'
+		] as const) {
+			dependencies[name] = resolveVersion(name, versions[name]);
+		}
+		devDependencies['@absolutejs/agent-conformance'] = resolveVersion(
+			'@absolutejs/agent-conformance',
+			versions['@absolutejs/agent-conformance']
 		);
 	}
 

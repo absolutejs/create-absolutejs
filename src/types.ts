@@ -69,6 +69,7 @@ export type TailwindConfig =
 export type GithubLinkOption = 'existing' | 'create' | 'skip';
 
 export type CreateConfiguration = {
+	agentic: boolean;
 	absProviders: ProviderOption[] | undefined;
 	assetsDirectory: string;
 	authOption: AuthOption;

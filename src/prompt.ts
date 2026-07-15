@@ -1,4 +1,5 @@
 import { getAuthOption } from './questions/authOption';
+import { getAgentic } from './questions/agentic';
 import { getCodeQualityTool } from './questions/codeQualityTool';
 import { getConfigurationType } from './questions/configurationType';
 import { getDatabaseEngine } from './questions/databaseEngine';
@@ -91,6 +92,11 @@ export const prompt = async (argumentConfiguration: ArgumentConfiguration) => {
 	const authOption =
 		argumentConfiguration.authOption ?? (await orPrompt('--auth', getAuthOption));
 
+	// 12b. Agent-first action/auth/MCP/wallet/credential stack
+	const agentic =
+		argumentConfiguration.agentic ??
+		(await orPrompt('--agentic/--no-agentic', getAgentic));
+
 	// 13. Additional plugins
 	const plugins =
 		argumentConfiguration.plugins?.filter(
@@ -129,6 +135,7 @@ export const prompt = async (argumentConfiguration: ArgumentConfiguration) => {
 		(await orPrompt('--install/--no-install', getInstallDependencies));
 
 	const values: CreateConfiguration = {
+		agentic,
 		absProviders: argumentConfiguration.absProviders?.filter(
 			(provider) => provider !== undefined
 		),

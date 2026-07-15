@@ -43,6 +43,7 @@ export const parseCommandLineOptions = () => {
 		args: argv.slice(DEFAULT_ARG_LENGTH),
 		options: {
 			'abs-provider': { multiple: true, type: 'string' },
+			agentic: { type: 'boolean' },
 			angular: { type: 'boolean' },
 			'angular-dir': { type: 'string' },
 			assets: { type: 'string' },
@@ -351,6 +352,7 @@ export const parseCommandLineOptions = () => {
 			: undefined;
 
 	const argumentConfiguration: ArgumentConfiguration = {
+		agentic: values.agentic ?? (values.skip ? false : undefined),
 		absProviders: absProviders.length ? absProviders : undefined,
 		assetsDirectory: values.assets,
 		authOption,

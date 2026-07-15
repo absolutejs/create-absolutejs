@@ -4,7 +4,7 @@
 		"create-absolutejs": "dist/index.js"
 	},
 	"dependencies": {
-		"@absolutejs/auth": "0.22.0",
+		"@absolutejs/auth": "0.54.6",
 		"@clack/prompts": "1.0.0",
 		"picocolors": "1.1.1"
 	},
@@ -47,10 +47,12 @@
 		"dev": "bun scripts/dev.ts",
 		"format": "absolute prettier --write",
 		"lint": "absolute eslint --ignore-pattern 'absolutejs-project/**'",
-		"release": "bun run format && bun run build && bun publish",
+		"release": "bun run format && bun run check:package && bun publish",
 		"test": "cd absolutejs-project && bun dev",
+		"test:unit": "bun test tests/",
+		"check:package": "bun run typecheck && bun run test:unit && bun run build",
 		"typecheck": "bun run tsc --noEmit"
 	},
 	"type": "module",
-	"version": "0.13.11"
+	"version": "0.14.0"
 }

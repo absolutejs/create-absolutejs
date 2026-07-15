@@ -51,6 +51,13 @@ Usage: create-absolute [project-name] [options]
 - `--angular`  
   Include an Angular frontend.
 
+- `--agentic`
+  Add the provider-neutral agent stack: Agency action enforcement and kill
+  switch, agent auth, MCP Tasks, credential operations, bounded wallet spend,
+  manifest contract 2, and the adversarial conformance harness. The scaffold
+  creates `src/backend/agent.ts` with a deny-by-default policy plus an
+  `AGENTS.md` execution contract.
+
 - `--angular-dir <directory>`  
   Specify the directory for and use the Angular frontend.
 

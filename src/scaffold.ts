@@ -10,6 +10,7 @@ import { scaffoldConfigurationFiles } from './generators/configurations/scaffold
 import { scaffoldDatabase } from './generators/db/scaffoldDatabase';
 import { scaffoldBackend } from './generators/project/scaffoldBackend';
 import { scaffoldFrontends } from './generators/project/scaffoldFrontends';
+import { scaffoldAgentic } from './generators/project/scaffoldAgentic';
 import type { PackageManager, CreateConfiguration } from './types';
 
 type ScaffoldProps = {
@@ -21,6 +22,7 @@ type ScaffoldProps = {
 
 export const scaffold = async ({
 	response: {
+		agentic,
 		projectName,
 		codeQualityTool,
 		initializeGitNow,
@@ -76,6 +78,7 @@ export const scaffold = async ({
 	});
 
 	await createPackageJson({
+		agentic,
 		authOption,
 		codeQualityTool,
 		databaseEngine,
@@ -103,6 +106,8 @@ export const scaffold = async ({
 		publicDirectory: 'public',
 		tailwind
 	});
+
+	if (agentic) scaffoldAgentic({ backendDirectory, projectName });
 
 	let dockerFreshInstall = false;
 	if (

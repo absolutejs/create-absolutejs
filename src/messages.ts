@@ -14,6 +14,7 @@ Options:
   ${cyan('--debug, -d')}                     Display a summary of the project configuration after creation
 
   ${cyan('--abs-provider')}                  A provider for Absolute-Auth (eg. 'google', 'github', 'discord') the full list is available at https://absolutejs.com/documentation/absolute-auth   
+  ${cyan('--agentic')}                       Add provider-neutral agent auth, actions, MCP, wallet, credential, and conformance scaffolding
   ${cyan('--angular')}                       Include an Angular frontend
   ${cyan('--angular-dir')} ${dim(cyan('<directory>'))}       Specify the directory for and use the Angular frontend
   ${cyan('--assets')} ${dim(cyan('<directory>'))}            Directory name for your static assets
@@ -71,6 +72,7 @@ type DebugMessageProps = {
 
 export const getDebugMessage = ({
 	response: {
+		agentic,
 		projectName,
 		codeQualityTool,
 		directoryConfig,
@@ -114,6 +116,7 @@ export const getDebugMessage = ({
 	/* prettier-ignore */
 	const lines: [string, string][] = [
 		['Project Name',         projectName],
+		['Agent-first Stack',    agentic ? green('Yes') : dim('No')],
 		['Package Manager',      packageManager],
 		['Config Type',          isCustomConfig ? green('Custom') : dim('Default')],
 		['Linting',              codeQualityTool === 'eslint+prettier' ? 'ESLint + Prettier' : 'Biome'],
