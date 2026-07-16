@@ -4,7 +4,7 @@
 		"create-absolutejs": "dist/index.js"
 	},
 	"dependencies": {
-		"@absolutejs/auth": "0.54.8",
+		"@absolutejs/auth": "0.54.9",
 		"@clack/prompts": "1.0.0",
 		"picocolors": "1.1.1"
 	},
@@ -54,5 +54,5 @@
 		"typecheck": "bun run tsc --noEmit"
 	},
 	"type": "module",
-	"version": "0.15.0"
+	"version": "0.15.1"
 }

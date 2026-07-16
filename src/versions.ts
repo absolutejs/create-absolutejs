@@ -16,7 +16,7 @@ export const versions = {
 	'@absolutejs/agent-sandbox': '0.1.0',
 	'@absolutejs/agent-trust': '0.1.0',
 	'@absolutejs/agent-control': '0.1.0',
-	'@absolutejs/auth': '0.54.8',
+	'@absolutejs/auth': '0.54.9',
 	'@absolutejs/egress': '0.1.0',
 	'@absolutejs/execution': '0.2.0',
 	'@absolutejs/manifest': '0.3.0',
