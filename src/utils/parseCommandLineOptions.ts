@@ -311,7 +311,8 @@ export const parseCommandLineOptions = () => {
 		: undefined;
 
 	const useTailwind =
-		values.tailwind ?? (hasTailwindFiles ? true : undefined);
+		values.tailwind ??
+		(hasTailwindFiles ? true : values.skip ? false : undefined);
 
 	if (useTailwind === false && hasTailwindFiles) {
 		console.warn(
@@ -363,15 +364,20 @@ export const parseCommandLineOptions = () => {
 		databaseHost,
 		directoryConfig,
 		frontendDirectories,
-		frontends: selectedFrontends.length ? selectedFrontends : undefined,
+		frontends: selectedFrontends.length
+			? selectedFrontends
+			: values.skip
+				? []
+				: undefined,
 		githubLink: isGithubLinkOption(values.github)
 			? values.github
 			: undefined,
 		githubRepoUrl: normalizeRepoInput(values.repo)?.httpsUrl,
 		githubVisibility,
 		includeExamples,
-		initializeGitNow: values.git,
-		installDependenciesNow: values.install,
+		initializeGitNow: values.git ?? (values.skip ? false : undefined),
+		installDependenciesNow:
+			values.install ?? (values.skip ? false : undefined),
 		orm,
 		plugins,
 		projectName,
