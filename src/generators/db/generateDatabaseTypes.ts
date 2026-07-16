@@ -196,7 +196,7 @@ export const generateDatabaseTypes = ({
 	const schemaImport =
 		authOption === 'abs'
 			? `import { users, schema } from '../../db/schema';`
-			: `import { countHistory } from '../../db/schema';`;
+			: `import { countHistory, schema } from '../../db/schema';`;
 	const extraTypes =
 		authOption === 'abs'
 			? `export type User = typeof users.$inferSelect;

@@ -1,7 +1,10 @@
 import { mkdirSync, writeFileSync } from 'fs';
 import { join } from 'path';
 import { CreateConfiguration } from '../../types';
-import { generateAbsoluteAuthConfig } from './generateAbsoluteAuthConfig';
+import {
+	generateAbsoluteAuthConfig,
+	generateSessionUserType
+} from './generateAbsoluteAuthConfig';
 import { generateServerFile } from './generateServer';
 
 type ScaffoldBackendProps = Pick<
@@ -19,6 +22,7 @@ type ScaffoldBackendProps = Pick<
 > & {
 	backendDirectory: string;
 	publicDirectory: string;
+	typesDirectory: string;
 };
 
 export const scaffoldBackend = ({
@@ -33,7 +37,8 @@ export const scaffoldBackend = ({
 	orm,
 	plugins,
 	publicDirectory,
-	tailwind
+	tailwind,
+	typesDirectory
 }: ScaffoldBackendProps) => {
 	generateServerFile({
 		assetsDirectory,
@@ -62,5 +67,18 @@ export const scaffoldBackend = ({
 			absoluteAuthConfig,
 			'utf-8'
 		);
+
+		/* The auth config and the example page both import `User` from
+		   types/databaseTypes, which scaffoldDatabase only writes when there is
+		   a database. Without one, emit the session user shape on its own so the
+		   auth scaffold still type-checks. */
+		if (!hasDatabase) {
+			mkdirSync(typesDirectory, { recursive: true });
+			writeFileSync(
+				join(typesDirectory, 'databaseTypes.ts'),
+				generateSessionUserType(),
+				'utf-8'
+			);
+		}
 	}
 };

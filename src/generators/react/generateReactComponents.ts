@@ -82,14 +82,22 @@ export const generateDropdownComponent = (frontends: Frontend[]) => {
 );
 `;
 };
+/* Pages live at `src/frontend/<reactDirectory>/pages`, but `reactDirectory` is
+   empty when React is the only frontend, which moves the page one level up. */
+const buildDatabaseTypesPath = (reactDirectory: string) =>
+	`${reactDirectory ? '../../../' : '../../'}types/databaseTypes`;
+
 export const generateReactExamplePage = (
 	authOption: AuthOption,
-	includeExamples: boolean
+	includeExamples: boolean,
+	reactDirectory: string
 ) => {
+	const databaseTypesPath = buildDatabaseTypesPath(reactDirectory);
+
 	if (!includeExamples) {
 		const authImports =
 			authOption === 'abs'
-				? `import type { User } from '../../../types/databaseTypes';\nimport type { ProviderConfiguration } from '@absolutejs/auth';\n`
+				? `import type { User } from '${databaseTypesPath}';\nimport type { ProviderConfiguration } from '@absolutejs/auth';\n`
 				: '';
 		const authProps =
 			authOption === 'abs'
@@ -172,7 +180,7 @@ export const ReactExample = ({ cssPath }: ReactExampleProps) => (
 	const closing = authOption === 'abs' ? `};` : `);`;
 
 	return `
-${authOption === 'abs' ? `import type { User } from '../../../types/databaseTypes';\nimport { extractPropFromIdentity } from '@absolutejs/auth';\nimport type { ProviderConfiguration } from '@absolutejs/auth';` : ''}
+${authOption === 'abs' ? `import type { User } from '${databaseTypesPath}';\nimport { extractPropFromIdentity } from '@absolutejs/auth';\nimport type { ProviderConfiguration } from '@absolutejs/auth';` : ''}
 import { App } from '../components/App';
 import { Dropdown } from '../components/Dropdown';
 import { Head } from '../components/Head';

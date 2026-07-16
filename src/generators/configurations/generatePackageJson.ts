@@ -189,6 +189,12 @@ export const createPackageJson = async ({
 		'typescript',
 		versions['typescript']
 	);
+	/* Every scaffolded project runs on Bun, and the local database drivers type
+	   against its built-in modules (`bun:sqlite`, `SQL` from `bun`). */
+	devDependencies['@types/bun'] = resolveVersion(
+		'@types/bun',
+		versions['@types/bun']
+	);
 
 	for (const p of defaultPlugins) {
 		dependencies[p.value] = resolveVersion(p.value, p.latestVersion);
@@ -440,6 +446,11 @@ export const createPackageJson = async ({
 	if (orm === 'drizzle') {
 		scripts['db:studio'] = 'drizzle-kit studio';
 		scripts['db:push'] = 'drizzle-kit push';
+		/* `drizzle.config.ts` imports it and the scripts above shell out to it. */
+		devDependencies['drizzle-kit'] = resolveVersion(
+			'drizzle-kit',
+			versions['drizzle-kit']
+		);
 	}
 
 	const packageJson: PackageJson = {

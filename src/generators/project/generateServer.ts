@@ -74,13 +74,8 @@ export const generateServerFile = ({
 				pluginImport.packageName !== 'networking'
 		)
 		.map((pluginImport) => {
-			if (pluginImport.packageName === 'absoluteAuth') {
-				const hasDatabase =
-					databaseEngine !== undefined && databaseEngine !== 'none';
-
-				return hasDatabase
-					? `.use(absoluteAuth(absoluteAuthConfig(db)))`
-					: `.use(absoluteAuth(absoluteAuthConfig()))`;
+			if (pluginImport.packageName === 'auth') {
+				return `.use(authPlugin)`;
 			}
 
 			if (pluginImport.config === undefined) {
@@ -111,10 +106,20 @@ export const generateServerFile = ({
 		frontendDirectories
 	});
 
+	const hasDatabase =
+		databaseEngine !== undefined && databaseEngine !== 'none';
+
+	/* `auth()` is async, so it is hoisted out of the `.use()` chain rather than
+	   inlined — Elysia accepts the promise as a plugin. */
+	const authBlock =
+		authOption === 'abs'
+			? `const authPlugin = auth(absoluteAuthConfig(${hasDatabase ? 'db' : ''}))\n`
+			: '';
+
 	const content = `${importsBlock}
 
 ${manifestBlock}
-${dbBlock ? `${dbBlock}\n` : ''}
+${dbBlock ? `${dbBlock}\n` : ''}${authBlock}
 const server = new Elysia()
 .use(absolutejs)
 ${useBlock}${authOption === 'abs' ? `\n${guardBlock}` : ''}

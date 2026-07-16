@@ -104,7 +104,8 @@ export const scaffold = async ({
 		orm,
 		plugins,
 		publicDirectory: 'public',
-		tailwind
+		tailwind,
+		typesDirectory
 	});
 
 	if (agentic) scaffoldAgentic({ backendDirectory, projectName });

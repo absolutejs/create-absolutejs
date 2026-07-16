@@ -8,18 +8,36 @@ type QueryOperations = {
 type AuthTemplateOptions = {
 	importLines: string;
 	queries: QueryOperations;
+	/** Drizzle infers the row as `User`; every raw-SQL driver hands back an
+	 *  untyped row, so the queried shape has to be asserted instead. */
+	rowsAreTyped: boolean;
 };
 
 const buildSqlAuthTemplate = ({
 	importLines,
-	queries
+	queries,
+	rowsAreTyped
 }: AuthTemplateOptions) => `
-import { DatabaseType, NewUser } from '../../types/databaseTypes';
+import { DatabaseType, NewUser${rowsAreTyped ? '' : ', User'} } from '../../types/databaseTypes';
 ${importLines}
 
-export const getUser = async (db: DatabaseType, authSub: string) => {
+${
+	rowsAreTyped
+		? `export const getUser = async (db: DatabaseType, authSub: string) => {
+	${queries.selectUser}
+};`
+		: `const selectUserRow = async (db: DatabaseType, authSub: string) => {
 	${queries.selectUser}
 };
+
+/* The driver returns the row untyped, so it is asserted to the shape the query
+   above selects. */
+export const getUser = async (
+	db: DatabaseType,
+	authSub: string
+): Promise<User | null> =>
+	((await selectUserRow(db, authSub)) as User | null) ?? null;`
+}
 
 export const createUser = async (db: DatabaseType, newUserData: NewUser) => {
 	const { auth_sub: authSub, metadata: userIdentity } = newUserData;
@@ -28,21 +46,23 @@ export const createUser = async (db: DatabaseType, newUserData: NewUser) => {
 
 type CountTemplateOptions = {
 	importLines: string;
-	dbType: string;
 	queries: QueryOperations;
 };
 
+/* Takes `db` as the `DatabaseType` alias rather than naming the driver type
+   inline, matching the auth template — the driver type is only ever spelled out
+   in types/databaseTypes, so it does not need importing at every call site. */
 const buildSqlCountTemplate = ({
 	importLines,
-	dbType,
 	queries
 }: CountTemplateOptions) => `
+import { DatabaseType } from '../../types/databaseTypes';
 ${importLines}
-export const getCountHistory = async (db: ${dbType}, uid: number) => {
+export const getCountHistory = async (db: DatabaseType, uid: number) => {
   ${queries.selectHistory}
 }
 
-export const createCountHistory = async (db: ${dbType}, count: number) => {
+export const createCountHistory = async (db: DatabaseType, count: number) => {
   ${queries.insertHistory}
 }
 `;
@@ -369,135 +389,111 @@ const mysqlPlanetScaleQueryOperations: QueryOperations = {
 
 const driverConfigurations = {
 	'cockroachdb:sql:local': {
-		dbType: 'SQL',
 		importLines: ``,
 		queries: postgresSqlQueryOperations
 	},
 	'gel:drizzle:local': {
-		dbType: 'GelJsDatabase<SchemaType>',
 		importLines: `import { eq } from 'drizzle-orm'
 import { schema } from '../../../db/schema'
 `,
 		queries: drizzleQueryOperations
 	},
 	'gel:sql:local': {
-		dbType: 'Client',
 		importLines: ``,
 		queries: gelClientQueryOperations
 	},
 	'mariadb:drizzle:local': {
-		dbType: 'MySql2Database<SchemaType>',
 		importLines: `import { eq } from 'drizzle-orm'
 import { schema } from '../../../db/schema'`,
 		queries: mysqlDrizzleQueryOperations
 	},
 	'mariadb:sql:local': {
-		dbType: 'SQL',
 		importLines: ``,
 		queries: mysqlSqlQueryOperations
 	},
 	'mongodb:sql:local': {
-		dbType: 'Db',
 		importLines: ``,
 		queries: mongodbQueryOperations
 	},
 	'mssql:drizzle:local': {
-		dbType: 'NodeMssqlDatabase<SchemaType>',
 		importLines: `import { eq } from 'drizzle-orm'
 import { schema } from '../../../db/schema'`,
 		queries: drizzleQueryOperations
 	},
 	'mssql:sql:local': {
-		dbType: 'ConnectionPool',
 		importLines: ``,
 		queries: mssqlSqlQueryOperations
 	},
 	'mysql:drizzle:local': {
-		dbType: 'MySql2Database<SchemaType>',
 		importLines: `import { eq } from 'drizzle-orm'
 import { schema } from '../../../db/schema'`,
 		queries: mysqlDrizzleQueryOperations
 	},
 	'mysql:drizzle:planetscale': {
-		dbType: 'PlanetScaleDatabase<SchemaType>',
 		importLines: `import { eq } from 'drizzle-orm'
 import { schema } from '../../../db/schema'`,
 		queries: mysqlDrizzleQueryOperations
 	},
 	'mysql:sql:local': {
-		dbType: 'SQL',
 		importLines: ``,
 		queries: mysqlSqlQueryOperations
 	},
 	'mysql:sql:planetscale': {
-		dbType: 'Client',
 		importLines: ``,
 		queries: mysqlPlanetScaleQueryOperations
 	},
 	'postgresql:drizzle:local': {
-		dbType: 'BunSQLDatabase<SchemaType>',
 		importLines: `import { eq } from 'drizzle-orm'
 import { schema } from '../../../db/schema'`,
 		queries: drizzleQueryOperations
 	},
 	'postgresql:drizzle:neon': {
-		dbType: 'NeonDatabase<SchemaType>',
 		importLines: `import { eq } from 'drizzle-orm'
 import { schema } from '../../../db/schema'`,
 		queries: drizzleQueryOperations
 	},
 	'postgresql:drizzle:planetscale': {
-		dbType: 'NodePgDatabase<SchemaType>',
 		importLines: `import { eq } from 'drizzle-orm'
 import { schema } from '../../../db/schema'`,
 		queries: drizzleQueryOperations
 	},
 	'postgresql:sql:local': {
-		dbType: 'SQL',
 		importLines: ``,
 		queries: postgresSqlQueryOperations
 	},
 	'postgresql:sql:neon': {
-		dbType: 'Pool',
 		importLines: ``,
 		queries: postgresQueryOperations
 	},
 	'postgresql:sql:planetscale': {
-		dbType: 'Pool',
 		importLines: ``,
 		queries: postgresQueryOperations
 	},
 	'singlestore:drizzle:local': {
-		dbType: 'SingleStoreDriverDatabase<SchemaType>',
 		importLines: `import { eq } from 'drizzle-orm'
 import { schema } from '../../../db/schema'`,
 		queries: mysqlDrizzleQueryOperations
 	},
 	'singlestore:sql:local': {
-		dbType: 'Pool',
 		importLines: `import { RowDataPacket } from 'mysql2/promise'
 `,
 		queries: singlestoreSqlQueryOperations
 	},
 	'sqlite:drizzle:local': {
-		dbType: 'BunSQLiteDatabase<SchemaType>',
 		importLines: `import { eq } from 'drizzle-orm'
 import { schema } from '../../../db/schema'`,
 		queries: drizzleQueryOperations
 	},
 	'sqlite:drizzle:turso': {
-		dbType: 'LibSQLDatabase<SchemaType>',
 		importLines: `import { eq } from 'drizzle-orm'
 import { schema } from '../../../db/schema'`,
 		queries: drizzleQueryOperations
 	},
 	'sqlite:sql:local': {
-		dbType: 'Database',
 		importLines: ``,
 		queries: bunSqliteQueryOperations
 	},
 	'sqlite:sql:turso': {
-		dbType: 'Client',
 		importLines: ``,
 		queries: libsqlQueryOperations
 	}
@@ -510,7 +506,10 @@ export const getAuthTemplate = (key: DriverConfigurationKey) => {
 	if (!configuration)
 		throw new Error(`Unsupported driver configuration: ${key}`);
 
-	return buildSqlAuthTemplate(configuration);
+	return buildSqlAuthTemplate({
+		...configuration,
+		rowsAreTyped: key.includes(':drizzle:')
+	});
 };
 
 export const getCountTemplate = (key: DriverConfigurationKey) => {

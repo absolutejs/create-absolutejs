@@ -56,12 +56,12 @@ export const scaffoldDatabase = async ({
 	});
 	writeFileSync(join(handlerDirectory, handlerFileName), dbHandlers, 'utf-8');
 
-	// Raw-SQL (no-ORM) auth handlers import `DatabaseType`/`NewUser` from
-	// types/databaseTypes (so do the auth config and the example page), but
-	// the drizzle-backed type module below is only written on the drizzle
-	// path. Generate a self-contained, driver-typed version here so the
-	// non-drizzle auth scaffold actually type-checks and builds.
-	if (usesAuth && orm !== 'drizzle') {
+	// Raw-SQL (no-ORM) handlers import `DatabaseType` (and `NewUser` on the auth
+	// path) from types/databaseTypes (so do the auth config and the example
+	// page), but the drizzle-backed type module below is only written on the
+	// drizzle path. Generate a self-contained, driver-typed version here so the
+	// non-drizzle scaffold actually type-checks and builds.
+	if (orm !== 'drizzle') {
 		mkdirSync(typesDirectory, { recursive: true });
 		const sqlTypes = generateDatabaseTypes({
 			authOption,

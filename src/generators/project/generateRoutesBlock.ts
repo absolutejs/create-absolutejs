@@ -29,8 +29,9 @@ export const generateRoutesBlock = ({
       return status(error.code, error.message);
     }
 
-    const providerConfiguration =
-      auth_client.value && providers[auth_client.value as ProviderOption];
+    const providerConfiguration = auth_client.value
+      ? providers[auth_client.value as ProviderOption]
+      : undefined;
 
     return ${handlerCall};
   }`

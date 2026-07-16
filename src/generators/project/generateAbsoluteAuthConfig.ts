@@ -28,6 +28,16 @@ const defaultProviderConfigurations: OAuth2ConfigurationDefaults = {
 	}
 };
 
+/* Mirrors the `User` shape the raw-SQL path writes into types/databaseTypes, so
+   an auth scaffold without a database resolves the same type from the same
+   module the example page already imports. */
+export const generateSessionUserType = () => `export type User = {
+	auth_sub: string;
+	created_at: Date;
+	metadata: Record<string, unknown>;
+};
+`;
+
 export const generateAbsoluteAuthConfig = (
 	absProviders: ProviderOption[] | undefined,
 	hasDatabase: boolean
@@ -76,39 +86,47 @@ ${credentialsLines}
 	if (!hasDatabase) {
 		return `import { getEnv } from '@absolutejs/absolute';
 import {
-	AbsoluteAuthProps,
-	createInMemoryAuthSessionStore
+	createInMemoryAuthSessionStore,
+	defineAuthConfig
 } from '@absolutejs/auth';
+import { User } from '../../types/databaseTypes';
 
-export const absoluteAuthConfig = (): AbsoluteAuthProps => ({
-	authSessionStore: createInMemoryAuthSessionStore(),
-	providersConfiguration: {
+export const absoluteAuthConfig = () =>
+	defineAuthConfig<User>({
+		authSessionStore: createInMemoryAuthSessionStore(),
+		/* Without a database there is nowhere to persist users, so no user is
+		   ever registered and this resolver has nothing to look a subject up in.
+		   Scaffold with a database to persist users and resolve them here. */
+		getUser: () => null,
+		providersConfiguration: {
 ${providerConfigs}
-	}
-});
+		}
+	});
 `;
 	}
 
 	return `import { getEnv } from '@absolutejs/absolute';
 import {
-	AbsoluteAuthProps,
 	createInMemoryAuthSessionStore,
+	defineAuthConfig,
 	extractPropFromIdentity,
-	instantiateUserSession,
-	providers
+	instantiateUserSession
 } from '@absolutejs/auth';
 import { DatabaseType, User } from '../../types/databaseTypes';
 import { createUser, getUser } from '../handlers/userHandlers';
 
-export const absoluteAuthConfig = (
-	db: DatabaseType
-): AbsoluteAuthProps<User> => ({
+export const absoluteAuthConfig = (db: DatabaseType) =>
+	defineAuthConfig<User>({
 	authSessionStore: createInMemoryAuthSessionStore(),
+	getUser: async (sub) => (await getUser(db, sub)) ?? null,
 	providersConfiguration: {
 ${providerConfigs}
 	},
+	/* \`providerConfiguration\` is handed to the callback rather than looked up by
+	   name, so identity extraction also works for custom providers. */
 	onCallbackSuccess: async ({
 		authProvider,
+		providerConfiguration,
 		providerInstance,
 		tokenResponse,
 		unregisteredSession,
@@ -118,6 +136,7 @@ ${providerConfigs}
 	}) =>
 		instantiateUserSession({
 			authProvider,
+			providerConfiguration,
 			providerInstance,
 			session,
 			tokenResponse,
@@ -125,7 +144,6 @@ ${providerConfigs}
 			user_session_id,
 			getUser: async (userIdentity) => {
 				const provider = authProvider.toUpperCase();
-				const providerConfiguration = providers[authProvider];
 
 				const subject = extractPropFromIdentity(
 					userIdentity,
@@ -148,7 +166,6 @@ ${providerConfigs}
 			},
 			onNewUser: async (userIdentity) => {
 				const provider = authProvider.toUpperCase();
-				const providerConfiguration = providers[authProvider];
 
 				const subject = extractPropFromIdentity(
 					userIdentity,

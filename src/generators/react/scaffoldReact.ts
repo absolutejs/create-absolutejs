@@ -1,5 +1,5 @@
 import { copyFileSync, cpSync, mkdirSync, writeFileSync } from 'fs';
-import { join } from 'path';
+import { basename, join } from 'path';
 import { ScaffoldFrontendProps } from '../../types';
 import { generateMarkupCSS } from '../project/generateMarkupCSS';
 import {
@@ -11,6 +11,7 @@ import {
 
 export const scaffoldReact = ({
 	authOption,
+	directory,
 	editBasePath,
 	includeExamples,
 	targetDirectory,
@@ -30,7 +31,7 @@ export const scaffoldReact = ({
 		mkdirSync(join(targetDirectory, 'pages'), { recursive: true });
 		writeFileSync(
 			join(targetDirectory, 'pages', 'ReactExample.tsx'),
-			generateReactExamplePage(authOption, false),
+			generateReactExamplePage(authOption, false, directory),
 			'utf-8'
 		);
 
@@ -55,7 +56,13 @@ export const scaffoldReact = ({
 		join(projectAssetsDirectory, 'svg', 'google-logo.svg')
 	);
 
+	/* `OAuthLink` is only rendered by the generated `SignIn` component, and it
+	   types its provider against `citra`, which only ships as a transitive
+	   dependency of `@absolutejs/auth`. Without Absolute Auth the import cannot
+	   resolve, so the component is left out entirely. */
 	cpSync(join(templatesDirectory, 'react'), targetDirectory, {
+		filter: (source) =>
+			authOption === 'abs' || basename(source) !== 'OAuthLink.tsx',
 		recursive: true
 	});
 
@@ -82,7 +89,7 @@ export const scaffoldReact = ({
 		);
 	}
 
-	const pageComponent = generateReactExamplePage(authOption, true);
+	const pageComponent = generateReactExamplePage(authOption, true, directory);
 	mkdirSync(join(targetDirectory, 'pages'), { recursive: true });
 	writeFileSync(
 		join(targetDirectory, 'pages', 'ReactExample.tsx'),

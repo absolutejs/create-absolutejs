@@ -15,6 +15,9 @@ export type ScaffoldFrontendProps = {
 	absProviders: ProviderOption[] | undefined;
 	assetsDirectory: string;
 	authOption: AuthOption;
+	/** Frontend's directory under `src/frontend`; empty when it is the only
+	 *  frontend and no directory was configured for it. */
+	directory: string;
 	editBasePath: string;
 	includeExamples: boolean;
 	targetDirectory: string;

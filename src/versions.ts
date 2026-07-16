@@ -5,7 +5,7 @@
  */
 export const versions = {
 	/* ── Core ─────────────────────────────────────────────── */
-	'@absolutejs/absolute': '0.19.0-beta.1099',
+	'@absolutejs/absolute': '0.19.0-beta.1105',
 	'@absolutejs/a2a': '0.1.0',
 	'@absolutejs/agency': '0.4.0',
 	'@absolutejs/agent-conformance': '0.3.0',
@@ -48,6 +48,8 @@ export const versions = {
 	'@stylistic/eslint-plugin': '5.9.0',
 	/* ── Tailwind CSS ─────────────────────────────────────── */
 	'@tailwindcss/cli': '4.2.0',
+	/* ── Bun ──────────────────────────────────────────────── */
+	'@types/bun': '1.3.14',
 	/* ── Database Drivers ─────────────────────────────────── */
 	'@types/mssql': '9.1.9',
 	'@types/pg': '8.16.0',
@@ -56,6 +58,7 @@ export const versions = {
 	'@typescript-eslint/parser': '8.56.0',
 	autoprefixer: '10.4.24',
 	/* ── ORM ──────────────────────────────────────────────── */
+	'drizzle-kit': '0.31.10',
 	'drizzle-orm': '0.45.1',
 	elysia: '1.4.28',
 	'elysia-rate-limit': '4.5.0',

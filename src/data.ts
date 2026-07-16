@@ -9,7 +9,7 @@ export const absoluteAuthPlugin: AvailableDependency = {
 				providersConfiguration: {}
 			},
 			isPlugin: true,
-			packageName: 'absoluteAuth'
+			packageName: 'auth'
 		}
 	],
 	latestVersion: versions['@absolutejs/auth'],
