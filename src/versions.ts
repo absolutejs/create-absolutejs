@@ -34,7 +34,7 @@ export const versions = {
 	'@elysiajs/swagger': '1.3.1',
 	/* ── ESLint + Prettier ────────────────────────────────── */
 	'@eslint/compat': '2.0.2',
-	'@eslint/js': '10.0.1',
+	'@eslint/js': '9.39.2',
 	/* ── Database Hosts ───────────────────────────────────── */
 	'@libsql/client': '0.17.0',
 	'@neondatabase/serverless': '1.0.2',
@@ -54,7 +54,7 @@ export const versions = {
 	elysia: '1.4.28',
 	'elysia-rate-limit': '4.5.0',
 	'elysia-scoped-state': '0.1.1',
-	eslint: '10.0.0',
+	eslint: '9.39.2',
 	'eslint-plugin-absolute': '0.11.13',
 	'eslint-plugin-import': '2.32.0',
 	/* ── ESLint React ─────────────────────────────────────── */
