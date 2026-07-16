@@ -3,7 +3,7 @@ import { spinner } from '@clack/prompts';
 import { $ } from 'bun';
 import { green, red } from 'picocolors';
 import { PackageManager } from '../types';
-import { formatCommands, formatNoInstallCommands } from '../utils/commandMaps';
+import { formatCommands } from '../utils/commandMaps';
 
 type FormatProjectProps = {
 	projectName: string;
@@ -16,12 +16,14 @@ export const formatProject = async ({
 	packageManager,
 	installDependenciesNow
 }: FormatProjectProps) => {
+	// A no-install scaffold must be fully offline and must not assume a global
+	// formatter. Templates are already formatted in the published package.
+	if (!installDependenciesNow) return;
+
 	const spin = spinner();
 
 	try {
-		const fmt = installDependenciesNow
-			? formatCommands[packageManager]
-			: formatNoInstallCommands[packageManager];
+		const fmt = formatCommands[packageManager];
 
 		spin.start('Formatting files…');
 		const [bin, ...args] = fmt.split(' ');
