@@ -70,12 +70,18 @@ export const createPackageJson = async ({
 
 	if (authOption === 'abs') packageNames.add(absoluteAuthPlugin.value);
 	if (agentic) {
+		packageNames.add('@absolutejs/a2a');
 		packageNames.add('@absolutejs/agency');
 		packageNames.add('@absolutejs/agent-conformance');
+		packageNames.add('@absolutejs/agent-control');
 		packageNames.add('@absolutejs/auth');
+		packageNames.add('@absolutejs/egress');
+		packageNames.add('@absolutejs/execution');
 		packageNames.add('@absolutejs/manifest');
 		packageNames.add('@absolutejs/mcp');
+		packageNames.add('@absolutejs/policy');
 		packageNames.add('@absolutejs/secrets');
+		packageNames.add('@absolutejs/sync-bus-pg');
 		packageNames.add('@absolutejs/wallet');
 	}
 
@@ -195,11 +201,17 @@ export const createPackageJson = async ({
 
 	if (agentic) {
 		for (const name of [
+			'@absolutejs/a2a',
 			'@absolutejs/agency',
+			'@absolutejs/agent-control',
 			'@absolutejs/auth',
+			'@absolutejs/egress',
+			'@absolutejs/execution',
 			'@absolutejs/manifest',
 			'@absolutejs/mcp',
+			'@absolutejs/policy',
 			'@absolutejs/secrets',
+			'@absolutejs/sync-bus-pg',
 			'@absolutejs/wallet'
 		] as const) {
 			dependencies[name] = resolveVersion(name, versions[name]);

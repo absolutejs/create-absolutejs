@@ -13,14 +13,25 @@ describe('agentic scaffold', () => {
 		expect(agentRuntimeSource).toContain('denyAllPolicy()');
 		expect(agentRuntimeSource).toContain('control: agentControl');
 		for (const boundary of [
+			'@absolutejs/a2a',
 			'@absolutejs/auth',
+			'@absolutejs/egress',
+			'@absolutejs/execution',
+			'@absolutejs/policy',
+			'@absolutejs/agent-control',
 			'@absolutejs/secrets',
+			'@absolutejs/sync-bus-pg',
 			'wallet allowances',
 			'MCP task handles',
 			'@absolutejs/agent-conformance',
 			'kill switch'
 		])
 			expect(agentsGuide).toContain(boundary);
+	});
+
+	test('documents Redis as optional rather than durable infrastructure', () => {
+		expect(agentsGuide).toContain('Redis is an');
+		expect(agentsGuide).toContain('not a source of truth or work queue');
 	});
 
 	test('writes the runtime and AGENTS.md to a project', () => {

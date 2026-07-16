@@ -40,13 +40,26 @@ This project uses the AbsoluteJS provider-neutral agent stack.
 - Give agents bounded wallet allowances and signed mandates. The host resolves
   ledger destinations; an agent never supplies the recipient account id.
 - Bind MCP task handles to the authenticated actor on get, update, and cancel.
+- Use \`@absolutejs/execution\` for idempotent effects and its transactional
+  PostgreSQL outbox before handing work to a durable queue.
+- Publish and consume remote agents with \`@absolutejs/a2a\` using A2A 1.0;
+  preserve the authenticated tenant and actor binding at every task boundary.
+- Route outbound HTTP through \`@absolutejs/egress\`. Authorize host, method,
+  resolved public IP, redirects, byte limits, and injected credentials host-side.
+- Store immutable, digest-addressed policy revisions with \`@absolutejs/policy\`
+  and atomically activate only reviewed versions.
+- Protect operator actions with \`@absolutejs/agent-control\` scopes, a
+  kill-switch-first check, and leased idempotency records.
+- Use \`@absolutejs/sync-bus-pg\` for durable framework channels. Redis is an
+  optional at-most-once fanout adapter, not a source of truth or work queue.
 - Run \`@absolutejs/agent-conformance\` suites for every new action, capability,
-  credential, wallet, and task adapter.
+  credential, wallet, egress, execution, control, and task adapter.
 - Use the control plane kill switch for incident response. It blocks new
   requests, lease issuance, and execution before downstream revocation fans out.
 
 Memory stores are for local development only. Production stores must be
-durable and enforce lease/capability consumption atomically.
+durable and enforce lease/capability consumption atomically. Apply each
+package's exported PostgreSQL schema in a migration before enabling traffic.
 `;
 
 export const scaffoldAgentic = ({
