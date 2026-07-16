@@ -19,19 +19,21 @@ import { getUseTailwind } from './questions/useTailwind';
 import type { ArgumentConfiguration, CreateConfiguration } from './types';
 import { orPrompt } from './utils/interactive';
 
-
 export const prompt = async (argumentConfiguration: ArgumentConfiguration) => {
 	// 1. Project name
 	const projectName =
-		argumentConfiguration.projectName ?? (await orPrompt('a project name', getProjectName));
+		argumentConfiguration.projectName ??
+		(await orPrompt('a project name', getProjectName));
 
 	// 2. Linting/formatting tool
 	const codeQualityTool =
-		argumentConfiguration.codeQualityTool ?? (await orPrompt('--eslint+prettier/--biome', getCodeQualityTool));
+		argumentConfiguration.codeQualityTool ??
+		(await orPrompt('--eslint+prettier/--biome', getCodeQualityTool));
 
 	// 3. Tailwind support?
 	const useTailwind =
-		argumentConfiguration.useTailwind ?? (await orPrompt('--tailwind/--no-tailwind', getUseTailwind));
+		argumentConfiguration.useTailwind ??
+		(await orPrompt('--tailwind/--no-tailwind', getUseTailwind));
 
 	// 4. Frontend(s)
 	const frontends =
@@ -42,16 +44,21 @@ export const prompt = async (argumentConfiguration: ArgumentConfiguration) => {
 	// 5. HTML scripting option (if HTML was selected)
 	const useHTMLScripts = frontends.includes('html')
 		? (argumentConfiguration.useHTMLScripts ??
-			(await orPrompt('--html-scripts/--no-html-scripts', getHtmlScriptingOption)))
+			(await orPrompt(
+				'--html-scripts/--no-html-scripts',
+				getHtmlScriptingOption
+			)))
 		: false;
 
 	// 5b. Include example pages/components, or generate a bare skeleton
 	const includeExamples =
-		argumentConfiguration.includeExamples ?? (await orPrompt('--examples/--no-examples', getIncludeExamples));
+		argumentConfiguration.includeExamples ??
+		(await orPrompt('--examples/--no-examples', getIncludeExamples));
 
 	// 6. Database engine
 	const databaseEngine =
-		argumentConfiguration.databaseEngine ?? (await orPrompt('--db', getDatabaseEngine));
+		argumentConfiguration.databaseEngine ??
+		(await orPrompt('--db', getDatabaseEngine));
 
 	// 7. Database host
 	const databaseHost =
@@ -61,12 +68,14 @@ export const prompt = async (argumentConfiguration: ArgumentConfiguration) => {
 	// 8. ORM choice
 	const orm =
 		databaseEngine !== undefined && databaseEngine !== 'none'
-			? (argumentConfiguration.orm ?? (await orPrompt('--orm', () => getORM(databaseEngine))))
+			? (argumentConfiguration.orm ??
+				(await orPrompt('--orm', () => getORM(databaseEngine))))
 			: undefined;
 
 	// 9. Configuration type
 	let directoryConfig =
-		argumentConfiguration.directoryConfig ?? (await orPrompt('--directory', getConfigurationType));
+		argumentConfiguration.directoryConfig ??
+		(await orPrompt('--directory', getConfigurationType));
 
 	// 10. Directory configurations
 	const { buildDirectory, assetsDirectory, tailwind, databaseDirectory } =
@@ -90,7 +99,8 @@ export const prompt = async (argumentConfiguration: ArgumentConfiguration) => {
 
 	// 12. Auth provider
 	const authOption =
-		argumentConfiguration.authOption ?? (await orPrompt('--auth', getAuthOption));
+		argumentConfiguration.authOption ??
+		(await orPrompt('--auth', getAuthOption));
 
 	// 12b. Agent-first action/auth/MCP/wallet/credential stack
 	const agentic =
@@ -105,7 +115,8 @@ export const prompt = async (argumentConfiguration: ArgumentConfiguration) => {
 
 	// 14. Initialize Git repository
 	const initializeGitNow =
-		argumentConfiguration.initializeGitNow ?? (await orPrompt('--git/--no-git', getInitializeGit));
+		argumentConfiguration.initializeGitNow ??
+		(await orPrompt('--git/--no-git', getInitializeGit));
 
 	// 14b. Optionally connect the new project to GitHub
 	const resolveGithubLink = async () => {
@@ -124,7 +135,9 @@ export const prompt = async (argumentConfiguration: ArgumentConfiguration) => {
 			};
 		}
 
-		return orPrompt('--repo/--repo-visibility', () => getGithubLink(projectName));
+		return orPrompt('--repo/--repo-visibility', () =>
+			getGithubLink(projectName)
+		);
 	};
 	const { githubLink, githubRepoUrl, githubVisibility } =
 		await resolveGithubLink();

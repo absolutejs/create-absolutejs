@@ -148,8 +148,7 @@ export const checkSqliteInstalled = async () => {
 	}
 	const proceed = await confirm({
 		initialValue: true,
-		message:
-			'sqlite3 CLI is optional (handy as a db shell). Install now?'
+		message: 'sqlite3 CLI is optional (handy as a db shell). Install now?'
 	});
 	if (!proceed) return;
 	switch (hostEnv) {

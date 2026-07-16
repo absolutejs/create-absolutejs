@@ -4,7 +4,10 @@ import { abort } from '../utils/abort';
 import { orPrompt } from '../utils/interactive';
 
 const orPromptText = (options: Parameters<typeof text>[0]) =>
-	orPrompt(`a value for "${String(options.message)}" (pass the matching --*-dir flag)`, () => text(options));
+	orPrompt(
+		`a value for "${String(options.message)}" (pass the matching --*-dir flag)`,
+		() => text(options)
+	);
 
 type GetDirectoryConfigurationProps = Pick<
 	CreateConfiguration,

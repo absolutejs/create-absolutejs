@@ -179,7 +179,9 @@ export const parseCommandLineOptions = () => {
 			? values.directory
 			: // --skip defaults every prompted axis (headless callers hang on
 				// missing ones).
-				(values.skip ? ('default' as const) : undefined);
+				values.skip
+				? ('default' as const)
+				: undefined;
 	if (values.directory !== undefined && directoryConfig === undefined) {
 		errors.push(
 			`Invalid directory configuration: "${values.directory}". Expected: [ ${availableDirectoryConfigurations.join(', ')} ]`
