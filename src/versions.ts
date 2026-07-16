@@ -5,7 +5,7 @@
  */
 export const versions = {
 	/* ── Core ─────────────────────────────────────────────── */
-	'@absolutejs/absolute': '0.19.0-beta.1105',
+	'@absolutejs/absolute': '0.19.0-beta.1106',
 	'@absolutejs/a2a': '0.1.0',
 	'@absolutejs/agency': '0.4.0',
 	'@absolutejs/agent-conformance': '0.3.0',
