@@ -4,6 +4,7 @@ import { tmpdir } from 'os';
 import { join } from 'path';
 import {
 	agentRuntimeSource,
+	agentDiscoverySource,
 	agentsGuide,
 	scaffoldAgentic
 } from '../src/generators/project/scaffoldAgentic';
@@ -12,6 +13,10 @@ describe('agentic scaffold', () => {
 	test('is deny-by-default and documents every privileged boundary', () => {
 		expect(agentRuntimeSource).toContain('denyAllPolicy()');
 		expect(agentRuntimeSource).toContain('control: agentControl');
+		expect(agentRuntimeSource).toContain('createAgentRuntime');
+		expect(agentDiscoverySource).toContain('createAgentDocument');
+		expect(agentDiscoverySource).toContain("id: 'status.read'");
+		expect(agentDiscoverySource).toContain('publishedAt');
 		for (const boundary of [
 			'@absolutejs/a2a',
 			'@absolutejs/auth',
@@ -24,6 +29,13 @@ describe('agentic scaffold', () => {
 			'wallet allowances',
 			'MCP task handles',
 			'@absolutejs/agent-conformance',
+			'@absolutejs/agent-discovery',
+			'@absolutejs/agent-runtime',
+			'@absolutejs/agent-sandbox',
+			'@absolutejs/agent-trust',
+			'@absolutejs/agent-memory',
+			'@absolutejs/agent-inbox',
+			'AuthZEN AARP',
 			'kill switch'
 		])
 			expect(agentsGuide).toContain(boundary);
@@ -41,6 +53,9 @@ describe('agentic scaffold', () => {
 		expect(readFileSync(join(backendDirectory, 'agent.ts'), 'utf8')).toBe(
 			agentRuntimeSource
 		);
+		expect(
+			readFileSync(join(backendDirectory, 'agent-discovery.ts'), 'utf8')
+		).toBe(agentDiscoverySource);
 		expect(readFileSync(join(projectName, 'AGENTS.md'), 'utf8')).toBe(
 			agentsGuide
 		);

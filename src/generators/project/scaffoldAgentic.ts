@@ -8,6 +8,10 @@ export const agentRuntimeSource = `import {
 	createMemoryAgentControlStore,
 	denyAllPolicy
 } from '@absolutejs/agency'
+import {
+	createAgentRuntime,
+	createMemoryAgentRuntimeStore
+} from '@absolutejs/agent-runtime'
 
 // Memory stores are development defaults. Replace them with durable stores
 // before running more than one process or accepting production actions.
@@ -23,6 +27,102 @@ export const agency = createAgency({
 	policy: denyAllPolicy(),
 	store: createMemoryAgencyStore()
 })
+
+// Durable run semantics are available from the first commit. The placeholder
+// driver fails closed until the application supplies its model/tool loop.
+export const agentRuntime = createAgentRuntime({
+	store: createMemoryAgentRuntimeStore(),
+	driver: {
+		next: async () => ({
+			type: 'fail',
+			code: 'agent_not_configured',
+			message: 'Configure the agent driver before accepting runs'
+		})
+	},
+	effects: {
+		execute: async () => {
+			throw new Error('Agent effects are not configured')
+		}
+	}
+})
+`;
+
+export const agentDiscoverySource = `import {
+	ABSOLUTE_AGENT_SCHEMA,
+	createAgentDiscoveryHandler,
+	signAgentDocument,
+	type AgentDiscoveryDocument,
+	type DiscoverySigner
+} from '@absolutejs/agent-discovery'
+
+// Keep this document specific and keyword-rich: registries rank declared
+// capabilities, effects, scopes, interfaces, examples, and publisher trust.
+export const createAgentDocument = ({
+	origin,
+	publishedAt,
+	version
+}: {
+	origin: string
+	publishedAt: string
+	version: string
+}): AgentDiscoveryDocument => ({
+	$schema: ABSOLUTE_AGENT_SCHEMA,
+	id: \`\${origin}/agents/main\`,
+	name: 'Replace with your agent name',
+	description: 'Replace with a precise description of the outcomes this agent delivers.',
+	version,
+	url: origin,
+	publisher: {
+		id: origin,
+		name: 'Replace with your organization',
+		jwksUri: \`\${origin}/.well-known/jwks.json\`
+	},
+	capabilities: [{
+		id: 'status.read',
+		title: 'Read service status',
+		description: 'Returns the public health and readiness status of this agent.',
+		tags: ['status', 'health', 'readiness'],
+		effects: ['read'],
+		approval: 'never'
+	}],
+	interfaces: [{
+		type: 'http',
+		url: \`\${origin}/api/agents/main\`,
+		contentTypes: ['application/json']
+	}],
+	categories: ['replace-with-domain-category'],
+	tags: ['replace-with-user-intent', 'replace-with-outcome'],
+	languages: ['en'],
+	documentationUrl: \`\${origin}/docs/agents/main\`,
+	examples: [{
+		title: 'Check whether the agent is ready',
+		prompt: 'Check the agent service status.',
+		capabilityId: 'status.read'
+	}],
+	createdAt: publishedAt,
+	updatedAt: publishedAt
+})
+
+// Use a KMS/HSM-backed signer in production. Mount the returned fetch handler
+// at the origin root so all well-known, A2A, JSON-LD, agents.txt, and sitemap
+// discovery surfaces are served from one signed descriptor.
+export const createAgentDiscovery = async ({
+	signer,
+	origin,
+	publishedAt,
+	version
+}: {
+	signer: DiscoverySigner
+	origin: string
+	publishedAt: string
+	version: string
+}) =>
+	createAgentDiscoveryHandler({
+		documents: [await signAgentDocument(
+			createAgentDocument({ origin, publishedAt, version }),
+			signer
+		)]
+	})
 `;
 
 export const agentsGuide = `# Agent execution contract
@@ -48,6 +148,21 @@ This project uses the AbsoluteJS provider-neutral agent stack.
   resolved public IP, redirects, byte limits, and injected credentials host-side.
 - Store immutable, digest-addressed policy revisions with \`@absolutejs/policy\`
   and atomically activate only reviewed versions.
+- Publish the signed descriptor in \`src/backend/agent-discovery.ts\` through
+  \`@absolutejs/agent-discovery\`. Keep capabilities, examples, tags, effects,
+  scopes, A2A/MCP interfaces, JSON-LD, agents.txt, and sitemap surfaces current.
+- Run long-lived work through \`@absolutejs/agent-runtime\`; use its leases,
+  checkpoints, timers, budgets, cancellation, and crash-safe effect recovery.
+- Authorize all HTTP/filesystem/process access with expiring
+  \`@absolutejs/agent-sandbox\` grants. There is no ambient agent authority.
+- Preserve instruction/data separation and provenance taints with
+  \`@absolutejs/agent-trust\`; external content never becomes an instruction.
+- Store scoped, expiring, provenance-bearing data with
+  \`@absolutejs/agent-memory\`, and validate writes against memory poisoning.
+- Receive only verified events through \`@absolutejs/agent-inbox\`; durable
+  leases, retries, dead letters, and schedules do not require Redis.
+- Use OpenID AuthZEN AARP for requestable approvals and COAZ mappings for
+  parameter-level MCP authorization. Approval always triggers re-evaluation.
 - Protect operator actions with \`@absolutejs/agent-control\` scopes, a
   kill-switch-first check, and leased idempotency records.
 - Use \`@absolutejs/sync-bus-pg\` for durable framework channels. Redis is an
@@ -71,5 +186,9 @@ export const scaffoldAgentic = ({
 }) => {
 	mkdirSync(backendDirectory, { recursive: true });
 	writeFileSync(join(backendDirectory, 'agent.ts'), agentRuntimeSource);
+	writeFileSync(
+		join(backendDirectory, 'agent-discovery.ts'),
+		agentDiscoverySource
+	);
 	writeFileSync(join(projectName, 'AGENTS.md'), agentsGuide);
 };

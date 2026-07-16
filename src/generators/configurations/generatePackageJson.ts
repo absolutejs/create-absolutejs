@@ -73,6 +73,12 @@ export const createPackageJson = async ({
 		packageNames.add('@absolutejs/a2a');
 		packageNames.add('@absolutejs/agency');
 		packageNames.add('@absolutejs/agent-conformance');
+		packageNames.add('@absolutejs/agent-discovery');
+		packageNames.add('@absolutejs/agent-inbox');
+		packageNames.add('@absolutejs/agent-memory');
+		packageNames.add('@absolutejs/agent-runtime');
+		packageNames.add('@absolutejs/agent-sandbox');
+		packageNames.add('@absolutejs/agent-trust');
 		packageNames.add('@absolutejs/agent-control');
 		packageNames.add('@absolutejs/auth');
 		packageNames.add('@absolutejs/egress');
@@ -203,6 +209,12 @@ export const createPackageJson = async ({
 		for (const name of [
 			'@absolutejs/a2a',
 			'@absolutejs/agency',
+			'@absolutejs/agent-discovery',
+			'@absolutejs/agent-inbox',
+			'@absolutejs/agent-memory',
+			'@absolutejs/agent-runtime',
+			'@absolutejs/agent-sandbox',
+			'@absolutejs/agent-trust',
 			'@absolutejs/agent-control',
 			'@absolutejs/auth',
 			'@absolutejs/egress',
