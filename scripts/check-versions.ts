@@ -51,10 +51,18 @@ const getBump = (
 		: { segment: 'patch', severity: 'patch' };
 };
 
-const fetchLatest = async (name: string): Promise<string | null> => {
+const fetchRegistryVersion = async (
+	name: string,
+	version: string
+): Promise<string | null> => {
 	try {
-		const target = `https://registry.npmjs.org/${name}/latest`;
+		const target =
+			'https://registry.npmjs.org/' +
+			encodeURIComponent(name) +
+			'/' +
+			version;
 		const res = await fetch(target, h2IfHttps(target));
+		if (!res.ok) return null;
 		const data = (await res.json()) as { version: string };
 
 		return data.version;
@@ -63,11 +71,27 @@ const fetchLatest = async (name: string): Promise<string | null> => {
 	}
 };
 
+const fetchLatest = (name: string) => fetchRegistryVersion(name, 'latest');
+
 const entries = Object.entries(versions);
 console.log(`\nChecking ${entries.length} packages against npm registry…\n`);
 
 const results: VersionResult[] = await Promise.all(
 	entries.map(async ([name, current]) => {
+		if (current.includes('-')) {
+			const published = await fetchRegistryVersion(name, current);
+
+			return {
+				current,
+				latest: published ?? '??',
+				name,
+				status:
+					published === current
+						? ('up-to-date' as const)
+						: ('error' as const)
+			};
+		}
+
 		const latest = await fetchLatest(name);
 		if (!latest)
 			return {
