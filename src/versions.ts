@@ -62,7 +62,7 @@ export const versions = {
 	'drizzle-orm': '1.0.0-rc.4',
 	elysia: '1.4.28',
 	'elysia-rate-limit': '4.5.0',
-	'elysia-scoped-state': '0.1.1',
+	'@absolutejs/scoped-state': '0.1.4',
 	eslint: '9.39.2',
 	'eslint-plugin-absolute': '0.11.13',
 	'eslint-plugin-import': '2.32.0',

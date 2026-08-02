@@ -133,7 +133,7 @@ export const createPackageJson = async ({
 	if (flags.requiresSvelte && codeQualityTool === 'eslint+prettier')
 		packageNames.add('prettier-plugin-svelte');
 	if (flags.requiresVue) packageNames.add('vue');
-	if (flags.requiresHtmx) packageNames.add('elysia-scoped-state');
+	if (flags.requiresHtmx) packageNames.add('@absolutejs/scoped-state');
 	if (orm === 'drizzle') packageNames.add('drizzle-orm');
 
 	switch (databaseHost) {
@@ -334,9 +334,9 @@ export const createPackageJson = async ({
 	}
 
 	if (flags.requiresHtmx) {
-		dependencies['elysia-scoped-state'] = resolveVersion(
-			'elysia-scoped-state',
-			versions['elysia-scoped-state']
+		dependencies['@absolutejs/scoped-state'] = resolveVersion(
+			'@absolutejs/scoped-state',
+			versions['@absolutejs/scoped-state']
 		);
 	}
 

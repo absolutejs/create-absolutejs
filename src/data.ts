@@ -197,6 +197,6 @@ export const scopedStatePlugin: AvailableDependency = {
 			packageName: 'scopedState'
 		}
 	],
-	latestVersion: versions['elysia-scoped-state'],
-	value: 'elysia-scoped-state'
+	latestVersion: versions['@absolutejs/scoped-state'],
+	value: '@absolutejs/scoped-state'
 };
