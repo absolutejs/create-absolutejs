@@ -148,7 +148,7 @@ export const scaffold = async ({
 	mkdirSync(utilsDirectory, { recursive: true });
 	writeFileSync(
 		join(utilsDirectory, 'edenTreaty.ts'),
-		`import { treaty } from '@elysiajs/eden'
+		`import { treaty } from '@elysia/eden'
 import type { Server } from '../../backend/server'
 
 const serverUrl =

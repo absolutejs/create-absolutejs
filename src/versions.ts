@@ -5,7 +5,7 @@
  */
 export const versions = {
 	/* ── Core ─────────────────────────────────────────────── */
-	'@absolutejs/absolute': '0.19.0-beta.1108',
+	'@absolutejs/absolute': '0.20.0-beta.0',
 	'@absolutejs/a2a': '0.3.2',
 	'@absolutejs/agency': '0.6.3',
 	'@absolutejs/agent-conformance': '0.3.0',
@@ -19,8 +19,8 @@ export const versions = {
 	'@absolutejs/auth': '0.56.17',
 	'@absolutejs/egress': '0.1.0',
 	'@absolutejs/execution': '0.14.4',
-	'@absolutejs/manifest': '0.3.0',
-	'@absolutejs/mcp': '0.9.0',
+	'@absolutejs/manifest': '0.9.0',
+	'@absolutejs/mcp': '0.12.0',
 	'@absolutejs/policy': '0.2.0',
 	'@absolutejs/secrets': '0.7.0',
 	'@absolutejs/sync-bus-pg': '0.2.0',
@@ -33,11 +33,11 @@ export const versions = {
 	'@angular/platform-browser': '21.2.0',
 	'@angular/platform-server': '21.2.0',
 	'@angular/ssr': '21.2.0',
-	'@elysiajs/cors': '1.4.1',
+	'@elysia/cors': '2.0.0-beta.1',
 	/* ── Plugins ──────────────────────────────────────────── */
-	'@elysiajs/eden': '1.4.8',
-	'@elysiajs/static': '1.4.7',
-	'@elysiajs/swagger': '1.3.1',
+	'@elysia/eden': '2.0.0-beta.5',
+	'@elysia/openapi': '2.0.0-beta.1',
+	'@elysia/static': '2.0.0-beta.2',
 	/* ── ESLint + Prettier ────────────────────────────────── */
 	'@eslint/compat': '2.0.2',
 	'@eslint/js': '9.39.2',
@@ -60,9 +60,9 @@ export const versions = {
 	/* ── ORM ──────────────────────────────────────────────── */
 	'drizzle-kit': '1.0.0-rc.4',
 	'drizzle-orm': '1.0.0-rc.4',
-	elysia: '1.4.28',
+	elysia: '2.0.0-beta.6',
 	'elysia-rate-limit': '4.5.0',
-	'@absolutejs/scoped-state': '0.1.4',
+	'@absolutejs/scoped-state': '0.2.0',
 	eslint: '9.39.2',
 	'eslint-plugin-absolute': '0.11.13',
 	'eslint-plugin-import': '2.32.0',

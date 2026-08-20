@@ -57,15 +57,15 @@ export const availableORMs = ['drizzle', 'prisma', 'none'] as const;
 export const availablePlugins: AvailableDependency[] = [
 	{
 		imports: [{ config: null, isPlugin: true, packageName: 'cors' }],
-		label: cyan('⚙️ @elysiajs/cors'),
-		latestVersion: versions['@elysiajs/cors'],
-		value: '@elysiajs/cors'
+		label: cyan('⚙️ @elysia/cors'),
+		latestVersion: versions['@elysia/cors'],
+		value: '@elysia/cors'
 	},
 	{
-		imports: [{ config: null, isPlugin: true, packageName: 'swagger' }],
-		label: cyan('📑 @elysiajs/swagger'),
-		latestVersion: versions['@elysiajs/swagger'],
-		value: '@elysiajs/swagger'
+		imports: [{ config: null, isPlugin: true, packageName: 'openapi' }],
+		label: cyan('📑 @elysia/openapi'),
+		latestVersion: versions['@elysia/openapi'],
+		value: '@elysia/openapi'
 	},
 	{
 		imports: [{ config: null, isPlugin: true, packageName: 'rateLimit' }],
@@ -101,12 +101,12 @@ export const defaultPlugins: AvailableDependency[] = [
 		value: '@absolutejs/absolute'
 	},
 	{
-		latestVersion: versions['@elysiajs/eden'],
-		value: '@elysiajs/eden'
+		latestVersion: versions['@elysia/eden'],
+		value: '@elysia/eden'
 	},
 	{
-		latestVersion: versions['@elysiajs/static'],
-		value: '@elysiajs/static'
+		latestVersion: versions['@elysia/static'],
+		value: '@elysia/static'
 	}
 ];
 export const eslintAndPrettierDependencies: AvailableDependency[] = [
