@@ -21,6 +21,7 @@ export const versions = {
 	'@absolutejs/execution': '0.14.4',
 	'@absolutejs/manifest': '0.9.0',
 	'@absolutejs/mcp': '0.12.0',
+	'@absolutejs/observability': '0.6.0',
 	'@absolutejs/policy': '0.2.0',
 	'@absolutejs/secrets': '0.7.0',
 	'@absolutejs/sync-bus-pg': '0.2.0',

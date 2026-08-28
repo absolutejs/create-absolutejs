@@ -36,6 +36,7 @@ export type FrontendDirectories = Partial<Record<Frontend, string>>;
 export type ImportEntry = {
 	packageName: string;
 	isPlugin: boolean;
+	importFrom?: string;
 	config?: Record<string, unknown> | null;
 };
 

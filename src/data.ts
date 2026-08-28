@@ -56,6 +56,19 @@ export const availableFrontends = [
 export const availableORMs = ['drizzle', 'prisma', 'none'] as const;
 export const availablePlugins: AvailableDependency[] = [
 	{
+		imports: [
+			{
+				config: null,
+				importFrom: '@absolutejs/observability/elysia',
+				isPlugin: true,
+				packageName: 'createManagedObservabilityRelayFromEnv'
+			}
+		],
+		label: magenta('🔎 @absolutejs/observability + Support Mode'),
+		latestVersion: versions['@absolutejs/observability'],
+		value: '@absolutejs/observability'
+	},
+	{
 		imports: [{ config: null, isPlugin: true, packageName: 'cors' }],
 		label: cyan('⚙️ @elysia/cors'),
 		latestVersion: versions['@elysia/cors'],

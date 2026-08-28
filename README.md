@@ -116,7 +116,14 @@ Usage: create-absolute [project-name] [options]
   ORM to configure: `drizzle` | `prisma` | `none`.
 
 - `--plugin <plugin>`  
-  Elysia plugin(s) to include (repeatable); `none` skips plugin setup.
+  Elysia plugin(s) to include (repeatable); `none` skips plugin setup. Select
+  `@absolutejs/observability` to mount the credential-safe error, Replay,
+  vitals, and Support Mode relay from environment configuration.
+
+```bash
+bun create absolutejs my-app \
+  --plugin @absolutejs/observability
+```
 
 - `--react`  
   Include a React frontend.

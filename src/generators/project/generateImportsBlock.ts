@@ -57,12 +57,19 @@ export const generateImportsBlock = ({
 	for (const dependency of deps) {
 		const importsList = dependency.imports ?? [];
 		if (importsList.length === 0) continue;
-		rawImports.push(
-			`import { ${importsList
-				.map((imp) => imp.packageName)
-				.sort()
-				.join(', ')} } from '${dependency.value}'`
-		);
+		const bySource = new Map<string, string[]>();
+		for (const imported of importsList) {
+			const source = imported.importFrom ?? dependency.value;
+			bySource.set(source, [
+				...(bySource.get(source) ?? []),
+				imported.packageName
+			]);
+		}
+		for (const [source, names] of bySource) {
+			rawImports.push(
+				`import { ${names.sort().join(', ')} } from '${source}'`
+			);
+		}
 	}
 
 	const buildExamplePath = (dir: string, file: string) =>
