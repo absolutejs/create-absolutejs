@@ -11,7 +11,7 @@
 	"description": "A CLI tool to create a new AbsoluteJS project",
 	"devDependencies": {
 		"@absolutejs/absolute": "0.20.0-beta.0",
-		"@absolutejs/changelog": "^0.1.2",
+		"@absolutejs/changelog": "^0.2.0",
 		"@eslint/compat": "2.0.2",
 		"@stylistic/eslint-plugin": "5.9.0",
 		"@types/bun": "1.3.8",
@@ -54,7 +54,8 @@
 		"test": "cd absolutejs-project && bun dev",
 		"test:unit": "bun test tests/",
 		"check:package": "bun run typecheck && bun run test:unit && bun run build && absolute-changelog check",
-		"typecheck": "bun run tsc --noEmit"
+		"typecheck": "bun run tsc --noEmit",
+		"prepublishOnly": "absolute-changelog check"
 	},
 	"type": "module",
 	"version": "0.17.0"
