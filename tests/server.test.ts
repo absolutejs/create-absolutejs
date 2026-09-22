@@ -29,6 +29,11 @@ test('generated server uses the Elysia 2 error lifecycle', () => {
 		expect(source).toContain('.error(({ request, error }) => {');
 		expect(source).not.toContain(".on('error'");
 		expect(source).not.toContain('err.message');
+		expect(source).not.toContain('export type Server');
+		expect(source).toContain('.use([absolutejs, api])');
+		expect(
+			readFileSync(join(backendDirectory, 'api.ts'), 'utf8')
+		).toContain('export type Api = typeof api');
 	} finally {
 		rmSync(project, { recursive: true, force: true });
 	}

@@ -65,7 +65,7 @@ export const versions = {
 	'elysia-rate-limit': '4.5.0',
 	'@absolutejs/scoped-state': '0.2.0',
 	eslint: '9.39.2',
-	'eslint-plugin-absolute': '0.11.13',
+	'eslint-plugin-absolute': '0.12.0',
 	'eslint-plugin-import': '2.32.0',
 	/* ── ESLint React ─────────────────────────────────────── */
 	'eslint-plugin-jsx-a11y': '6.10.2',

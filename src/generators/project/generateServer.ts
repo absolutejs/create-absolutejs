@@ -117,11 +117,12 @@ export const generateServerFile = ({
 			: '';
 
 	const content = `${importsBlock}
+import { api } from './api'
 
 ${manifestBlock}
 ${dbBlock ? `${dbBlock}\n` : ''}${authBlock}
-const server = new Elysia()
-.use(absolutejs)
+export const server = new Elysia()
+.use([absolutejs, api])
 ${useBlock}${authOption === 'abs' ? `\n${guardBlock}` : ''}
   ${routesBlock}
   .use(networking)
@@ -129,7 +130,10 @@ ${useBlock}${authOption === 'abs' ? `\n${guardBlock}` : ''}
     console.error(\`Server error on \${request.method} \${request.url}\`, error)
   })
 
-export type Server = typeof server
 `;
+	writeFileSync(
+		join(backendDirectory, 'api.ts'),
+		"import { Elysia } from 'elysia'\n\n// Add typed JSON subapps here; keep page rendering and lifecycle in server.ts.\nexport const api = new Elysia({ name: 'application-api' })\nexport type Api = typeof api\n"
+	);
 	writeFileSync(serverFilePath, content);
 };

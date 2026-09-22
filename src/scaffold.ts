@@ -149,14 +149,14 @@ export const scaffold = async ({
 	writeFileSync(
 		join(utilsDirectory, 'edenTreaty.ts'),
 		`import { treaty } from '@elysia/eden'
-import type { Server } from '../../backend/server'
+import type { Api } from '../../backend/api'
 
 const serverUrl =
 	typeof window !== 'undefined'
 		? window.location.origin
 		: 'http://localhost:3000'
 
-export const server = treaty<Server>(serverUrl)
+export const server = treaty<Api>(serverUrl)
 `
 	);
 
