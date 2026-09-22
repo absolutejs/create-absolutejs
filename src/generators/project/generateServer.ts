@@ -125,9 +125,8 @@ const server = new Elysia()
 ${useBlock}${authOption === 'abs' ? `\n${guardBlock}` : ''}
   ${routesBlock}
   .use(networking)
-  .on('error', err => {
-    const { request } = err
-    console.error(\`Server error on \${request.method} \${request.url}: \${err.message}\`)
+  .error(({ request, error }) => {
+    console.error(\`Server error on \${request.method} \${request.url}\`, error)
   })
 
 export type Server = typeof server

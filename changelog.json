@@ -1,5 +1,26 @@
 {
 	"contract": 1,
 	"name": "create-absolutejs",
-	"releases": []
+	"releases": [
+		{
+			"version": "0.17.2",
+			"date": "2026-09-22",
+			"changes": [
+				{
+					"kind": "fixed",
+					"summary": "Use the Elysia 2 error lifecycle verified against a fresh generated project"
+				}
+			]
+		},
+		{
+			"version": "0.17.1",
+			"date": "2026-09-22",
+			"changes": [
+				{
+					"kind": "fixed",
+					"summary": "Generate the Elysia 2 onError lifecycle instead of an unsupported on error hook"
+				}
+			]
+		}
+	]
 }
