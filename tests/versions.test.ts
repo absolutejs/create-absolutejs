@@ -9,10 +9,10 @@ import { versions } from '../src/versions';
 
 describe('generated runtime versions', () => {
 	test('scaffolds the coordinated pre-1.0 AbsoluteJS release', () => {
-		expect(versions['@absolutejs/absolute']).toBe('0.20.0-beta.117');
+		expect(versions['@absolutejs/absolute']).toBe('0.20.0-beta.120');
 		expect(versions['@absolutejs/manifest']).toBe('0.10.0');
 		expect(versions['@absolutejs/mcp']).toBe('0.26.5');
-		expect(versions['@absolutejs/scoped-state']).toBe('0.3.0');
+		expect(versions['@absolutejs/scoped-state']).toBe('0.3.1');
 	});
 
 	test('uses only Elysia 2 package names and tested beta versions', () => {

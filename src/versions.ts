@@ -6,7 +6,7 @@
 export const versions = {
 	'@absolutejs/a2a': '0.3.6',
 	/* ── Core ─────────────────────────────────────────────── */
-	'@absolutejs/absolute': '0.20.0-beta.117',
+	'@absolutejs/absolute': '0.20.0-beta.120',
 	'@absolutejs/agency': '0.7.4',
 	'@absolutejs/agent-conformance': '0.15.1',
 	'@absolutejs/agent-control': '0.5.8',
@@ -23,7 +23,7 @@ export const versions = {
 	'@absolutejs/mcp': '0.26.5',
 	'@absolutejs/observability': '0.6.1',
 	'@absolutejs/policy': '0.4.1',
-	'@absolutejs/scoped-state': '0.3.0',
+	'@absolutejs/scoped-state': '0.3.1',
 	'@absolutejs/secrets': '0.9.7',
 	'@absolutejs/sync-bus-pg': '0.2.3',
 	'@absolutejs/wallet': '0.9.3',
@@ -46,7 +46,7 @@ export const versions = {
 	/* ── Database Hosts ───────────────────────────────────── */
 	'@libsql/client': '0.18.0',
 	'@neondatabase/serverless': '1.1.0',
-	'@planetscale/database': '1.20.1',
+	'@planetscale/database': '1.20.2',
 	'@stylistic/eslint-plugin': '5.10.0',
 	/* ── Tailwind CSS ─────────────────────────────────────── */
 	'@tailwindcss/cli': '4.3.3',

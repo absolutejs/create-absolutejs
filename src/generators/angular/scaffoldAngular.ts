@@ -1,12 +1,11 @@
 import { copyFileSync, mkdirSync, writeFileSync } from 'fs';
-import { join } from 'path';
+import { join, relative } from 'path';
 import { ScaffoldFrontendProps } from '../../types';
 import { generateMarkupCSS } from '../project/generateMarkupCSS';
 import {
 	generateAngularPage,
 	generateAngularPageHtml,
 	generateAppComponent,
-	generateAppComponentCss,
 	generateAppComponentHtml,
 	generateCounterComponent,
 	generateCounterComponentCss,
@@ -18,7 +17,6 @@ import {
 export const scaffoldAngular = ({
 	editBasePath,
 	includeExamples,
-	isSingleFrontend,
 	targetDirectory,
 	frontends,
 	templatesDirectory,
@@ -90,7 +88,7 @@ export const scaffoldAngular = ({
 
 	writeFileSync(
 		join(componentsDirectory, 'app.component.ts'),
-		generateAppComponent(isSingleFrontend),
+		generateAppComponent(),
 		'utf-8'
 	);
 
@@ -101,14 +99,8 @@ export const scaffoldAngular = ({
 	);
 
 	writeFileSync(
-		join(stylesDirectory, 'app.component.css'),
-		generateAppComponentCss(),
-		'utf-8'
-	);
-
-	writeFileSync(
 		join(componentsDirectory, 'counter.component.ts'),
-		generateCounterComponent(isSingleFrontend),
+		generateCounterComponent(relative(componentsDirectory, stylesDirectory).replaceAll('\\', '/')),
 		'utf-8'
 	);
 

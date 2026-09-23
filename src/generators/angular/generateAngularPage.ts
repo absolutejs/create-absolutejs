@@ -55,9 +55,7 @@ export const generateAngularPageHtml = (includeExamples: boolean) => {
 <app-root [initialCount]="initialCount"></app-root>
 `;
 };
-export const generateAppComponent = (
-	isSingleFrontend: boolean
-) => `import { Component, Input, ViewEncapsulation } from '@angular/core';
+export const generateAppComponent = () => `import { Component, Input, ViewEncapsulation } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { CounterComponent } from './counter.component';
 
@@ -66,14 +64,12 @@ import { CounterComponent } from './counter.component';
 	standalone: true,
 	imports: [CommonModule, CounterComponent],
 	templateUrl: '../templates/app.component.html',
-	styleUrl: '${isSingleFrontend ? '../' : '../../'}styles/app.component.css',
 	encapsulation: ViewEncapsulation.None
 })
 export class AppComponent {
 	@Input() initialCount: number = 0;
 }
 `;
-export const generateAppComponentCss = () => ``;
 export const generateAppComponentHtml = (
 	frontends: Frontend[],
 	editBasePath: string
@@ -113,7 +109,7 @@ export const generateAppComponentHtml = (
 `;
 };
 export const generateCounterComponent = (
-	isSingleFrontend: boolean
+	stylesRelativeDirectory: string
 ) => `import { Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
@@ -122,7 +118,7 @@ import { CommonModule } from '@angular/common';
 	standalone: true,
 	imports: [CommonModule],
 	templateUrl: '../templates/counter.component.html',
-	styleUrl: '${isSingleFrontend ? '../' : '../../'}styles/counter.component.css'
+	styleUrl: '${stylesRelativeDirectory}/counter.component.css'
 })
 export class CounterComponent {
 	@Input() initialCount: number = 0;

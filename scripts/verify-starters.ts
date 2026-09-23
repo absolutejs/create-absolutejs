@@ -37,6 +37,8 @@ const base: CreateConfiguration = {
 };
 const cases: Array<{ name: string; options: Partial<CreateConfiguration> }> = [
 	{ name: 'react', options: {} },
+	{ name: 'react-bare', options: { includeExamples: false, useTailwind: true, tailwind: { input: 'src/styles/tailwind.css', output: 'build/tailwind.css' } } },
+	{ name: 'planetscale-postgres', options: { databaseEngine: 'postgresql', databaseHost: 'planetscale', orm: 'drizzle' } },
 	{ name: 'sqlite', options: { databaseEngine: 'sqlite' } },
 	{
 		name: 'sqlite-drizzle',
