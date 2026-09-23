@@ -1,8 +1,8 @@
 
 import { defineConfig } from 'eslint/config';
-import tseslint from 'typescript-eslint';
 import absolute from 'eslint-plugin-absolute';
 import reactHooks from 'eslint-plugin-react-hooks';
+import tseslint from 'typescript-eslint';
 
 export default defineConfig([
   { ignores: ['node_modules/**', 'build/**', 'dist/**', '.absolutejs/**', '.data/**', '**/.absolutejs-hmr-*', 'drizzle/**'] },
@@ -13,14 +13,14 @@ export default defineConfig([
     plugins: { absolute },
     rules: {
       '@typescript-eslint/ban-ts-comment': ['error', { 'ts-check': true, 'ts-expect-error': true, 'ts-ignore': true, 'ts-nocheck': true }],
-      'absolute/no-chained-type-assertions': 'error',
-      'absolute/no-unsafe-schema-types': 'error',
-      'absolute/prefer-drizzle-query-builders': 'error',
-      'absolute/elysia-composition-boundaries': 'error',
-      'absolute/no-nondeterministic-render': 'error',
       'absolute/button-icon-is-hidden': 'error',
+      'absolute/elysia-composition-boundaries': 'error',
       'absolute/icon-button-has-accessible-name': 'error',
       'absolute/loading-indicator-has-aria-busy': 'error',
+      'absolute/no-chained-type-assertions': 'error',
+      'absolute/no-nondeterministic-render': 'error',
+      'absolute/no-unsafe-schema-types': 'error',
+      'absolute/prefer-drizzle-query-builders': 'error',
       'absolute/progressbar-has-state': 'error',
     },
   },
@@ -31,17 +31,18 @@ export default defineConfig([
   {
     files: ['src/frontend/**/*.{ts,tsx,js,jsx}'],
     rules: {
-      'no-restricted-syntax': ['error',
-        { selector: "CallExpression[callee.name='fetch']", message: 'Use a directly typed Eden subapp client.' },
-        { selector: "CallExpression[callee.property.name='fetch']", message: 'Use a directly typed Eden subapp client.' },
-      ],
       'absolute/eden-requires-react-query': 'error',
+      'no-restricted-syntax': ['error',
+        { message: 'Use a directly typed Eden subapp client.', selector: "CallExpression[callee.name='fetch']" },
+        { message: 'Use a directly typed Eden subapp client.', selector: "CallExpression[callee.property.name='fetch']" },
+      ],
     },
   },
   { files: ['**/*.{html,vue,svelte,gjs,gts}'], plugins: { absolute }, processor: 'absolute/template-source' },
   {
-    files: ['src/frontend/**/*.{ts,tsx,js,jsx}'],
+    // React Hooks rules do not apply to Angular's unrelated usePageContext API.
+    files: ['src/frontend/**/*.{tsx,jsx}', 'src/frontend/**/hooks/**/*.{ts,js}'],
     plugins: { 'react-hooks': reactHooks },
-    rules: { 'react-hooks/rules-of-hooks': 'error', 'react-hooks/exhaustive-deps': 'error' },
+    rules: { 'react-hooks/exhaustive-deps': 'error', 'react-hooks/rules-of-hooks': 'error' },
   },
 ]);

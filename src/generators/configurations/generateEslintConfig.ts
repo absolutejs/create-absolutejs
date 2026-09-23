@@ -8,7 +8,8 @@ import absolute from 'eslint-plugin-absolute';
 ${frontends.includes('react') ? "import reactHooks from 'eslint-plugin-react-hooks';" : ''}
 
 export default defineConfig([
-  { ignores: ['node_modules/**', 'build/**', 'dist/**', '.absolutejs/**', '.data/**', '**/.absolutejs-hmr-*', 'drizzle/**'] },
+  // The copied HTMX distribution is third-party minified runtime code.
+  { ignores: ['src/frontend/**/htmx.min.js', 'node_modules/**', 'build/**', 'dist/**', '.absolutejs/**', '.data/**', '**/.absolutejs-hmr-*', 'drizzle/**'] },
   { linterOptions: { noInlineConfig: true, reportUnusedDisableDirectives: 'error' } },
   ...tseslint.configs.recommended,
   {
@@ -45,7 +46,8 @@ export default defineConfig([
   ${
 		frontends.includes('react')
 			? `{
-    files: ['src/frontend/**/*.{ts,tsx,js,jsx}'],
+    // React Hooks rules do not apply to Angular's unrelated usePageContext API.
+    files: ['src/frontend/**/*.{tsx,jsx}', 'src/frontend/**/hooks/**/*.{ts,js}'],
     plugins: { 'react-hooks': reactHooks },
     rules: { 'react-hooks/rules-of-hooks': 'error', 'react-hooks/exhaustive-deps': 'error' },
   },`

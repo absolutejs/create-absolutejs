@@ -61,9 +61,9 @@ export const scaffoldReact = ({
 	   dependency of `@absolutejs/auth`. Without Absolute Auth the import cannot
 	   resolve, so the component is left out entirely. */
 	cpSync(join(templatesDirectory, 'react'), targetDirectory, {
+		recursive: true,
 		filter: (source) =>
-			authOption === 'abs' || basename(source) !== 'OAuthLink.tsx',
-		recursive: true
+			authOption === 'abs' || basename(source) !== 'OAuthLink.tsx'
 	});
 
 	const appComponent = generateAppComponent(frontends, editBasePath);

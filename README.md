@@ -74,13 +74,13 @@ Usage: create-absolute [project-name] [options]
   Output directory for build artifacts.
 
 - `--db <engine|none>`  
-  Database engine (`postgresql` | `mysql` | `sqlite` | `mongodb` | `redis` | `singlestore` | `cockroachdb` | `mssql`) or `none`.
+  Database engine (`postgresql` | `mysql` | `mariadb` | `sqlite` | `mongodb` | `gel` | `singlestore` | `cockroachdb` | `mssql`) or `none`.
 
 - `--db-dir <directory>`  
   Directory name for your database files.
 
 - `--db-host <provider|none>`  
-  Database host provider (`neon` | `planetscale` | `supabase` | `turso` | `vercel` | `upstash` | `atlas`) or `none`.
+  Database host provider (`neon` | `planetscale` | `turso`) or `none`.
 
 - `--directory <default|custom>`  
   Directory-naming strategy: `default` or `custom`.
@@ -112,8 +112,8 @@ Usage: create-absolute [project-name] [options]
 - `--lts`  
   Use LTS versions of required packages.
 
-- `--orm <drizzle|prisma|none>`  
-  ORM to configure: `drizzle` | `prisma` | `none`.
+- `--orm <drizzle|none>`
+  ORM to configure: `drizzle` | `none`. Prisma scaffolding is not implemented and is rejected before files are written. Drizzle 1 no longer includes the Gel dialect; choose no ORM for Gel.
 
 - `--plugin <plugin>`  
   Elysia plugin(s) to include (repeatable); `none` skips plugin setup. Select
@@ -191,3 +191,36 @@ Contributions are welcome! Feel free to open issues or submit pull requests to i
 ## License
 
 **Business Source License 1.1 (BSL-1.1)** – see [`LICENSE`](./LICENSE) for details.
+
+## Scaffold compatibility and verification
+
+The CLI pins published registry versions; it does not install local package links.
+The compatibility policy in `src/utils/registryChannel.ts` also applies when
+resolving versions at creation time, so npm's older `latest` tag cannot silently
+switch a generated server back to Elysia 1.
+
+- AbsoluteJS uses its current 0.20 beta channel.
+- Elysia remains at 2.0.0-beta.6 and OpenAPI at 2.0.0-beta.2: the published
+  authentication/plugin contracts still rely on `ElysiaStatus.code`, which later
+  Elysia betas changed. Upgrading these requires a coordinated SDK migration.
+- TypeScript 5.9.3 and Angular's current 21 LTS patches match the framework's
+  compiler peer dependencies. Newer incompatible compiler majors are not selected.
+- Drizzle ORM and Kit use the coordinated 1.0 release-candidate channel.
+- All other pins are checked against their latest published release channel.
+
+Automatic authentication setup currently supplies a complete Google configuration
+and requires a persistent database. Configure other login providers explicitly
+using `@absolutejs/auth` after creation; the CLI rejects unsupported automatic
+provider configurations instead of silently omitting them. Auth sessions are
+in-memory by default; configure a shared session store for multi-instance hosting.
+
+`bun run check-versions` checks every scaffold pin against that policy.
+`bun run check:package` runs typechecking, unit tests, compilation and release
+metadata validation. `bun run test:starters` scaffolds representative frontend,
+plugin, database and agentic combinations into a temporary directory, installs
+real registry dependencies, and checks TypeScript and ESLint. SQLite cases also
+exercise generated HTTP validation and persistence using an isolated database.
+The matrix creates Docker configuration files but does not start containers or
+connect to paid providers. Use `SCAFFOLD_CHECK_CASES=sqlite-auth,all-frontends` to
+select cases. Hosted database credentials and real OAuth acceptance are separate
+integration checks, not implied by this matrix.

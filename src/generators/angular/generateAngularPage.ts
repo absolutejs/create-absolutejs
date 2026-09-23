@@ -1,17 +1,12 @@
 import { Frontend } from '../../types';
 import { formatNavLink } from '../../utils/formatNavLink';
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-export const generateAngularPage = (
-	_frontends: Frontend[],
-	includeExamples: boolean
-) => {
+export const generateAngularPage = (includeExamples: boolean) => {
 	if (!includeExamples)
 		return `import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { defineAngularPage } from '@absolutejs/absolute/angular';
 
-type AngularPageProps = {
+export type Context = {
 	initialCount: number;
 };
 
@@ -23,20 +18,17 @@ type AngularPageProps = {
 })
 export class AngularExampleComponent {}
 
-export const page = defineAngularPage<AngularPageProps>({
-	component: AngularExampleComponent
-});
+export const factory = () => AngularExampleComponent;
 `;
 
-	return `import { Component, inject, InjectionToken } from '@angular/core';
+	return `import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { defineAngularPage } from '@absolutejs/absolute/angular';
+import { usePageContext } from '@absolutejs/absolute/angular';
 import { DropdownComponent } from '../components/dropdown.component';
 import { AppComponent } from '../components/app.component';
 
-export const INITIAL_COUNT = new InjectionToken<number>('INITIAL_COUNT');
 
-type AngularPageProps = {
+export type Context = {
 	initialCount: number;
 };
 
@@ -47,20 +39,12 @@ type AngularPageProps = {
 	templateUrl: '../templates/angular-example.html'
 })
 export class AngularExampleComponent {
-	initialCount: number = 0;
-
-	constructor() {
-		const initialCountToken = inject(INITIAL_COUNT, { optional: true });
-		this.initialCount = initialCountToken ?? 0;
-	}
+	initialCount = usePageContext<Context>().initialCount;
 }
 
-export const page = defineAngularPage<AngularPageProps>({
-	component: AngularExampleComponent
-});
+export const factory = () => AngularExampleComponent;
 `;
 };
-
 export const generateAngularPageHtml = (includeExamples: boolean) => {
 	if (!includeExamples) return `<main></main>\n`;
 
@@ -71,7 +55,6 @@ export const generateAngularPageHtml = (includeExamples: boolean) => {
 <app-root [initialCount]="initialCount"></app-root>
 `;
 };
-
 export const generateAppComponent = (
 	isSingleFrontend: boolean
 ) => `import { Component, Input, ViewEncapsulation } from '@angular/core';
@@ -90,9 +73,7 @@ export class AppComponent {
 	@Input() initialCount: number = 0;
 }
 `;
-
 export const generateAppComponentCss = () => ``;
-
 export const generateAppComponentHtml = (
 	frontends: Frontend[],
 	editBasePath: string
@@ -131,7 +112,6 @@ export const generateAppComponentHtml = (
 </main>
 `;
 };
-
 export const generateCounterComponent = (
 	isSingleFrontend: boolean
 ) => `import { Component, Input } from '@angular/core';
@@ -157,13 +137,6 @@ export class CounterComponent {
 	}
 }
 `;
-
-export const generateCounterComponentHtml =
-	() => `<button (click)="increment()">
-	count is <span class="counter-value">{{ count }}</span>
-</button>
-`;
-
 export const generateCounterComponentCss = () => `button {
 	background-color: #1a1a1a;
 	border: 1px solid transparent;
@@ -191,10 +164,12 @@ button:focus-visible {
 	}
 }
 `;
-
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-export const generateDropdownComponent = (_frontends: Frontend[]) => {
-	return `import { Component } from '@angular/core';
+export const generateCounterComponentHtml =
+	() => `<button (click)="increment()">
+	count is <span class="counter-value">{{ count }}</span>
+</button>
+`;
+export const generateDropdownComponent = () => `import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 @Component({
@@ -207,8 +182,6 @@ export class DropdownComponent {
 	isOpen = false;
 }
 `;
-};
-
 export const generateDropdownComponentHtml = (frontends: Frontend[]) => {
 	const navLinks = frontends.map(formatNavLink).join('\n\t\t');
 

@@ -1,7 +1,7 @@
-import { expect, test } from 'bun:test';
 import { mkdirSync, mkdtempSync, readFileSync, rmSync } from 'fs';
 import { tmpdir } from 'os';
 import { join } from 'path';
+import { expect, test } from 'bun:test';
 import { generateServerFile } from '../src/generators/project/generateServer';
 
 test('generated server uses the Elysia 2 error lifecycle', () => {
@@ -10,17 +10,17 @@ test('generated server uses the Elysia 2 error lifecycle', () => {
 	mkdirSync(backendDirectory, { recursive: true });
 	try {
 		generateServerFile({
-			backendDirectory,
 			assetsDirectory: 'assets',
-			publicDirectory: 'public',
-			buildDirectory: 'build',
-			frontendDirectories: { react: 'react' },
-			plugins: [],
-			tailwind: undefined,
 			authOption: undefined,
+			backendDirectory,
+			buildDirectory: 'build',
 			databaseEngine: undefined,
 			databaseHost: undefined,
-			orm: undefined
+			frontendDirectories: { react: 'react' },
+			orm: undefined,
+			plugins: [],
+			publicDirectory: 'public',
+			tailwind: undefined
 		});
 		const source = readFileSync(
 			join(backendDirectory, 'server.ts'),
@@ -35,6 +35,6 @@ test('generated server uses the Elysia 2 error lifecycle', () => {
 			readFileSync(join(backendDirectory, 'api.ts'), 'utf8')
 		).toContain('export type Api = typeof api');
 	} finally {
-		rmSync(project, { recursive: true, force: true });
+		rmSync(project, { force: true, recursive: true });
 	}
 });

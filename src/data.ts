@@ -37,7 +37,6 @@ export const availableDatabaseHosts = [
 ] as const;
 export const availableDirectoryConfigurations = ['default', 'custom'] as const;
 export const availableDrizzleDialects = [
-	'gel',
 	'mariadb',
 	'mssql',
 	'mysql',

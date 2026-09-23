@@ -8,9 +8,9 @@ import { createPackageJson } from './generators/configurations/generatePackageJs
 import { initalizeRoot } from './generators/configurations/initializeRoot';
 import { scaffoldConfigurationFiles } from './generators/configurations/scaffoldConfigurationFiles';
 import { scaffoldDatabase } from './generators/db/scaffoldDatabase';
+import { scaffoldAgentic } from './generators/project/scaffoldAgentic';
 import { scaffoldBackend } from './generators/project/scaffoldBackend';
 import { scaffoldFrontends } from './generators/project/scaffoldFrontends';
-import { scaffoldAgentic } from './generators/project/scaffoldAgentic';
 import type { PackageManager, CreateConfiguration } from './types';
 
 type ScaffoldProps = {
@@ -18,6 +18,7 @@ type ScaffoldProps = {
 	packageManager: PackageManager;
 	latest: boolean;
 	envVariables: string[] | undefined;
+	verifyLocalDatabase?: boolean;
 };
 
 export const scaffold = async ({
@@ -47,9 +48,30 @@ export const scaffold = async ({
 		frontendDirectories
 	},
 	latest,
+	verifyLocalDatabase = true,
 	envVariables,
 	packageManager
 }: ScaffoldProps): Promise<{ dockerFreshInstall: boolean }> => {
+	if (orm === 'drizzle' && databaseEngine === 'gel')
+		throw new Error(
+			'Drizzle 1 no longer supports Gel. Choose no ORM for Gel.'
+		);
+	if (orm === 'prisma')
+		throw new Error(
+			'Prisma scaffolding is not implemented. Choose Drizzle or no ORM.'
+		);
+	if (authOption === 'abs' && (!databaseEngine || databaseEngine === 'none'))
+		throw new Error(
+			'Authentication requires a database for persistent users. Select a database or omit --auth.'
+		);
+	if (
+		authOption === 'abs' &&
+		(!absProviders?.length ||
+			absProviders.some((provider) => provider !== 'google'))
+	)
+		throw new Error(
+			'Automatic auth scaffolding currently supports --abs-provider google. Configure other providers with the auth package after creation.'
+		);
 	const __dirname = dirname(fileURLToPath(import.meta.url));
 	const templatesDirectory = join(__dirname, '/templates');
 
@@ -124,7 +146,8 @@ export const scaffold = async ({
 			databaseHost,
 			orm,
 			projectName,
-			typesDirectory
+			typesDirectory,
+			verifyLocalDatabase
 		});
 		({ dockerFreshInstall } = result);
 	}

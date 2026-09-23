@@ -1,5 +1,6 @@
 import pc from 'picocolors';
 
+import { registryChannel } from '../src/utils/registryChannel';
 import { versions } from '../src/versions';
 
 // Opportunistic HTTP/2 multiplexing — npm registry is HTTPS + the script
@@ -71,27 +72,14 @@ const fetchRegistryVersion = async (
 	}
 };
 
-const fetchLatest = (name: string) => fetchRegistryVersion(name, 'latest');
+const fetchLatest = (name: string) =>
+	fetchRegistryVersion(name, registryChannel(name));
 
 const entries = Object.entries(versions);
 console.log(`\nChecking ${entries.length} packages against npm registry…\n`);
 
 const results: VersionResult[] = await Promise.all(
 	entries.map(async ([name, current]) => {
-		if (current.includes('-')) {
-			const published = await fetchRegistryVersion(name, current);
-
-			return {
-				current,
-				latest: published ?? '??',
-				name,
-				status:
-					published === current
-						? ('up-to-date' as const)
-						: ('error' as const)
-			};
-		}
-
 		const latest = await fetchLatest(name);
 		if (!latest)
 			return {
@@ -184,4 +172,4 @@ console.log(
 	`${pc.green(`✓ ${upToDate.length} up-to-date`)}  ${pc.yellow(`⚠ ${outdated.length} outdated`)}  ${pc.red(`✗ ${errors.length} errors`)}\n`
 );
 
-if (outdated.length > 0) process.exit(1);
+if (outdated.length > 0 || errors.length > 0) process.exit(1);

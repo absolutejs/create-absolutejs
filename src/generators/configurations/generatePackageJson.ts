@@ -212,7 +212,7 @@ export const createPackageJson = async ({
 	}
 
 	if (agentic) {
-		for (const name of [
+		([
 			'@absolutejs/a2a',
 			'@absolutejs/agency',
 			'@absolutejs/agent-discovery',
@@ -231,9 +231,9 @@ export const createPackageJson = async ({
 			'@absolutejs/secrets',
 			'@absolutejs/sync-bus-pg',
 			'@absolutejs/wallet'
-		] as const) {
+		] as const).forEach((name) => {
 			dependencies[name] = resolveVersion(name, versions[name]);
-		}
+		});
 		devDependencies['@absolutejs/agent-conformance'] = resolveVersion(
 			'@absolutejs/agent-conformance',
 			versions['@absolutejs/agent-conformance']

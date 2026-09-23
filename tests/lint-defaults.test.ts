@@ -1,6 +1,6 @@
-import { expect, test } from 'bun:test';
 import { mkdtemp, writeFile, rm } from 'node:fs/promises';
 import { join } from 'node:path';
+import { expect, test } from 'bun:test';
 import { ESLint } from 'eslint';
 import { generateEslintConfig } from '../src/generators/configurations/generateEslintConfig';
 
@@ -37,6 +37,6 @@ test('starter lint rejects raw database queries and browser fetch, accepts typed
 			await eslint.isPathIgnored(join(dir, 'build/generated.ts'))
 		).toBe(true);
 	} finally {
-		await rm(dir, { recursive: true, force: true });
+		await rm(dir, { force: true, recursive: true });
 	}
 });

@@ -14,7 +14,7 @@ const connectionMap: Record<string, Record<string, DBExpr>> = {
 		none: { expr: 'new SQL(getEnv("DATABASE_URL"))' }
 	},
 	mongodb: {
-		none: { expr: 'new MongoClient(getEnv("DATABASE_URL"))' }
+		none: { expr: 'new MongoClient(getEnv("DATABASE_URL")).db()' }
 	},
 	mssql: {
 		none: { expr: 'await connect(getEnv("DATABASE_URL"))' }
@@ -89,26 +89,26 @@ export const generateDBBlock = ({
 	) {
 		return `
 const pool = createPool(getEnv("DATABASE_URL"))
-const db = drizzle(pool, { schema, mode: 'default' })
+const db = drizzle({ client: pool })
 `;
 	}
 
 	if (databaseEngine === 'mssql' && hostKey === 'none') {
 		return `
 const pool = await connect(getEnv("DATABASE_URL"))
-const db = drizzle({ client: pool }, { schema })
+const db = drizzle({ client: pool })
 `;
 	}
 
 	if (databaseEngine === 'postgresql' && databaseHost === 'neon') {
 		return `
 		const sql = neon(getEnv('DATABASE_URL'));
-const db = drizzle(sql, { schema });
+const db = drizzle({ client: sql });
 `;
 	}
 
 	return `
 const pool = ${expr}
-const db = drizzle(pool, { schema })
+const db = drizzle({ client: pool })
 `;
 };

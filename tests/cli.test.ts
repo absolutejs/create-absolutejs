@@ -1,5 +1,5 @@
-import { afterEach, describe, expect, test } from 'bun:test';
 import { argv } from 'process';
+import { afterEach, describe, expect, test } from 'bun:test';
 import { parseCommandLineOptions } from '../src/utils/parseCommandLineOptions';
 
 const originalArguments = [...argv];

@@ -18,6 +18,10 @@ export const scaffoldHTMX = ({
 	const pagesDirectory = join(targetDirectory, 'pages');
 	const cssOutputFile = join(stylesIndexesDirectory, 'htmx-example.css');
 
+	copyFileSync(
+		join(templatesDirectory, 'htmx', 'LICENSE'),
+		join(targetDirectory, 'htmx.LICENSE')
+	);
 	// htmx.min.js is the framework runtime, copied in both modes.
 	const glob = new Glob('htmx*.min.js');
 	for (const relativePath of glob.scanSync({

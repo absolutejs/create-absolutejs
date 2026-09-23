@@ -35,7 +35,7 @@ export const scaffoldAngular = ({
 
 		writeFileSync(
 			join(pagesDirectory, 'angular-example.ts'),
-			generateAngularPage(frontends, false),
+			generateAngularPage(false),
 			'utf-8'
 		);
 		writeFileSync(
@@ -66,7 +66,7 @@ export const scaffoldAngular = ({
 
 	writeFileSync(
 		join(pagesDirectory, 'angular-example.ts'),
-		generateAngularPage(frontends, true),
+		generateAngularPage(true),
 		'utf-8'
 	);
 
@@ -78,7 +78,7 @@ export const scaffoldAngular = ({
 
 	writeFileSync(
 		join(componentsDirectory, 'dropdown.component.ts'),
-		generateDropdownComponent(frontends),
+		generateDropdownComponent(),
 		'utf-8'
 	);
 
