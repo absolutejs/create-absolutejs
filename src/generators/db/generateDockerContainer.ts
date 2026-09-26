@@ -8,6 +8,8 @@ interface DatabaseTemplate {
 		test: string;
 	};
 	image: string;
+	/* SQL the image runs once on first boot, written beside the compose file. */
+	initScript?: { fileName: string; mountPath: string; sql: string };
 	platform?: string;
 	port: string;
 	volumePath: string;
@@ -24,7 +26,9 @@ const templates: Record<
 		},
 		healthcheck: {
 			startPeriod: '5s',
-			test: 'cockroach sql --insecure -e "select 1" >/dev/null 2>&1'
+			/* Healthy once COCKROACH_DATABASE exists, not merely once the node
+			   answers, so `db:up --wait` is followed safely by `db:migrate`. */
+			test: 'cockroach sql --insecure -e "SHOW DATABASES" 2>/dev/null | grep -q "^database"'
 		},
 		image: 'cockroachdb/cockroach:latest-v25.3',
 		port: '26257:26257',
@@ -119,9 +123,17 @@ const templates: Record<
 		},
 		healthcheck: {
 			startPeriod: '30s',
-			test: 'singlestore -u root -ppassword -e "SELECT 1" >/dev/null 2>&1'
+			/* Healthy once the init script has created the database. */
+			test: 'singlestore -u root -ppassword -D database -e "SELECT 1" >/dev/null 2>&1'
 		},
 		image: 'ghcr.io/singlestore-labs/singlestoredb-dev', // NOTE: No tag specified due to data persistence
+		/* The dev image has no "create this database" variable; without it the
+		   DATABASE_URL's database would not exist until something created it. */
+		initScript: {
+			fileName: 'singlestore-init.sql',
+			mountPath: '/init.sql',
+			sql: 'CREATE DATABASE IF NOT EXISTS `database`;\n'
+		},
 		platform: 'linux/amd64', // Required for ARM64 (Apple Silicon); no-op on amd64
 		port: '3306:3306',
 		volumePath: '/data'
@@ -139,8 +151,19 @@ export const generateDockerContainer = (databaseEngine: DatabaseEngine) => {
 		);
 	}
 
-	const { command, env, healthcheck, image, platform, port, volumePath } =
-		templates[databaseEngine];
+	const {
+		command,
+		env,
+		healthcheck,
+		image,
+		initScript,
+		platform,
+		port,
+		volumePath
+	} = templates[databaseEngine];
+	const initScriptLine = initScript
+		? `\n            - ./${initScript.fileName}:${initScript.mountPath}:ro`
+		: '';
 	const commandLine = command ? `\n        command: ${command}` : '';
 	const platformLine = platform ? `\n        platform: ${platform}` : '';
 	const envLines = Object.entries(env)
@@ -162,9 +185,15 @@ ${envLines}
             retries: 30
             start_period: ${healthcheck.startPeriod}
         volumes:
-            - db_data:${volumePath}
+            - db_data:${volumePath}${initScriptLine}
 
 volumes:
     db_data:
 `;
 };
+export const getDockerInitScript = (databaseEngine: DatabaseEngine) =>
+	databaseEngine === undefined ||
+	databaseEngine === 'none' ||
+	databaseEngine === 'sqlite'
+		? undefined
+		: templates[databaseEngine].initScript;

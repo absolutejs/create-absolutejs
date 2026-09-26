@@ -4,6 +4,7 @@ import { fileURLToPath } from 'url';
 import { formatProject } from './commands/formatProject';
 import { initializeGit } from './commands/initializeGit';
 import { installDependencies } from './commands/installDependencies';
+import { migrateDatabase } from './commands/migrateDatabase';
 import { createPackageJson } from './generators/configurations/generatePackageJson';
 import { initalizeRoot } from './generators/configurations/initializeRoot';
 import { scaffoldConfigurationFiles } from './generators/configurations/scaffoldConfigurationFiles';
@@ -12,6 +13,7 @@ import { scaffoldAgentic } from './generators/project/scaffoldAgentic';
 import { scaffoldBackend } from './generators/project/scaffoldBackend';
 import { scaffoldFrontends } from './generators/project/scaffoldFrontends';
 import type { PackageManager, CreateConfiguration } from './types';
+import { validateDatabaseSelection } from './utils/validateDatabaseSelection';
 
 type ScaffoldProps = {
 	response: CreateConfiguration;
@@ -51,11 +53,16 @@ export const scaffold = async ({
 	verifyLocalDatabase = true,
 	envVariables,
 	packageManager
-}: ScaffoldProps): Promise<{ dockerFreshInstall: boolean }> => {
-	if (orm === 'drizzle' && databaseEngine === 'gel')
-		throw new Error(
-			'Drizzle 1 no longer supports Gel. Choose no ORM for Gel.'
-		);
+}: ScaffoldProps): Promise<{
+	databaseMigrationPending: boolean;
+	dockerFreshInstall: boolean;
+}> => {
+	const { errors: databaseErrors } = validateDatabaseSelection({
+		databaseEngine,
+		databaseHost,
+		orm
+	});
+	if (databaseErrors.length > 0) throw new Error(databaseErrors.join('\n'));
 	if (orm === 'prisma')
 		throw new Error(
 			'Prisma scaffolding is not implemented. Choose Drizzle or no ORM.'
@@ -187,6 +194,16 @@ export const server = treaty<Api>(serverUrl)
 		await installDependencies(packageManager, projectName);
 	}
 
+	const databaseMigrated =
+		orm === 'drizzle' &&
+		installDependenciesNow &&
+		(await migrateDatabase({
+			databaseEngine,
+			databaseHost,
+			projectName,
+			verifyLocalDatabase
+		}));
+
 	await formatProject({
 		installDependenciesNow,
 		packageManager,
@@ -202,5 +219,8 @@ export const server = treaty<Api>(serverUrl)
 		});
 	}
 
-	return { dockerFreshInstall };
+	return {
+		databaseMigrationPending: orm === 'drizzle' && !databaseMigrated,
+		dockerFreshInstall
+	};
 };

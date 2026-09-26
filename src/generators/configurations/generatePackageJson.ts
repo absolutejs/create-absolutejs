@@ -167,6 +167,22 @@ export const createPackageJson = async ({
 		packageNames.add('@types/mssql');
 	}
 
+	/* drizzle-orm/cockroach (and drizzle-kit's cockroach dialect) drive
+	   CockroachDB through node-postgres. */
+	const usesCockroachDrizzle =
+		isLocal && databaseEngine === 'cockroachdb' && orm === 'drizzle';
+	if (usesCockroachDrizzle) {
+		packageNames.add('pg');
+		packageNames.add('@types/pg');
+	}
+
+	/* drizzle-kit migrates through the first Postgres driver it can import,
+	   trying pg before Neon's serverless driver (which @absolutejs/auth brings
+	   in transitively and which cannot reach a local database). */
+	const needsKitPostgresDriver =
+		isLocal && databaseEngine === 'postgresql' && orm === 'drizzle';
+	if (needsKitPostgresDriver) packageNames.add('pg');
+
 	if (isLocal && databaseEngine === 'gel') packageNames.add('gel');
 	if (databaseEngine === 'mongodb') packageNames.add('mongodb');
 
@@ -427,6 +443,18 @@ export const createPackageJson = async ({
 		);
 	}
 
+	if (needsKitPostgresDriver) {
+		devDependencies['pg'] = resolveVersion('pg', versions['pg']);
+	}
+
+	if (usesCockroachDrizzle) {
+		dependencies['pg'] = resolveVersion('pg', versions['pg']);
+		devDependencies['@types/pg'] = resolveVersion(
+			'@types/pg',
+			versions['@types/pg']
+		);
+	}
+
 	if (isLocalDb && databaseEngine === 'gel') {
 		dependencies['gel'] = resolveVersion('gel', versions['gel']);
 	}
@@ -440,12 +468,20 @@ export const createPackageJson = async ({
 
 	if (isLocalDb && databaseEngine === 'sqlite') {
 		scripts['db:sqlite'] = 'sqlite3 db/database.sqlite';
-		scripts['db:init'] = 'sqlite3 db/database.sqlite < db/init.sql';
+	}
+
+	if (isLocalDb && databaseEngine === 'sqlite' && orm !== 'drizzle') {
+		scripts['db:init'] = 'sqlite3 db/database.sqlite < db/schema.sql';
 	}
 
 	if (orm === 'drizzle') {
-		scripts['db:studio'] = 'drizzle-kit studio';
-		scripts['db:push'] = 'drizzle-kit push';
+		/* Migrations are the schema's source of truth: `db:generate` diffs
+		   db/schema.ts into a new committed migration and `db:migrate` applies
+		   pending ones. drizzle-kit runs on Bun so it can use Bun's own SQL and
+		   SQLite drivers, exactly as the server does. */
+		scripts['db:generate'] = 'bun --bun drizzle-kit generate';
+		scripts['db:migrate'] = 'bun --bun drizzle-kit migrate';
+		scripts['db:studio'] = 'bun --bun drizzle-kit studio';
 		/* `drizzle.config.ts` imports it and the scripts above shell out to it. */
 		devDependencies['drizzle-kit'] = resolveVersion(
 			'drizzle-kit',

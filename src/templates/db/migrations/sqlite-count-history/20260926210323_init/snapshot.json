@@ -1,0 +1,54 @@
+{
+  "version": "7",
+  "dialect": "sqlite",
+  "id": "6622a331-77bf-4d4e-88f4-49c5160639c6",
+  "prevIds": [
+    "00000000-0000-0000-0000-000000000000"
+  ],
+  "ddl": [
+    {
+      "name": "count_history",
+      "entityType": "tables"
+    },
+    {
+      "type": "integer",
+      "notNull": false,
+      "autoincrement": true,
+      "default": null,
+      "generated": null,
+      "name": "uid",
+      "entityType": "columns",
+      "table": "count_history"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "count",
+      "entityType": "columns",
+      "table": "count_history"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": "((julianday('now') - 2440587.5) * 86400000)",
+      "generated": null,
+      "name": "created_at",
+      "entityType": "columns",
+      "table": "count_history"
+    },
+    {
+      "columns": [
+        "uid"
+      ],
+      "nameExplicit": false,
+      "name": "count_history_pk",
+      "table": "count_history",
+      "entityType": "pks"
+    }
+  ],
+  "renames": []
+}

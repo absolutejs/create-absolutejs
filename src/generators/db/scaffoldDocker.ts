@@ -15,7 +15,10 @@ import {
 	initTemplates,
 	userTables
 } from './dockerInitTemplates';
-import { generateDockerContainer } from './generateDockerContainer';
+import {
+	generateDockerContainer,
+	getDockerInitScript
+} from './generateDockerContainer';
 
 type DockerCommandProps = {
 	databaseEngine: DatabaseEngine;
@@ -69,6 +72,9 @@ const verifyDockerContainer = async ({
 };
 
 type ScaffoldDockerProps = {
+	/* False when an ORM's migrations own the schema: the container is only
+	   verified, not seeded with hand-written DDL. */
+	initializeSchema?: boolean;
 	verifyLocalDatabase?: boolean;
 	databaseEngine: DatabaseEngine;
 	projectDatabaseDirectory: string;
@@ -81,6 +87,7 @@ export const scaffoldDocker = async ({
 	projectDatabaseDirectory,
 	projectName,
 	authOption,
+	initializeSchema = true,
 	verifyLocalDatabase = true
 }: ScaffoldDockerProps): Promise<{ dockerFreshInstall: boolean }> => {
 	if (
@@ -99,6 +106,14 @@ export const scaffoldDocker = async ({
 		dbContainer,
 		'utf-8'
 	);
+	const initScript = getDockerInitScript(databaseEngine);
+	if (initScript) {
+		writeFileSync(
+			join(projectDatabaseDirectory, initScript.fileName),
+			initScript.sql,
+			'utf-8'
+		);
+	}
 
 	if (!verifyLocalDatabase) return { dockerFreshInstall: false };
 	const { freshInstall } = await checkDockerInstalled(databaseEngine);
@@ -109,7 +124,7 @@ export const scaffoldDocker = async ({
 	spin.start(`Starting ${databaseEngine} container`);
 
 	const dockerAction =
-		databaseEngine in userTables
+		initializeSchema && databaseEngine in userTables
 			? () =>
 					initDockerSchema({
 						authOption,

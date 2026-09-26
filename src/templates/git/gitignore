@@ -37,9 +37,6 @@ package-lock.json
 **/*.bun
 **/*.lockb
 
-/db/migrations/meta
-/db/migrations/*.sql
-
 #local build files
 **/build/src/
 /build

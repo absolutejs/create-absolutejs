@@ -3,6 +3,11 @@ import type { CreateConfiguration } from '../../types';
 
 type DBExpr = { expr: string };
 
+/* A Turso database needs its auth token; a local libSQL `file:` URL has none,
+   so the token stays optional. */
+const tursoClient =
+	'createClient({ authToken: env.DATABASE_AUTH_TOKEN, url: getEnv("DATABASE_URL") })';
+
 const connectionMap: Record<string, Record<string, DBExpr>> = {
 	cockroachdb: {
 		none: { expr: 'new SQL(getEnv("DATABASE_URL"))' }
@@ -40,14 +45,14 @@ const connectionMap: Record<string, Record<string, DBExpr>> = {
 	},
 	sqlite: {
 		none: { expr: 'new Database("db/database.sqlite")' },
-		turso: { expr: 'createClient({ url: getEnv("DATABASE_URL") })' }
+		turso: { expr: tursoClient }
 	}
 };
 
 const remoteDrizzleInit: Record<string, string> = {
 	neon: 'neon(getEnv("DATABASE_URL"));',
 	planetscale: 'new Client({ url: getEnv("DATABASE_URL") })',
-	turso: 'createClient({ url: getEnv("DATABASE_URL") })'
+	turso: tursoClient
 };
 
 const drizzleDialectSet = new Set<string>([...availableDrizzleDialects]);
@@ -89,6 +94,13 @@ export const generateDBBlock = ({
 	) {
 		return `
 const pool = createPool(getEnv("DATABASE_URL"))
+const db = drizzle({ client: pool })
+`;
+	}
+
+	if (databaseEngine === 'cockroachdb') {
+		return `
+const pool = new Pool({ connectionString: getEnv("DATABASE_URL") })
 const db = drizzle({ client: pool })
 `;
 	}
