@@ -6,6 +6,20 @@
 			"changes": [
 				{
 					"kind": "fixed",
+					"summary": "Accept --orm none as the help text documents, and refuse unsupported database, host and ORM combinations before writing any files"
+				},
+				{
+					"kind": "added",
+					"summary": "Scaffold Drizzle for every Drizzle 1.0 dialect (PostgreSQL, MySQL, MariaDB, SQLite, Turso/libSQL, SingleStore, SQL Server, CockroachDB) with a committed initial migration and db:generate / db:migrate scripts"
+				}
+			],
+			"date": "2026-09-26",
+			"version": "0.19.0"
+		},
+		{
+			"changes": [
+				{
+					"kind": "fixed",
 					"summary": "Update registry dependency pins and generate compatible Elysia 2, Drizzle 1, Angular and HTMX starters with persistent auth, typed JSON subapps, and executable starter checks"
 				}
 			],
