@@ -1,9 +1,11 @@
-import { isDrizzleDialect } from '../../typeGuards';
+import { isDrizzleDialect, isPrismaDialect } from '../../typeGuards';
 import type {
 	AvailableDependency,
 	AvailableDrizzleDialect,
 	CreateConfiguration
 } from '../../types';
+import { getPrismaServerImports } from '../prisma/generatePrismaCode';
+import { getPrismaTarget } from '../prisma/prismaTargets';
 import type { FrameworkFlags } from './computeFlags';
 
 type GenerateImportsBlockProps = {
@@ -270,6 +272,14 @@ export const generateImportsBlock = ({
 
 	if (orm === 'drizzle' && isDrizzleDialect(databaseEngine)) {
 		rawImports.push(...ormDatabaseImports[orm][databaseEngine]);
+	}
+
+	if (orm === 'prisma' && isPrismaDialect(databaseEngine)) {
+		rawImports.push(
+			...getPrismaServerImports(
+				getPrismaTarget(databaseEngine, databaseHost)
+			)
+		);
 	}
 
 	if (noOrm && hasDatabase && noOrmImports[databaseEngine]) {

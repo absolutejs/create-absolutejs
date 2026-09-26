@@ -10,9 +10,12 @@ import {
 	eslintAndPrettierDependencies,
 	eslintReactDependencies
 } from '../../data';
+import { isPrismaDialect } from '../../typeGuards';
 import type { CreateConfiguration, PackageJson } from '../../types';
 import { getPackageVersions } from '../../utils/getPackageVersion';
 import { versions } from '../../versions';
+import { getPrismaPackageJson } from '../prisma/prismaPackageJson';
+import { getPrismaTarget } from '../prisma/prismaTargets';
 import { computeFlags } from '../project/computeFlags';
 
 type CreatePackageJsonProps = Pick<
@@ -28,6 +31,8 @@ type CreatePackageJsonProps = Pick<
 	| 'codeQualityTool'
 > & {
 	projectName: string;
+	/* Where the database files live (--db-dir); scripts reference it. */
+	databaseDirectory?: string;
 	latest: boolean;
 	repositoryUrl: string | undefined;
 };
@@ -56,6 +61,7 @@ export const createPackageJson = async ({
 	latest,
 	frontendDirectories,
 	codeQualityTool,
+	databaseDirectory = 'db',
 	repositoryUrl
 }: CreatePackageJsonProps) => {
 	const flags = computeFlags(frontendDirectories);
@@ -489,6 +495,16 @@ export const createPackageJson = async ({
 			'drizzle-kit',
 			versions['drizzle-kit']
 		);
+	}
+
+	if (orm === 'prisma' && isPrismaDialect(databaseEngine)) {
+		const prisma = getPrismaPackageJson(
+			getPrismaTarget(databaseEngine, databaseHost),
+			databaseDirectory
+		);
+		Object.assign(dependencies, prisma.dependencies);
+		Object.assign(devDependencies, prisma.devDependencies);
+		Object.assign(scripts, prisma.scripts);
 	}
 
 	const packageJson: PackageJson = {
