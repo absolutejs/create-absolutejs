@@ -71,7 +71,8 @@ export const generateServerFile = ({
 		.filter(
 			(pluginImport) =>
 				pluginImport.isPlugin &&
-				pluginImport.packageName !== 'networking' && pluginImport.packageName !== 'openapi'
+				pluginImport.packageName !== 'networking' &&
+				pluginImport.packageName !== 'openapi'
 		)
 		.map((pluginImport) => {
 			if (pluginImport.packageName === 'auth') {

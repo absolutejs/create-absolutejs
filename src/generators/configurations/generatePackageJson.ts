@@ -228,26 +228,28 @@ export const createPackageJson = async ({
 	}
 
 	if (agentic) {
-		([
-			'@absolutejs/a2a',
-			'@absolutejs/agency',
-			'@absolutejs/agent-discovery',
-			'@absolutejs/agent-inbox',
-			'@absolutejs/agent-memory',
-			'@absolutejs/agent-runtime',
-			'@absolutejs/agent-sandbox',
-			'@absolutejs/agent-trust',
-			'@absolutejs/agent-control',
-			'@absolutejs/auth',
-			'@absolutejs/egress',
-			'@absolutejs/execution',
-			'@absolutejs/manifest',
-			'@absolutejs/mcp',
-			'@absolutejs/policy',
-			'@absolutejs/secrets',
-			'@absolutejs/sync-bus-pg',
-			'@absolutejs/wallet'
-		] as const).forEach((name) => {
+		(
+			[
+				'@absolutejs/a2a',
+				'@absolutejs/agency',
+				'@absolutejs/agent-discovery',
+				'@absolutejs/agent-inbox',
+				'@absolutejs/agent-memory',
+				'@absolutejs/agent-runtime',
+				'@absolutejs/agent-sandbox',
+				'@absolutejs/agent-trust',
+				'@absolutejs/agent-control',
+				'@absolutejs/auth',
+				'@absolutejs/egress',
+				'@absolutejs/execution',
+				'@absolutejs/manifest',
+				'@absolutejs/mcp',
+				'@absolutejs/policy',
+				'@absolutejs/secrets',
+				'@absolutejs/sync-bus-pg',
+				'@absolutejs/wallet'
+			] as const
+		).forEach((name) => {
 			dependencies[name] = resolveVersion(name, versions[name]);
 		});
 		devDependencies['@absolutejs/agent-conformance'] = resolveVersion(

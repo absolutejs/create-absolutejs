@@ -174,7 +174,10 @@ export const parseCommandLineOptions = () => {
 	}
 
 	const defaultDirectory = values.skip ? ('default' as const) : undefined;
-	const directoryConfig = values.directory !== undefined && isDirectoryConfig(values.directory) ? values.directory : defaultDirectory;
+	const directoryConfig =
+		values.directory !== undefined && isDirectoryConfig(values.directory)
+			? values.directory
+			: defaultDirectory;
 	if (values.directory !== undefined && directoryConfig === undefined) {
 		errors.push(
 			`Invalid directory configuration: "${values.directory}". Expected: [ ${availableDirectoryConfigurations.join(', ')} ]`
@@ -276,7 +279,8 @@ export const parseCommandLineOptions = () => {
 		: undefined;
 
 	const defaultTailwind = values.skip ? false : undefined;
-	const useTailwind = values.tailwind ?? (hasTailwindFiles ? true : defaultTailwind);
+	const useTailwind =
+		values.tailwind ?? (hasTailwindFiles ? true : defaultTailwind);
 
 	if (useTailwind === false && hasTailwindFiles) {
 		console.warn(
@@ -329,7 +333,9 @@ export const parseCommandLineOptions = () => {
 		databaseHost,
 		directoryConfig,
 		frontendDirectories,
-		frontends: selectedFrontends.length ? selectedFrontends : defaultFrontends,
+		frontends: selectedFrontends.length
+			? selectedFrontends
+			: defaultFrontends,
 		githubLink: isGithubLinkOption(values.github)
 			? values.github
 			: undefined,

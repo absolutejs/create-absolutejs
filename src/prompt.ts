@@ -149,7 +149,10 @@ export const prompt = async (argumentConfiguration: ArgumentConfiguration) => {
 
 	const values: CreateConfiguration = {
 		// Google is the provider with a complete generated configuration.
-		absProviders: argumentConfiguration.absProviders?.filter((provider) => provider !== undefined) ?? (authOption === 'abs' ? ['google'] : undefined),
+		absProviders:
+			argumentConfiguration.absProviders?.filter(
+				(provider) => provider !== undefined
+			) ?? (authOption === 'abs' ? ['google'] : undefined),
 		agentic,
 		assetsDirectory,
 		authOption,

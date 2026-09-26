@@ -58,29 +58,147 @@ const drizzleAuth = {
 
 const cases: StarterCase[] = [
 	{ name: 'react', options: {} },
-	{ name: 'react-bare', options: { includeExamples: false, useTailwind: true, tailwind: { input: 'src/styles/tailwind.css', output: 'build/tailwind.css' } } },
-	{ name: 'planetscale-postgres', options: { databaseEngine: 'postgresql', databaseHost: 'planetscale', orm: 'drizzle' } },
+	{
+		name: 'react-bare',
+		options: {
+			includeExamples: false,
+			useTailwind: true,
+			tailwind: {
+				input: 'src/styles/tailwind.css',
+				output: 'build/tailwind.css'
+			}
+		}
+	},
+	{
+		name: 'planetscale-postgres',
+		options: {
+			databaseEngine: 'postgresql',
+			databaseHost: 'planetscale',
+			orm: 'drizzle'
+		}
+	},
 	{ name: 'sqlite', options: { databaseEngine: 'sqlite' } },
-	{ database: 'file', name: 'sqlite-drizzle', options: { databaseEngine: 'sqlite', orm: 'drizzle' } },
-	{ database: 'file', name: 'sqlite-auth', options: { ...drizzleAuth, databaseEngine: 'sqlite' } },
-	{ name: 'neon', options: { databaseEngine: 'postgresql', databaseHost: 'neon', orm: 'drizzle' } },
-	{ name: 'neon-auth', options: { ...drizzleAuth, databaseEngine: 'postgresql', databaseHost: 'neon' } },
-	{ database: 'file', name: 'turso', options: { databaseEngine: 'sqlite', databaseHost: 'turso', orm: 'drizzle' } },
-	{ database: 'libsql-server', name: 'turso-server', options: { databaseEngine: 'sqlite', databaseHost: 'turso', orm: 'drizzle' } },
-	{ database: 'libsql-server', name: 'turso-server-auth', options: { ...drizzleAuth, databaseEngine: 'sqlite', databaseHost: 'turso' } },
-	{ name: 'planetscale', options: { databaseEngine: 'mysql', databaseHost: 'planetscale', orm: 'drizzle' } },
-	{ database: 'docker', name: 'postgres', options: { databaseEngine: 'postgresql', orm: 'drizzle' } },
-	{ database: 'docker', name: 'postgres-auth', options: { ...drizzleAuth, databaseEngine: 'postgresql' } },
-	{ database: 'docker', name: 'mysql', options: { databaseEngine: 'mysql', orm: 'drizzle' } },
-	{ database: 'docker', name: 'mysql-auth', options: { ...drizzleAuth, databaseEngine: 'mysql' } },
-	{ database: 'docker', name: 'mariadb', options: { databaseEngine: 'mariadb', orm: 'drizzle' } },
-	{ database: 'docker', name: 'mariadb-auth', options: { ...drizzleAuth, databaseEngine: 'mariadb' } },
-	{ database: 'docker', name: 'mssql', options: { databaseEngine: 'mssql', orm: 'drizzle' } },
-	{ database: 'docker', name: 'mssql-auth', options: { ...drizzleAuth, databaseEngine: 'mssql' } },
-	{ database: 'docker', name: 'singlestore', options: { databaseEngine: 'singlestore', orm: 'drizzle' } },
-	{ database: 'docker', name: 'singlestore-auth', options: { ...drizzleAuth, databaseEngine: 'singlestore' } },
-	{ database: 'docker', name: 'cockroachdb', options: { databaseEngine: 'cockroachdb', orm: 'drizzle' } },
-	{ database: 'docker', name: 'cockroachdb-auth', options: { ...drizzleAuth, databaseEngine: 'cockroachdb' } },
+	{
+		database: 'file',
+		name: 'sqlite-drizzle',
+		options: { databaseEngine: 'sqlite', orm: 'drizzle' }
+	},
+	{
+		database: 'file',
+		name: 'sqlite-auth',
+		options: { ...drizzleAuth, databaseEngine: 'sqlite' }
+	},
+	{
+		name: 'neon',
+		options: {
+			databaseEngine: 'postgresql',
+			databaseHost: 'neon',
+			orm: 'drizzle'
+		}
+	},
+	{
+		name: 'neon-auth',
+		options: {
+			...drizzleAuth,
+			databaseEngine: 'postgresql',
+			databaseHost: 'neon'
+		}
+	},
+	{
+		database: 'file',
+		name: 'turso',
+		options: {
+			databaseEngine: 'sqlite',
+			databaseHost: 'turso',
+			orm: 'drizzle'
+		}
+	},
+	{
+		database: 'libsql-server',
+		name: 'turso-server',
+		options: {
+			databaseEngine: 'sqlite',
+			databaseHost: 'turso',
+			orm: 'drizzle'
+		}
+	},
+	{
+		database: 'libsql-server',
+		name: 'turso-server-auth',
+		options: {
+			...drizzleAuth,
+			databaseEngine: 'sqlite',
+			databaseHost: 'turso'
+		}
+	},
+	{
+		name: 'planetscale',
+		options: {
+			databaseEngine: 'mysql',
+			databaseHost: 'planetscale',
+			orm: 'drizzle'
+		}
+	},
+	{
+		database: 'docker',
+		name: 'postgres',
+		options: { databaseEngine: 'postgresql', orm: 'drizzle' }
+	},
+	{
+		database: 'docker',
+		name: 'postgres-auth',
+		options: { ...drizzleAuth, databaseEngine: 'postgresql' }
+	},
+	{
+		database: 'docker',
+		name: 'mysql',
+		options: { databaseEngine: 'mysql', orm: 'drizzle' }
+	},
+	{
+		database: 'docker',
+		name: 'mysql-auth',
+		options: { ...drizzleAuth, databaseEngine: 'mysql' }
+	},
+	{
+		database: 'docker',
+		name: 'mariadb',
+		options: { databaseEngine: 'mariadb', orm: 'drizzle' }
+	},
+	{
+		database: 'docker',
+		name: 'mariadb-auth',
+		options: { ...drizzleAuth, databaseEngine: 'mariadb' }
+	},
+	{
+		database: 'docker',
+		name: 'mssql',
+		options: { databaseEngine: 'mssql', orm: 'drizzle' }
+	},
+	{
+		database: 'docker',
+		name: 'mssql-auth',
+		options: { ...drizzleAuth, databaseEngine: 'mssql' }
+	},
+	{
+		database: 'docker',
+		name: 'singlestore',
+		options: { databaseEngine: 'singlestore', orm: 'drizzle' }
+	},
+	{
+		database: 'docker',
+		name: 'singlestore-auth',
+		options: { ...drizzleAuth, databaseEngine: 'singlestore' }
+	},
+	{
+		database: 'docker',
+		name: 'cockroachdb',
+		options: { databaseEngine: 'cockroachdb', orm: 'drizzle' }
+	},
+	{
+		database: 'docker',
+		name: 'cockroachdb-auth',
+		options: { ...drizzleAuth, databaseEngine: 'cockroachdb' }
+	},
 	{ name: 'gel', options: { databaseEngine: 'gel', orm: 'none' } },
 	{ name: 'mongodb', options: { databaseEngine: 'mongodb' } },
 	{
@@ -133,35 +251,43 @@ console.log('Real SQLite persistence and route validation passed');
 const drizzleClients: Record<string, { imports: string; db: string }> = {
 	cockroachdb: {
 		db: 'drizzle({ client: new Pool({ connectionString: process.env.DATABASE_URL }) })',
-		imports: "import { drizzle } from 'drizzle-orm/cockroach'; import { Pool } from 'pg';"
+		imports:
+			"import { drizzle } from 'drizzle-orm/cockroach'; import { Pool } from 'pg';"
 	},
 	mariadb: {
 		db: 'drizzle({ client: createPool(process.env.DATABASE_URL) })',
-		imports: "import { drizzle } from 'drizzle-orm/mysql2'; import { createPool } from 'mysql2';"
+		imports:
+			"import { drizzle } from 'drizzle-orm/mysql2'; import { createPool } from 'mysql2';"
 	},
 	mssql: {
 		db: 'drizzle({ client: await connect(process.env.DATABASE_URL) })',
-		imports: "import { drizzle } from 'drizzle-orm/node-mssql'; import { connect } from 'mssql';"
+		imports:
+			"import { drizzle } from 'drizzle-orm/node-mssql'; import { connect } from 'mssql';"
 	},
 	mysql: {
 		db: 'drizzle({ client: createPool(process.env.DATABASE_URL) })',
-		imports: "import { drizzle } from 'drizzle-orm/mysql2'; import { createPool } from 'mysql2';"
+		imports:
+			"import { drizzle } from 'drizzle-orm/mysql2'; import { createPool } from 'mysql2';"
 	},
 	postgresql: {
 		db: 'drizzle({ client: new SQL(process.env.DATABASE_URL) })',
-		imports: "import { drizzle } from 'drizzle-orm/bun-sql'; import { SQL } from 'bun';"
+		imports:
+			"import { drizzle } from 'drizzle-orm/bun-sql'; import { SQL } from 'bun';"
 	},
 	singlestore: {
 		db: 'drizzle({ client: createPool(process.env.DATABASE_URL) })',
-		imports: "import { drizzle } from 'drizzle-orm/singlestore'; import { createPool } from 'mysql2/promise';"
+		imports:
+			"import { drizzle } from 'drizzle-orm/singlestore'; import { createPool } from 'mysql2/promise';"
 	},
 	sqlite: {
 		db: "drizzle({ client: new Database('db/database.sqlite') })",
-		imports: "import { drizzle } from 'drizzle-orm/bun-sqlite'; import { Database } from 'bun:sqlite';"
+		imports:
+			"import { drizzle } from 'drizzle-orm/bun-sqlite'; import { Database } from 'bun:sqlite';"
 	},
 	turso: {
 		db: 'drizzle({ client: createClient({ authToken: process.env.DATABASE_AUTH_TOKEN, url: process.env.DATABASE_URL }) })',
-		imports: "import { drizzle } from 'drizzle-orm/libsql'; import { createClient } from '@libsql/client';"
+		imports:
+			"import { drizzle } from 'drizzle-orm/libsql'; import { createClient } from '@libsql/client';"
 	}
 };
 
@@ -258,7 +384,10 @@ type Database = { env: Record<string, string>; stop: () => Promise<unknown> };
    project ships with are what gets exercised. */
 const startDockerDatabase = async (item: StarterCase): Promise<Database> => {
 	const cwd = join(root, item.name);
-	const composeFile = readFileSync(join(cwd, 'db/docker-compose.db.yml'), 'utf8');
+	const composeFile = readFileSync(
+		join(cwd, 'db/docker-compose.db.yml'),
+		'utf8'
+	);
 	const [, containerPort] = composeFile.match(/- "\d+:(\d+)"/) ?? [];
 	if (!containerPort) throw new Error('the compose file maps no port');
 	const override = join(root, `${item.name}-compose.verify.yml`);
@@ -282,12 +411,20 @@ const startDockerDatabase = async (item: StarterCase): Promise<Database> => {
 		override
 	];
 	const stop = () => shell([...compose, 'down', '-v'], cwd);
-	const up = await run(item, 'db-up', [...compose, 'up', '-d', '--wait', 'db']);
+	const up = await run(item, 'db-up', [
+		...compose,
+		'up',
+		'-d',
+		'--wait',
+		'db'
+	]);
 	if (up.exit !== 0) {
 		await stop();
 		throw new Error('database container did not become healthy');
 	}
-	const published = (await shell([...compose, 'port', 'db', containerPort], cwd)).output;
+	const published = (
+		await shell([...compose, 'port', 'db', containerPort], cwd)
+	).output;
 	const hostPort = published.split(':').pop();
 	const url = envValue(item, 'DATABASE_URL');
 	if (!url || !hostPort) {
@@ -300,14 +437,18 @@ const startDockerDatabase = async (item: StarterCase): Promise<Database> => {
 	);
 	if (localUrl === url) {
 		await stop();
-		throw new Error(`DATABASE_URL does not target localhost:${containerPort}`);
+		throw new Error(
+			`DATABASE_URL does not target localhost:${containerPort}`
+		);
 	}
 
 	return { env: { DATABASE_URL: localUrl }, stop };
 };
 
 const base64url = (bytes: ArrayBuffer | Uint8Array) =>
-	Buffer.from(bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes)).toString('base64url');
+	Buffer.from(
+		bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes)
+	).toString('base64url');
 
 /* sqld verifies Ed25519-signed JWTs against SQLD_AUTH_JWT_KEY, exactly like a
    Turso database token; requests without the token are rejected. */
@@ -316,17 +457,33 @@ const startLibsqlServer = async (item: StarterCase): Promise<Database> => {
 		'sign',
 		'verify'
 	])) as CryptoKeyPair;
-	const publicKey = base64url(await crypto.subtle.exportKey('raw', keys.publicKey));
-	const header = base64url(new TextEncoder().encode(JSON.stringify({ alg: 'EdDSA', typ: 'JWT' })));
-	const claims = base64url(new TextEncoder().encode(JSON.stringify({ a: 'rw' })));
+	const publicKey = base64url(
+		await crypto.subtle.exportKey('raw', keys.publicKey)
+	);
+	const header = base64url(
+		new TextEncoder().encode(JSON.stringify({ alg: 'EdDSA', typ: 'JWT' }))
+	);
+	const claims = base64url(
+		new TextEncoder().encode(JSON.stringify({ a: 'rw' }))
+	);
 	const signature = base64url(
-		await crypto.subtle.sign('Ed25519', keys.privateKey, new TextEncoder().encode(`${header}.${claims}`))
+		await crypto.subtle.sign(
+			'Ed25519',
+			keys.privateKey,
+			new TextEncoder().encode(`${header}.${claims}`)
+		)
 	);
 	const container = `cabs-verify-${item.name}`;
 	await shell(['docker', 'rm', '-f', container]);
 	const started = await shell([
-		'docker', 'run', '-d', '--rm', '--name', container,
-		'-e', `SQLD_AUTH_JWT_KEY=${publicKey}`,
+		'docker',
+		'run',
+		'-d',
+		'--rm',
+		'--name',
+		container,
+		'-e',
+		`SQLD_AUTH_JWT_KEY=${publicKey}`,
 		'ghcr.io/tursodatabase/libsql-server:latest'
 	]);
 	if (started.exit !== 0) throw new Error(started.error);
@@ -338,16 +495,23 @@ const startLibsqlServer = async (item: StarterCase): Promise<Database> => {
 		await sleep(500);
 	}
 	const anonymous = await fetch(`${url}/v2/pipeline`, {
-		body: JSON.stringify({ requests: [{ stmt: { sql: 'SELECT 1' }, type: 'execute' }] }),
+		body: JSON.stringify({
+			requests: [{ stmt: { sql: 'SELECT 1' }, type: 'execute' }]
+		}),
 		method: 'POST'
 	});
 	if (anonymous.status !== 401) {
 		await stop();
-		throw new Error(`libsql-server accepted a request without a token (${anonymous.status})`);
+		throw new Error(
+			`libsql-server accepted a request without a token (${anonymous.status})`
+		);
 	}
 
 	return {
-		env: { DATABASE_AUTH_TOKEN: `${header}.${claims}.${signature}`, DATABASE_URL: url },
+		env: {
+			DATABASE_AUTH_TOKEN: `${header}.${claims}.${signature}`,
+			DATABASE_URL: url
+		},
 		stop
 	};
 };
@@ -365,18 +529,32 @@ const applyEnv = (item: StarterCase, env: Record<string, string>) => {
 	const path = join(root, item.name, '.env');
 	const lines = readFileSync(path, 'utf8')
 		.split('\n')
-		.filter((line) => !Object.keys(env).some((key) => line.startsWith(`${key}=`)));
-	writeFileSync(path, [...lines, ...Object.entries(env).map(([key, value]) => `${key}=${value}`)].join('\n'));
+		.filter(
+			(line) =>
+				!Object.keys(env).some((key) => line.startsWith(`${key}=`))
+		);
+	writeFileSync(
+		path,
+		[
+			...lines,
+			...Object.entries(env).map(([key, value]) => `${key}=${value}`)
+		].join('\n')
+	);
 };
 
 /* `absolute dev` runs the project's db:up/db:down scripts when a compose file
    exists — with the host port mappings and a shared compose project name. The
    harness already runs that compose file port-less, so for the server stage
    those hooks are switched off and restored afterwards. */
-const withoutDatabaseHooks = async <T>(item: StarterCase, task: () => Promise<T>) => {
+const withoutDatabaseHooks = async <T>(
+	item: StarterCase,
+	task: () => Promise<T>
+) => {
 	const path = join(root, item.name, 'package.json');
 	const original = readFileSync(path, 'utf8');
-	const manifest = JSON.parse(original) as { scripts: Record<string, string> };
+	const manifest = JSON.parse(original) as {
+		scripts: Record<string, string>;
+	};
 	delete manifest.scripts['db:up'];
 	delete manifest.scripts['db:down'];
 	writeFileSync(path, JSON.stringify(manifest, null, 2));
@@ -402,7 +580,8 @@ const verifyServer = async (item: StarterCase, env: Record<string, string>) => {
 	try {
 		let ready = false;
 		for (let attempt = 0; attempt < 180 && !ready; attempt++) {
-			ready = (await fetch(`${origin}/`).catch(() => undefined))?.ok === true;
+			ready =
+				(await fetch(`${origin}/`).catch(() => undefined))?.ok === true;
 			if (!ready) await sleep(500);
 		}
 		if (!ready) throw new Error('server never answered');
@@ -411,22 +590,44 @@ const verifyServer = async (item: StarterCase, env: Record<string, string>) => {
 			headers: { 'Content-Type': 'application/json' },
 			method: 'POST'
 		});
-		const created = (await post.json()) as { uid: number; count: number; created_at: string };
-		if (post.status !== 200) throw new Error(`POST /count ${post.status}: ${JSON.stringify(created)}`);
-		if (created.count !== 7) throw new Error(`POST /count returned ${JSON.stringify(created)}`);
-		const skew = Math.abs(new Date(created.created_at).getTime() - Date.now());
-		if (!(skew < 60000)) throw new Error(`created_at ${created.created_at} is ${skew}ms from now`);
+		const created = (await post.json()) as {
+			uid: number;
+			count: number;
+			created_at: string;
+		};
+		if (post.status !== 200)
+			throw new Error(
+				`POST /count ${post.status}: ${JSON.stringify(created)}`
+			);
+		if (created.count !== 7)
+			throw new Error(`POST /count returned ${JSON.stringify(created)}`);
+		const skew = Math.abs(
+			new Date(created.created_at).getTime() - Date.now()
+		);
+		if (!(skew < 60000))
+			throw new Error(
+				`created_at ${created.created_at} is ${skew}ms from now`
+			);
 		const get = await fetch(`${origin}/count/${created.uid}`);
 		const read = await get.json();
-		if (get.status !== 200 || JSON.stringify(read) !== JSON.stringify(created))
-			throw new Error(`GET /count/${created.uid} ${get.status}: ${JSON.stringify(read)}`);
+		if (
+			get.status !== 200 ||
+			JSON.stringify(read) !== JSON.stringify(created)
+		)
+			throw new Error(
+				`GET /count/${created.uid} ${get.status}: ${JSON.stringify(read)}`
+			);
 		const invalid = await fetch(`${origin}/count`, {
 			body: JSON.stringify({ count: 'invalid' }),
 			headers: { 'Content-Type': 'application/json' },
 			method: 'POST'
 		});
-		if (invalid.status !== 422) throw new Error(`invalid body answered ${invalid.status}`);
-		writeFileSync(`${log}.result`, `created ${JSON.stringify(created)}\nread ${JSON.stringify(read)}\n`);
+		if (invalid.status !== 422)
+			throw new Error(`invalid body answered ${invalid.status}`);
+		writeFileSync(
+			`${log}.result`,
+			`created ${JSON.stringify(created)}\nread ${JSON.stringify(read)}\n`
+		);
 
 		return true;
 	} catch (error) {
@@ -458,21 +659,44 @@ const verifyDrizzle = async (item: StarterCase) => {
 		if (Object.keys(database.env).length > 0) applyEnv(item, database.env);
 		const migrations = join(root, item.name, 'db/migrations');
 		const committed = readdirSync(migrations).length;
-		const generate = await run(item, 'db-generate', ['bun', 'run', 'db:generate'], database.env);
+		const generate = await run(
+			item,
+			'db-generate',
+			['bun', 'run', 'db:generate'],
+			database.env
+		);
 		const inSync =
 			generate.exit === 0 &&
 			generate.output.includes('No schema changes') &&
 			readdirSync(migrations).length === committed;
 		if (!record(item, 'db:generate (no drift)', inSync)) return;
-		const migrate = await run(item, 'db-migrate', ['bun', 'run', 'db:migrate'], database.env);
+		const migrate = await run(
+			item,
+			'db-migrate',
+			['bun', 'run', 'db:migrate'],
+			database.env
+		);
 		if (!record(item, 'db:migrate', migrate.exit === 0)) return;
-		const again = await run(item, 'db-migrate-again', ['bun', 'run', 'db:migrate'], database.env);
+		const again = await run(
+			item,
+			'db-migrate-again',
+			['bun', 'run', 'db:migrate'],
+			database.env
+		);
 		if (!record(item, 'db:migrate (idempotent)', again.exit === 0)) return;
 		if (item.options.authOption === 'abs') {
-			const dialect = item.options.databaseHost === 'turso' ? 'turso' : String(item.options.databaseEngine);
+			const dialect =
+				item.options.databaseHost === 'turso'
+					? 'turso'
+					: String(item.options.databaseEngine);
 			const client = drizzleClients[dialect];
 			if (!client) throw new Error(`no client for ${dialect}`);
-			const handlers = await run(item, 'handlers', ['bun', '-e', drizzleUserRuntime(client)], database.env);
+			const handlers = await run(
+				item,
+				'handlers',
+				['bun', '-e', drizzleUserRuntime(client)],
+				database.env
+			);
 			record(item, 'query (user handlers)', handlers.exit === 0);
 
 			return;
@@ -519,8 +743,15 @@ for (const item of cases) {
 		built = record(item, stage, exit === 0) && built;
 	}
 	if (!built) continue;
-	if (item.options.databaseEngine === 'sqlite' && item.options.orm !== 'drizzle') {
-		const { exit } = await run(item, 'runtime', ['bun', '-e', sqliteRuntime]);
+	if (
+		item.options.databaseEngine === 'sqlite' &&
+		item.options.orm !== 'drizzle'
+	) {
+		const { exit } = await run(item, 'runtime', [
+			'bun',
+			'-e',
+			sqliteRuntime
+		]);
 		record(item, 'runtime', exit === 0);
 	}
 	if (item.database) await verifyDrizzle(item);
