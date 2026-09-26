@@ -1,52 +1,6 @@
 import { mkdirSync, writeFileSync } from 'fs';
 import { join } from 'path';
 
-export const agentRuntimeSource = `import {
-	createAgency,
-	createAgentControlPlane,
-	createMemoryAgencyStore,
-	createMemoryAgentControlStore,
-	denyAllPolicy
-} from '@absolutejs/agency'
-import {
-	createAgentRuntime,
-	createMemoryAgentRuntimeStore
-} from '@absolutejs/agent-runtime'
-
-// Memory stores are development defaults. Replace them with durable stores
-// before running more than one process or accepting production actions.
-export const agentControl = createAgentControlPlane({
-	sources: [],
-	store: createMemoryAgentControlStore()
-})
-
-// Intentionally deny-by-default. Replace denyAllPolicy() with your policy
-// decision point only after declaring each action's effects and scopes.
-export const agency = createAgency({
-	control: agentControl,
-	policy: denyAllPolicy(),
-	store: createMemoryAgencyStore()
-})
-
-// Durable run semantics are available from the first commit. The placeholder
-// driver fails closed until the application supplies its model/tool loop.
-export const agentRuntime = createAgentRuntime({
-	store: createMemoryAgentRuntimeStore(),
-	driver: {
-		next: async () => ({
-			type: 'fail',
-			code: 'agent_not_configured',
-			message: 'Configure the agent driver before accepting runs'
-		})
-	},
-	effects: {
-		execute: async () => {
-			throw new Error('Agent effects are not configured')
-		}
-	}
-})
-`;
-
 export const agentDiscoverySource = `import {
 	ABSOLUTE_AGENT_SCHEMA,
 	createAgentDiscoveryHandler,
@@ -124,7 +78,51 @@ export const createAgentDiscovery = async ({
 		)]
 	})
 `;
+export const agentRuntimeSource = `import {
+	createAgency,
+	createAgentControlPlane,
+	createMemoryAgencyStore,
+	createMemoryAgentControlStore,
+	denyAllPolicy
+} from '@absolutejs/agency'
+import {
+	createAgentRuntime,
+	createMemoryAgentRuntimeStore
+} from '@absolutejs/agent-runtime'
 
+// Memory stores are development defaults. Replace them with durable stores
+// before running more than one process or accepting production actions.
+export const agentControl = createAgentControlPlane({
+	sources: [],
+	store: createMemoryAgentControlStore()
+})
+
+// Intentionally deny-by-default. Replace denyAllPolicy() with your policy
+// decision point only after declaring each action's effects and scopes.
+export const agency = createAgency({
+	control: agentControl,
+	policy: denyAllPolicy(),
+	store: createMemoryAgencyStore()
+})
+
+// Durable run semantics are available from the first commit. The placeholder
+// driver fails closed until the application supplies its model/tool loop.
+export const agentRuntime = createAgentRuntime({
+	store: createMemoryAgentRuntimeStore(),
+	driver: {
+		next: async () => ({
+			type: 'fail',
+			code: 'agent_not_configured',
+			message: 'Configure the agent driver before accepting runs'
+		})
+	},
+	effects: {
+		execute: async () => {
+			throw new Error('Agent effects are not configured')
+		}
+	}
+})
+`;
 export const agentsGuide = `# Agent execution contract
 
 This project uses the AbsoluteJS provider-neutral agent stack.
@@ -176,7 +174,6 @@ Memory stores are for local development only. Production stores must be
 durable and enforce lease/capability consumption atomically. Apply each
 package's exported PostgreSQL schema in a migration before enabling traffic.
 `;
-
 export const scaffoldAgentic = ({
 	backendDirectory,
 	projectName

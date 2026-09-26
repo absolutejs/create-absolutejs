@@ -19,6 +19,8 @@ export default defineConfig([
 	{
 		ignores: [
 			'**/node_modules/**',
+			// Generated release metadata is JSON data, not a JavaScript module.
+			'changelog.json',
 			'.absolutejs/**',
 			'.claude/**',
 			'absolutejs-project/**',
@@ -252,6 +254,12 @@ export default defineConfig([
 		rules: {
 			'absolute/explicit-object-types': 'off'
 		}
+	},
+	{
+		// Bun test files are executable entrypoints, not exported library modules.
+		files: ['tests/**/*.ts'],
+		languageOptions: { globals: globals.node },
+		rules: { 'import/no-unused-modules': 'off' }
 	},
 	{
 		//TODO: Add official eslint support for Svelte.

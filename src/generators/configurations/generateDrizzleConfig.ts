@@ -24,7 +24,7 @@ export const createDrizzleConfig = ({
 		dbCredentials: {
 			url: env.DATABASE_URL
 		},
-		dialect: '${databaseEngine}',
+		dialect: '${databaseEngine === 'mariadb' ? 'mysql' : databaseEngine}',
 		out: '${databaseDirectory}/migrations',
 		schema: '${databaseDirectory}/schema.ts'
 	});

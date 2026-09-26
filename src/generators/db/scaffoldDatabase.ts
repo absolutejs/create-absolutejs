@@ -25,6 +25,7 @@ type ScaffoldDatabaseProps = Pick<
 	| 'databaseEngine'
 > & {
 	databaseDirectory: string;
+	verifyLocalDatabase?: boolean;
 	backendDirectory: string;
 	typesDirectory: string;
 };
@@ -37,7 +38,8 @@ export const scaffoldDatabase = async ({
 	backendDirectory,
 	authOption,
 	orm,
-	typesDirectory
+	typesDirectory,
+	verifyLocalDatabase = true
 }: ScaffoldDatabaseProps): Promise<{ dockerFreshInstall: boolean }> => {
 	const projectDatabaseDirectory = join(projectName, databaseDirectory);
 	const handlerDirectory = join(backendDirectory, 'handlers');
@@ -109,20 +111,22 @@ export const scaffoldDatabase = async ({
 		seeded.close();
 	}
 
+	let dockerFreshInstall = false;
 	if (
 		(databaseHost === 'none' || databaseHost === undefined) &&
 		databaseEngine !== 'sqlite' &&
 		databaseEngine !== undefined &&
 		databaseEngine !== 'none'
 	) {
-		const { dockerFreshInstall } = await scaffoldDocker({
+		const result = await scaffoldDocker({
 			authOption,
 			databaseEngine,
 			projectDatabaseDirectory,
-			projectName
+			projectName,
+			verifyLocalDatabase
 		});
 
-		return { dockerFreshInstall };
+		({ dockerFreshInstall } = result);
 	}
 
 	if (orm === 'drizzle') {
@@ -148,7 +152,7 @@ export const scaffoldDatabase = async ({
 		});
 		writeFileSync(join(typesDirectory, 'databaseTypes.ts'), drizzleTypes);
 
-		return { dockerFreshInstall: false };
+		return { dockerFreshInstall };
 	}
 
 	if (orm === 'prisma') {
@@ -157,5 +161,5 @@ export const scaffoldDatabase = async ({
 		);
 	}
 
-	return { dockerFreshInstall: false };
+	return { dockerFreshInstall };
 };

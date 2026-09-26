@@ -174,14 +174,8 @@ export const parseCommandLineOptions = () => {
 		codeQualityTool = undefined;
 	}
 
-	const directoryConfig =
-		values.directory !== undefined && isDirectoryConfig(values.directory)
-			? values.directory
-			: // --skip defaults every prompted axis (headless callers hang on
-				// missing ones).
-				values.skip
-				? ('default' as const)
-				: undefined;
+	const defaultDirectory = values.skip ? ('default' as const) : undefined;
+	const directoryConfig = values.directory !== undefined && isDirectoryConfig(values.directory) ? values.directory : defaultDirectory;
 	if (values.directory !== undefined && directoryConfig === undefined) {
 		errors.push(
 			`Invalid directory configuration: "${values.directory}". Expected: [ ${availableDirectoryConfigurations.join(', ')} ]`
@@ -312,9 +306,8 @@ export const parseCommandLineOptions = () => {
 		? { input: values['tailwind-input'], output: values['tailwind-output'] }
 		: undefined;
 
-	const useTailwind =
-		values.tailwind ??
-		(hasTailwindFiles ? true : values.skip ? false : undefined);
+	const defaultTailwind = values.skip ? false : undefined;
+	const useTailwind = values.tailwind ?? (hasTailwindFiles ? true : defaultTailwind);
 
 	if (useTailwind === false && hasTailwindFiles) {
 		console.warn(
@@ -354,9 +347,10 @@ export const parseCommandLineOptions = () => {
 			? repoVisibility
 			: undefined;
 
+	const defaultFrontends = values.skip ? [] : undefined;
 	const argumentConfiguration: ArgumentConfiguration = {
-		agentic: values.agentic ?? (values.skip ? false : undefined),
 		absProviders: absProviders.length ? absProviders : undefined,
+		agentic: values.agentic ?? (values.skip ? false : undefined),
 		assetsDirectory: values.assets,
 		authOption,
 		buildDirectory: values.build,
@@ -366,11 +360,7 @@ export const parseCommandLineOptions = () => {
 		databaseHost,
 		directoryConfig,
 		frontendDirectories,
-		frontends: selectedFrontends.length
-			? selectedFrontends
-			: values.skip
-				? []
-				: undefined,
+		frontends: selectedFrontends.length ? selectedFrontends : defaultFrontends,
 		githubLink: isGithubLinkOption(values.github)
 			? values.github
 			: undefined,

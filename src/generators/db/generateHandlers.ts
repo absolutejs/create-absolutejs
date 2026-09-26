@@ -1,5 +1,9 @@
 import { CreateConfiguration } from '../../types';
-import { getAuthTemplate, getCountTemplate } from './handlerTemplates';
+import {
+	getAuthTemplate,
+	getCountTemplate,
+	isDriverConfigurationKey
+} from './handlerTemplates';
 
 type GenerateDBHandlersProps = Pick<
 	CreateConfiguration,
@@ -23,6 +27,8 @@ export const generateDBHandlers = ({
 	const ormKey = orm === 'drizzle' ? 'drizzle' : 'sql';
 	const key = `${databaseEngine}:${ormKey}:${host}` as const;
 
-	// @ts-expect-error - TODO: Finish the other templates
+	if (!isDriverConfigurationKey(key))
+		throw new Error(`Unsupported database configuration: ${key}`);
+
 	return usesAuth ? getAuthTemplate(key) : getCountTemplate(key);
 };

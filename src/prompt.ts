@@ -1,5 +1,5 @@
-import { getAuthOption } from './questions/authOption';
 import { getAgentic } from './questions/agentic';
+import { getAuthOption } from './questions/authOption';
 import { getCodeQualityTool } from './questions/codeQualityTool';
 import { getConfigurationType } from './questions/configurationType';
 import { getDatabaseEngine } from './questions/databaseEngine';
@@ -148,10 +148,9 @@ export const prompt = async (argumentConfiguration: ArgumentConfiguration) => {
 		(await orPrompt('--install/--no-install', getInstallDependencies));
 
 	const values: CreateConfiguration = {
+		// Google is the provider with a complete generated configuration.
+		absProviders: argumentConfiguration.absProviders?.filter((provider) => provider !== undefined) ?? (authOption === 'abs' ? ['google'] : undefined),
 		agentic,
-		absProviders: argumentConfiguration.absProviders?.filter(
-			(provider) => provider !== undefined
-		),
 		assetsDirectory,
 		authOption,
 		buildDirectory,

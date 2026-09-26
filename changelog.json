@@ -1,5 +1,46 @@
 {
 	"contract": 1,
 	"name": "create-absolutejs",
-	"releases": []
+	"releases": [
+		{
+			"changes": [
+				{
+					"kind": "fixed",
+					"summary": "Update registry dependency pins and generate compatible Elysia 2, Drizzle 1, Angular and HTMX starters with persistent auth, typed JSON subapps, and executable starter checks"
+				}
+			],
+			"date": "2026-09-23",
+			"version": "0.18.0"
+		},
+		{
+			"changes": [
+				{
+					"kind": "fixed",
+					"summary": "Generate correctness-focused lint defaults with typed Drizzle checks and isolated Eden API subapps; consume eslint-plugin-absolute 0.12.0"
+				}
+			],
+			"date": "2026-09-22",
+			"version": "0.17.3"
+		},
+		{
+			"changes": [
+				{
+					"kind": "fixed",
+					"summary": "Use the Elysia 2 error lifecycle verified against a fresh generated project"
+				}
+			],
+			"date": "2026-09-22",
+			"version": "0.17.2"
+		},
+		{
+			"changes": [
+				{
+					"kind": "fixed",
+					"summary": "Generate the Elysia 2 onError lifecycle instead of an unsupported on error hook"
+				}
+			],
+			"date": "2026-09-22",
+			"version": "0.17.1"
+		}
+	]
 }

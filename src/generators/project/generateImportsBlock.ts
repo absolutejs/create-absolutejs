@@ -54,9 +54,9 @@ export const generateImportsBlock = ({
 	pushHandler(flags.requiresVue, 'generateHeadElement');
 	pushHandler(flags.requiresHtmx, 'handleHTMXPageRequest');
 
-	for (const dependency of deps) {
+	deps.forEach((dependency) => {
 		const importsList = dependency.imports ?? [];
-		if (importsList.length === 0) continue;
+		if (importsList.length === 0) return;
 		const bySource = new Map<string, string[]>();
 		for (const imported of importsList) {
 			const source = imported.importFrom ?? dependency.value;
@@ -70,7 +70,7 @@ export const generateImportsBlock = ({
 				`import { ${names.sort().join(', ')} } from '${source}'`
 			);
 		}
-	}
+	});
 
 	const buildExamplePath = (dir: string, file: string) =>
 		`../frontend${dir ? `/${dir}` : ''}/pages/${file}`;
@@ -125,10 +125,7 @@ export const generateImportsBlock = ({
 			`import { Elysia } from 'elysia'`,
 			...(databaseEngine === 'sqlite' && !isRemoteHost
 				? []
-				: [`import { getEnv } from '@absolutejs/absolute'`]),
-			...(authOption === 'abs'
-				? [`import { schema } from '../../db/schema'`]
-				: [`import { schema } from '../../db/schema'`])
+				: [`import { getEnv } from '@absolutejs/absolute'`])
 		]
 	} as const;
 
@@ -273,12 +270,6 @@ export const generateImportsBlock = ({
 			`import { absoluteAuthConfig } from './utils/absoluteAuthConfig'`,
 			`import { t } from 'elysia'`,
 			`import { authClientOption, authIntentOption, getStatus, providers, ProviderOption, userSessionIdTypebox } from '@absolutejs/auth'`
-		);
-
-	if (hasDatabase && (authOption === undefined || authOption === 'none'))
-		rawImports.push(
-			`import { getCountHistory, createCountHistory } from './handlers/countHistoryHandlers'`,
-			`import { t } from 'elysia'`
 		);
 
 	const importMap = new Map<

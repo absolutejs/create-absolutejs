@@ -1,6 +1,6 @@
 import { select, isCancel, SelectOptions } from '@clack/prompts';
-import { cyan, magenta } from 'picocolors';
-import { isDrizzleDialect, isPrismaDialect } from '../typeGuards';
+import { cyan } from 'picocolors';
+import { isDrizzleDialect } from '../typeGuards';
 import { DatabaseEngine, ORM } from '../types';
 import { abort } from '../utils/abort';
 
@@ -13,9 +13,6 @@ export const getORM = async (
 
 	if (isDrizzleDialect(databaseEngine)) {
 		options.push({ label: cyan('Drizzle'), value: 'drizzle' });
-	}
-	if (isPrismaDialect(databaseEngine)) {
-		options.push({ label: magenta('Prisma'), value: 'prisma' });
 	}
 
 	const orm = await select<ORM>({

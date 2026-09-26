@@ -55,7 +55,7 @@ const DIALECTS = {
 		pkg: 'sqlite-core',
 		string: 'text()',
 		table: 'sqliteTable',
-		time: "integer({ mode: 'timestamp' })"
+		time: "integer({ mode: 'timestamp_ms' })"
 	}
 } as const;
 
@@ -87,19 +87,20 @@ export const generateDrizzleSchema = ({
 			? [cfg.table, stringBuilder, timeBuilder, jsonBuilder]
 			: [cfg.table, intBuilder, timeBuilder];
 	const uniqueBuilders = Array.from(new Set(importBuilders));
-	const builderImport = `import { ${uniqueBuilders.join(
+	const builderImport = `${authOption === 'abs' ? "import type { UserIdentity } from '../src/types/userIdentity';\n" : ''}import { ${uniqueBuilders.join(
 		', '
 	)} } from 'drizzle-orm/${cfg.pkg}';`;
 
 	const sqliteImports =
-		databaseEngine === 'sqlite'
+		databaseEngine === 'sqlite' || databaseEngine === 'mssql'
 			? `import { sql } from 'drizzle-orm';\n`
 			: '';
 
 	let uidColumn: string;
-	if (
+	if (databaseEngine === 'mssql') {
+		uidColumn = `int('uid').identity().primaryKey()`;
+	} else if (
 		databaseEngine === 'mariadb' ||
-		databaseEngine === 'mssql' ||
 		databaseEngine === 'mysql' ||
 		databaseEngine === 'singlestore'
 	) {
@@ -116,17 +117,16 @@ export const generateDrizzleSchema = ({
 const MILLIS_PER_DAY = 86400000;\n\n`
 			: '';
 
-	const timestampColumn =
-		databaseEngine === 'sqlite'
-			? `${cfg.time}.notNull().default(sql\`(julianday('now') - \${JULIAN_DAY_UNIX_EPOCH_OFFSET}) * \${MILLIS_PER_DAY}\`)`
-			: `${cfg.time}.notNull().defaultNow()`;
+	let timestampColumn = `${cfg.time}.notNull().defaultNow()`;
+	if (databaseEngine === 'sqlite') timestampColumn = `${cfg.time}.notNull().default(sql\`(julianday('now') - \${JULIAN_DAY_UNIX_EPOCH_OFFSET}) * \${MILLIS_PER_DAY}\`)`;
+	if (databaseEngine === 'mssql') timestampColumn = `${cfg.time}.notNull().default(sql\`sysdatetime()\`)`;
 
 	const tableBlock =
 		authOption === 'abs'
 			? `export const users = ${cfg.table}('users', {
   auth_sub: ${cfg.string}.primaryKey(),
   created_at: ${timestampColumn},
-  metadata: ${cfg.json}.$type<Record<string, unknown>>().default({})
+  metadata: ${cfg.json}.$type<UserIdentity>().default({})
 });`
 			: `export const countHistory = ${cfg.table}('count_history', {
   uid: ${uidColumn},

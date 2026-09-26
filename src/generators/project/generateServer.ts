@@ -71,26 +71,26 @@ export const generateServerFile = ({
 		.filter(
 			(pluginImport) =>
 				pluginImport.isPlugin &&
-				pluginImport.packageName !== 'networking'
+				pluginImport.packageName !== 'networking' && pluginImport.packageName !== 'openapi'
 		)
 		.map((pluginImport) => {
 			if (pluginImport.packageName === 'auth') {
-				return `.use(authPlugin)`;
+				return 'authPlugin';
 			}
 
 			if (pluginImport.config === undefined) {
-				return `.use(${pluginImport.packageName})`;
+				return pluginImport.packageName;
 			}
 
 			if (pluginImport.config === null) {
-				return `.use(${pluginImport.packageName}())`;
+				return `${pluginImport.packageName}()`;
 			}
 
-			return `.use(${pluginImport.packageName}(${JSON.stringify(
+			return `${pluginImport.packageName}(${JSON.stringify(
 				pluginImport.config
-			)}))`;
+			)})`;
 		})
-		.join('\n');
+		.join(', ');
 
 	const guardBlock = `.guard({
 			cookie: t.Cookie({
@@ -103,34 +103,46 @@ export const generateServerFile = ({
 	const routesBlock = generateRoutesBlock({
 		authOption,
 		databaseEngine,
-		frontendDirectories
+		frontendDirectories,
+		includeDatabaseRoutes: false
 	});
 
 	const hasDatabase =
 		databaseEngine !== undefined && databaseEngine !== 'none';
 
-	/* `auth()` is async, so it is hoisted out of the `.use()` chain rather than
-	   inlined — Elysia accepts the promise as a plugin. */
+	/* Resolve async auth before composing the shallow plugin array. */
 	const authBlock =
 		authOption === 'abs'
-			? `const authPlugin = auth(absoluteAuthConfig(${hasDatabase ? 'db' : ''}))\n`
+			? `const authPlugin = await auth(absoluteAuthConfig(${hasDatabase ? 'db' : ''}))\n`
 			: '';
 
 	const content = `${importsBlock}
+import { ${hasDatabase && authOption !== 'abs' ? 'createApi' : 'api'} } from './api'
 
 ${manifestBlock}
-${dbBlock ? `${dbBlock}\n` : ''}${authBlock}
-const server = new Elysia()
-.use(absolutejs)
-${useBlock}${authOption === 'abs' ? `\n${guardBlock}` : ''}
+${dbBlock ? `${dbBlock}\n` : ''}${hasDatabase && authOption !== 'abs' ? 'const api = createApi(db)\n' : ''}${authBlock}
+export const server = new Elysia()
+.use([absolutejs, api${useBlock ? `, ${useBlock}` : ''}])
+${authOption === 'abs' ? `\n${guardBlock}` : ''}
   ${routesBlock}
-  .use(networking)
-  .on('error', err => {
-    const { request } = err
-    console.error(\`Server error on \${request.method} \${request.url}: \${err.message}\`)
+  ${plugins.includes('@elysia/openapi') ? '.use(openapi())' : ''}
+  .error(({ request, error }) => {
+    console.error(\`Server error on \${request.method} \${request.url}\`, error)
   })
+  .use(networking)
 
-export type Server = typeof server
 `;
+	writeFileSync(
+		join(backendDirectory, 'api.ts'),
+		hasDatabase && authOption !== 'abs'
+			? `import { Elysia, t } from 'elysia'
+import type { DatabaseType } from '../types/databaseTypes'
+import { getCountHistory, createCountHistory } from './handlers/countHistoryHandlers'
+export const createApi = (db: DatabaseType) => new Elysia({name:'application-api'})
+${generateRoutesBlock({ authOption: 'none', databaseEngine, frontendDirectories: {} })}
+export type Api = ReturnType<typeof createApi>
+`
+			: "import { Elysia } from 'elysia'\n\n// Add typed JSON subapps here; keep page rendering and lifecycle in server.ts.\nexport const api = new Elysia({ name: 'application-api' })\nexport type Api = typeof api\n"
+	);
 	writeFileSync(serverFilePath, content);
 };

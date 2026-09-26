@@ -69,6 +69,7 @@ const verifyDockerContainer = async ({
 };
 
 type ScaffoldDockerProps = {
+	verifyLocalDatabase?: boolean;
 	databaseEngine: DatabaseEngine;
 	projectDatabaseDirectory: string;
 	authOption: AuthOption;
@@ -79,7 +80,8 @@ export const scaffoldDocker = async ({
 	databaseEngine,
 	projectDatabaseDirectory,
 	projectName,
-	authOption
+	authOption,
+	verifyLocalDatabase = true
 }: ScaffoldDockerProps): Promise<{ dockerFreshInstall: boolean }> => {
 	if (
 		databaseEngine === undefined ||
@@ -91,14 +93,16 @@ export const scaffoldDocker = async ({
 		);
 	}
 
-	const { freshInstall } = await checkDockerInstalled(databaseEngine);
-	const { daemonWasStarted } = await ensureDockerDaemonRunning();
 	const dbContainer = generateDockerContainer(databaseEngine);
 	writeFileSync(
 		join(projectDatabaseDirectory, 'docker-compose.db.yml'),
 		dbContainer,
 		'utf-8'
 	);
+
+	if (!verifyLocalDatabase) return { dockerFreshInstall: false };
+	const { freshInstall } = await checkDockerInstalled(databaseEngine);
+	const { daemonWasStarted } = await ensureDockerDaemonRunning();
 
 	const docker = resolveDockerExe();
 	const spin = spinner();

@@ -28,16 +28,6 @@ const defaultProviderConfigurations: OAuth2ConfigurationDefaults = {
 	}
 };
 
-/* Mirrors the `User` shape the raw-SQL path writes into types/databaseTypes, so
-   an auth scaffold without a database resolves the same type from the same
-   module the example page already imports. */
-export const generateSessionUserType = () => `export type User = {
-	auth_sub: string;
-	created_at: Date;
-	metadata: Record<string, unknown>;
-};
-`;
-
 export const generateAbsoluteAuthConfig = (
 	absProviders: ProviderOption[] | undefined,
 	hasDatabase: boolean
@@ -114,6 +104,7 @@ import {
 } from '@absolutejs/auth';
 import { DatabaseType, User } from '../../types/databaseTypes';
 import { createUser, getUser } from '../handlers/userHandlers';
+import { parseUserIdentity } from '../../types/userIdentity';
 
 export const absoluteAuthConfig = (db: DatabaseType) =>
 	defineAuthConfig<User>({
@@ -177,7 +168,7 @@ ${providerConfigs}
 				try {
 					const newUser = await createUser(db, {
 						auth_sub: authSub,
-						metadata: userIdentity
+						metadata: parseUserIdentity(userIdentity)
 					});
 					return newUser;
 				} catch (error) {
@@ -192,3 +183,12 @@ ${providerConfigs}
 });
 `;
 };
+/* Mirrors the `User` shape the raw-SQL path writes into types/databaseTypes, so
+   an auth scaffold without a database resolves the same type from the same
+   module the example page already imports. */
+export const generateSessionUserType = () => `export type User = {
+	auth_sub: string;
+	created_at: Date;
+	metadata: Record<string, unknown>;
+};
+`;

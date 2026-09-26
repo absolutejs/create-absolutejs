@@ -46,13 +46,10 @@ const DIALECTS: Record<string, DialectDDL> = {
 	}
 };
 
-export const supportsRelationalSchema = (engine: DatabaseEngine): boolean =>
-	engine !== undefined && engine in DIALECTS;
-
 export const generateRelationalSchema = (
 	databaseEngine: DatabaseEngine,
 	authOption: AuthOption
-): string => {
+) => {
 	if (databaseEngine === undefined || !(databaseEngine in DIALECTS)) {
 		throw new Error(
 			`Internal error: no relational DDL for engine "${databaseEngine}"`
@@ -74,3 +71,5 @@ export const generateRelationalSchema = (
 );
 `;
 };
+export const supportsRelationalSchema = (engine: DatabaseEngine) =>
+	engine !== undefined && engine in DIALECTS;

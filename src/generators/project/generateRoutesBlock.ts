@@ -9,12 +9,14 @@ type GenerateRoutesBlockProps = {
 	databaseEngine: CreateConfiguration['databaseEngine'];
 	frontendDirectories: FrontendDirectories;
 	authOption: AuthOption;
+	includeDatabaseRoutes?: boolean;
 };
 
 export const generateRoutesBlock = ({
 	databaseEngine,
 	frontendDirectories,
-	authOption
+	authOption,
+	includeDatabaseRoutes = true
 }: GenerateRoutesBlockProps) => {
 	const hasDatabase =
 		databaseEngine !== undefined && databaseEngine !== 'none';
@@ -39,14 +41,14 @@ export const generateRoutesBlock = ({
 
 	const createHandlerCall = (frontend: string) => {
 		if (frontend === 'angular')
-			return `handleAngularPageRequest<typeof AngularExamplePage>({
+			return `handleAngularPageRequest<AngularExamplePage.Context>({
     headTag: generateHeadElement({
       cssPath: asset(manifest, 'AngularExampleCSS'),
       title: 'AbsoluteJS + Angular'
     }),
     indexPath: asset(manifest, 'AngularExampleIndex'),
     pagePath: asset(manifest, 'AngularExample'),
-    props: { initialCount: 0 }
+    requestContext: { initialCount: 0 }
   })`;
 
 		if (frontend === 'html')
@@ -78,10 +80,7 @@ export const generateRoutesBlock = ({
 		if (frontend === 'vue')
 			return `handleVuePageRequest<typeof VueExample>({
     headTag: generateHeadElement({
-      cssPath: [
-        asset(manifest, 'VueExampleCSS'),
-        asset(manifest, 'VueExampleCompiledCSS')
-      ],
+      cssPath: asset(manifest, 'VueExampleCSS'),
       title: 'AbsoluteJS + Vue'
     }),
     indexPath: asset(manifest, 'VueExampleIndex'),
@@ -117,14 +116,14 @@ export const generateRoutesBlock = ({
 		}
 	});
 
-	if (hasDatabase && (authOption === undefined || authOption === 'none')) {
+	if (
+		includeDatabaseRoutes &&
+		hasDatabase &&
+		(authOption === undefined || authOption === 'none')
+	) {
 		routes.push(
-			`.get('/count/:uid', ({ params: { uid } }) => getCountHistory(db, uid), {
-    params: t.Object({ uid: t.Number() })
-  })`,
-			`.post('/count', ({ body: { count } }) => createCountHistory(db, count), {
-    body: t.Object({ count: t.Number() })
-  })`
+			`.get('/count/:uid', { params: t.Object({ uid: t.Number() }) }, ({ params: { uid } }) => getCountHistory(db, uid))`,
+			`.post('/count', { body: t.Object({ count: t.Number() }) }, ({ body: { count } }) => createCountHistory(db, count))`
 		);
 	}
 

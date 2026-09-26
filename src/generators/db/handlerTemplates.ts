@@ -40,7 +40,7 @@ export const getUser = async (
 }
 
 export const createUser = async (db: DatabaseType, newUserData: NewUser) => {
-	const { auth_sub: authSub, metadata: userIdentity } = newUserData;
+	${rowsAreTyped ? '' : 'const { auth_sub: authSub, metadata: userIdentity } = newUserData;'}
 	${queries.insertUser}
 }`;
 
@@ -418,7 +418,17 @@ import { schema } from '../../../db/schema'`,
 	'mssql:drizzle:local': {
 		importLines: `import { eq } from 'drizzle-orm'
 import { schema } from '../../../db/schema'`,
-		queries: drizzleQueryOperations
+		queries: {
+			...drizzleQueryOperations,
+			insertHistory: drizzleQueryOperations.insertHistory.replace(
+				'.values({ count }).returning()',
+				'.output().values({ count })'
+			),
+			insertUser: drizzleQueryOperations.insertUser.replace(
+				'.values(newUserData)\n\t\t.returning()',
+				'.output()\n\t\t.values(newUserData)'
+			)
+		}
 	},
 	'mssql:sql:local': {
 		importLines: ``,
@@ -500,7 +510,6 @@ import { schema } from '../../../db/schema'`,
 } as const;
 
 type DriverConfigurationKey = keyof typeof driverConfigurations;
-
 export const getAuthTemplate = (key: DriverConfigurationKey) => {
 	const configuration = driverConfigurations[key];
 	if (!configuration)
@@ -511,7 +520,6 @@ export const getAuthTemplate = (key: DriverConfigurationKey) => {
 		rowsAreTyped: key.includes(':drizzle:')
 	});
 };
-
 export const getCountTemplate = (key: DriverConfigurationKey) => {
 	const configuration = driverConfigurations[key];
 	if (!configuration)
@@ -519,3 +527,6 @@ export const getCountTemplate = (key: DriverConfigurationKey) => {
 
 	return buildSqlCountTemplate(configuration);
 };
+export const isDriverConfigurationKey = (
+	key: string
+): key is DriverConfigurationKey => Object.hasOwn(driverConfigurations, key);

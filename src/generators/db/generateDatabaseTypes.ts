@@ -137,21 +137,20 @@ export const generateDatabaseTypes = ({
 	let dbTypeLine = '';
 
 	if (databaseHost === 'neon') {
-		dbImport = `import { NeonHttpDatabase } from 'drizzle-orm/neon-http';`;
-		dbTypeLine = 'export type DatabaseType = NeonHttpDatabase<SchemaType>;';
+		dbImport = `import type { drizzle } from 'drizzle-orm/neon-http';`;
+		dbTypeLine = 'export type DatabaseType = ReturnType<typeof drizzle>;';
 	} else if (databaseHost === 'planetscale' && databaseEngine === 'mysql') {
-		dbImport = `import { PlanetScaleDatabase } from 'drizzle-orm/planetscale-serverless';`;
-		dbTypeLine =
-			'export type DatabaseType = PlanetScaleDatabase<SchemaType>;';
+		dbImport = `import type { drizzle } from 'drizzle-orm/planetscale-serverless';`;
+		dbTypeLine = 'export type DatabaseType = ReturnType<typeof drizzle>;';
 	} else if (
 		databaseHost === 'planetscale' &&
 		databaseEngine === 'postgresql'
 	) {
-		dbImport = `import { NodePgDatabase } from 'drizzle-orm/node-postgres';`;
-		dbTypeLine = 'export type DatabaseType = NodePgDatabase<SchemaType>;';
+		dbImport = `import type { drizzle } from 'drizzle-orm/node-postgres';`;
+		dbTypeLine = 'export type DatabaseType = ReturnType<typeof drizzle>;';
 	} else if (databaseHost === 'turso') {
-		dbImport = `import { LibSQLDatabase } from 'drizzle-orm/libsql';`;
-		dbTypeLine = 'export type DatabaseType = LibSQLDatabase<SchemaType>;';
+		dbImport = `import type { drizzle } from 'drizzle-orm/libsql';`;
+		dbTypeLine = 'export type DatabaseType = ReturnType<typeof drizzle>;';
 	}
 
 	if (
@@ -159,36 +158,30 @@ export const generateDatabaseTypes = ({
 		isDrizzleDialect(databaseEngine)
 	) {
 		switch (databaseEngine) {
-			case 'gel':
-				dbImport = `import { GelJsDatabase } from 'drizzle-orm/gel';`;
-				dbTypeLine =
-					'export type DatabaseType = GelJsDatabase<SchemaType>;';
-				break;
 			case 'mariadb':
 			case 'mysql':
-				dbImport = `import { Mysql2Database } from 'drizzle-orm/mysql2';`;
+				dbImport = `import type { drizzle } from 'drizzle-orm/mysql2';`;
 				dbTypeLine =
-					'export type DatabaseType = Mysql2Database<SchemaType>;';
+					'export type DatabaseType = ReturnType<typeof drizzle>;';
 				break;
 			case 'mssql':
-				dbImport = `import { NodeMssqlDatabase } from 'drizzle-orm/node-mssql';`;
+				dbImport = `import type { NodeMsSqlDatabase } from 'drizzle-orm/node-mssql';`;
 				dbTypeLine =
-					'export type DatabaseType = NodeMssqlDatabase<SchemaType>;';
+					'export type DatabaseType = NodeMsSqlDatabase;';
 				break;
 			case 'postgresql':
-				dbImport = `import { BunSQLDatabase } from 'drizzle-orm/bun-sql';`;
+				dbImport = `import type { drizzle } from 'drizzle-orm/bun-sql';`;
 				dbTypeLine =
-					'export type DatabaseType = BunSQLDatabase<SchemaType>;';
+					'export type DatabaseType = ReturnType<typeof drizzle>;';
 				break;
 			case 'singlestore':
-				dbImport = `import { SingleStoreDriverDatabase } from 'drizzle-orm/singlestore';`;
-				dbTypeLine =
-					'export type DatabaseType = SingleStoreDriverDatabase<SchemaType>;';
+				dbImport = `import type { SingleStoreDriverDatabase } from 'drizzle-orm/singlestore';`;
+				dbTypeLine = 'export type DatabaseType = SingleStoreDriverDatabase;';
 				break;
 			case 'sqlite':
-				dbImport = `import { BunSQLiteDatabase } from 'drizzle-orm/bun-sqlite';`;
+				dbImport = `import type { drizzle } from 'drizzle-orm/bun-sqlite';`;
 				dbTypeLine =
-					'export type DatabaseType = BunSQLiteDatabase<SchemaType>;';
+					'export type DatabaseType = ReturnType<typeof drizzle>;';
 				break;
 		}
 	}
