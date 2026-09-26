@@ -1,5 +1,9 @@
 import { isDrizzleDialect } from '../../typeGuards';
-import type { AvailableDependency, CreateConfiguration } from '../../types';
+import type {
+	AvailableDependency,
+	AvailableDrizzleDialect,
+	CreateConfiguration
+} from '../../types';
 import type { FrameworkFlags } from './computeFlags';
 
 type GenerateImportsBlockProps = {
@@ -104,7 +108,10 @@ export const generateImportsBlock = ({
 	const connectorImports = {
 		neon: [`import { neon } from '@neondatabase/serverless'`],
 		planetscale: [`import { Client } from '@planetscale/database'`],
-		turso: [`import { createClient } from '@libsql/client'`]
+		turso: [
+			`import { createClient } from '@libsql/client'`,
+			`import { env } from 'bun'`
+		]
 	} as const;
 
 	const dialectImports = {
@@ -144,15 +151,19 @@ export const generateImportsBlock = ({
 		return [] as const;
 	};
 
-	const ormDatabaseImports = {
+	const ormDatabaseImports: {
+		drizzle: Record<AvailableDrizzleDialect, readonly string[]>;
+	} = {
 		drizzle: {
-			gel: [
-				`import { createClient } from 'gel'`,
-				`import { drizzle } from 'drizzle-orm/gel'`
+			cockroachdb: [
+				`import { drizzle } from 'drizzle-orm/cockroach'`,
+				`import { Pool } from 'pg'`
 			],
+			/* drizzle-orm/mysql2 1.0 sets options on the pool's `config`, which
+			   only mysql2's callback pool has; it wraps it in .promise() itself. */
 			mariadb: [
 				`import { drizzle } from 'drizzle-orm/mysql2'`,
-				`import { createPool } from 'mysql2/promise'`
+				`import { createPool } from 'mysql2'`
 			],
 			mssql: [
 				`import { connect } from 'mssql'`,
@@ -161,7 +172,7 @@ export const generateImportsBlock = ({
 			mysql: !isRemoteHost
 				? [
 						`import { drizzle } from 'drizzle-orm/mysql2'`,
-						`import { createPool } from 'mysql2/promise'`
+						`import { createPool } from 'mysql2'`
 					]
 				: [],
 			postgresql: getPostgresqlOrmDatabaseImports(),

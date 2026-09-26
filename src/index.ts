@@ -20,7 +20,7 @@ if (help === true) {
 
 const response = await prompt(argumentConfiguration);
 
-const { dockerFreshInstall } = await scaffold({
+const { databaseMigrationPending, dockerFreshInstall } = await scaffold({
 	envVariables,
 	latest,
 	packageManager,
@@ -36,6 +36,7 @@ const debugMessage =
 		: '';
 
 const outroMessage = getOutroMessage({
+	databaseMigrationPending,
 	installDependenciesNow: response.installDependenciesNow,
 	packageManager,
 	projectName: response.projectName

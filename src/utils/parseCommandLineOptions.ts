@@ -11,7 +11,6 @@ import {
 	availableDatabaseEngines,
 	availableDatabaseHosts,
 	availableDirectoryConfigurations,
-	availableDrizzleDialects,
 	availableORMs,
 	availablePrismaDialects
 } from '../data';
@@ -20,7 +19,6 @@ import {
 	isDatabaseEngine,
 	isDatabaseHost,
 	isDirectoryConfig,
-	isDrizzleDialect,
 	isGithubLinkOption,
 	isORM,
 	isPrismaDialect
@@ -35,6 +33,7 @@ import type {
 	ORM
 } from '../types';
 import { normalizeRepoInput } from './github';
+import { validateDatabaseSelection } from './validateDatabaseSelection';
 
 export const parseCommandLineOptions = () => {
 	const { values, positionals } = parseArgs({
@@ -182,16 +181,13 @@ export const parseCommandLineOptions = () => {
 		);
 	}
 
-	if (
-		values.orm === 'drizzle' &&
-		databaseEngine !== undefined &&
-		databaseEngine !== 'none' &&
-		!isDrizzleDialect(databaseEngine)
-	) {
-		errors.push(
-			`Invalid database engine for Drizzle ORM: "${databaseEngine}". Expected: [ ${availableDrizzleDialects.join(', ')} ]`
-		);
-	}
+	const databaseSelection = validateDatabaseSelection({
+		databaseEngine,
+		databaseHost,
+		orm
+	});
+	({ databaseEngine } = databaseSelection);
+	errors.push(...databaseSelection.errors);
 
 	if (
 		values.orm === 'prisma' &&
@@ -201,33 +197,6 @@ export const parseCommandLineOptions = () => {
 	) {
 		errors.push(
 			`Invalid database engine for Prisma ORM: "${databaseEngine}". Expected: [ ${availablePrismaDialects.join(', ')} ]`
-		);
-	}
-
-	if (
-		values['db-host'] === 'turso' &&
-		(databaseEngine === undefined || databaseEngine === 'none')
-	) {
-		databaseEngine = 'sqlite';
-	} else if (values['db-host'] === 'turso' && databaseEngine !== 'sqlite') {
-		errors.push(
-			`Invalid database engine for Turso: "${databaseEngine}". Expected: "sqlite".`
-		);
-	}
-
-	if (values['db-host'] === 'neon' && databaseEngine !== 'postgresql') {
-		errors.push(
-			`Invalid database engine for Neon: "${databaseEngine}". Expected: "postgresql".`
-		);
-	}
-
-	if (
-		values['db-host'] === 'planetscale' &&
-		databaseEngine !== 'postgresql' &&
-		databaseEngine !== 'mysql'
-	) {
-		errors.push(
-			`Invalid database engine for PlanetScale: "${databaseEngine}". Expected: "postgresql" or "mysql".`
 		);
 	}
 

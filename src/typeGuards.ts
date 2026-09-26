@@ -2,6 +2,7 @@ import {
 	availableDatabaseEngines,
 	availableDatabaseHosts,
 	availableDrizzleDialects,
+	availableORMs,
 	availablePrismaDialects,
 	frontendLabels
 } from './data';
@@ -42,7 +43,7 @@ export const isGithubLinkOption = (
 ): value is GithubLinkOption =>
 	value === 'existing' || value === 'create' || value === 'skip';
 export const isORM = (value: string | undefined): value is ORM =>
-	value === 'drizzle' || value === 'prisma' || value === undefined;
+	value === undefined || availableORMs.some((orm) => orm === value);
 export const isPrismaDialect = (value: string | undefined): value is string =>
 	availablePrismaDialects.some((dialect) => dialect === value);
 export const isValidAuthOption = (

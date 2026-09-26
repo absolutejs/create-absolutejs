@@ -1,10 +1,15 @@
-import { mkdirSync, writeFileSync } from 'fs';
-import { join } from 'path';
+import { cpSync, mkdirSync, writeFileSync } from 'fs';
+import { dirname, join } from 'path';
+import { fileURLToPath } from 'url';
 import { dim, yellow } from 'picocolors';
 import { isDrizzleDialect } from '../../typeGuards';
 import type { CreateConfiguration } from '../../types';
 import { checkSqliteInstalled } from '../../utils/checkSqliteInstalled';
 import { createDrizzleConfig } from '../configurations/generateDrizzleConfig';
+import {
+	getDrizzleKitDialect,
+	getMigrationTemplateName
+} from './drizzleTargets';
 import { generateDatabaseTypes } from './generateDatabaseTypes';
 import { generateDrizzleSchema } from './generateDrizzleSchema';
 import { generateDBHandlers } from './generateHandlers';
@@ -89,7 +94,10 @@ export const scaffoldDatabase = async ({
 		);
 	}
 
-	if (databaseEngine === 'sqlite') {
+	/* Drizzle projects get their tables from the committed initial migration
+	   (`db:migrate`), never from hand-written DDL, so the migration history and
+	   the database always agree. */
+	if (databaseEngine === 'sqlite' && orm !== 'drizzle') {
 		// The sqlite3 CLI is a developer convenience (a db shell), never a
 		// scaffold requirement — seeding goes through bun:sqlite below, which
 		// ships with the runtime. The check only nudges interactive users;
@@ -121,6 +129,7 @@ export const scaffoldDatabase = async ({
 		const result = await scaffoldDocker({
 			authOption,
 			databaseEngine,
+			initializeSchema: orm !== 'drizzle',
 			projectDatabaseDirectory,
 			projectName,
 			verifyLocalDatabase
@@ -142,7 +151,31 @@ export const scaffoldDatabase = async ({
 			join(projectDatabaseDirectory, 'schema.ts'),
 			drizzleSchema
 		);
-		createDrizzleConfig({ databaseDirectory, databaseEngine, projectName });
+		createDrizzleConfig({
+			databaseDirectory,
+			databaseEngine,
+			databaseHost,
+			projectName
+		});
+		const templatesDirectory = join(
+			dirname(fileURLToPath(import.meta.url)),
+			'..',
+			'..',
+			'templates'
+		);
+		cpSync(
+			join(
+				templatesDirectory,
+				'db',
+				'migrations',
+				getMigrationTemplateName(
+					getDrizzleKitDialect(databaseEngine, databaseHost),
+					usesAuth
+				)
+			),
+			join(projectDatabaseDirectory, 'migrations'),
+			{ recursive: true }
+		);
 
 		const drizzleTypes = generateDatabaseTypes({
 			authOption,

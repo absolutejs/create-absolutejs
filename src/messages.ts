@@ -53,9 +53,12 @@ type OutroMessageProps = {
 	projectName: string;
 	packageManager: string;
 	installDependenciesNow: boolean;
+	/* A Drizzle project whose initial migration has not been applied yet. */
+	databaseMigrationPending: boolean;
 };
 
 export const getOutroMessage = ({
+	databaseMigrationPending,
 	projectName,
 	packageManager,
 	installDependenciesNow
@@ -63,6 +66,7 @@ export const getOutroMessage = ({
 	`${green('Created successfully')}, you can now run:\n\n` +
 	`${cyan('cd')} ${projectName}\n` +
 	`${installDependenciesNow ? '' : `${cyan(`${packageManager} install`)}\n`}` +
+	`${databaseMigrationPending ? `${cyan(`${packageManager} run db:migrate`)}\n` : ''}` +
 	`${cyan(`${packageManager} dev`)}`; // TODO: Some package managers need run
 
 type DebugMessageProps = {

@@ -158,11 +158,15 @@ export const generateDatabaseTypes = ({
 		isDrizzleDialect(databaseEngine)
 	) {
 		switch (databaseEngine) {
-			case 'mariadb':
-			case 'mysql':
-				dbImport = `import type { drizzle } from 'drizzle-orm/mysql2';`;
+			case 'cockroachdb':
+				dbImport = `import type { drizzle } from 'drizzle-orm/cockroach';`;
 				dbTypeLine =
 					'export type DatabaseType = ReturnType<typeof drizzle>;';
+				break;
+			case 'mariadb':
+			case 'mysql':
+				dbImport = `import type { MySql2Database } from 'drizzle-orm/mysql2';`;
+				dbTypeLine = 'export type DatabaseType = MySql2Database;';
 				break;
 			case 'mssql':
 				dbImport = `import type { NodeMsSqlDatabase } from 'drizzle-orm/node-mssql';`;

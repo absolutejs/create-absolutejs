@@ -21,6 +21,8 @@ export default defineConfig([
 			'**/node_modules/**',
 			// Generated release metadata is JSON data, not a JavaScript module.
 			'changelog.json',
+			// drizzle-kit's generated migration snapshots, copied into projects verbatim.
+			'src/templates/db/migrations/**',
 			'.absolutejs/**',
 			'.claude/**',
 			'absolutejs-project/**',

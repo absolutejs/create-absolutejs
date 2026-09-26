@@ -314,14 +314,12 @@ const mysqlDrizzleQueryOperations: QueryOperations = {
 
   return newHistory;`,
 
-	insertUser: `const [row] = await db
-    .insert(schema.users)
-    .values({ auth_sub: authSub, metadata: userIdentity });
+	insertUser: `await db.insert(schema.users).values(newUserData);
 
   const [newUser] = await db
     .select()
     .from(schema.users)
-    .where(eq(schema.users.auth_sub, authSub));
+    .where(eq(schema.users.auth_sub, newUserData.auth_sub));
 
   if (!newUser) throw new Error('Failed to create user');
   return newUser;`,
@@ -388,15 +386,14 @@ const mysqlPlanetScaleQueryOperations: QueryOperations = {
 };
 
 const driverConfigurations = {
+	'cockroachdb:drizzle:local': {
+		importLines: `import { eq } from 'drizzle-orm'
+import { schema } from '../../../db/schema'`,
+		queries: drizzleQueryOperations
+	},
 	'cockroachdb:sql:local': {
 		importLines: ``,
 		queries: postgresSqlQueryOperations
-	},
-	'gel:drizzle:local': {
-		importLines: `import { eq } from 'drizzle-orm'
-import { schema } from '../../../db/schema'
-`,
-		queries: drizzleQueryOperations
 	},
 	'gel:sql:local': {
 		importLines: ``,

@@ -1,0 +1,74 @@
+{
+  "version": "2",
+  "dialect": "mssql",
+  "id": "c491f825-d719-4383-8371-1d24485e8ddb",
+  "prevIds": [
+    "00000000-0000-0000-0000-000000000000"
+  ],
+  "ddl": [
+    {
+      "name": "users",
+      "entityType": "tables",
+      "schema": "dbo"
+    },
+    {
+      "type": "nvarchar(255)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "auth_sub",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "users"
+    },
+    {
+      "type": "datetime2",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "created_at",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "users"
+    },
+    {
+      "type": "nvarchar(max)",
+      "notNull": false,
+      "generated": null,
+      "identity": null,
+      "name": "metadata",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "users"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "auth_sub"
+      ],
+      "name": "users_pkey",
+      "table": "users",
+      "schema": "dbo",
+      "entityType": "pks"
+    },
+    {
+      "column": "created_at",
+      "nameExplicit": false,
+      "default": "(sysdatetime())",
+      "name": "users_created_at_default",
+      "entityType": "defaults",
+      "schema": "dbo",
+      "table": "users"
+    },
+    {
+      "column": "metadata",
+      "nameExplicit": false,
+      "default": "('{}')",
+      "name": "users_metadata_default",
+      "entityType": "defaults",
+      "schema": "dbo",
+      "table": "users"
+    }
+  ],
+  "renames": []
+}

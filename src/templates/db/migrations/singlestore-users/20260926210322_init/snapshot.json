@@ -1,0 +1,65 @@
+{
+  "version": "2",
+  "dialect": "singlestore",
+  "id": "c077064e-71dd-4939-9b88-0f3c07d67857",
+  "prevIds": [
+    "00000000-0000-0000-0000-000000000000"
+  ],
+  "ddl": [
+    {
+      "name": "users",
+      "entityType": "tables"
+    },
+    {
+      "type": "varchar(255)",
+      "notNull": true,
+      "autoIncrement": false,
+      "default": null,
+      "onUpdateNow": false,
+      "onUpdateNowFsp": null,
+      "charSet": null,
+      "collation": null,
+      "generated": null,
+      "name": "auth_sub",
+      "entityType": "columns",
+      "table": "users"
+    },
+    {
+      "type": "timestamp",
+      "notNull": true,
+      "autoIncrement": false,
+      "default": "CURRENT_TIMESTAMP",
+      "onUpdateNow": false,
+      "onUpdateNowFsp": null,
+      "charSet": null,
+      "collation": null,
+      "generated": null,
+      "name": "created_at",
+      "entityType": "columns",
+      "table": "users"
+    },
+    {
+      "type": "json",
+      "notNull": false,
+      "autoIncrement": false,
+      "default": "'{}'",
+      "onUpdateNow": false,
+      "onUpdateNowFsp": null,
+      "charSet": null,
+      "collation": null,
+      "generated": null,
+      "name": "metadata",
+      "entityType": "columns",
+      "table": "users"
+    },
+    {
+      "columns": [
+        "auth_sub"
+      ],
+      "name": "PRIMARY",
+      "table": "users",
+      "entityType": "pks"
+    }
+  ],
+  "renames": []
+}

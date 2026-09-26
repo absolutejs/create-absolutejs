@@ -37,6 +37,18 @@ export const generateEnv = ({
 		vars.push(`DATABASE_URL=${databaseURLS[databaseEngine]}`);
 	}
 
+	/* A Turso project starts on a local libSQL file so it runs (and migrates)
+	   before a cloud database exists; pointing it at Turso is two variables. */
+	const setsDatabaseUrl = vars.some((entry) =>
+		entry.startsWith('DATABASE_URL=')
+	);
+	if (databaseHost === 'turso' && !setsDatabaseUrl) {
+		vars.push(
+			'# Local libSQL file. For Turso use DATABASE_URL=libsql://<database>.turso.io and set DATABASE_AUTH_TOKEN.',
+			'DATABASE_URL=file:db/database.db'
+		);
+	}
+
 	if (vars.length === 0) return;
 
 	const envPath = join(projectName, '.env');

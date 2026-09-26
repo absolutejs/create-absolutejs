@@ -1,145 +1,137 @@
 import { AuthOption, AvailableDrizzleDialect } from '../../types';
 
-const DIALECTS = {
-	gel: {
-		builders: ['text', 'gelTable', 'timestamp', 'integer', 'json'],
-		json: 'json()',
-		pkg: 'gel-core',
-		string: 'text()',
-		table: 'gelTable',
-		time: 'timestamp()'
-	},
-	mariadb: {
-		builders: ['json', 'mysqlTable', 'timestamp', 'varchar', 'int'],
-		json: 'json()',
-		pkg: 'mysql-core',
+type DialectSchema = {
+	int: string;
+	json: string;
+	jsonDefault?: string;
+	pkg: string;
+	string: string;
+	table: string;
+	time: string;
+	timestampDefault: string;
+	uid: string;
+};
+
+const mysqlFamily = {
+	int: 'int',
+	json: 'json()',
+	string: 'varchar({ length: 255 })',
+	time: 'timestamp()',
+	timestampDefault: '.defaultNow()',
+	uid: "int('uid').primaryKey().autoincrement()"
+} as const;
+
+const DIALECTS: Record<AvailableDrizzleDialect, DialectSchema> = {
+	cockroachdb: {
+		int: 'int4',
+		json: 'jsonb()',
+		pkg: 'cockroach-core',
 		string: 'varchar({ length: 255 })',
-		table: 'mysqlTable',
-		time: 'timestamp()'
+		table: 'cockroachTable',
+		time: 'timestamp()',
+		timestampDefault: '.defaultNow()',
+		uid: "int4('uid').primaryKey().generatedAlwaysAsIdentity()"
 	},
+	mariadb: { ...mysqlFamily, pkg: 'mysql-core', table: 'mysqlTable' },
 	mssql: {
-		builders: ['datetime2', 'int', 'mssqlTable', 'nvarchar', 'json'],
+		int: 'int',
 		json: "nvarchar({ length: 'max', mode: 'json' })",
 		pkg: 'mssql-core',
 		string: 'nvarchar({ length: 255 })',
 		table: 'mssqlTable',
-		time: 'datetime2()'
+		time: 'datetime2()',
+		timestampDefault: '.default(sql`sysdatetime()`)',
+		uid: "int('uid').identity().primaryKey()"
 	},
-	mysql: {
-		builders: ['json', 'mysqlTable', 'timestamp', 'varchar', 'int'],
-		json: 'json()',
-		pkg: 'mysql-core',
-		string: 'varchar({ length: 255 })',
-		table: 'mysqlTable',
-		time: 'timestamp()'
-	},
+	mysql: { ...mysqlFamily, pkg: 'mysql-core', table: 'mysqlTable' },
 	postgresql: {
-		builders: ['jsonb', 'pgTable', 'timestamp', 'varchar', 'integer'],
+		int: 'integer',
 		json: 'jsonb()',
 		pkg: 'pg-core',
 		string: 'varchar({ length: 255 })',
 		table: 'pgTable',
-		time: 'timestamp()'
+		time: 'timestamp()',
+		timestampDefault: '.defaultNow()',
+		uid: "integer('uid').primaryKey().generatedAlwaysAsIdentity()"
 	},
 	singlestore: {
-		builders: ['json', 'singlestoreTable', 'timestamp', 'varchar', 'int'],
-		json: 'json()',
+		...mysqlFamily,
+		/* SingleStore rejects MySQL's parenthesised expression default
+		   (DEFAULT ('{}')), which is what drizzle-kit emits for .default({}). */
+		jsonDefault: ".default(sql`'{}'`)",
 		pkg: 'singlestore-core',
-		string: 'varchar({ length: 255 })',
-		table: 'singlestoreTable',
-		time: 'timestamp()'
+		table: 'singlestoreTable'
 	},
 	sqlite: {
-		builders: ['text', 'sqliteTable', 'integer'],
+		int: 'integer',
 		json: "text('', { mode: 'json' })",
 		pkg: 'sqlite-core',
 		string: 'text()',
 		table: 'sqliteTable',
-		time: "integer({ mode: 'timestamp_ms' })"
+		time: "integer({ mode: 'timestamp_ms' })",
+		/* Milliseconds since the Unix epoch: julianday() counts days from
+		   2440587.5 (the epoch's Julian day). drizzle-kit only accepts a
+		   parameter-free SQL default, so the constants are inline. */
+		timestampDefault:
+			".default(sql`((julianday('now') - 2440587.5) * 86400000)`)",
+		uid: "integer('uid').primaryKey({ autoIncrement: true })"
 	}
-} as const;
+};
 
 type GenerateSchemaProps = {
 	databaseEngine: AvailableDrizzleDialect;
 	authOption: AuthOption;
 };
 
-const builder = (expr: string) => expr.split('(')[0];
+const builder = (expr: string) => expr.split('(')[0] ?? expr;
 
 export const generateDrizzleSchema = ({
 	databaseEngine,
 	authOption
 }: GenerateSchemaProps) => {
 	const cfg = DIALECTS[databaseEngine];
-	const intBuilder =
-		databaseEngine === 'mariadb' ||
-		databaseEngine === 'mssql' ||
-		databaseEngine === 'mysql' ||
-		databaseEngine === 'singlestore'
-			? 'int'
-			: 'integer';
-	const timeBuilder = builder(cfg.time);
-	const jsonBuilder = builder(cfg.json);
-	const stringBuilder = builder(cfg.string);
+	const usesAuth = authOption === 'abs';
 
-	const importBuilders =
-		authOption === 'abs'
-			? [cfg.table, stringBuilder, timeBuilder, jsonBuilder]
-			: [cfg.table, intBuilder, timeBuilder];
+	const importBuilders = usesAuth
+		? [cfg.table, builder(cfg.string), builder(cfg.time), builder(cfg.json)]
+		: [cfg.table, cfg.int, builder(cfg.time)];
 	const uniqueBuilders = Array.from(new Set(importBuilders));
-	const builderImport = `${authOption === 'abs' ? "import type { UserIdentity } from '../src/types/userIdentity';\n" : ''}import { ${uniqueBuilders.join(
-		', '
-	)} } from 'drizzle-orm/${cfg.pkg}';`;
+	const jsonDefault = cfg.jsonDefault ?? '.default({})';
+	const usesSqlDefault = [
+		cfg.timestampDefault,
+		usesAuth ? jsonDefault : ''
+	].some((expression) => expression.includes('sql`'));
 
-	const sqliteImports =
-		databaseEngine === 'sqlite' || databaseEngine === 'mssql'
-			? `import { sql } from 'drizzle-orm';\n`
-			: '';
+	const imports = [
+		usesSqlDefault ? "import { sql } from 'drizzle-orm';" : '',
+		usesAuth
+			? "import type { UserIdentity } from '../src/types/userIdentity';"
+			: '',
+		`import { ${uniqueBuilders.join(', ')} } from 'drizzle-orm/${cfg.pkg}';`
+	]
+		.filter(Boolean)
+		.join('\n');
 
-	let uidColumn: string;
-	if (databaseEngine === 'mssql') {
-		uidColumn = `int('uid').identity().primaryKey()`;
-	} else if (
-		databaseEngine === 'mariadb' ||
-		databaseEngine === 'mysql' ||
-		databaseEngine === 'singlestore'
-	) {
-		uidColumn = `${intBuilder}('uid').primaryKey().autoincrement()`;
-	} else if (databaseEngine === 'sqlite') {
-		uidColumn = `integer('uid').primaryKey({ autoIncrement: true })`;
-	} else {
-		uidColumn = `integer('uid').primaryKey().generatedAlwaysAsIdentity()`;
-	}
+	const timestampColumn = `${cfg.time}.notNull()${cfg.timestampDefault}`;
 
-	const constsBlock =
-		databaseEngine === 'sqlite'
-			? `const JULIAN_DAY_UNIX_EPOCH_OFFSET = 2440587.5;
-const MILLIS_PER_DAY = 86400000;\n\n`
-			: '';
-
-	let timestampColumn = `${cfg.time}.notNull().defaultNow()`;
-	if (databaseEngine === 'sqlite') timestampColumn = `${cfg.time}.notNull().default(sql\`(julianday('now') - \${JULIAN_DAY_UNIX_EPOCH_OFFSET}) * \${MILLIS_PER_DAY}\`)`;
-	if (databaseEngine === 'mssql') timestampColumn = `${cfg.time}.notNull().default(sql\`sysdatetime()\`)`;
-
-	const tableBlock =
-		authOption === 'abs'
-			? `export const users = ${cfg.table}('users', {
+	const tableBlock = usesAuth
+		? `export const users = ${cfg.table}('users', {
   auth_sub: ${cfg.string}.primaryKey(),
   created_at: ${timestampColumn},
-  metadata: ${cfg.json}.$type<UserIdentity>().default({})
+  metadata: ${cfg.json}.$type<UserIdentity>()${jsonDefault}
 });`
-			: `export const countHistory = ${cfg.table}('count_history', {
-  uid: ${uidColumn},
-  count: ${intBuilder}('count').notNull(),
+		: `export const countHistory = ${cfg.table}('count_history', {
+  uid: ${cfg.uid},
+  count: ${cfg.int}('count').notNull(),
   created_at: ${timestampColumn}
 });`;
 
-	const schemaKey = authOption === 'abs' ? 'users' : 'countHistory';
+	const schemaKey = usesAuth ? 'users' : 'countHistory';
 
 	return `
-${sqliteImports}${builderImport}
+${imports}
 
-${constsBlock}${tableBlock}
+${tableBlock}
 
 export const schema = {
   ${schemaKey}
