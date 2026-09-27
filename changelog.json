@@ -5,6 +5,16 @@
 		{
 			"changes": [
 				{
+					"kind": "added",
+					"summary": "Scaffold Prisma for every Prisma database (PostgreSQL, Neon, PlanetScale, CockroachDB, MySQL, MariaDB, SQLite, Turso, SQL Server on Prisma 7.10 driver adapters; MongoDB on Prisma 6.19.3) with a committed initial migration, typed handlers and prisma generate / db:migrate scripts"
+				}
+			],
+			"date": "2026-09-27",
+			"version": "0.20.0"
+		},
+		{
+			"changes": [
+				{
 					"kind": "fixed",
 					"summary": "Accept --orm none as the help text documents, and refuse unsupported database, host and ORM combinations before writing any files"
 				},
