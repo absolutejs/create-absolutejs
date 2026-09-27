@@ -68,15 +68,18 @@ export const getPrismaServerImports = ({ adapter }: PrismaTarget) => [
 		: [])
 ];
 
+/* Prisma queries return a lazy PrismaPromise that only runs when awaited;
+   Elysia serializes a returned non-Promise object as-is. Every handler is
+   async and awaits, so routes always receive a real Promise of the row. */
 const countHistoryHandlers = ({ provider }: PrismaTarget) =>
 	provider === 'mongodb'
 		? `import type { CountHistory, DatabaseType } from '../../types/databaseTypes';
 
-export const getCountHistory = (
+export const getCountHistory = async (
 	db: DatabaseType,
 	uid: number
 ): Promise<CountHistory | null> =>
-	db.countHistory.findUnique({ omit: { id: true }, where: { uid } });
+	await db.countHistory.findUnique({ omit: { id: true }, where: { uid } });
 
 /* MongoDB has no autoincrement: the next uid comes from an atomic increment
    on a counter document. */
@@ -90,21 +93,24 @@ export const createCountHistory = async (
 		where: { id: 'count_history' }
 	});
 
-	return db.countHistory.create({ data: { count, uid }, omit: { id: true } });
+	return await db.countHistory.create({
+		data: { count, uid },
+		omit: { id: true }
+	});
 };
 `
 		: `import type { CountHistory, DatabaseType } from '../../types/databaseTypes';
 
-export const getCountHistory = (
+export const getCountHistory = async (
 	db: DatabaseType,
 	uid: number
 ): Promise<CountHistory | null> =>
-	db.countHistory.findUnique({ where: { uid } });
+	await db.countHistory.findUnique({ where: { uid } });
 
-export const createCountHistory = (
+export const createCountHistory = async (
 	db: DatabaseType,
 	count: number
-): Promise<CountHistory> => db.countHistory.create({ data: { count } });
+): Promise<CountHistory> => await db.countHistory.create({ data: { count } });
 `;
 
 /* Json columns hand back Prisma's JsonValue; SQL Server stores the metadata as
@@ -113,7 +119,7 @@ const userHandlers = ({ supportsJson }: PrismaTarget) => {
 	const readMetadata = supportsJson ? 'metadata' : 'JSON.parse(metadata)';
 	const writeMetadata = supportsJson
 		? 'metadata'
-		: 'JSON.stringify(metadata)';
+		: 'metadata: JSON.stringify(metadata)';
 
 	return `import type { DatabaseType, NewUser, User } from '../../types/databaseTypes';
 import { parseUserIdentity } from '../../types/userIdentity';
@@ -150,7 +156,7 @@ export const createUser = async (
 	db: DatabaseType,
 	{ auth_sub, metadata = {} }: NewUser
 ): Promise<User> =>
-	toUser(await db.user.create({ data: { auth_sub, metadata: ${writeMetadata} } }));
+	toUser(await db.user.create({ data: { auth_sub, ${writeMetadata} } }));
 `;
 };
 

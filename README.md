@@ -112,8 +112,9 @@ Usage: create-absolute [project-name] [options]
 - `--lts`  
   Use LTS versions of required packages.
 
-- `--orm <drizzle|none>`
-  ORM to configure: `drizzle` | `none`. Prisma scaffolding is not implemented and is rejected before files are written. Drizzle 1 no longer includes the Gel dialect; choose no ORM for Gel.
+- `--orm <drizzle|prisma|none>`
+  ORM to configure: `drizzle` | `prisma` | `none`. Drizzle 1 no longer includes the Gel dialect; choose no ORM for Gel.
+  Prisma supports PostgreSQL (local, Neon, PlanetScale), CockroachDB, MySQL (local, PlanetScale), MariaDB, SQLite (local, Turso), SQL Server and MongoDB; Gel and SingleStore are rejected before files are written. A Prisma project ships `prisma.config.ts`, `db/schema.prisma` and a committed initial migration; `postinstall` / `db:generate` run `prisma generate` into `src/generated/prisma` (git-ignored), and `db:migrate` applies the migrations (`prisma migrate deploy`; Turso through `db/migrate.ts`, since Prisma Migrate cannot reach libSQL URLs; MongoDB through `prisma db push`). `db:migrate:dev` authors new migrations.
 
 - `--plugin <plugin>`  
   Elysia plugin(s) to include (repeatable); `none` skips plugin setup. Select
@@ -206,6 +207,12 @@ switch a generated server back to Elysia 1.
 - TypeScript 5.9.3 and Angular's current 21 LTS patches match the framework's
   compiler peer dependencies. Newer incompatible compiler majors are not selected.
 - Drizzle ORM and Kit use the coordinated 1.0 release-candidate channel.
+- Prisma uses 7.10 (the `prisma-client` generator with driver adapters) for every
+  SQL database. MongoDB projects pin Prisma 6.19.3, because Prisma 7 does not
+  support MongoDB yet (Prisma's documentation directs MongoDB users to v6.19).
+  They need a replica set, which the generated Docker database provides. The npm
+  `latest` tag for `prisma` currently points at an 8.0 release candidate, so
+  Prisma is always pinned, including under `--lts`.
 - All other pins are checked against their latest published release channel.
 
 Automatic authentication setup currently supplies a complete Google configuration

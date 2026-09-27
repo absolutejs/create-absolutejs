@@ -66,7 +66,8 @@ volumes:
 /* The local DATABASE_URL a Prisma project starts with, where it differs from
    the no-ORM default generateEnv writes: SQLite needs a URL at all (the libSQL
    adapter and Prisma Migrate both take one), MongoDB is the unauthenticated
-   replica set above, and SQL Server uses Prisma's `sqlserver://` format. */
+   replica set above, SQL Server uses Prisma's `sqlserver://` format and
+   MariaDB the `mysql://` scheme. */
 export const getPrismaLocalDatabaseUrl = (
 	target: PrismaTarget,
 	databaseDirectory: string,
@@ -77,6 +78,10 @@ export const getPrismaLocalDatabaseUrl = (
 	switch (target.provider) {
 		case 'mongodb':
 			return 'mongodb://localhost:27017/database?replicaSet=rs0&directConnection=true';
+		/* MariaDB too: Prisma Migrate only accepts the mysql:// scheme, and the
+		   mariadb driver adapter takes it as well. */
+		case 'mysql':
+			return 'mysql://user:userpassword@localhost:3306/database';
 		case 'sqlite':
 			return `file:./${databaseDirectory}/database.sqlite`;
 		case 'sqlserver':

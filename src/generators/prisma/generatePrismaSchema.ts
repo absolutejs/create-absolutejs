@@ -17,7 +17,9 @@ type GeneratePrismaSchemaProps = {
    ObjectId, so the numeric `uid` the API exposes is a unique field there,
    assigned from an atomic counter document. */
 /* CockroachDB only autoincrements BigInt; an Int key takes a sequence, so
-   the uid stays a JavaScript number like every other engine's. */
+   the uid stays a JavaScript number like every other engine's. Its maximum is
+   pinned to INT4's, which is what CockroachDB gives the identity column —
+   otherwise Prisma reports the migrated table as drifted from the schema. */
 const countHistoryModel = ({ provider }: PrismaTarget) =>
 	provider === 'mongodb'
 		? `model CountHistory {
@@ -37,7 +39,7 @@ model Counter {
   @@map("counters")
 }`
 		: `model CountHistory {
-  uid        Int      @id @default(${provider === 'cockroachdb' ? 'sequence()' : 'autoincrement()'})
+  uid        Int      @id @default(${provider === 'cockroachdb' ? 'sequence(maxValue: 2147483647)' : 'autoincrement()'})
   count      Int
   created_at DateTime @default(now())
 
