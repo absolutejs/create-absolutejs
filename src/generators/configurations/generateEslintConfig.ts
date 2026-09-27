@@ -9,7 +9,7 @@ ${frontends.includes('react') ? "import reactHooks from 'eslint-plugin-react-hoo
 
 export default defineConfig([
   // The copied HTMX distribution is third-party minified runtime code.
-  { ignores: ['src/frontend/**/htmx.min.js', 'node_modules/**', 'build/**', 'dist/**', '.absolutejs/**', '.data/**', '**/.absolutejs-hmr-*', 'drizzle/**'] },
+  { ignores: ['src/frontend/**/htmx.min.js', 'node_modules/**', 'build/**', 'dist/**', '.absolutejs/**', '.data/**', '**/.absolutejs-hmr-*', 'drizzle/**', 'src/generated/**'] },
   { linterOptions: { noInlineConfig: true, reportUnusedDisableDirectives: 'error' } },
   ...tseslint.configs.recommended,
   {

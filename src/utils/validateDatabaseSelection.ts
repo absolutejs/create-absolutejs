@@ -1,5 +1,5 @@
-import { availableDrizzleDialects } from '../data';
-import { isDrizzleDialect } from '../typeGuards';
+import { availableDrizzleDialects, availablePrismaDialects } from '../data';
+import { isDrizzleDialect, isPrismaDialect } from '../typeGuards';
 import type { DatabaseEngine, DatabaseHost, ORM } from '../types';
 
 type DatabaseSelection = {
@@ -42,6 +42,12 @@ export const validateDatabaseSelection = ({
 	) {
 		errors.push(
 			`Invalid database engine for Drizzle ORM: "${databaseEngine}". Expected: [ ${availableDrizzleDialects.join(', ')} ]`
+		);
+	}
+
+	if (orm === 'prisma' && hasEngine && !isPrismaDialect(databaseEngine)) {
+		errors.push(
+			`Invalid database engine for Prisma ORM: "${databaseEngine}". Prisma supports [ ${availablePrismaDialects.join(', ')} ]; use "--orm none" with "--db ${databaseEngine}".`
 		);
 	}
 

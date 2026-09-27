@@ -1,0 +1,7 @@
+-- CreateTable
+CREATE TABLE "count_history" (
+    "uid" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    "count" INTEGER NOT NULL,
+    "created_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+

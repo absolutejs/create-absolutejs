@@ -11,8 +11,7 @@ import {
 	availableDatabaseEngines,
 	availableDatabaseHosts,
 	availableDirectoryConfigurations,
-	availableORMs,
-	availablePrismaDialects
+	availableORMs
 } from '../data';
 import {
 	isValidAuthOption,
@@ -20,8 +19,7 @@ import {
 	isDatabaseHost,
 	isDirectoryConfig,
 	isGithubLinkOption,
-	isORM,
-	isPrismaDialect
+	isORM
 } from '../typeGuards';
 import type {
 	ArgumentConfiguration,
@@ -191,17 +189,6 @@ export const parseCommandLineOptions = () => {
 	});
 	({ databaseEngine } = databaseSelection);
 	errors.push(...databaseSelection.errors);
-
-	if (
-		values.orm === 'prisma' &&
-		databaseEngine !== undefined &&
-		databaseEngine !== 'none' &&
-		!isPrismaDialect(databaseEngine)
-	) {
-		errors.push(
-			`Invalid database engine for Prisma ORM: "${databaseEngine}". Expected: [ ${availablePrismaDialects.join(', ')} ]`
-		);
-	}
 
 	if (errors.length > 0) {
 		console.error(errors.join('\n'));

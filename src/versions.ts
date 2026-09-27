@@ -1,3 +1,7 @@
+/* Prisma 7 does not support MongoDB (https://pris.ly/d/mongodb: "use Prisma
+   ORM v6.19"), so MongoDB projects pin the latest Prisma 6 line for both the
+   CLI and the client. */
+export const prismaMongoDBVersion = '6.19.3';
 /**
  * Single source of truth for all scaffolded dependency versions.
  * Every package version used in project generation lives here.
@@ -47,6 +51,14 @@ export const versions = {
 	'@libsql/client': '0.18.0',
 	'@neondatabase/serverless': '1.1.0',
 	'@planetscale/database': '1.20.2',
+	/* ── Prisma (7.x: query compiler + driver adapters) ──── */
+	'@prisma/adapter-libsql': '7.10.0',
+	'@prisma/adapter-mariadb': '7.10.0',
+	'@prisma/adapter-mssql': '7.10.0',
+	'@prisma/adapter-neon': '7.10.0',
+	'@prisma/adapter-pg': '7.10.0',
+	'@prisma/adapter-planetscale': '7.10.0',
+	'@prisma/client': '7.10.0',
 	'@stylistic/eslint-plugin': '5.10.0',
 	/* ── Tailwind CSS ─────────────────────────────────────── */
 	'@tailwindcss/cli': '4.3.3',
@@ -85,6 +97,7 @@ export const versions = {
 	prettier: '3.9.9',
 	/* ── Svelte ───────────────────────────────────────────── */
 	'prettier-plugin-svelte': '4.1.1',
+	prisma: '7.10.0',
 	react: '19.3.0',
 	'react-dom': '19.3.0',
 	'react-refresh': '0.19.0',

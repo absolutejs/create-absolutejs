@@ -1,11 +1,11 @@
 import { cpSync, mkdirSync, writeFileSync } from 'fs';
 import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
-import { dim, yellow } from 'picocolors';
 import { isDrizzleDialect } from '../../typeGuards';
 import type { CreateConfiguration } from '../../types';
 import { checkSqliteInstalled } from '../../utils/checkSqliteInstalled';
 import { createDrizzleConfig } from '../configurations/generateDrizzleConfig';
+import { scaffoldPrismaDatabase } from '../prisma/scaffoldPrismaDatabase';
 import {
 	getDrizzleKitDialect,
 	getMigrationTemplateName
@@ -50,6 +50,21 @@ export const scaffoldDatabase = async ({
 	const handlerDirectory = join(backendDirectory, 'handlers');
 	mkdirSync(projectDatabaseDirectory, { recursive: true });
 	mkdirSync(handlerDirectory, { recursive: true });
+
+	if (orm === 'prisma') {
+		const dockerFreshInstall = await scaffoldPrismaDatabase({
+			authOption,
+			backendDirectory,
+			databaseDirectory,
+			databaseEngine,
+			databaseHost,
+			projectName,
+			typesDirectory,
+			verifyLocalDatabase
+		});
+
+		return { dockerFreshInstall };
+	}
 
 	const usesAuth = authOption !== undefined && authOption !== 'none';
 	const handlerFileName = usesAuth
@@ -186,12 +201,6 @@ export const scaffoldDatabase = async ({
 		writeFileSync(join(typesDirectory, 'databaseTypes.ts'), drizzleTypes);
 
 		return { dockerFreshInstall };
-	}
-
-	if (orm === 'prisma') {
-		console.warn(
-			`${dim('│')}\n${yellow('▲')}  Prisma support is not implemented yet`
-		);
 	}
 
 	return { dockerFreshInstall };

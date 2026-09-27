@@ -12,7 +12,8 @@ export default defineConfig([
 			'.absolutejs/**',
 			'.data/**',
 			'**/.absolutejs-hmr-*',
-			'drizzle/**'
+			'drizzle/**',
+			'src/generated/**'
 		]
 	},
 	{
