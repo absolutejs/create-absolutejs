@@ -5,6 +5,16 @@
 		{
 			"changes": [
 				{
+					"kind": "changed",
+					"summary": "New projects use @absolutejs/absolute 0.20.0-beta.123: React Fast Refresh works on a Bun with the reactFastRefresh fix (and `absolute dev` offers AbsoluteJS's patched Bun), edits keep applying after a React syntax error, and a React edit re-imports every changed module"
+				}
+			],
+			"date": "2026-09-28",
+			"version": "0.20.1"
+		},
+		{
+			"changes": [
+				{
 					"kind": "added",
 					"summary": "Scaffold Prisma for every Prisma database (PostgreSQL, Neon, PlanetScale, CockroachDB, MySQL, MariaDB, SQLite, Turso, SQL Server on Prisma 7.10 driver adapters; MongoDB on Prisma 6.19.3) with a committed initial migration, typed handlers and prisma generate / db:migrate scripts"
 				}
