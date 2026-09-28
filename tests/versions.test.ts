@@ -9,7 +9,7 @@ import { versions } from '../src/versions';
 
 describe('generated runtime versions', () => {
 	test('scaffolds the coordinated pre-1.0 AbsoluteJS release', () => {
-		expect(versions['@absolutejs/absolute']).toBe('0.20.0-beta.123');
+		expect(versions['@absolutejs/absolute']).toBe('0.20.0-beta.124');
 		expect(versions['@absolutejs/manifest']).toBe('0.10.0');
 		expect(versions['@absolutejs/mcp']).toBe('0.26.5');
 		expect(versions['@absolutejs/scoped-state']).toBe('0.3.1');
