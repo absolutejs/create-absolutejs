@@ -10,7 +10,7 @@ export const prismaMongoDBVersion = '6.19.3';
 export const versions = {
 	'@absolutejs/a2a': '0.3.6',
 	/* ── Core ─────────────────────────────────────────────── */
-	'@absolutejs/absolute': '0.20.0-beta.124',
+	'@absolutejs/absolute': '0.20.0-beta.125',
 	'@absolutejs/agency': '0.7.4',
 	'@absolutejs/agent-conformance': '0.15.1',
 	'@absolutejs/agent-control': '0.5.8',
