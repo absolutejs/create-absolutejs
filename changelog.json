@@ -5,6 +5,17 @@
 		{
 			"changes": [
 				{
+					"detail": "AbsoluteJS beta.125 fixes Vue pages that reach a helper only through a re-export (`export { x } from \"./y\"`). Those helpers were never copied into the generated tree, so the page failed to build and answered 500 in dev.",
+					"kind": "changed",
+					"summary": "New projects use @absolutejs/absolute 0.20.0-beta.125: Vue pages build through helper re-exports"
+				}
+			],
+			"date": "2026-09-29",
+			"version": "0.20.3"
+		},
+		{
+			"changes": [
+				{
 					"detail": "AbsoluteJS beta.124 accepts `@absolutejs/auth` up to 0.96, so a project that adds a current auth no longer also gets auth 0.76.3 nested under AbsoluteJS. The duplicate had doubled the auth type declarations TypeScript loads. beta.124 also stops `/hmr-status` from counting closed or duplicate HMR clients.",
 					"kind": "changed",
 					"summary": "New projects use @absolutejs/absolute 0.20.0-beta.124: one copy of @absolutejs/auth instead of two"
