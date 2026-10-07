@@ -17,11 +17,13 @@ type AddConfigurationProps = Pick<
 	| 'databaseHost'
 > & {
 	templatesDirectory: string;
+	buildDirectory?: string;
 	envVariables: string[] | undefined;
 };
 
 export const scaffoldConfigurationFiles = ({
 	tailwind,
+	buildDirectory = 'build',
 	templatesDirectory,
 	databaseEngine,
 	envVariables,
@@ -33,44 +35,40 @@ export const scaffoldConfigurationFiles = ({
 }: AddConfigurationProps) => {
 	const hasAngular = frontends.includes('angular');
 
+	const raw = readFileSync(
+		join(templatesDirectory, 'configurations', 'tsconfig.example.json'),
+		'utf-8'
+	);
+	const stripped = raw
+		.replace(/\/\*[\s\S]*?\*\//g, '')
+		.replace(/\/\/[^\n]*/g, '')
+		.replace(/,\s*([}\]])/g, '$1');
+	const tsconfig = JSON.parse(stripped) as {
+		compilerOptions: Record<string, unknown>;
+		exclude?: string[];
+		angularCompilerOptions?: Record<string, unknown>;
+	};
+	tsconfig.exclude = [
+		'node_modules',
+		buildDirectory,
+		'dist',
+		'.absolutejs',
+		'**/.absolutejs-hmr-*'
+	];
 	if (hasAngular) {
-		const templatePath = join(
-			templatesDirectory,
-			'configurations',
-			'tsconfig.example.json'
-		);
-		const raw = readFileSync(templatePath, 'utf-8');
-		const stripped = raw
-			.replace(/\/\*[\s\S]*?\*\//g, '')
-			.replace(/\/\/[^\n]*/g, '')
-			.replace(/,\s*([}\]])/g, '$1');
-		const tsconfig = JSON.parse(stripped) as {
-			compilerOptions: Record<string, unknown>;
-		};
-
 		tsconfig.compilerOptions['emitDecoratorMetadata'] = true;
 		tsconfig.compilerOptions['experimentalDecorators'] = true;
 		tsconfig.compilerOptions['useDefineForClassFields'] = false;
-
-		const withAngular: Record<string, unknown> = {
-			angularCompilerOptions: {
-				enableI18nLegacyMessageIdFormat: false,
-				strictInjectionParameters: true,
-				strictTemplates: true
-			},
-			...tsconfig
+		tsconfig.angularCompilerOptions = {
+			enableI18nLegacyMessageIdFormat: false,
+			strictInjectionParameters: true,
+			strictTemplates: true
 		};
-
-		writeFileSync(
-			join(projectName, 'tsconfig.json'),
-			JSON.stringify(withAngular, null, '\t')
-		);
-	} else {
-		copyFileSync(
-			join(templatesDirectory, 'configurations', 'tsconfig.example.json'),
-			join(projectName, 'tsconfig.json')
-		);
 	}
+	writeFileSync(
+		join(projectName, 'tsconfig.json'),
+		JSON.stringify(tsconfig, null, '\t')
+	);
 
 	if (tailwind) {
 		copyFileSync(
@@ -93,9 +91,9 @@ export const scaffoldConfigurationFiles = ({
 			join(projectName, 'eslint.config.mjs'),
 			generateEslintConfig(frontends)
 		);
-		copyFileSync(
-			join(templatesDirectory, 'configurations', '.prettierignore'),
-			join(projectName, '.prettierignore')
+		writeFileSync(
+			join(projectName, '.prettierignore'),
+			`${readFileSync(join(templatesDirectory, 'configurations', '.prettierignore'), 'utf-8')}\n${buildDirectory}\n.absolutejs\n**/.absolutejs-hmr-*\n`
 		);
 		const prettierrc = generatePrettierrc(frontends);
 
