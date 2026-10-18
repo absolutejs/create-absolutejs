@@ -5,6 +5,17 @@
 		{
 			"changes": [
 				{
+					"detail": "AbsoluteJS beta.139 makes Expo, React Native and the Expo code-signing tooling optional peers, so a new web project no longer installs them, nor node-forge and braces, which have high-severity advisories and no fixed release. `absolute mobile` installs them when a project adds an Expo app. beta.126 to beta.138 also bring the dead-stylesheet reload fix and `absolute typecheck` on `bun check`.",
+					"kind": "changed",
+					"summary": "New projects use @absolutejs/absolute 0.20.0-beta.139: web projects no longer install Expo or React Native"
+				}
+			],
+			"date": "2026-10-17",
+			"version": "0.20.4"
+		},
+		{
+			"changes": [
+				{
 					"detail": "AbsoluteJS beta.125 fixes Vue pages that reach a helper only through a re-export (`export { x } from \"./y\"`). Those helpers were never copied into the generated tree, so the page failed to build and answered 500 in dev.",
 					"kind": "changed",
 					"summary": "New projects use @absolutejs/absolute 0.20.0-beta.125: Vue pages build through helper re-exports"
