@@ -5,6 +5,17 @@
 		{
 			"changes": [
 				{
+					"detail": "AbsoluteJS beta.140: a dev page reconnects after a dropped connection without reloading, and keeps trying through long outages; edits to class and memo/forwardRef components show without a reload; production builds ship React's production build.",
+					"kind": "changed",
+					"summary": "New projects use @absolutejs/absolute 0.20.0-beta.140: dev pages survive network drops"
+				}
+			],
+			"date": "2026-10-18",
+			"version": "0.20.5"
+		},
+		{
+			"changes": [
+				{
 					"detail": "AbsoluteJS beta.139 makes Expo, React Native and the Expo code-signing tooling optional peers, so a new web project no longer installs them, nor node-forge and braces, which have high-severity advisories and no fixed release. `absolute mobile` installs them when a project adds an Expo app. beta.126 to beta.138 also bring the dead-stylesheet reload fix and `absolute typecheck` on `bun check`.",
 					"kind": "changed",
 					"summary": "New projects use @absolutejs/absolute 0.20.0-beta.139: web projects no longer install Expo or React Native"
