@@ -52,3 +52,6 @@ package-lock.json
 
 # dist folder
 /dist
+# AbsoluteJS caches and transient server bootstraps
+.absolutejs/
+**/.absolutejs-hmr-*

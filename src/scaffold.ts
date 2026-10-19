@@ -91,6 +91,7 @@ export const scaffold = async ({
 	);
 
 	scaffoldConfigurationFiles({
+		buildDirectory,
 		codeQualityTool,
 		databaseEngine,
 		databaseHost,
