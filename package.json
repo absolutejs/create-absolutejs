@@ -45,6 +45,10 @@
 	"license": "BSL-1.1",
 	"main": "dist/index.js",
 	"name": "create-absolutejs",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/absolutejs/create-absolutejs.git"
+	},
 	"peerDependencies": {
 		"typescript": "5.9.3"
 	},
