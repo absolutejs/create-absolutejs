@@ -43,12 +43,12 @@
 	"license": "BSL-1.1",
 	"main": "dist/index.js",
 	"name": "create-absolutejs",
+	"peerDependencies": {
+		"typescript": "5.9.3"
+	},
 	"repository": {
 		"type": "git",
 		"url": "git+https://github.com/absolutejs/create-absolutejs.git"
-	},
-	"peerDependencies": {
-		"typescript": "5.9.3"
 	},
 	"scripts": {
 		"build": "rm -rf dist && tsc --project tsconfig.build.json && cp -R src/templates dist/templates",
