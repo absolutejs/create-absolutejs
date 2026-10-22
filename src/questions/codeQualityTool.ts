@@ -7,7 +7,7 @@ export const getCodeQualityTool = async () => {
 		message: 'Choose linting and formatting tool:',
 		options: [
 			{
-				label: blueBright('ESLint + Prettier'),
+				label: blueBright('ESLint + bun fmt (Prettier-compatible)'),
 				value: 'eslint+prettier'
 			},
 			{ label: yellow('Biome'), value: 'biome' }

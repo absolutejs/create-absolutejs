@@ -10,7 +10,7 @@
 	},
 	"description": "A CLI tool to create a new AbsoluteJS project",
 	"devDependencies": {
-		"@absolutejs/absolute": "0.20.0-beta.120",
+		"@absolutejs/absolute": "0.20.0-beta.145",
 		"@absolutejs/changelog": "0.7.0",
 		"@elysia/eden": "2.0.0-rc.0",
 		"@eslint/compat": "2.1.1",
@@ -28,8 +28,6 @@
 		"eslint-plugin-promise": "7.3.0",
 		"eslint-plugin-security": "4.0.1",
 		"globals": "17.12.0",
-		"prettier": "3.9.9",
-		"prettier-plugin-svelte": "4.1.1",
 		"prisma": "7.10.0",
 		"svelte": "5.57.1",
 		"tailwindcss": "4.3.3",
@@ -58,7 +56,7 @@
 		"check:package": "bun run typecheck && bun run test:unit && bun run build && absolute-changelog check",
 		"config": "absolute config",
 		"dev": "bun scripts/dev.ts",
-		"format": "absolute prettier --write",
+		"format": "absolute fmt",
 		"lint": "absolute eslint --ignore-pattern 'absolutejs-project/**'",
 		"prepublishOnly": "bun run check:package",
 		"release": "bun run format && bun run check:package && bun publish",
@@ -68,5 +66,5 @@
 		"typecheck": "bun run tsc --noEmit"
 	},
 	"type": "module",
-	"version": "0.20.6"
+	"version": "0.20.7"
 }
