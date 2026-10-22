@@ -26,7 +26,8 @@ test('generated server uses the Elysia 2 error lifecycle', () => {
 			join(backendDirectory, 'server.ts'),
 			'utf8'
 		);
-		expect(source).toContain('.error(({ request, error }) => {');
+		expect(source).toContain('.onError(({ request, error }) => {');
+		expect(source).not.toContain('.error((');
 		expect(source).not.toContain(".on('error'");
 		expect(source).not.toContain('err.message');
 		expect(source).not.toContain('export type Server');

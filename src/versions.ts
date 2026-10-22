@@ -10,7 +10,7 @@ export const prismaMongoDBVersion = '6.19.3';
 export const versions = {
 	'@absolutejs/a2a': '0.3.6',
 	/* ── Core ─────────────────────────────────────────────── */
-	'@absolutejs/absolute': '0.20.0-beta.140',
+	'@absolutejs/absolute': '0.20.0-beta.144',
 	'@absolutejs/agency': '0.7.4',
 	'@absolutejs/agent-conformance': '0.15.1',
 	'@absolutejs/agent-control': '0.5.8',
@@ -20,16 +20,16 @@ export const versions = {
 	'@absolutejs/agent-runtime': '0.2.6',
 	'@absolutejs/agent-sandbox': '0.2.2',
 	'@absolutejs/agent-trust': '0.2.2',
-	'@absolutejs/auth': '0.85.0',
+	'@absolutejs/auth': '0.101.0',
 	'@absolutejs/egress': '0.2.0',
 	'@absolutejs/execution': '0.14.8',
 	'@absolutejs/manifest': '0.10.0',
 	'@absolutejs/mcp': '0.26.5',
-	'@absolutejs/observability': '0.6.1',
+	'@absolutejs/observability': '0.7.0',
 	'@absolutejs/policy': '0.4.1',
 	'@absolutejs/scoped-state': '0.3.1',
 	'@absolutejs/secrets': '0.9.7',
-	'@absolutejs/sync-bus-pg': '0.2.3',
+	'@absolutejs/sync-bus-pg': '0.2.4',
 	'@absolutejs/wallet': '0.9.3',
 	/* ── Angular ─────────────────────────────────────────── */
 	'@angular/common': '21.2.24',
@@ -39,11 +39,11 @@ export const versions = {
 	'@angular/platform-browser': '21.2.24',
 	'@angular/platform-server': '21.2.24',
 	'@angular/ssr': '21.2.24',
-	'@elysia/cors': '2.0.0-beta.1',
+	'@elysia/cors': '2.0.0-rc.0',
 	/* ── Plugins ──────────────────────────────────────────── */
-	'@elysia/eden': '2.0.0-beta.5',
-	'@elysia/openapi': '2.0.0-beta.2',
-	'@elysia/static': '2.0.0-beta.2',
+	'@elysia/eden': '2.0.0-rc.0',
+	'@elysia/openapi': '2.0.0-rc.0',
+	'@elysia/static': '2.0.0-rc.0',
 	/* ── ESLint + Prettier ────────────────────────────────── */
 	'@eslint/compat': '2.1.1',
 	'@eslint/js': '10.0.1',
@@ -74,7 +74,7 @@ export const versions = {
 	/* ── ORM ──────────────────────────────────────────────── */
 	'drizzle-kit': '1.0.0-rc.4',
 	'drizzle-orm': '1.0.0-rc.4',
-	elysia: '2.0.0-beta.6',
+	elysia: '2.0.0-rc.0',
 	'elysia-rate-limit': '5.1.1',
 	eslint: '10.11.0',
 	'eslint-plugin-absolute': '0.12.0',
