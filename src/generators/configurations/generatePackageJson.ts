@@ -136,8 +136,6 @@ export const createPackageJson = async ({
 	}
 
 	if (flags.requiresSvelte) packageNames.add('svelte');
-	if (flags.requiresSvelte && codeQualityTool === 'eslint+prettier')
-		packageNames.add('prettier-plugin-svelte');
 	if (flags.requiresVue) packageNames.add('vue');
 	if (flags.requiresHtmx) packageNames.add('@absolutejs/scoped-state');
 	if (orm === 'drizzle') packageNames.add('drizzle-orm');
@@ -346,13 +344,6 @@ export const createPackageJson = async ({
 		dependencies['svelte'] = resolveVersion('svelte', versions['svelte']);
 	}
 
-	if (flags.requiresSvelte && codeQualityTool === 'eslint+prettier') {
-		devDependencies['prettier-plugin-svelte'] = resolveVersion(
-			'prettier-plugin-svelte',
-			versions['prettier-plugin-svelte']
-		);
-	}
-
 	if (flags.requiresVue) {
 		dependencies['vue'] = resolveVersion('vue', versions['vue']);
 	}
@@ -396,7 +387,8 @@ export const createPackageJson = async ({
 
 	const scripts: PackageJson['scripts'] = {
 		dev: 'absolute dev',
-		format: `absolute prettier --write "./**/*.{js,ts,css,json,mjs,md${flags.requiresReact ? ',jsx,tsx' : ''}${flags.requiresSvelte ? ',svelte' : ''}${flags.requiresVue ? ',vue' : ''}${flags.requiresHtml || flags.requiresHtmx ? ',html' : ''}}"`,
+		format: 'absolute fmt',
+		'format:check': 'absolute fmt --check',
 		lint: 'absolute eslint',
 		test: 'echo "Error: no test specified" && exit 1',
 		typecheck: 'bun run tsc --noEmit'

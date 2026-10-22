@@ -10,7 +10,7 @@ export const prismaMongoDBVersion = '6.19.3';
 export const versions = {
 	'@absolutejs/a2a': '0.3.6',
 	/* ── Core ─────────────────────────────────────────────── */
-	'@absolutejs/absolute': '0.20.0-beta.144',
+	'@absolutejs/absolute': '0.20.0-beta.145',
 	'@absolutejs/agency': '0.7.4',
 	'@absolutejs/agent-conformance': '0.15.1',
 	'@absolutejs/agent-control': '0.5.8',
@@ -83,7 +83,6 @@ export const versions = {
 	'eslint-plugin-jsx-a11y': '6.10.2',
 	'eslint-plugin-promise': '7.3.0',
 	'eslint-plugin-react': '7.37.5',
-	'eslint-plugin-react-compiler': '19.1.0-rc.2',
 	'eslint-plugin-react-hooks': '7.1.1',
 	'eslint-plugin-security': '4.0.1',
 	gel: '2.2.1',
@@ -94,9 +93,7 @@ export const versions = {
 	mysql2: '3.24.4',
 	pg: '8.23.0',
 	postcss: '8.5.28',
-	prettier: '3.9.9',
 	/* ── Svelte ───────────────────────────────────────────── */
-	'prettier-plugin-svelte': '4.1.1',
 	prisma: '7.10.0',
 	react: '19.3.0',
 	'react-dom': '19.3.0',

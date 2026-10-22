@@ -4,3 +4,5 @@ build
 *.min.js
 changelog.json
 CHANGELOG.md
+*.yml
+*.yaml

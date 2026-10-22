@@ -140,10 +140,6 @@ export const eslintAndPrettierDependencies: AvailableDependency[] = [
 		value: 'globals'
 	},
 	{
-		latestVersion: versions['prettier'],
-		value: 'prettier'
-	},
-	{
 		latestVersion: versions['@stylistic/eslint-plugin'],
 		value: '@stylistic/eslint-plugin'
 	},
@@ -180,10 +176,6 @@ export const eslintReactDependencies: AvailableDependency[] = [
 	{
 		latestVersion: versions['eslint-plugin-react'],
 		value: 'eslint-plugin-react'
-	},
-	{
-		latestVersion: versions['eslint-plugin-react-compiler'],
-		value: 'eslint-plugin-react-compiler'
 	},
 	{
 		latestVersion: versions['eslint-plugin-react-hooks'],

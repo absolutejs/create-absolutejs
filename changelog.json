@@ -5,6 +5,16 @@
 		{
 			"changes": [
 				{
+					"kind": "changed",
+					"summary": "New projects format with `absolute fmt` (Bun 1.4.4 `bun fmt`, Prettier-compatible) instead of installing Prettier; they pin @absolutejs/absolute 0.20.0-beta.145, and an older Bun skips formatting with a warning instead of failing the scaffold. React projects no longer install the deprecated eslint-plugin-react-compiler (its rules ship in eslint-plugin-react-hooks 7), whose zod-validation-error 3.x broke `absolute eslint` under Bun 1.4.4"
+				}
+			],
+			"date": "2026-10-22",
+			"version": "0.20.7"
+		},
+		{
+			"changes": [
+				{
 					"detail": "New projects start on Elysia 2.0.0-rc.0 and the @elysia plugins' release candidates, with @absolutejs/absolute 0.20.0-beta.144, @absolutejs/auth 0.101.0 and @absolutejs/observability 0.7.0, which build against it. The generated server registers its error handler with `onError` (Elysia rc.0 renamed `error`). Version lookups for Elysia packages now follow npm's `rc` tag instead of fixed betas.",
 					"kind": "changed",
 					"summary": "Scaffolds projects on Elysia 2.0.0-rc.0"
