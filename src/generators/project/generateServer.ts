@@ -127,7 +127,7 @@ export const server = new Elysia()
 ${authOption === 'abs' ? `\n${guardBlock}` : ''}
   ${routesBlock}
   ${plugins.includes('@elysia/openapi') ? '.use(openapi())' : ''}
-  .error(({ request, error }) => {
+  .onError(({ request, error }) => {
     console.error(\`Server error on \${request.method} \${request.url}\`, error)
   })
   .use(networking)

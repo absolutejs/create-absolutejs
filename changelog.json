@@ -5,6 +5,17 @@
 		{
 			"changes": [
 				{
+					"detail": "New projects start on Elysia 2.0.0-rc.0 and the @elysia plugins' release candidates, with @absolutejs/absolute 0.20.0-beta.144, @absolutejs/auth 0.101.0 and @absolutejs/observability 0.7.0, which build against it. The generated server registers its error handler with `onError` (Elysia rc.0 renamed `error`). Version lookups for Elysia packages now follow npm's `rc` tag instead of fixed betas.",
+					"kind": "changed",
+					"summary": "Scaffolds projects on Elysia 2.0.0-rc.0"
+				}
+			],
+			"date": "2026-10-22",
+			"version": "0.20.6"
+		},
+		{
+			"changes": [
+				{
 					"detail": "AbsoluteJS beta.140: a dev page reconnects after a dropped connection without reloading, and keeps trying through long outages; edits to class and memo/forwardRef components show without a reload; production builds ship React's production build.",
 					"kind": "changed",
 					"summary": "New projects use @absolutejs/absolute 0.20.0-beta.140: dev pages survive network drops"
