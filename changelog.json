@@ -8,7 +8,7 @@
 			"changes": [
 				{
 					"kind": "fixed",
-					"summary": "Starter typechecks exclude generated build, runtime, dependency, and distribution files, including a custom build directory, so running the development server does not add generated browser entrypoints to application checks. Angular compiler options and checks of actual application sources are preserved."
+					"summary": "Starter typechecks exclude generated build, runtime, dependency, and distribution files, including a custom build directory, so running the development server does not add generated browser entrypoints to application checks. Angular compiler options and checks of actual application sources are preserved. Generated runtime sidecars are also ignored by Git."
 				}
 			]
 		},
