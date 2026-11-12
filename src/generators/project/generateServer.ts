@@ -66,7 +66,7 @@ export const generateServerFile = ({
 		dbBlock = generateDBBlock({ databaseEngine, databaseHost, orm });
 	}
 
-	const useBlock = deps
+	const pluginExpressions = deps
 		.flatMap((dependency) => dependency.imports ?? [])
 		.filter(
 			(pluginImport) =>
@@ -90,8 +90,17 @@ export const generateServerFile = ({
 			return `${pluginImport.packageName}(${JSON.stringify(
 				pluginImport.config
 			)})`;
-		})
+		});
+	/* A plugin that is called (`rateLimit()`) can return a plain function
+	 * plugin, which Elysia 2's typing rejects inside the `.use([...])` array
+	 * (TS2769). Instances stay in the array; each call gets its own `.use`. */
+	const useBlock = pluginExpressions
+		.filter((expression) => !expression.endsWith(')'))
 		.join(', ');
+	const calledPluginsBlock = pluginExpressions
+		.filter((expression) => expression.endsWith(')'))
+		.map((expression) => `.use(${expression})`)
+		.join('\n');
 
 	const guardBlock = `.guard({
 			cookie: t.Cookie({
@@ -124,7 +133,7 @@ ${manifestBlock}
 ${dbBlock ? `${dbBlock}\n` : ''}${hasDatabase && authOption !== 'abs' ? 'const api = createApi(db)\n' : ''}${authBlock}
 export const server = new Elysia()
 .use([absolutejs, api${useBlock ? `, ${useBlock}` : ''}])
-${authOption === 'abs' ? `\n${guardBlock}` : ''}
+${calledPluginsBlock ? `${calledPluginsBlock}\n` : ''}${authOption === 'abs' ? `\n${guardBlock}` : ''}
   ${routesBlock}
   ${plugins.includes('@elysia/openapi') ? '.use(openapi())' : ''}
   .onError(({ request, error }) => {

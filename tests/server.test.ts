@@ -39,3 +39,35 @@ test('generated server uses the Elysia 2 error lifecycle', () => {
 		rmSync(project, { force: true, recursive: true });
 	}
 });
+
+test('a called plugin gets its own use, outside the plugin array', () => {
+	const project = mkdtempSync(join(tmpdir(), 'absolute-server-'));
+	const backendDirectory = join(project, 'src', 'backend');
+	mkdirSync(backendDirectory, { recursive: true });
+	try {
+		generateServerFile({
+			assetsDirectory: 'assets',
+			authOption: undefined,
+			backendDirectory,
+			buildDirectory: 'build',
+			databaseEngine: undefined,
+			databaseHost: undefined,
+			frontendDirectories: { react: 'react' },
+			orm: undefined,
+			plugins: ['elysia-rate-limit', '@elysia/cors'],
+			publicDirectory: 'public',
+			tailwind: undefined
+		});
+		const source = readFileSync(
+			join(backendDirectory, 'server.ts'),
+			'utf8'
+		);
+		// Elysia 2 rejects a function plugin like rateLimit() inside the array.
+		expect(source).toContain('.use([absolutejs, api])');
+		expect(source).toContain('.use(rateLimit())');
+		expect(source).toContain('.use(cors())');
+		expect(source).not.toMatch(/\.use\(\[[^\]]*rateLimit/);
+	} finally {
+		rmSync(project, { force: true, recursive: true });
+	}
+});
