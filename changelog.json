@@ -5,6 +5,16 @@
 		{
 			"changes": [
 				{
+					"kind": "fixed",
+					"summary": "The rate limiter no longer breaks a new project's type check"
+				}
+			],
+			"date": "2026-11-12",
+			"version": "0.20.10"
+		},
+		{
+			"changes": [
+				{
 					"detail": "AbsoluteJS beta.168 type-checks Svelte page props in server files: `handleSveltePageRequest<typeof Page>({ props })` now fails on a missing, mistyped or unknown prop, as React pages do. Svelte projects install svelte2tsx, which `absolute typecheck` and `absolute dev` use to generate a declaration per component, and their tsconfig lists `.absolutejs/types/svelte` in `rootDirs` so tsc and editors resolve server imports to those declarations. Since beta.145 the framework also refreshes imported CSS and changed images during HMR, builds Svelte and Vue pages without the frameworks a project doesn't use, hydrates islands on HTML and HTMX pages with only `islands.registry`, stops the server `absolute start` started, and no longer imports absolute.config.ts at runtime in production.",
 					"kind": "changed",
 					"summary": "New projects use @absolutejs/absolute 0.20.0-beta.168, and Svelte page props are type-checked"
