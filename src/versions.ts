@@ -10,7 +10,7 @@ export const prismaMongoDBVersion = '6.19.3';
 export const versions = {
 	'@absolutejs/a2a': '0.3.6',
 	/* ── Core ─────────────────────────────────────────────── */
-	'@absolutejs/absolute': '0.20.0-beta.145',
+	'@absolutejs/absolute': '0.20.0-beta.168',
 	'@absolutejs/agency': '0.7.4',
 	'@absolutejs/agent-conformance': '0.15.1',
 	'@absolutejs/agent-control': '0.5.8',
@@ -99,6 +99,7 @@ export const versions = {
 	'react-dom': '19.3.0',
 	'react-refresh': '0.19.0',
 	svelte: '5.57.1',
+	svelte2tsx: '0.7.63',
 	tailwindcss: '4.3.3',
 	/* ── Build / TypeScript ───────────────────────────────── */
 	typescript: '5.9.3',

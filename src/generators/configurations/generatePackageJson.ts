@@ -135,7 +135,10 @@ export const createPackageJson = async ({
 		packageNames.add('@angular/ssr');
 	}
 
-	if (flags.requiresSvelte) packageNames.add('svelte');
+	if (flags.requiresSvelte) {
+		packageNames.add('svelte');
+		packageNames.add('svelte2tsx');
+	}
 	if (flags.requiresVue) packageNames.add('vue');
 	if (flags.requiresHtmx) packageNames.add('@absolutejs/scoped-state');
 	if (orm === 'drizzle') packageNames.add('drizzle-orm');
@@ -342,6 +345,14 @@ export const createPackageJson = async ({
 
 	if (flags.requiresSvelte) {
 		dependencies['svelte'] = resolveVersion('svelte', versions['svelte']);
+		/* `absolute typecheck` and `absolute dev` generate a declaration per
+		   Svelte component with svelte2tsx, so server files type-check
+		   `handleSveltePageRequest<typeof Page>({ props })` against the
+		   component's `$props()`. */
+		devDependencies['svelte2tsx'] = resolveVersion(
+			'svelte2tsx',
+			versions['svelte2tsx']
+		);
 	}
 
 	if (flags.requiresVue) {

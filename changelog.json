@@ -3,14 +3,25 @@
 	"name": "create-absolutejs",
 	"releases": [
 		{
-			"version": "0.20.8",
-			"date": "2026-11-04",
+			"changes": [
+				{
+					"detail": "AbsoluteJS beta.168 type-checks Svelte page props in server files: `handleSveltePageRequest<typeof Page>({ props })` now fails on a missing, mistyped or unknown prop, as React pages do. Svelte projects install svelte2tsx, which `absolute typecheck` and `absolute dev` use to generate a declaration per component, and their tsconfig lists `.absolutejs/types/svelte` in `rootDirs` so tsc and editors resolve server imports to those declarations. Since beta.145 the framework also refreshes imported CSS and changed images during HMR, builds Svelte and Vue pages without the frameworks a project doesn't use, hydrates islands on HTML and HTMX pages with only `islands.registry`, stops the server `absolute start` started, and no longer imports absolute.config.ts at runtime in production.",
+					"kind": "changed",
+					"summary": "New projects use @absolutejs/absolute 0.20.0-beta.168, and Svelte page props are type-checked"
+				}
+			],
+			"date": "2026-11-12",
+			"version": "0.20.9"
+		},
+		{
 			"changes": [
 				{
 					"kind": "fixed",
 					"summary": "Starter typechecks exclude generated build, runtime, dependency, and distribution files, including a custom build directory, so running the development server does not add generated browser entrypoints to application checks. Angular compiler options and checks of actual application sources are preserved. Generated runtime sidecars are also ignored by Git."
 				}
-			]
+			],
+			"date": "2026-11-04",
+			"version": "0.20.8"
 		},
 		{
 			"changes": [

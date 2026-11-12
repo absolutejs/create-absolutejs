@@ -61,6 +61,15 @@ export const scaffoldConfigurationFiles = ({
 			'.absolutejs'
 		])
 	];
+	/* `absolute typecheck` and `absolute dev` write a declaration per Svelte
+	   component under .absolutejs/types/svelte; listing that mirror in
+	   rootDirs lets tsc and editors check Svelte page props in server files. */
+	if (frontends.includes('svelte')) {
+		tsconfig.compilerOptions['rootDirs'] = [
+			'.',
+			'.absolutejs/types/svelte'
+		];
+	}
 	if (hasAngular) {
 		tsconfig.compilerOptions['emitDecoratorMetadata'] = true;
 		tsconfig.compilerOptions['experimentalDecorators'] = true;

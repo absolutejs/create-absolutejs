@@ -71,3 +71,32 @@ for (const frontend of ['react', 'angular'] as const) {
 		});
 	}
 }
+
+test('svelte tsconfig resolves server imports to generated component declarations', async () => {
+	const dir = await mkdtemp(join(tmpdir(), 'absolute-typecheck-'));
+	try {
+		scaffoldConfigurationFiles({
+			buildDirectory: 'build',
+			codeQualityTool: 'eslint+prettier',
+			databaseEngine: 'none',
+			databaseHost: 'none',
+			envVariables: undefined,
+			frontends: ['svelte'],
+			initializeGitNow: false,
+			projectName: dir,
+			tailwind: undefined,
+			templatesDirectory: join(import.meta.dir, '../src/templates')
+		});
+		const read = ts.readConfigFile(
+			join(dir, 'tsconfig.json'),
+			ts.sys.readFile
+		);
+		const parsed = ts.parseJsonConfigFileContent(read.config, ts.sys, dir);
+		expect(parsed.options.rootDirs).toEqual([
+			dir,
+			join(dir, '.absolutejs/types/svelte')
+		]);
+	} finally {
+		await rm(dir, { force: true, recursive: true });
+	}
+});
