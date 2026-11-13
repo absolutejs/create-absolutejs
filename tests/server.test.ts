@@ -62,10 +62,14 @@ test('the rate limiter is @absolutejs/rate-limit, in the plugin array, keyed on 
 			join(backendDirectory, 'server.ts'),
 			'utf8'
 		);
-		expect(source).toContain("import { gcra, rateLimit } from '@absolutejs/rate-limit'");
+		expect(source).toContain(
+			"import { gcra, rateLimit } from '@absolutejs/rate-limit'"
+		);
 		expect(source).not.toContain('elysia-rate-limit');
 		// One shallow array, as the project's own lint rule wants; called plugins stay in it.
-		expect(source).toMatch(/\.use\(\[absolutejs, api, [^\]]*rateLimiter[^\]]*\]\)/);
+		expect(source).toMatch(
+			/\.use\(\[absolutejs, api, [^\]]*rateLimiter[^\]]*\]\)/
+		);
 		expect(source).toContain('cors()');
 		expect(source).not.toMatch(/\.use\((cors|rateLimit)\(/);
 		expect(source).toContain("clientIpHeader: 'x-real-ip'");

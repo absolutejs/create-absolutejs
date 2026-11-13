@@ -45,6 +45,9 @@ describe('plugins', () => {
 
 		const { argumentConfiguration } = parseCommandLineOptions();
 
-		expect(argumentConfiguration.plugins).toEqual(['@absolutejs/rate-limit', '@elysia/cors']);
+		expect(argumentConfiguration.plugins).toEqual([
+			'@absolutejs/rate-limit',
+			'@elysia/cors'
+		]);
 	});
 });

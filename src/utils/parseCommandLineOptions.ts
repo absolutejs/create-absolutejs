@@ -261,7 +261,9 @@ export const parseCommandLineOptions = () => {
 		values.plugin && values.plugin[0] === 'none'
 			? []
 			: values.plugin?.map((plugin) =>
-					plugin === 'elysia-rate-limit' ? '@absolutejs/rate-limit' : plugin
+					plugin === 'elysia-rate-limit'
+						? '@absolutejs/rate-limit'
+						: plugin
 				);
 
 	const hasTailwindFiles =
