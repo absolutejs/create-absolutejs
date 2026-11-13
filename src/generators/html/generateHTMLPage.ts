@@ -50,10 +50,7 @@ export const generateHTMLPage = (
     <body>
         <header>
             <a href="/">AbsoluteJS</a>
-            <details
-                onpointerenter="if(event.pointerType==='mouse')this.open=true"
-                onpointerleave="if(event.pointerType==='mouse')this.open=false"
-            >
+            <details>
                 <summary>Pages</summary>
                 <nav>
                     ${navLinks}

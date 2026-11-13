@@ -8,6 +8,9 @@ export const registryChannel = (name: string) => {
 	if (name.startsWith('@angular/')) return 'v21-lts';
 	// AbsoluteJS's compiler integration and Angular 21 require TypeScript 5.9.
 	if (name === 'typescript') return '5.9.3';
+	// `latest` is vue-router 5, outside @absolutejs/absolute's ^4.5.1 peer
+	// range, and the registry has no tag for the 4.x line.
+	if (name === 'vue-router') return '4.6.4';
 
 	return 'latest';
 };

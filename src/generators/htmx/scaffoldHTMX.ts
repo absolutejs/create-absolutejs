@@ -1,4 +1,4 @@
-import { copyFileSync, mkdirSync, writeFileSync } from 'fs';
+import { copyFileSync, cpSync, mkdirSync, writeFileSync } from 'fs';
 import { join } from 'path';
 import { Glob } from 'bun';
 import { ScaffoldFrontendProps } from '../../types';
@@ -63,6 +63,13 @@ export const scaffoldHTMX = ({
 	mkdirSync(pagesDirectory, { recursive: true });
 	const htmxFilePath = join(pagesDirectory, 'HTMXExample.html');
 	writeFileSync(htmxFilePath, htmxPage, 'utf-8');
+
+	/* The page's own script; inline handlers would break secureHeaders()'s CSP. */
+	cpSync(
+		join(templatesDirectory, 'htmx', 'scripts'),
+		join(targetDirectory, 'scripts'),
+		{ recursive: true }
+	);
 
 	const htmxCSS = generateMarkupCSS('htmx', '#3465a4');
 	writeFileSync(cssOutputFile, htmxCSS, 'utf-8');

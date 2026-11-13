@@ -11,7 +11,7 @@ export const versions = {
 	'@absolutejs/rate-limit': '0.8.0',
 	'@absolutejs/a2a': '0.3.6',
 	/* ── Core ─────────────────────────────────────────────── */
-	'@absolutejs/absolute': '0.20.0-beta.170',
+	'@absolutejs/absolute': '0.20.0-beta.171',
 	'@absolutejs/agency': '0.7.4',
 	'@absolutejs/agent-conformance': '0.15.1',
 	'@absolutejs/agent-control': '0.5.8',
@@ -39,6 +39,7 @@ export const versions = {
 	'@angular/core': '21.2.24',
 	'@angular/platform-browser': '21.2.24',
 	'@angular/platform-server': '21.2.24',
+	'@angular/router': '21.2.24',
 	'@angular/ssr': '21.2.24',
 	'@elysia/cors': '2.0.0-rc.0',
 	/* ── Plugins ──────────────────────────────────────────── */
@@ -99,6 +100,7 @@ export const versions = {
 	'react-dom': '19.3.0',
 	'react-refresh': '0.19.0',
 	svelte: '5.57.1',
+	'svelte-check': '4.7.8',
 	svelte2tsx: '0.7.63',
 	tailwindcss: '4.3.3',
 	/* ── Build / TypeScript ───────────────────────────────── */
@@ -106,5 +108,8 @@ export const versions = {
 	'typescript-eslint': '8.70.1',
 	/* ── Vue ──────────────────────────────────────────────── */
 	vue: '3.5.43',
+	/* vue-router 5 is outside @absolutejs/absolute's ^4.5.1 peer range. */
+	'vue-router': '4.6.4',
+	'vue-tsc': '3.3.14',
 	'zod-validation-error': '5.0.0'
 } as const;

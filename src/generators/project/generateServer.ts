@@ -83,6 +83,10 @@ export const generateServerFile = ({
 				return 'rateLimiter';
 			}
 
+			if (pluginImport.packageName === 'scopedState') {
+				return 'visitorState';
+			}
+
 			if (pluginImport.config === undefined) {
 				return pluginImport.packageName;
 			}
@@ -110,6 +114,16 @@ export const generateServerFile = ({
 	trustedProxies: 1,
 	trustedProxyCidrs: ['10.0.0.0/8']
 })
+`
+		: '';
+
+	/* Its own top-level const, not an inline call in the .use([...]) array.
+	 * Backend HMR re-runs that statement on every server.ts edit; an unchanged
+	 * top-level const keeps its plugin, so visitors keep their state. (The
+	 * framework also matches inline literal calls since beta.171, but the
+	 * hoisted form is the one its docs recommend and survives edited args.) */
+	const scopedStateBlock = pluginExpressions.includes('visitorState')
+		? `const visitorState = scopedState({ count: { value: 0 } })
 `
 		: '';
 
@@ -141,7 +155,7 @@ export const generateServerFile = ({
 import { ${hasDatabase && authOption !== 'abs' ? 'createApi' : 'api'} } from './api'
 
 ${manifestBlock}
-${dbBlock ? `${dbBlock}\n` : ''}${hasDatabase && authOption !== 'abs' ? 'const api = createApi(db)\n' : ''}${authBlock}${rateLimitBlock}
+${dbBlock ? `${dbBlock}\n` : ''}${hasDatabase && authOption !== 'abs' ? 'const api = createApi(db)\n' : ''}${authBlock}${rateLimitBlock}${scopedStateBlock}
 export const server = new Elysia()
 .use([absolutejs, api${useBlock ? `, ${useBlock}` : ''}])
 ${authOption === 'abs' ? `\n${guardBlock}` : ''}

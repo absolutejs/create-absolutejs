@@ -5,6 +5,37 @@
 		{
 			"changes": [
 				{
+					"detail": "AbsoluteJS beta.171 stops production error pages from showing error text, stops serving /manifest.json, renders error.html when a route throws for HTML and HTMX pages, and fixes React islands, Vue routes and Angular base hrefs under `absolute start`. Backend HMR also keeps scoped state.",
+					"kind": "changed",
+					"summary": "New projects use @absolutejs/absolute 0.20.0-beta.171"
+				},
+				{
+					"detail": "`--angular` and `--angular-dir` were silently ignored, so a non-interactive run never made an Angular project. They now work like the other framework flags. `--html --skip` without `--html-scripts` exited with \"cannot prompt for --html-scripts\"; `--skip` now defaults HTML scripts on, as the prompt does. `--no-html-scripts` still turns them off.",
+					"kind": "fixed",
+					"summary": "`--angular` and `--angular-dir` select Angular, and `--skip` no longer stops at the HTML scripts question"
+				},
+				{
+					"detail": "server.ts created `scopedState({ count: { value: 0 } })` inline in `.use([...])`. It is now `const visitorState = scopedState(...)`, passed as `visitorState`. Backend HMR keeps an unchanged top-level const, so visitors keep their counts when server.ts is edited, the form the AbsoluteJS backend HMR docs recommend.",
+					"kind": "changed",
+					"summary": "The HTMX starter creates its scoped state as a top-level `const visitorState`"
+				},
+				{
+					"detail": "The Pages menu opened on hover through inline `onpointerenter` and `onpointerleave` attributes, which the strict CSP from `secureHeaders()` blocks: two violations on each page. The HTML page already handled hover in its script, so the attributes are gone. The HTMX page gets its own `scripts/htmx-example.ts` for it. An HTML page made with `--no-html-scripts` has no script, so its menu opens on click.",
+					"kind": "fixed",
+					"summary": "The HTML and HTMX starter pages run under `secureHeaders()` without CSP violations"
+				},
+				{
+					"detail": "The generated `typecheck` script ran plain `tsc --noEmit`, which skips .svelte and .vue files. It now runs `absolute typecheck`. Svelte projects get svelte-check alongside svelte2tsx, and Vue projects get vue-tsc, which `absolute typecheck` needs to check them. Vue projects also get vue-router 4 and Angular projects get @angular/router, for pages that export `routes`.",
+					"kind": "fixed",
+					"summary": "`absolute typecheck` passes out of the box for Svelte and Vue projects, and the typecheck script runs it"
+				}
+			],
+			"date": "2026-11-13",
+			"version": "0.20.14"
+		},
+		{
+			"changes": [
+				{
 					"kind": "fixed",
 					"summary": "Full-stack SaaS (and any Absolute Auth project) starts before an OAuth app is registered"
 				}

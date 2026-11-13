@@ -132,14 +132,20 @@ export const createPackageJson = async ({
 		packageNames.add('@angular/core');
 		packageNames.add('@angular/platform-browser');
 		packageNames.add('@angular/platform-server');
+		packageNames.add('@angular/router');
 		packageNames.add('@angular/ssr');
 	}
 
 	if (flags.requiresSvelte) {
 		packageNames.add('svelte');
+		packageNames.add('svelte-check');
 		packageNames.add('svelte2tsx');
 	}
-	if (flags.requiresVue) packageNames.add('vue');
+	if (flags.requiresVue) {
+		packageNames.add('vue');
+		packageNames.add('vue-router');
+		packageNames.add('vue-tsc');
+	}
 	if (flags.requiresHtmx) packageNames.add('@absolutejs/scoped-state');
 	if (orm === 'drizzle') packageNames.add('drizzle-orm');
 
@@ -335,6 +341,8 @@ export const createPackageJson = async ({
 			'@angular/core',
 			'@angular/platform-browser',
 			'@angular/platform-server',
+			/* The auto router (a page that exports `routes`) needs it. */
+			'@angular/router',
 			'@angular/ssr'
 		] as const;
 
@@ -353,10 +361,25 @@ export const createPackageJson = async ({
 			'svelte2tsx',
 			versions['svelte2tsx']
 		);
+		/* `absolute typecheck` checks .svelte files with svelte-check. */
+		devDependencies['svelte-check'] = resolveVersion(
+			'svelte-check',
+			versions['svelte-check']
+		);
 	}
 
 	if (flags.requiresVue) {
 		dependencies['vue'] = resolveVersion('vue', versions['vue']);
+		/* The auto router (a page that exports `routes`) needs it. */
+		dependencies['vue-router'] = resolveVersion(
+			'vue-router',
+			versions['vue-router']
+		);
+		/* `absolute typecheck` checks .vue files with vue-tsc. */
+		devDependencies['vue-tsc'] = resolveVersion(
+			'vue-tsc',
+			versions['vue-tsc']
+		);
 	}
 
 	if (flags.requiresHtmx) {
@@ -402,7 +425,7 @@ export const createPackageJson = async ({
 		'format:check': 'absolute fmt --check',
 		lint: 'absolute eslint',
 		test: 'echo "Error: no test specified" && exit 1',
-		typecheck: 'bun run tsc --noEmit'
+		typecheck: 'absolute typecheck'
 	};
 
 	const isLocalDb = isLocal;

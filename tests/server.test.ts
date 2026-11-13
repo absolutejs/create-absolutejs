@@ -80,13 +80,44 @@ test('the rate limiter is @absolutejs/rate-limit, in the plugin array, keyed on 
 });
 
 test('an OAuth provider turns on only when its settings are present, so a new project starts without them', async () => {
-	const { generateAbsoluteAuthConfig } = await import(
-		'../src/generators/project/generateAbsoluteAuthConfig'
-	);
+	const { generateAbsoluteAuthConfig } =
+		await import('../src/generators/project/generateAbsoluteAuthConfig');
 	const source = generateAbsoluteAuthConfig(['google'], true);
 	expect(source).toContain(
 		'...(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET && process.env.OAUTH2_CALLBACK_URI'
 	);
 	expect(source).toContain("clientId: getEnv('GOOGLE_CLIENT_ID')");
 	expect(source).toContain(': {})');
+});
+
+test('HTMX scoped state is a top-level const, so backend HMR keeps visitors’ state', () => {
+	const project = mkdtempSync(join(tmpdir(), 'absolute-server-'));
+	const backendDirectory = join(project, 'src', 'backend');
+	mkdirSync(backendDirectory, { recursive: true });
+	try {
+		generateServerFile({
+			assetsDirectory: 'assets',
+			authOption: undefined,
+			backendDirectory,
+			buildDirectory: 'build',
+			databaseEngine: undefined,
+			databaseHost: undefined,
+			frontendDirectories: { htmx: 'htmx' },
+			orm: undefined,
+			plugins: [],
+			publicDirectory: 'public',
+			tailwind: undefined
+		});
+		const source = readFileSync(
+			join(backendDirectory, 'server.ts'),
+			'utf8'
+		);
+		expect(source).toContain(
+			'const visitorState = scopedState({ count: { value: 0 } })'
+		);
+		expect(source).toContain('.use([absolutejs, api, visitorState])');
+		expect(source).not.toMatch(/\.use\(\[[^\]]*scopedState\(/);
+	} finally {
+		rmSync(project, { force: true, recursive: true });
+	}
 });
