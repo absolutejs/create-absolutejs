@@ -6,6 +6,16 @@
 			"changes": [
 				{
 					"kind": "fixed",
+					"summary": "Full-stack SaaS projects start, and HTMX projects pass their own lint"
+				}
+			],
+			"date": "2026-11-13",
+			"version": "0.20.11"
+		},
+		{
+			"changes": [
+				{
+					"kind": "fixed",
 					"summary": "The rate limiter no longer breaks a new project's type check"
 				}
 			],

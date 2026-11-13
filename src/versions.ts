@@ -8,6 +8,7 @@ export const prismaMongoDBVersion = '6.19.3';
  * Run `bun run check-versions` to compare against latest npm versions.
  */
 export const versions = {
+	'@absolutejs/rate-limit': '0.8.0',
 	'@absolutejs/a2a': '0.3.6',
 	/* ── Core ─────────────────────────────────────────────── */
 	'@absolutejs/absolute': '0.20.0-beta.168',
@@ -75,7 +76,6 @@ export const versions = {
 	'drizzle-kit': '1.0.0-rc.4',
 	'drizzle-orm': '1.0.0-rc.4',
 	elysia: '2.0.0-rc.0',
-	'elysia-rate-limit': '5.1.1',
 	eslint: '10.11.0',
 	'eslint-plugin-absolute': '0.12.0',
 	'eslint-plugin-import': '2.32.0',

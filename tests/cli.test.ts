@@ -29,3 +29,22 @@ describe('headless CLI defaults', () => {
 		expect(argumentConfiguration.installDependenciesNow).toBe(false);
 	});
 });
+
+describe('plugins', () => {
+	test('--plugin=elysia-rate-limit still picks the rate limiter, now @absolutejs/rate-limit', () => {
+		argv.splice(
+			0,
+			argv.length,
+			'bun',
+			'create-absolutejs',
+			'saas-app',
+			'--skip',
+			'--plugin=elysia-rate-limit',
+			'--plugin=@elysia/cors'
+		);
+
+		const { argumentConfiguration } = parseCommandLineOptions();
+
+		expect(argumentConfiguration.plugins).toEqual(['@absolutejs/rate-limit', '@elysia/cors']);
+	});
+});

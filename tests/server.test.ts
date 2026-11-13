@@ -40,7 +40,7 @@ test('generated server uses the Elysia 2 error lifecycle', () => {
 	}
 });
 
-test('a called plugin gets its own use, outside the plugin array', () => {
+test('the rate limiter is @absolutejs/rate-limit, in the plugin array, keyed on the edge’s client address', () => {
 	const project = mkdtempSync(join(tmpdir(), 'absolute-server-'));
 	const backendDirectory = join(project, 'src', 'backend');
 	mkdirSync(backendDirectory, { recursive: true });
@@ -54,7 +54,7 @@ test('a called plugin gets its own use, outside the plugin array', () => {
 			databaseHost: undefined,
 			frontendDirectories: { react: 'react' },
 			orm: undefined,
-			plugins: ['elysia-rate-limit', '@elysia/cors'],
+			plugins: ['@absolutejs/rate-limit', '@elysia/cors'],
 			publicDirectory: 'public',
 			tailwind: undefined
 		});
@@ -62,11 +62,14 @@ test('a called plugin gets its own use, outside the plugin array', () => {
 			join(backendDirectory, 'server.ts'),
 			'utf8'
 		);
-		// Elysia 2 rejects a function plugin like rateLimit() inside the array.
-		expect(source).toContain('.use([absolutejs, api])');
-		expect(source).toContain('.use(rateLimit())');
-		expect(source).toContain('.use(cors())');
-		expect(source).not.toMatch(/\.use\(\[[^\]]*rateLimit/);
+		expect(source).toContain("import { gcra, rateLimit } from '@absolutejs/rate-limit'");
+		expect(source).not.toContain('elysia-rate-limit');
+		// One shallow array, as the project's own lint rule wants; called plugins stay in it.
+		expect(source).toMatch(/\.use\(\[absolutejs, api, [^\]]*rateLimiter[^\]]*\]\)/);
+		expect(source).toContain('cors()');
+		expect(source).not.toMatch(/\.use\((cors|rateLimit)\(/);
+		expect(source).toContain("clientIpHeader: 'x-real-ip'");
+		expect(source).toContain("trustedProxyCidrs: ['10.0.0.0/8']");
 	} finally {
 		rmSync(project, { force: true, recursive: true });
 	}
