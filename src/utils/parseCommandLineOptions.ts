@@ -254,8 +254,15 @@ export const parseCommandLineOptions = () => {
 	if (values.plugin === undefined && values.skip) {
 		values.plugin = ['none'];
 	}
+	/* elysia-rate-limit 5.x needs a newer Elysia than the 2.0.0-rc.0 new
+	 * projects run on (it crashes at startup), so the rate-limit plugin is
+	 * @absolutejs/rate-limit; the old name still picks it. */
 	const plugins =
-		values.plugin && values.plugin[0] === 'none' ? [] : values.plugin;
+		values.plugin && values.plugin[0] === 'none'
+			? []
+			: values.plugin?.map((plugin) =>
+					plugin === 'elysia-rate-limit' ? '@absolutejs/rate-limit' : plugin
+				);
 
 	const hasTailwindFiles =
 		values['tailwind-input'] !== undefined ||

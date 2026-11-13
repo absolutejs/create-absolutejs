@@ -81,10 +81,13 @@ export const availablePlugins: AvailableDependency[] = [
 		value: '@elysia/openapi'
 	},
 	{
-		imports: [{ config: null, isPlugin: true, packageName: 'rateLimit' }],
-		label: green('🛠️ elysia-rate-limit'),
-		latestVersion: versions['elysia-rate-limit'],
-		value: 'elysia-rate-limit'
+		imports: [
+			{ config: null, isPlugin: true, packageName: 'rateLimit' },
+			{ config: null, isPlugin: false, packageName: 'gcra' }
+		],
+		label: green('🛠️ @absolutejs/rate-limit'),
+		latestVersion: versions['@absolutejs/rate-limit'],
+		value: '@absolutejs/rate-limit'
 	}
 ];
 export const availablePrismaDialects = [

@@ -79,6 +79,10 @@ export const generateServerFile = ({
 				return 'authPlugin';
 			}
 
+			if (pluginImport.packageName === 'rateLimit') {
+				return 'rateLimiter';
+			}
+
 			if (pluginImport.config === undefined) {
 				return pluginImport.packageName;
 			}
@@ -91,16 +95,23 @@ export const generateServerFile = ({
 				pluginImport.config
 			)})`;
 		});
-	/* A plugin that is called (`rateLimit()`) can return a plain function
-	 * plugin, which Elysia 2's typing rejects inside the `.use([...])` array
-	 * (TS2769). Instances stay in the array; each call gets its own `.use`. */
-	const useBlock = pluginExpressions
-		.filter((expression) => !expression.endsWith(')'))
-		.join(', ');
-	const calledPluginsBlock = pluginExpressions
-		.filter((expression) => expression.endsWith(')'))
-		.map((expression) => `.use(${expression})`)
-		.join('\n');
+	const useBlock = pluginExpressions.join(', ');
+
+	/* 100 requests a minute per visitor, bursts of 20. Behind the
+	 * AbsoluteJS edge the visitor's address arrives as X-Real-IP from a
+	 * private address; it is read only from there, so off the platform (or
+	 * reaching the app directly) each connection is keyed by its own
+	 * address and a client can't choose its key. */
+	const rateLimitBlock = pluginExpressions.includes('rateLimiter')
+		? `const rateLimiter = rateLimit({
+	algorithm: gcra({ burst: 20, periodMs: 60_000, requestsPerPeriod: 100 }),
+	clientIpHeader: 'x-real-ip',
+	key: 'ip',
+	trustedProxies: 1,
+	trustedProxyCidrs: ['10.0.0.0/8']
+})
+`
+		: '';
 
 	const guardBlock = `.guard({
 			cookie: t.Cookie({
@@ -130,10 +141,10 @@ export const generateServerFile = ({
 import { ${hasDatabase && authOption !== 'abs' ? 'createApi' : 'api'} } from './api'
 
 ${manifestBlock}
-${dbBlock ? `${dbBlock}\n` : ''}${hasDatabase && authOption !== 'abs' ? 'const api = createApi(db)\n' : ''}${authBlock}
+${dbBlock ? `${dbBlock}\n` : ''}${hasDatabase && authOption !== 'abs' ? 'const api = createApi(db)\n' : ''}${authBlock}${rateLimitBlock}
 export const server = new Elysia()
 .use([absolutejs, api${useBlock ? `, ${useBlock}` : ''}])
-${calledPluginsBlock ? `${calledPluginsBlock}\n` : ''}${authOption === 'abs' ? `\n${guardBlock}` : ''}
+${authOption === 'abs' ? `\n${guardBlock}` : ''}
   ${routesBlock}
   ${plugins.includes('@elysia/openapi') ? '.use(openapi())' : ''}
   .onError(({ request, error }) => {
