@@ -78,3 +78,15 @@ test('the rate limiter is @absolutejs/rate-limit, in the plugin array, keyed on 
 		rmSync(project, { force: true, recursive: true });
 	}
 });
+
+test('an OAuth provider turns on only when its settings are present, so a new project starts without them', async () => {
+	const { generateAbsoluteAuthConfig } = await import(
+		'../src/generators/project/generateAbsoluteAuthConfig'
+	);
+	const source = generateAbsoluteAuthConfig(['google'], true);
+	expect(source).toContain(
+		'...(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET && process.env.OAUTH2_CALLBACK_URI'
+	);
+	expect(source).toContain("clientId: getEnv('GOOGLE_CLIENT_ID')");
+	expect(source).toContain(': {})');
+});
