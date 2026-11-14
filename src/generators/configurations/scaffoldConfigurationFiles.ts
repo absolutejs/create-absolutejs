@@ -48,6 +48,7 @@ export const scaffoldConfigurationFiles = ({
 	const tsconfig = JSON.parse(stripped) as {
 		compilerOptions: Record<string, unknown>;
 		exclude?: string[];
+		include?: string[];
 		angularCompilerOptions?: Record<string, unknown>;
 	};
 	// Dev entrypoints contain browser-only module URLs and are not application sources.
@@ -57,10 +58,15 @@ export const scaffoldConfigurationFiles = ({
 			...(tsconfig.exclude ?? []),
 			'node_modules',
 			buildDirectory,
-			'dist',
-			'.absolutejs'
+			'dist'
 		])
 	];
+	/* `absolute dev`, `build` and `typecheck` write the project's manifest keys
+	   to .absolutejs/types/manifest.d.ts, which narrows `asset(manifest, key)`;
+	   listing it gives editors the same check. `**` already skips dot-folders,
+	   so the rest of .absolutejs stays out; excluding .absolutejs would also
+	   drop this file, and a missing file (before the first command) is fine. */
+	tsconfig.include = ['**/*', '.absolutejs/types/manifest.d.ts'];
 	/* `absolute typecheck` and `absolute dev` write a declaration per Svelte
 	   component under .absolutejs/types/svelte; listing that mirror in
 	   rootDirs lets tsc and editors check Svelte page props in server files. */

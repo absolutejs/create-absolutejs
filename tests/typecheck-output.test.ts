@@ -42,13 +42,25 @@ for (const frontend of ['react', 'angular'] as const) {
 					ts.sys.readFile
 				);
 				expect(read.error).toBeUndefined();
-				const parsed = ts.parseJsonConfigFileContent(
-					read.config,
-					ts.sys,
-					dir
-				);
+				const parse = () =>
+					ts.parseJsonConfigFileContent(read.config, ts.sys, dir);
+				const parsed = parse();
 				expect(parsed.errors).toEqual([]);
 				expect(parsed.fileNames).toEqual([join(dir, 'src/entry.ts')]);
+				/* The generated manifest keys are the one .absolutejs file
+				   editors see, once an AbsoluteJS command has written them. */
+				const manifestKeys = join(
+					dir,
+					'.absolutejs/types/manifest.d.ts'
+				);
+				await mkdir(join(dir, '.absolutejs/types'), {
+					recursive: true
+				});
+				await writeFile(manifestKeys, 'export {};');
+				expect(parse().fileNames).toEqual([
+					join(dir, 'src/entry.ts'),
+					manifestKeys
+				]);
 				const program = ts.createProgram(parsed.fileNames, {
 					...parsed.options,
 					noEmit: true,
