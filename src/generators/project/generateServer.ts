@@ -151,9 +151,9 @@ export const generateServerFile = ({
 			? `const authPlugin = await auth(absoluteAuthConfig(${hasDatabase ? 'db' : ''}))\n`
 			: '';
 
-	/* No app-level onError: AbsoluteJS renders error.html (and logs the error)
-	 * for a page route that throws only while the app has no onError of its
-	 * own, wherever it is registered, and keeps 404s quiet. */
+	/* No app-level onError: while the app has none of its own, wherever it is
+	 * registered, AbsoluteJS logs every route that throws, renders error.html
+	 * for page requests, and keeps 404s quiet. */
 	const content = `${importsBlock}
 import { ${hasDatabase && authOption !== 'abs' ? 'createApi' : 'api'} } from './api'
 
