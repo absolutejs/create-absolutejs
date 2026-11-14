@@ -375,7 +375,11 @@ export const createPackageJson = async ({
 			'vue-router',
 			versions['vue-router']
 		);
-		/* `absolute typecheck` checks .vue files with vue-tsc. */
+		/* `absolute typecheck` checks .vue files with vue-check, bundled with
+		   @absolutejs/absolute, on Bun 1.4.4+. vue-tsc is its fallback on older
+		   Bun (the framework supports 1.4.2+) or with
+		   ABSOLUTE_TYPECHECK_CHECKER=tsc, so it stays until projects require
+		   Bun 1.4.4. */
 		devDependencies['vue-tsc'] = resolveVersion(
 			'vue-tsc',
 			versions['vue-tsc']

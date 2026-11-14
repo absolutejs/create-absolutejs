@@ -4,7 +4,7 @@ import { join } from 'path';
 import { expect, test } from 'bun:test';
 import { generateServerFile } from '../src/generators/project/generateServer';
 
-test('generated server uses the Elysia 2 error lifecycle', () => {
+test('generated server leaves errors to AbsoluteJS, with no onError of its own', () => {
 	const project = mkdtempSync(join(tmpdir(), 'absolute-server-'));
 	const backendDirectory = join(project, 'src', 'backend');
 	mkdirSync(backendDirectory, { recursive: true });
@@ -26,7 +26,8 @@ test('generated server uses the Elysia 2 error lifecycle', () => {
 			join(backendDirectory, 'server.ts'),
 			'utf8'
 		);
-		expect(source).toContain('.onError(({ request, error }) => {');
+		// An app onError would stop AbsoluteJS rendering error.html.
+		expect(source).not.toContain('onError');
 		expect(source).not.toContain('.error((');
 		expect(source).not.toContain(".on('error'");
 		expect(source).not.toContain('err.message');

@@ -5,6 +5,7 @@ import { describe, expect, test } from 'bun:test';
 import { createPackageJson } from '../src/generators/configurations/generatePackageJson';
 import { generateHTMLPage } from '../src/generators/html/generateHTMLPage';
 import { generateHTMXPage } from '../src/generators/htmx/generateHTMXPage';
+import { generateErrorPage } from '../src/generators/project/generateErrorPage';
 import type { PackageJson } from '../src/types';
 
 const generate = async (frontendDirectories: Record<string, string>) => {
@@ -96,5 +97,19 @@ describe('starter pages work under secureHeaders()’ CSP', () => {
 		expect(page).toContain(
 			'<script src="../scripts/htmx-example.ts"></script>'
 		);
+	});
+});
+
+describe('the error.html convention page', () => {
+	test('shows the error placeholders and works under secureHeaders()', () => {
+		const page = generateErrorPage(
+			'AbsoluteJS + HTML',
+			'../../styles/indexes/html-example.css'
+		);
+		expect(page).toContain('{{ message }}');
+		expect(page).toContain('{{ stack }}');
+		expect(page).not.toMatch(/\son[a-z]+\s*=/i);
+		expect(page).not.toContain('<script');
+		expect(page).not.toContain('<style');
 	});
 });

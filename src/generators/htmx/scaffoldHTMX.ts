@@ -2,6 +2,7 @@ import { copyFileSync, cpSync, mkdirSync, writeFileSync } from 'fs';
 import { join } from 'path';
 import { Glob } from 'bun';
 import { ScaffoldFrontendProps } from '../../types';
+import { generateErrorPage } from '../project/generateErrorPage';
 import { generateMarkupCSS } from '../project/generateMarkupCSS';
 import { generateHTMXPage } from './generateHTMXPage';
 
@@ -17,6 +18,14 @@ export const scaffoldHTMX = ({
 }: ScaffoldFrontendProps) => {
 	const pagesDirectory = join(targetDirectory, 'pages');
 	const cssOutputFile = join(stylesIndexesDirectory, 'htmx-example.css');
+	const cssHref = `${isSingleFrontend ? '../../' : '../../../'}styles/indexes/htmx-example.css`;
+	/* A route that throws on a page or HTMX request renders this (status 500). */
+	const writeErrorPage = () =>
+		writeFileSync(
+			join(pagesDirectory, 'error.html'),
+			generateErrorPage('AbsoluteJS + HTMX', cssHref),
+			'utf-8'
+		);
 
 	copyFileSync(
 		join(templatesDirectory, 'htmx', 'LICENSE'),
@@ -40,6 +49,7 @@ export const scaffoldHTMX = ({
 			generateHTMXPage(isSingleFrontend, frontends, editBasePath, false),
 			'utf-8'
 		);
+		writeErrorPage();
 		writeFileSync(cssOutputFile, `@import url('../reset.css');`, 'utf-8');
 
 		return;
@@ -63,6 +73,7 @@ export const scaffoldHTMX = ({
 	mkdirSync(pagesDirectory, { recursive: true });
 	const htmxFilePath = join(pagesDirectory, 'HTMXExample.html');
 	writeFileSync(htmxFilePath, htmxPage, 'utf-8');
+	writeErrorPage();
 
 	/* The page's own script; inline handlers would break secureHeaders()'s CSP. */
 	cpSync(
