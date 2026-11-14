@@ -1,3 +1,29 @@
+/* The framework packages `absolute add <framework>` installs. They and their
+   versions below are mirrored in absolutejs src/cli/add/dependencies.ts
+   (SCAFFOLD_VERSIONS, and FRAMEWORK_PACKAGES for the per-framework lists in
+   generatePackageJson.ts) and must change together. tests/absolute-add-
+   mirror.test.ts compares the two when an absolutejs checkout sits nearby. */
+export const frameworkPackages = [
+	'@absolutejs/scoped-state',
+	'@angular/common',
+	'@angular/compiler',
+	'@angular/compiler-cli',
+	'@angular/core',
+	'@angular/platform-browser',
+	'@angular/platform-server',
+	'@angular/router',
+	'@angular/ssr',
+	'@types/react',
+	'react',
+	'react-dom',
+	'react-refresh',
+	'svelte',
+	'svelte-check',
+	'svelte2tsx',
+	'vue',
+	'vue-router',
+	'vue-tsc'
+] as const satisfies readonly (keyof typeof versions)[];
 /* Prisma 7 does not support MongoDB (https://pris.ly/d/mongodb: "use Prisma
    ORM v6.19"), so MongoDB projects pin the latest Prisma 6 line for both the
    CLI and the client. */
@@ -6,12 +32,14 @@ export const prismaMongoDBVersion = '6.19.3';
  * Single source of truth for all scaffolded dependency versions.
  * Every package version used in project generation lives here.
  * Run `bun run check-versions` to compare against latest npm versions.
+ * The framework entries (listed in `frameworkPackages` above) are mirrored in
+ * absolutejs src/cli/add/dependencies.ts and must change together.
  */
 export const versions = {
 	'@absolutejs/rate-limit': '0.8.0',
 	'@absolutejs/a2a': '0.3.6',
 	/* ── Core ─────────────────────────────────────────────── */
-	'@absolutejs/absolute': '0.20.0-beta.178',
+	'@absolutejs/absolute': '0.20.0-beta.179',
 	'@absolutejs/agency': '0.7.4',
 	'@absolutejs/agent-conformance': '0.15.1',
 	'@absolutejs/agent-control': '0.5.8',

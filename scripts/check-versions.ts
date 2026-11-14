@@ -1,7 +1,7 @@
 import pc from 'picocolors';
 
 import { registryChannel } from '../src/utils/registryChannel';
-import { versions } from '../src/versions';
+import { frameworkPackages, versions } from '../src/versions';
 
 // Opportunistic HTTP/2 multiplexing — npm registry is HTTPS + the script
 // fans out one fetch per package via Promise.all, so all calls share one
@@ -157,6 +157,20 @@ if (outdated.length > 0) {
 			`${pad(res.name, nameWidth)}  ${pc.dim(pad(res.current, curWidth))}  ${colorLatest(res)}`
 		);
 	}
+	console.log();
+}
+
+const mirrored: ReadonlySet<string> = new Set(frameworkPackages);
+const outdatedFrameworkPackages = outdated.filter((res) =>
+	mirrored.has(res.name)
+);
+
+if (outdatedFrameworkPackages.length > 0) {
+	console.log(
+		pc.yellow(
+			`ℹ ${outdatedFrameworkPackages.map((res) => res.name).join(', ')} ${outdatedFrameworkPackages.length === 1 ? 'is a framework package' : 'are framework packages'} mirrored in absolutejs src/cli/add/dependencies.ts (what \`absolute add\` installs). Update both together.`
+		)
+	);
 	console.log();
 }
 
