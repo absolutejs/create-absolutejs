@@ -10,7 +10,7 @@
 	},
 	"description": "A CLI tool to create a new AbsoluteJS project",
 	"devDependencies": {
-		"@absolutejs/absolute": "0.20.0-beta.172",
+		"@absolutejs/absolute": "0.20.0-beta.173",
 		"@absolutejs/changelog": "0.7.0",
 		"@elysia/eden": "2.0.0-rc.0",
 		"@eslint/compat": "2.1.1",
@@ -66,5 +66,5 @@
 		"typecheck": "bun run tsc --noEmit"
 	},
 	"type": "module",
-	"version": "0.20.14"
+	"version": "0.20.15"
 }

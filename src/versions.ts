@@ -11,7 +11,7 @@ export const versions = {
 	'@absolutejs/rate-limit': '0.8.0',
 	'@absolutejs/a2a': '0.3.6',
 	/* ── Core ─────────────────────────────────────────────── */
-	'@absolutejs/absolute': '0.20.0-beta.172',
+	'@absolutejs/absolute': '0.20.0-beta.173',
 	'@absolutejs/agency': '0.7.4',
 	'@absolutejs/agent-conformance': '0.15.1',
 	'@absolutejs/agent-control': '0.5.8',
