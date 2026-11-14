@@ -5,6 +5,17 @@
 		{
 			"changes": [
 				{
+					"detail": "With AbsoluteJS beta.175, a route that throws is logged on the server whatever the request accepts, so React, Svelte, Vue and Angular projects and API calls log errors too, and the scaffolded HTML and HTMX error.html pages load their stylesheet in production. Angular pages keep their styles on hot updates under secureHeaders().",
+					"kind": "changed",
+					"summary": "New projects use @absolutejs/absolute 0.20.0-beta.175"
+				}
+			],
+			"date": "2026-11-14",
+			"version": "0.20.16"
+		},
+		{
+			"changes": [
+				{
 					"detail": "AbsoluteJS beta.172 type-checks Vue projects with vue-check, bundled with the framework, on Bun 1.4.4 and newer, and `absolute typecheck` always type-checks even when the project has its own `check` script. Beta.173 stops island pages and Vue lazy routes from exposing server file paths in production, streams React SuspenseSlot and StreamSlot content by default, keeps Angular `@defer` sections after hydration, and fixes dev serving of paths that contain spaces.",
 					"kind": "changed",
 					"summary": "New projects use @absolutejs/absolute 0.20.0-beta.173"
