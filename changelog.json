@@ -5,6 +5,17 @@
 		{
 			"changes": [
 				{
+					"detail": "With AbsoluteJS beta.179, `absolute add <framework>` installs the same packages and versions as this scaffold, so a framework added to a project later matches one scaffolded with it. Vue pages with only a plain `<script>` work, and Vue and Svelte islands can import shared modules by a relative path.",
+					"kind": "changed",
+					"summary": "New projects use @absolutejs/absolute 0.20.0-beta.179"
+				}
+			],
+			"date": "2026-11-14",
+			"version": "0.20.18"
+		},
+		{
+			"changes": [
+				{
 					"detail": "With AbsoluteJS beta.178, `absolute typecheck` runs every framework's checker side by side, so projects with Vue and Svelte or React check all of them; JSON requests to unknown routes get a JSON 404 instead of the not-found page; and Svelte and Vue island styles load under secureHeaders().",
 					"kind": "changed",
 					"summary": "New projects use @absolutejs/absolute 0.20.0-beta.178"
