@@ -5,6 +5,17 @@
 		{
 			"changes": [
 				{
+					"detail": "With AbsoluteJS beta.180, `absolute typecheck` rejects `asset(manifest, key)` keys the build does not write. The generated tsconfig.json includes `.absolutejs/types/manifest.d.ts`, where AbsoluteJS writes those keys, so editors check them too, and `absolute typecheck` no longer prints a note asking for it.",
+					"kind": "changed",
+					"summary": "New projects use @absolutejs/absolute 0.20.0-beta.180, and editors check asset() keys"
+				}
+			],
+			"date": "2026-11-15",
+			"version": "0.20.19"
+		},
+		{
+			"changes": [
+				{
 					"detail": "With AbsoluteJS beta.179, `absolute add <framework>` installs the same packages and versions as this scaffold, so a framework added to a project later matches one scaffolded with it. Vue pages with only a plain `<script>` work, and Vue and Svelte islands can import shared modules by a relative path.",
 					"kind": "changed",
 					"summary": "New projects use @absolutejs/absolute 0.20.0-beta.179"
