@@ -1,11 +1,16 @@
-import { mkdtempSync, readFileSync, rmSync } from 'fs';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync } from 'fs';
 import { tmpdir } from 'os';
 import { join } from 'path';
 import { describe, expect, test } from 'bun:test';
 import { createPackageJson } from '../src/generators/configurations/generatePackageJson';
 import { generateHTMLPage } from '../src/generators/html/generateHTMLPage';
 import { generateHTMXPage } from '../src/generators/htmx/generateHTMXPage';
+import { generateBuildBlock } from '../src/generators/project/generateBuildBlock';
 import { generateErrorPage } from '../src/generators/project/generateErrorPage';
+import { renderReadme } from '../src/generators/project/generateReadme';
+import { generateRoutesBlock } from '../src/generators/project/generateRoutesBlock';
+import { generateReactExamplePage } from '../src/generators/react/generateReactComponents';
+import { generateSveltePage } from '../src/generators/svelte/generateSveltePage';
 import type { PackageJson } from '../src/types';
 
 const generate = async (frontendDirectories: Record<string, string>) => {
@@ -37,6 +42,12 @@ const generate = async (frontendDirectories: Record<string, string>) => {
 };
 
 describe('generated package.json', () => {
+	test('build and start run the AbsoluteJS CLI', async () => {
+		const { scripts } = await generate({ html: 'html' });
+		expect(scripts?.build).toBe('absolute build');
+		expect(scripts?.start).toBe('absolute start');
+	});
+
 	test('typecheck runs absolute typecheck', async () => {
 		const { scripts } = await generate({ react: 'react' });
 		expect(scripts?.typecheck).toBe('absolute typecheck');
@@ -111,5 +122,105 @@ describe('the error.html convention page', () => {
 		expect(page).not.toMatch(/\son[a-z]+\s*=/i);
 		expect(page).not.toContain('<script');
 		expect(page).not.toContain('<style');
+	});
+});
+
+/* absolute.config.ts for a project with these frontends. */
+const generateConfig = (frontendDirectories: Record<string, string>) => {
+	const project = mkdtempSync(join(tmpdir(), 'absolute-config-'));
+	try {
+		const backendDirectory = join(project, 'src', 'backend');
+		mkdirSync(backendDirectory, { recursive: true });
+		generateBuildBlock({
+			assetsDirectory: 'src/backend/assets',
+			backendDirectory,
+			buildDirectory: 'build',
+			frontendDirectories,
+			publicDirectory: 'public',
+			tailwind: undefined
+		});
+
+		return readFileSync(join(project, 'absolute.config.ts'), 'utf8');
+	} finally {
+		rmSync(project, { force: true, recursive: true });
+	}
+};
+
+describe('the starter font (Poppins) is self-hosted', () => {
+	test('React and Svelte projects configure it; others do not', () => {
+		for (const frontend of ['react', 'svelte']) {
+			const config = generateConfig({ [frontend]: frontend });
+			expect(config).toContain(
+				"families: [{ family: 'Poppins', weights: [400, 500, 600, 700] }]"
+			);
+			expect(config).toContain('injectHtml: false');
+		}
+		for (const frontend of ['vue', 'angular', 'html', 'htmx'])
+			expect(generateConfig({ [frontend]: frontend })).not.toContain(
+				'fonts:'
+			);
+	});
+
+	test('no starter page links Google Fonts', () => {
+		const pages = [
+			generateReactExamplePage('none', true, 'react'),
+			generateReactExamplePage('abs', true, 'react'),
+			generateReactExamplePage('none', false, 'react'),
+			generateSveltePage(['svelte'], 'src', true),
+			generateSveltePage(['svelte'], 'src', false),
+			readFileSync(
+				join(
+					import.meta.dir,
+					'../src/templates/react/components/Head.tsx'
+				),
+				'utf8'
+			)
+		];
+		for (const page of pages) expect(page).not.toContain('googleapis');
+	});
+
+	test('the React and Svelte pages receive and link fontAssets(manifest)', () => {
+		const routes = generateRoutesBlock({
+			authOption: 'none',
+			databaseEngine: 'none',
+			frontendDirectories: { react: 'react', svelte: 'svelte' }
+		});
+		const pageRoutes = ['/', '/react', '/svelte'];
+		expect(routes.match(/fonts: fontAssets\(manifest\)/g)).toHaveLength(
+			pageRoutes.length
+		);
+		for (const examples of [true, false]) {
+			expect(
+				generateReactExamplePage('none', examples, 'react')
+			).toContain('<Head cssPath={cssPath} fonts={fonts} />');
+			expect(generateSveltePage(['svelte'], 'src', examples)).toContain(
+				'{#each fonts.stylesheets as href (href)}'
+			);
+		}
+	});
+});
+
+describe('the README', () => {
+	const template = readFileSync(
+		join(import.meta.dir, '../src/templates/README.md'),
+		'utf8'
+	);
+
+	test('mentions vue-tsc only for Vue projects', () => {
+		expect(renderReadme(template, ['vue'])).toContain('vue-tsc');
+		for (const frontends of [
+			['react', 'svelte', 'html', 'htmx'],
+			['angular']
+		] as const)
+			expect(renderReadme(template, [...frontends])).not.toContain(
+				'vue-tsc'
+			);
+	});
+
+	test('leaves no section markers', () => {
+		for (const frontends of [['vue'], ['react']] as const)
+			expect(renderReadme(template, [...frontends])).not.toContain(
+				'<!--'
+			);
 	});
 });

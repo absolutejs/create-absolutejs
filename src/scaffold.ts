@@ -1,4 +1,4 @@
-import { copyFileSync, mkdirSync, writeFileSync } from 'fs';
+import { mkdirSync, writeFileSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { formatProject } from './commands/formatProject';
@@ -9,6 +9,7 @@ import { createPackageJson } from './generators/configurations/generatePackageJs
 import { initalizeRoot } from './generators/configurations/initializeRoot';
 import { scaffoldConfigurationFiles } from './generators/configurations/scaffoldConfigurationFiles';
 import { scaffoldDatabase } from './generators/db/scaffoldDatabase';
+import { scaffoldReadme } from './generators/project/generateReadme';
 import { scaffoldAgentic } from './generators/project/scaffoldAgentic';
 import { scaffoldBackend } from './generators/project/scaffoldBackend';
 import { scaffoldFrontends } from './generators/project/scaffoldFrontends';
@@ -85,10 +86,7 @@ export const scaffold = async ({
 		typesDirectory
 	} = initalizeRoot(projectName, templatesDirectory);
 
-	copyFileSync(
-		join(templatesDirectory, 'README.md'),
-		join(projectName, 'README.md')
-	);
+	scaffoldReadme(templatesDirectory, projectName, frontends);
 
 	scaffoldConfigurationFiles({
 		buildDirectory,

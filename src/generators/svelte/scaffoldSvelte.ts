@@ -1,6 +1,7 @@
 import { copyFileSync, cpSync, mkdirSync, writeFileSync } from 'fs';
 import { join } from 'path';
 import { ScaffoldFrontendProps } from '../../types';
+import { starterFontCSS } from '../project/starterFont';
 import { generateSveltePage } from './generateSveltePage';
 
 export const scaffoldSvelte = ({
@@ -14,7 +15,7 @@ export const scaffoldSvelte = ({
 }: ScaffoldFrontendProps) => {
 	const pagesDirectory = join(targetDirectory, 'pages');
 	const cssOutputFile = join(stylesIndexesDirectory, 'svelte-example.css');
-	const svelteCSS = `@import url('../reset.css');`;
+	const svelteCSS = `@import url('../reset.css');\n${starterFontCSS}`;
 
 	if (!includeExamples) {
 		mkdirSync(pagesDirectory, { recursive: true });

@@ -42,6 +42,8 @@ export const generateImportsBlock = ({
 	);
 	pushHandler(flags.requiresAngular, 'generateHeadElement');
 	pushHandler(flags.requiresHtml, 'handleHTMLPageRequest');
+	/* The React and Svelte starters link the self-hosted Poppins. */
+	pushHandler(flags.requiresReact || flags.requiresSvelte, 'fontAssets');
 	pushHandler(
 		flags.requiresReact,
 		'handleReactPageRequest',

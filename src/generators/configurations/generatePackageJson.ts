@@ -424,10 +424,12 @@ export const createPackageJson = async ({
 	if (latest) s.stop(green('Package versions resolved'));
 
 	const scripts: PackageJson['scripts'] = {
+		build: 'absolute build',
 		dev: 'absolute dev',
 		format: 'absolute fmt',
 		'format:check': 'absolute fmt --check',
 		lint: 'absolute eslint',
+		start: 'absolute start',
 		test: 'echo "Error: no test specified" && exit 1',
 		typecheck: 'absolute typecheck'
 	};

@@ -104,16 +104,18 @@ export const generateReactExamplePage = (
 				? '\n\tuser: User | null;\n\tproviderConfiguration: ProviderConfiguration | undefined;'
 				: '';
 
-		return `${authImports}import { Head } from '../components/Head';
+		return `${authImports}import type { FontAssets } from '@absolutejs/absolute';
+import { Head } from '../components/Head';
 
 type ReactExampleProps = {
 	initialCount: number;
-	cssPath: string;${authProps}
+	cssPath: string;
+	fonts: FontAssets;${authProps}
 };
 
-export const ReactExample = ({ cssPath }: ReactExampleProps) => (
+export const ReactExample = ({ cssPath, fonts }: ReactExampleProps) => (
 	<html>
-		<Head cssPath={cssPath} />
+		<Head cssPath={cssPath} fonts={fonts} />
 		<body>
 			<main></main>
 		</body>
@@ -128,14 +130,15 @@ export const ReactExample = ({ cssPath }: ReactExampleProps) => (
 		type ReactExampleProps = { 
 			initialCount: number; 
 			cssPath: string;
+			fonts: FontAssets;
 			${authOption === 'abs' ? 'user: User | null;\n\tproviderConfiguration: ProviderConfiguration | undefined;' : ''}
 		};
 	`;
 
 	const fnSignature =
 		authOption === 'abs'
-			? `export const ReactExample = ({ initialCount, cssPath, user, providerConfiguration }: ReactExampleProps) => {`
-			: `export const ReactExample = ({ initialCount, cssPath }: ReactExampleProps) => (`;
+			? `export const ReactExample = ({ initialCount, cssPath, fonts, user, providerConfiguration }: ReactExampleProps) => {`
+			: `export const ReactExample = ({ initialCount, cssPath, fonts }: ReactExampleProps) => (`;
 
 	const extractProps = `	const userImage =
 		user?.metadata && providerConfiguration?.picture
@@ -181,6 +184,7 @@ export const ReactExample = ({ cssPath }: ReactExampleProps) => (
 
 	return `
 ${authOption === 'abs' ? `import type { User } from '${databaseTypesPath}';\nimport { extractPropFromIdentity } from '@absolutejs/auth';\nimport type { ProviderConfiguration } from '@absolutejs/auth';` : ''}
+import type { FontAssets } from '@absolutejs/absolute';
 import { App } from '../components/App';
 import { Dropdown } from '../components/Dropdown';
 import { Head } from '../components/Head';
@@ -192,7 +196,7 @@ ${fnSignature}
 ${authOption === 'abs' ? extractProps : ''}
     ${useBlockReturn ? 'return (' : ''}
         <html>
-            <Head cssPath={cssPath} />
+            <Head cssPath={cssPath} fonts={fonts} />
             <body>
                 <header>
                     <a href="/">AbsoluteJS</a>

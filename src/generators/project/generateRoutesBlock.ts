@@ -60,8 +60,8 @@ export const generateRoutesBlock = ({
 		if (frontend === 'react') {
 			const reactProps =
 				authOption === 'abs'
-					? `{ cssPath: asset(manifest, 'ReactExampleCSS'), initialCount: 0, providerConfiguration, user }`
-					: `{ cssPath: asset(manifest, 'ReactExampleCSS'), initialCount: 0 }`;
+					? `{ cssPath: asset(manifest, 'ReactExampleCSS'), fonts: fontAssets(manifest), initialCount: 0, providerConfiguration, user }`
+					: `{ cssPath: asset(manifest, 'ReactExampleCSS'), fonts: fontAssets(manifest), initialCount: 0 }`;
 
 			return `handleReactPageRequest({
     Page: ReactExample,
@@ -74,7 +74,11 @@ export const generateRoutesBlock = ({
 			return `handleSveltePageRequest<typeof SvelteExample>({
     indexPath: asset(manifest, 'SvelteExampleIndex'),
     pagePath: asset(manifest, 'SvelteExample'),
-    props: { cssPath: asset(manifest, 'SvelteExampleCSS'), initialCount: 0 }
+    props: {
+      cssPath: asset(manifest, 'SvelteExampleCSS'),
+      fonts: fontAssets(manifest),
+      initialCount: 0
+    }
   })`;
 
 		if (frontend === 'vue')
