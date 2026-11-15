@@ -11,7 +11,7 @@ import { renderReadme } from '../src/generators/project/generateReadme';
 import { generateRoutesBlock } from '../src/generators/project/generateRoutesBlock';
 import { generateReactExamplePage } from '../src/generators/react/generateReactComponents';
 import { generateSveltePage } from '../src/generators/svelte/generateSveltePage';
-import type { PackageJson } from '../src/types';
+import type { Frontend, PackageJson } from '../src/types';
 
 const generate = async (frontendDirectories: Record<string, string>) => {
 	const project = mkdtempSync(join(tmpdir(), 'absolute-package-'));
@@ -200,6 +200,15 @@ describe('the starter font (Poppins) is self-hosted', () => {
 	});
 });
 
+const FRONTENDS = [
+	'angular',
+	'html',
+	'htmx',
+	'react',
+	'svelte',
+	'vue'
+] as const satisfies readonly Frontend[];
+
 describe('the README', () => {
 	const template = readFileSync(
 		join(import.meta.dir, '../src/templates/README.md'),
@@ -215,6 +224,33 @@ describe('the README', () => {
 			expect(renderReadme(template, [...frontends])).not.toContain(
 				'vue-tsc'
 			);
+	});
+
+	test('mentions vue-tsc for each single framework only when it is Vue', () => {
+		for (const frontend of FRONTENDS)
+			expect(renderReadme(template, [frontend]).includes('vue-tsc')).toBe(
+				frontend === 'vue'
+			);
+	});
+
+	test('every `bun run <script>` it shows exists in package.json', async () => {
+		const projects = [
+			...FRONTENDS.map((frontend) => [frontend]),
+			[...FRONTENDS]
+		];
+		const checks = projects.map(async (frontends) => {
+			const readme = renderReadme(template, frontends);
+			const { scripts } = await generate(
+				Object.fromEntries(frontends.map((name) => [name, name]))
+			);
+			const commands = [...readme.matchAll(/bun run ([\w:-]+)/g)].map(
+				(match) => match[1]
+			);
+			expect(commands.length).toBeGreaterThan(0);
+			for (const command of commands)
+				expect(Object.keys(scripts ?? {})).toContain(command ?? '');
+		});
+		await Promise.all(checks);
 	});
 
 	test('leaves no section markers', () => {
