@@ -5,6 +5,17 @@
 		{
 			"changes": [
 				{
+					"detail": "AbsoluteJS beta.191 replaces `defineAction` + `.use(action)` with routes that declare a `form` schema; the scaffold never used the old API, so new projects need no changes. Since beta.183 the framework also supports Vue Router 5, checks Angular with angular-check on Bun 1.4.4+, and type-checks Vue faster.",
+					"kind": "changed",
+					"summary": "New projects use @absolutejs/absolute 0.20.0-beta.191"
+				}
+			],
+			"date": "2026-11-16",
+			"version": "0.20.23"
+		},
+		{
+			"changes": [
+				{
 					"detail": "AbsoluteJS beta.182 escapes expressions in streamed Svelte `{#await}` branches (a security fix), sends `charset=utf-8` with every page and adds `getCspNonce()` to `@absolutejs/absolute/react`; beta.183 returns 404 for unknown sub-paths of Angular pages with colocated routes.",
 					"kind": "changed",
 					"summary": "New projects use @absolutejs/absolute 0.20.0-beta.183"
