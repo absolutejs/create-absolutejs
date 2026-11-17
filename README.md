@@ -231,3 +231,13 @@ The matrix creates Docker configuration files but does not start containers or
 connect to paid providers. Use `SCAFFOLD_CHECK_CASES=sqlite-auth,all-frontends` to
 select cases. Hosted database credentials and real OAuth acceptance are separate
 integration checks, not implied by this matrix.
+
+### Checked array and dictionary access
+
+New projects enable `noUncheckedIndexedAccess` alongside `strict`. A dictionary
+key or array element may be absent, so handle `undefined` before using its value.
+This includes Vue Router parameters while navigating away from a page.
+
+This default does not rewrite existing projects. To adopt it, add
+`"noUncheckedIndexedAccess": true` under `compilerOptions` in your tsconfig.json
+and resolve the resulting diagnostics with checks or explicit fallbacks.
