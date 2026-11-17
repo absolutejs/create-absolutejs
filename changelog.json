@@ -5,6 +5,17 @@
 		{
 			"changes": [
 				{
+					"detail": "A project scaffolded with Svelte gets @typescript/native-preview as a dev dependency (about 31 MB). With it, absolute typecheck in @absolutejs/absolute 0.20.0-beta.195, which new projects now use, runs svelte-check with TypeScript 7 native checker: on a 772-component application about 25 s where plain svelte-check took 70 to 83 s, with the same errors. Projects without Svelte do not get the package. Its only command is tsgo, so the project tsc is unchanged.",
+					"kind": "changed",
+					"summary": "Svelte projects are scaffolded with the native TypeScript that svelte-check uses"
+				}
+			],
+			"date": "2026-11-17",
+			"version": "0.20.26"
+		},
+		{
+			"changes": [
+				{
 					"detail": "All frontend starters now include noUncheckedIndexedAccess alongside strict. Missing route parameters and other dictionary entries must be handled before indexing or dereferencing. Existing projects are not rewritten; opt-in migration guidance is in the README.",
 					"kind": "changed",
 					"summary": "New projects enable noUncheckedIndexedAccess to catch missing array and dictionary values"
