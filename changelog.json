@@ -5,6 +5,17 @@
 		{
 			"changes": [
 				{
+					"detail": "All frontend starters now include noUncheckedIndexedAccess alongside strict. Missing route parameters and other dictionary entries must be handled before indexing or dereferencing. Existing projects are not rewritten; opt-in migration guidance is in the README.",
+					"kind": "changed",
+					"summary": "New projects enable noUncheckedIndexedAccess to catch missing array and dictionary values"
+				}
+			],
+			"date": "2026-11-17",
+			"version": "0.20.25"
+		},
+		{
+			"changes": [
+				{
 					"detail": "@absolutejs/absolute beta.191 and later are built against Elysia 2.0.0-rc.1. On rc.0, the `body` of a route with a `form` schema was `unknown`, Eden did not type-check the request body, and Eden typed the 422 response as a union with ValidationProblem. New projects now pin elysia and @elysia/eden to 2.0.0-rc.1.",
 					"kind": "changed",
 					"summary": "New projects use @absolutejs/absolute 0.20.0-beta.192 with elysia and @elysia/eden 2.0.0-rc.1"
