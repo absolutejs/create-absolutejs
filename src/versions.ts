@@ -14,6 +14,7 @@ export const frameworkPackages = [
 	'@angular/router',
 	'@angular/ssr',
 	'@types/react',
+	'@typescript/native-preview',
 	'react',
 	'react-dom',
 	'react-refresh',
@@ -39,7 +40,7 @@ export const versions = {
 	'@absolutejs/rate-limit': '0.8.0',
 	'@absolutejs/a2a': '0.3.6',
 	/* ── Core ─────────────────────────────────────────────── */
-	'@absolutejs/absolute': '0.20.0-beta.192',
+	'@absolutejs/absolute': '0.20.0-beta.195',
 	'@absolutejs/agency': '0.7.4',
 	'@absolutejs/agent-conformance': '0.15.1',
 	'@absolutejs/agent-control': '0.5.8',
@@ -100,6 +101,11 @@ export const versions = {
 	/* ── React ────────────────────────────────────────────── */
 	'@types/react': '19.3.0',
 	'@typescript-eslint/parser': '8.70.1',
+	/* The native TypeScript 7 svelte-check looks for: with it,
+	   `absolute typecheck` checks Svelte with the native checker. Its only
+	   command is `tsgo`; typescript@7 under an alias would bring a `tsc`
+	   that replaces the project's own. */
+	'@typescript/native-preview': '7.0.0-dev.20260707.2',
 	autoprefixer: '10.6.1',
 	/* ── ORM ──────────────────────────────────────────────── */
 	'drizzle-kit': '1.0.0-rc.4',

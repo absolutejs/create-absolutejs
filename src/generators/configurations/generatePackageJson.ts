@@ -137,6 +137,7 @@ export const createPackageJson = async ({
 	}
 
 	if (flags.requiresSvelte) {
+		packageNames.add('@typescript/native-preview');
 		packageNames.add('svelte');
 		packageNames.add('svelte-check');
 		packageNames.add('svelte2tsx');
@@ -360,6 +361,13 @@ export const createPackageJson = async ({
 		devDependencies['svelte2tsx'] = resolveVersion(
 			'svelte2tsx',
 			versions['svelte2tsx']
+		);
+		/* svelte-check type-checks with TypeScript 7's native checker when
+		   this package is installed, several times faster. Only a Svelte
+		   project gets it. */
+		devDependencies['@typescript/native-preview'] = resolveVersion(
+			'@typescript/native-preview',
+			versions['@typescript/native-preview']
 		);
 		/* `absolute typecheck` checks .svelte files with svelte-check. */
 		devDependencies['svelte-check'] = resolveVersion(

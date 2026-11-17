@@ -56,6 +56,8 @@ describe('generated package.json', () => {
 	test('Svelte gets svelte-check and svelte2tsx for absolute typecheck', async () => {
 		const { devDependencies } = await generate({ svelte: 'svelte' });
 		expect(devDependencies?.['svelte-check']).toBeDefined();
+		// The native TypeScript 7 svelte-check looks for.
+		expect(devDependencies?.['@typescript/native-preview']).toBeDefined();
 		expect(devDependencies?.['svelte2tsx']).toBeDefined();
 	});
 
@@ -83,6 +85,7 @@ describe('generated package.json', () => {
 			...devDependencies
 		};
 		for (const name of [
+			'@typescript/native-preview',
 			'svelte-check',
 			'vue-tsc',
 			'vue-router',
