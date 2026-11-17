@@ -137,6 +137,7 @@ export const createPackageJson = async ({
 	}
 
 	if (flags.requiresSvelte) {
+		packageNames.add('@typescript/native');
 		packageNames.add('svelte');
 		packageNames.add('svelte-check');
 		packageNames.add('svelte2tsx');
@@ -361,6 +362,11 @@ export const createPackageJson = async ({
 			'svelte2tsx',
 			versions['svelte2tsx']
 		);
+		/* svelte-check type-checks with TypeScript 7's native checker when
+		   it is installed under this alias, several times faster. It is an
+		   alias, so there is no newer version to look up: always the listed
+		   one. Only a Svelte project gets it. */
+		devDependencies['@typescript/native'] = versions['@typescript/native'];
 		/* `absolute typecheck` checks .svelte files with svelte-check. */
 		devDependencies['svelte-check'] = resolveVersion(
 			'svelte-check',

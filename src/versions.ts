@@ -14,6 +14,7 @@ export const frameworkPackages = [
 	'@angular/router',
 	'@angular/ssr',
 	'@types/react',
+	'@typescript/native',
 	'react',
 	'react-dom',
 	'react-refresh',
@@ -100,6 +101,9 @@ export const versions = {
 	/* ── React ────────────────────────────────────────────── */
 	'@types/react': '19.3.0',
 	'@typescript-eslint/parser': '8.70.1',
+	/* TypeScript 7 under the alias svelte-check looks for: with it,
+	   `absolute typecheck` checks Svelte with the native checker. */
+	'@typescript/native': 'npm:typescript@7.0.2',
 	autoprefixer: '10.6.1',
 	/* ── ORM ──────────────────────────────────────────────── */
 	'drizzle-kit': '1.0.0-rc.4',
