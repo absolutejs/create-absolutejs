@@ -10,9 +10,9 @@
         "picocolors": "1.1.1",
       },
       "devDependencies": {
-        "@absolutejs/absolute": "0.20.0-beta.191",
+        "@absolutejs/absolute": "0.20.0-beta.192",
         "@absolutejs/changelog": "0.7.0",
-        "@elysia/eden": "2.0.0-rc.0",
+        "@elysia/eden": "2.0.0-rc.1",
         "@eslint/compat": "2.1.1",
         "@eslint/js": "10.0.1",
         "@stylistic/eslint-plugin": "5.10.0",
@@ -21,7 +21,7 @@
         "autoprefixer": "10.6.1",
         "drizzle-kit": "1.0.0-rc.4",
         "drizzle-orm": "1.0.0-rc.4",
-        "elysia": "2.0.0-rc.0",
+        "elysia": "2.0.0-rc.1",
         "eslint": "10.11.0",
         "eslint-plugin-absolute": "0.12.0",
         "eslint-plugin-import": "2.32.0",
@@ -40,7 +40,7 @@
     },
   },
   "packages": {
-    "@absolutejs/absolute": ["@absolutejs/absolute@0.20.0-beta.191", "", { "dependencies": { "@absolutejs/angular-check": ">=0.1.1 <0.2.0", "@absolutejs/auth": ">=0.101.0 <1", "@absolutejs/beacon": ">=0.7.0-beta.4 <0.8.0", "@absolutejs/bvm": "^0.1.1", "@absolutejs/deploy": "0.33.0", "@absolutejs/devices": "0.7.1", "@absolutejs/devices-capacitor": "0.8.1", "@absolutejs/http": "0.0.1", "@absolutejs/pwa": ">=0.16.3 <0.18.0", "@absolutejs/vue-check": ">=0.4.0 <0.5.0", "@capacitor/browser": "8.0.4", "@capacitor/filesystem": "8.1.3", "@capacitor/keyboard": "8.0.5", "@capacitor/network": "8.0.1", "@capacitor/preferences": "8.0.1", "@elysia/openapi": "^2.0.0-rc.0", "@elysia/server-timing": "^2.0.0-rc.0", "@elysia/static": "^2.0.0-rc.0", "@tailwindcss/oxide": "^4.1.0", "exact-mirror": ">=1.2.6 <2.0.0", "jiti": "2.6.1", "typebox": ">=1.3.16 <2.0.0", "web-vitals": "6.0.0", "zustand": "^5.0.12" }, "peerDependencies": { "@absolutejs/devices-expo": "0.0.12", "@absolutejs/sync": ">=3.0.0 <4", "@angular/animations": "^21.0.0", "@angular/common": "^21.0.0", "@angular/compiler": "^21.0.0", "@angular/compiler-cli": "^21.0.0", "@angular/core": "^21.0.0", "@angular/platform-browser": "^21.0.0", "@angular/platform-server": "^21.0.0", "@angular/router": "^21.0.0", "@angular/ssr": "^21.0.0", "@capacitor/android": "^8.5.0", "@capacitor/app": "^8.1.1", "@capacitor/cli": "^8.5.0", "@capacitor/core": "^8.5.0", "@capacitor/ios": "^8.5.0", "@expo/code-signing-certificates": "0.0.6", "@libsql/client": ">=0.15.0 <1", "@vue/compiler-sfc": "^3.5.27", "elysia": "^2.0.0-rc.0", "less": "^4.6.0", "mssql": ">=11.0.0 <13", "postcss": "^8.5.0", "react": "^19.2.0", "react-dom": "^19.2.0", "react-router": "^7.0.0", "rxjs": "^7.8.0", "sass": "^1.99.0", "sharp": ">=0.33.0", "stylus": "^0.64.0", "svelte": "^5.35.2", "svelte2tsx": ">=0.7.0 <1", "tailwindcss": "^4.1.0", "typescript": "^5.9.3", "vue": "^3.5.27", "vue-router": "^4.5.1 || ^5.0.0" }, "optionalPeers": ["@absolutejs/devices-expo", "@absolutejs/sync", "@angular/animations", "@angular/common", "@angular/compiler", "@angular/compiler-cli", "@angular/core", "@angular/platform-browser", "@angular/platform-server", "@angular/router", "@angular/ssr", "@capacitor/android", "@capacitor/app", "@capacitor/cli", "@capacitor/core", "@capacitor/ios", "@expo/code-signing-certificates", "@libsql/client", "@vue/compiler-sfc", "less", "mssql", "postcss", "react", "react-dom", "react-router", "rxjs", "sass", "sharp", "stylus", "svelte", "svelte2tsx", "tailwindcss", "typescript", "vue", "vue-router"], "bin": { "absolute": "dist/cli/index.js" } }, "sha512-QOUb6vHWCnNjn4Ao1Viu4fYUh7UM6Byx+bjwSy6RtN9Qvd6mbQwYkWfUEkAoOhbhbHcVWncZNtzjmuBmzdl3/A=="],
+    "@absolutejs/absolute": ["@absolutejs/absolute@0.20.0-beta.192", "", { "dependencies": { "@absolutejs/angular-check": ">=0.1.1 <0.2.0", "@absolutejs/auth": ">=0.101.0 <1", "@absolutejs/beacon": ">=0.7.0-beta.4 <0.8.0", "@absolutejs/bvm": "^0.1.1", "@absolutejs/deploy": "0.33.0", "@absolutejs/devices": "0.7.1", "@absolutejs/devices-capacitor": "0.8.1", "@absolutejs/http": "0.0.1", "@absolutejs/pwa": ">=0.16.3 <0.18.0", "@absolutejs/vue-check": ">=0.4.0 <0.5.0", "@capacitor/browser": "8.0.4", "@capacitor/filesystem": "8.1.3", "@capacitor/keyboard": "8.0.5", "@capacitor/network": "8.0.1", "@capacitor/preferences": "8.0.1", "@elysia/openapi": "^2.0.0-rc.0", "@elysia/server-timing": "^2.0.0-rc.0", "@elysia/static": "^2.0.0-rc.0", "@tailwindcss/oxide": "^4.1.0", "exact-mirror": ">=1.2.6 <2.0.0", "jiti": "2.6.1", "typebox": ">=1.3.16 <2.0.0", "web-vitals": "6.0.0", "zustand": "^5.0.12" }, "peerDependencies": { "@absolutejs/devices-expo": "0.0.12", "@absolutejs/sync": ">=3.0.0 <4", "@angular/animations": "^21.0.0", "@angular/common": "^21.0.0", "@angular/compiler": "^21.0.0", "@angular/compiler-cli": "^21.0.0", "@angular/core": "^21.0.0", "@angular/platform-browser": "^21.0.0", "@angular/platform-server": "^21.0.0", "@angular/router": "^21.0.0", "@angular/ssr": "^21.0.0", "@capacitor/android": "^8.5.0", "@capacitor/app": "^8.1.1", "@capacitor/cli": "^8.5.0", "@capacitor/core": "^8.5.0", "@capacitor/ios": "^8.5.0", "@expo/code-signing-certificates": "0.0.6", "@libsql/client": ">=0.15.0 <1", "@vue/compiler-sfc": "^3.5.27", "elysia": "^2.0.0-rc.0", "less": "^4.6.0", "mssql": ">=11.0.0 <13", "postcss": "^8.5.0", "react": "^19.2.0", "react-dom": "^19.2.0", "react-router": "^7.0.0", "rxjs": "^7.8.0", "sass": "^1.99.0", "sharp": ">=0.33.0", "stylus": "^0.64.0", "svelte": "^5.35.2", "svelte2tsx": ">=0.7.0 <1", "tailwindcss": "^4.1.0", "typescript": "^5.9.3", "vue": "^3.5.27", "vue-router": "^4.5.1 || ^5.0.0" }, "optionalPeers": ["@absolutejs/devices-expo", "@absolutejs/sync", "@angular/animations", "@angular/common", "@angular/compiler", "@angular/compiler-cli", "@angular/core", "@angular/platform-browser", "@angular/platform-server", "@angular/router", "@angular/ssr", "@capacitor/android", "@capacitor/app", "@capacitor/cli", "@capacitor/core", "@capacitor/ios", "@expo/code-signing-certificates", "@libsql/client", "@vue/compiler-sfc", "less", "mssql", "postcss", "react", "react-dom", "react-router", "rxjs", "sass", "sharp", "stylus", "svelte", "svelte2tsx", "tailwindcss", "typescript", "vue", "vue-router"], "bin": { "absolute": "dist/cli/index.js" } }, "sha512-Uda0Vd5rQ+boxvZlTtcGBm00t3uYhi7q8J3zW4XrEgjSommkQnQuXWn/9tWEfDsdF1R9NgSAJVZ/CNxFaLstsA=="],
 
     "@absolutejs/angular-check": ["@absolutejs/angular-check@0.1.2", "", { "peerDependencies": { "@angular/compiler-cli": ">=22.2.0 <23.0.0", "typescript": ">=5.9.0" }, "bin": { "angular-check": "src/cli.ts" } }, "sha512-eczAlozAmp1DJ5nfOGIeyeCLwSjkRg2AW4+HXCIbyERvNFfE5JZ6uU4Y3SIUaKtyVaVd9jnlfILVYrKqARhh0w=="],
 
@@ -162,7 +162,7 @@
 
     "@electric-sql/pglite-tools": ["@electric-sql/pglite-tools@0.3.3", "", { "peerDependencies": { "@electric-sql/pglite": "0.4.3" } }, "sha512-AlzLJTRJ8+UFgK8CmxIpyIpJ0+YaFw02IiOSdYrqxwPXdSyeIShz8aa9Tq+tYFXdPwcaMp/Fc80mQZ1dkOQ/wg=="],
 
-    "@elysia/eden": ["@elysia/eden@2.0.0-rc.0", "", { "peerDependencies": { "elysia": ">= 2.0.0-rc.0" } }, "sha512-Hw2YUjGBzeu+Wr1bflrbQLoFGAHK4sQlKHoKFSWNlfgW39yV5VJqf2G8g8VI5lzVgHFWqu0ldAPVWyhB1aFSRg=="],
+    "@elysia/eden": ["@elysia/eden@2.0.0-rc.1", "", { "peerDependencies": { "elysia": ">= 2.0.0-rc.0" } }, "sha512-5W2/OaTOYlF3XU/nQDQ4HeL8SfWHD8YV+YE7YlbZdvK3hDjCcwqc2C7/CvjmE8QZ8XbYDLzk5rj0rY+xBVH6dw=="],
 
     "@elysia/openapi": ["@elysia/openapi@2.0.0-rc.0", "", { "peerDependencies": { "elysia": ">= 2.0.0-rc.0" } }, "sha512-IkRdigbDxqZpQzZ9Dg/HpJT2S4SUdRboVZ5umT0uYrUffJTRnb11seetF/gt96xqxbrWSZSlG8pxKtuabJ6NGg=="],
 
@@ -612,7 +612,7 @@
 
     "elkjs": ["elkjs@0.11.1", "", {}, "sha512-zxxR9k+rx5ktMwT/FwyLdPCrq7xN6e4VGGHH8hA01vVYKjTFik7nHOxBnAYtrgYUB1RpAiLvA1/U2YraWxyKKg=="],
 
-    "elysia": ["elysia@2.0.0-rc.0", "", { "dependencies": { "deuri": "^3.0.0", "memoirist": "1.2.3" }, "peerDependencies": { "@types/bun": ">= 1.3.0", "exact-mirror": ">= 1.2.6", "openapi-types": ">= 12.0.0", "typebox": ">= 1.3.0", "typescript": ">= 5.7.0" }, "optionalPeers": ["@types/bun", "typescript"] }, "sha512-7ks9V+dJcBE2i1CL9+cj2TbiTFdCSNiHfQbfp06g+8om5f72z+hWDnabG6+6bDloZDuvIWwXx8fAJmO3R6UnfA=="],
+    "elysia": ["elysia@2.0.0-rc.1", "", { "dependencies": { "deuri": "^3.0.0", "memoirist": "1.2.3" }, "peerDependencies": { "@types/bun": ">= 1.3.0", "exact-mirror": ">= 1.2.6", "openapi-types": ">= 12.0.0", "typebox": ">= 1.3.0", "typescript": ">= 5.7.0" }, "optionalPeers": ["@types/bun", "typescript"] }, "sha512-DBfUtnQvCuR+kUNGZZV/qsCUKaTcpVa25rhVcpWhpqr7lsmpnoAEQqHf9HjCUYzpclejETpwQTgy7eabgtryvg=="],
 
     "emoji-regex": ["emoji-regex@10.6.0", "", {}, "sha512-toUI84YS5YmxW219erniWD0CIVOo46xGKColeNQRgOzDorgBi1v4D71/OFzgD9GO2UGKIv1C3Sp8DAn0+j5w7A=="],
 
