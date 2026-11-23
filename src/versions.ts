@@ -40,7 +40,7 @@ export const versions = {
 	'@absolutejs/rate-limit': '0.8.0',
 	'@absolutejs/a2a': '0.3.6',
 	/* ── Core ─────────────────────────────────────────────── */
-	'@absolutejs/absolute': '0.20.0-beta.195',
+	'@absolutejs/absolute': '0.20.0-beta.310',
 	'@absolutejs/agency': '0.7.4',
 	'@absolutejs/agent-conformance': '0.15.1',
 	'@absolutejs/agent-control': '0.5.8',
@@ -112,7 +112,7 @@ export const versions = {
 	'drizzle-orm': '1.0.0-rc.4',
 	elysia: '2.0.0-rc.1',
 	eslint: '10.11.0',
-	'eslint-plugin-absolute': '0.12.0',
+	'eslint-plugin-absolute': '0.14.0',
 	'eslint-plugin-import': '2.32.0',
 	/* ── ESLint React ─────────────────────────────────────── */
 	'eslint-plugin-jsx-a11y': '6.10.2',

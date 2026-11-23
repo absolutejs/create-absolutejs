@@ -26,7 +26,7 @@ test('starter lint rejects raw database queries and browser fetch, accepts typed
 		);
 		expect(
 			browser[0]?.messages.some(
-				(item) => item.ruleId === 'no-restricted-syntax'
+				(item) => item.ruleId === 'absolute/no-raw-browser-fetch'
 			)
 		).toBe(true);
 		const valid = await eslint.lintText('export const capacity = 6;', {
