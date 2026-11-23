@@ -5,6 +5,16 @@
 		{
 			"changes": [
 				{
+					"kind": "fixed",
+					"summary": "Exclude configured build output and temporary HMR files from scaffold typechecking and formatting, including custom build directories"
+				}
+			],
+			"date": "2026-11-23",
+			"version": "0.21.1"
+		},
+		{
+			"changes": [
+				{
 					"kind": "added",
 					"summary": "Generate reproducible browser lint and Elysia 2 migration checks"
 				}
