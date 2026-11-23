@@ -53,5 +53,5 @@ package-lock.json
 # dist folder
 /dist
 # AbsoluteJS development runtime artifacts
-/.absolutejs/
+.absolutejs/
 **/.absolutejs-hmr-*

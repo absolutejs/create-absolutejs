@@ -58,7 +58,9 @@ export const scaffoldConfigurationFiles = ({
 			...(tsconfig.exclude ?? []),
 			'node_modules',
 			buildDirectory,
-			'dist'
+			'dist',
+			// The dev server's transient copies of server files.
+			'**/.absolutejs-hmr-*'
 		])
 	];
 	/* `absolute dev`, `build` and `typecheck` write the project's manifest keys
@@ -112,9 +114,9 @@ export const scaffoldConfigurationFiles = ({
 			join(projectName, 'eslint.config.mjs'),
 			generateEslintConfig(frontends)
 		);
-		copyFileSync(
-			join(templatesDirectory, 'configurations', '.prettierignore'),
-			join(projectName, '.prettierignore')
+		writeFileSync(
+			join(projectName, '.prettierignore'),
+			`${readFileSync(join(templatesDirectory, 'configurations', '.prettierignore'), 'utf-8')}\n${buildDirectory}\n.absolutejs\n**/.absolutejs-hmr-*\n`
 		);
 		const prettierrc = generatePrettierrc(frontends);
 
