@@ -1,73 +1,69 @@
 {
-  "version": "1",
-  "dialect": "cockroach",
-  "id": "25a4568e-927c-4251-8f0c-145bd20ef6cf",
-  "prevIds": [
-    "00000000-0000-0000-0000-000000000000"
-  ],
-  "ddl": [
-    {
-      "isRlsEnabled": false,
-      "name": "count_history",
-      "entityType": "tables",
-      "schema": "public"
-    },
-    {
-      "type": "int4",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": {
-        "type": "always",
-        "increment": "1",
-        "startWith": "1",
-        "minValue": "1",
-        "maxValue": "2147483647",
-        "cache": 1
-      },
-      "name": "uid",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "count_history"
-    },
-    {
-      "type": "int4",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "count",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "count_history"
-    },
-    {
-      "type": "timestamp",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "now()",
-      "generated": null,
-      "identity": null,
-      "name": "created_at",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "count_history"
-    },
-    {
-      "columns": [
-        "uid"
-      ],
-      "nameExplicit": false,
-      "name": "count_history_pkey",
-      "schema": "public",
-      "table": "count_history",
-      "entityType": "pks"
-    }
-  ],
-  "renames": []
+	"version": "1",
+	"dialect": "cockroach",
+	"id": "25a4568e-927c-4251-8f0c-145bd20ef6cf",
+	"prevIds": ["00000000-0000-0000-0000-000000000000"],
+	"ddl": [
+		{
+			"isRlsEnabled": false,
+			"name": "count_history",
+			"entityType": "tables",
+			"schema": "public"
+		},
+		{
+			"type": "int4",
+			"typeSchema": null,
+			"notNull": true,
+			"dimensions": 0,
+			"default": null,
+			"generated": null,
+			"identity": {
+				"type": "always",
+				"increment": "1",
+				"startWith": "1",
+				"minValue": "1",
+				"maxValue": "2147483647",
+				"cache": 1
+			},
+			"name": "uid",
+			"entityType": "columns",
+			"schema": "public",
+			"table": "count_history"
+		},
+		{
+			"type": "int4",
+			"typeSchema": null,
+			"notNull": true,
+			"dimensions": 0,
+			"default": null,
+			"generated": null,
+			"identity": null,
+			"name": "count",
+			"entityType": "columns",
+			"schema": "public",
+			"table": "count_history"
+		},
+		{
+			"type": "timestamp",
+			"typeSchema": null,
+			"notNull": true,
+			"dimensions": 0,
+			"default": "now()",
+			"generated": null,
+			"identity": null,
+			"name": "created_at",
+			"entityType": "columns",
+			"schema": "public",
+			"table": "count_history"
+		},
+		{
+			"columns": ["uid"],
+			"nameExplicit": false,
+			"name": "count_history_pkey",
+			"schema": "public",
+			"table": "count_history",
+			"entityType": "pks"
+		}
+	],
+	"renames": []
 }

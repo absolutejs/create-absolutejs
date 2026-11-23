@@ -10,9 +10,12 @@ import {
 	eslintAndPrettierDependencies,
 	eslintReactDependencies
 } from '../../data';
+import { isPrismaDialect } from '../../typeGuards';
 import type { CreateConfiguration, PackageJson } from '../../types';
 import { getPackageVersions } from '../../utils/getPackageVersion';
 import { versions } from '../../versions';
+import { getPrismaPackageJson } from '../prisma/prismaPackageJson';
+import { getPrismaTarget } from '../prisma/prismaTargets';
 import { computeFlags } from '../project/computeFlags';
 
 type CreatePackageJsonProps = Pick<
@@ -28,6 +31,8 @@ type CreatePackageJsonProps = Pick<
 	| 'codeQualityTool'
 > & {
 	projectName: string;
+	/* Where the database files live (--db-dir); scripts reference it. */
+	databaseDirectory?: string;
 	latest: boolean;
 	repositoryUrl: string | undefined;
 };
@@ -56,6 +61,7 @@ export const createPackageJson = async ({
 	latest,
 	frontendDirectories,
 	codeQualityTool,
+	databaseDirectory = 'db',
 	repositoryUrl
 }: CreatePackageJsonProps) => {
 	const flags = computeFlags(frontendDirectories);
@@ -126,13 +132,21 @@ export const createPackageJson = async ({
 		packageNames.add('@angular/core');
 		packageNames.add('@angular/platform-browser');
 		packageNames.add('@angular/platform-server');
+		packageNames.add('@angular/router');
 		packageNames.add('@angular/ssr');
 	}
 
-	if (flags.requiresSvelte) packageNames.add('svelte');
-	if (flags.requiresSvelte && codeQualityTool === 'eslint+prettier')
-		packageNames.add('prettier-plugin-svelte');
-	if (flags.requiresVue) packageNames.add('vue');
+	if (flags.requiresSvelte) {
+		packageNames.add('@typescript/native-preview');
+		packageNames.add('svelte');
+		packageNames.add('svelte-check');
+		packageNames.add('svelte2tsx');
+	}
+	if (flags.requiresVue) {
+		packageNames.add('vue');
+		packageNames.add('vue-router');
+		packageNames.add('vue-tsc');
+	}
 	if (flags.requiresHtmx) packageNames.add('@absolutejs/scoped-state');
 	if (orm === 'drizzle') packageNames.add('drizzle-orm');
 
@@ -228,26 +242,28 @@ export const createPackageJson = async ({
 	}
 
 	if (agentic) {
-		([
-			'@absolutejs/a2a',
-			'@absolutejs/agency',
-			'@absolutejs/agent-discovery',
-			'@absolutejs/agent-inbox',
-			'@absolutejs/agent-memory',
-			'@absolutejs/agent-runtime',
-			'@absolutejs/agent-sandbox',
-			'@absolutejs/agent-trust',
-			'@absolutejs/agent-control',
-			'@absolutejs/auth',
-			'@absolutejs/egress',
-			'@absolutejs/execution',
-			'@absolutejs/manifest',
-			'@absolutejs/mcp',
-			'@absolutejs/policy',
-			'@absolutejs/secrets',
-			'@absolutejs/sync-bus-pg',
-			'@absolutejs/wallet'
-		] as const).forEach((name) => {
+		(
+			[
+				'@absolutejs/a2a',
+				'@absolutejs/agency',
+				'@absolutejs/agent-discovery',
+				'@absolutejs/agent-inbox',
+				'@absolutejs/agent-memory',
+				'@absolutejs/agent-runtime',
+				'@absolutejs/agent-sandbox',
+				'@absolutejs/agent-trust',
+				'@absolutejs/agent-control',
+				'@absolutejs/auth',
+				'@absolutejs/egress',
+				'@absolutejs/execution',
+				'@absolutejs/manifest',
+				'@absolutejs/mcp',
+				'@absolutejs/policy',
+				'@absolutejs/secrets',
+				'@absolutejs/sync-bus-pg',
+				'@absolutejs/wallet'
+			] as const
+		).forEach((name) => {
 			dependencies[name] = resolveVersion(name, versions[name]);
 		});
 		devDependencies['@absolutejs/agent-conformance'] = resolveVersion(
@@ -326,6 +342,8 @@ export const createPackageJson = async ({
 			'@angular/core',
 			'@angular/platform-browser',
 			'@angular/platform-server',
+			/* The auto router (a page that exports `routes`) needs it. */
+			'@angular/router',
 			'@angular/ssr'
 		] as const;
 
@@ -336,17 +354,44 @@ export const createPackageJson = async ({
 
 	if (flags.requiresSvelte) {
 		dependencies['svelte'] = resolveVersion('svelte', versions['svelte']);
-	}
-
-	if (flags.requiresSvelte && codeQualityTool === 'eslint+prettier') {
-		devDependencies['prettier-plugin-svelte'] = resolveVersion(
-			'prettier-plugin-svelte',
-			versions['prettier-plugin-svelte']
+		/* `absolute typecheck` and `absolute dev` generate a declaration per
+		   Svelte component with svelte2tsx, so server files type-check
+		   `handleSveltePageRequest<typeof Page>({ props })` against the
+		   component's `$props()`. */
+		devDependencies['svelte2tsx'] = resolveVersion(
+			'svelte2tsx',
+			versions['svelte2tsx']
+		);
+		/* svelte-check type-checks with TypeScript 7's native checker when
+		   this package is installed, several times faster. Only a Svelte
+		   project gets it. */
+		devDependencies['@typescript/native-preview'] = resolveVersion(
+			'@typescript/native-preview',
+			versions['@typescript/native-preview']
+		);
+		/* `absolute typecheck` checks .svelte files with svelte-check. */
+		devDependencies['svelte-check'] = resolveVersion(
+			'svelte-check',
+			versions['svelte-check']
 		);
 	}
 
 	if (flags.requiresVue) {
 		dependencies['vue'] = resolveVersion('vue', versions['vue']);
+		/* The auto router (a page that exports `routes`) needs it. */
+		dependencies['vue-router'] = resolveVersion(
+			'vue-router',
+			versions['vue-router']
+		);
+		/* `absolute typecheck` checks .vue files with vue-check, bundled with
+		   @absolutejs/absolute, on Bun 1.4.4+. vue-tsc is its fallback on older
+		   Bun (the framework supports 1.4.2+) or with
+		   ABSOLUTE_TYPECHECK_CHECKER=tsc, so it stays until projects require
+		   Bun 1.4.4. */
+		devDependencies['vue-tsc'] = resolveVersion(
+			'vue-tsc',
+			versions['vue-tsc']
+		);
 	}
 
 	if (flags.requiresHtmx) {
@@ -387,11 +432,15 @@ export const createPackageJson = async ({
 	if (latest) s.stop(green('Package versions resolved'));
 
 	const scripts: PackageJson['scripts'] = {
+		build: 'absolute build',
+		'check:migrations': 'absolute migrate --target elysia-2 --check',
 		dev: 'absolute dev',
-		format: `absolute prettier --write "./**/*.{js,ts,css,json,mjs,md${flags.requiresReact ? ',jsx,tsx' : ''}${flags.requiresSvelte ? ',svelte' : ''}${flags.requiresVue ? ',vue' : ''}${flags.requiresHtml || flags.requiresHtmx ? ',html' : ''}}"`,
+		format: 'absolute fmt',
+		'format:check': 'absolute fmt --check',
 		lint: 'absolute eslint',
+		start: 'absolute start',
 		test: 'echo "Error: no test specified" && exit 1',
-		typecheck: 'bun run tsc --noEmit'
+		typecheck: 'absolute typecheck'
 	};
 
 	const isLocalDb = isLocal;
@@ -487,6 +536,16 @@ export const createPackageJson = async ({
 			'drizzle-kit',
 			versions['drizzle-kit']
 		);
+	}
+
+	if (orm === 'prisma' && isPrismaDialect(databaseEngine)) {
+		const prisma = getPrismaPackageJson(
+			getPrismaTarget(databaseEngine, databaseHost),
+			databaseDirectory
+		);
+		Object.assign(dependencies, prisma.dependencies);
+		Object.assign(devDependencies, prisma.devDependencies);
+		Object.assign(scripts, prisma.scripts);
 	}
 
 	const packageJson: PackageJson = {

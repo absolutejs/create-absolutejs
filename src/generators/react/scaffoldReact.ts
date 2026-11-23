@@ -2,6 +2,7 @@ import { copyFileSync, cpSync, mkdirSync, writeFileSync } from 'fs';
 import { basename, join } from 'path';
 import { ScaffoldFrontendProps } from '../../types';
 import { generateMarkupCSS } from '../project/generateMarkupCSS';
+import { starterFontCSS } from '../project/starterFont';
 import {
 	generateAppComponent,
 	generateDropdownComponent,
@@ -37,7 +38,7 @@ export const scaffoldReact = ({
 
 		writeFileSync(
 			join(stylesIndexesDirectory, 'react-example.css'),
-			`@import url('../reset.css');`,
+			`@import url('../reset.css');\n${starterFontCSS}`,
 			'utf-8'
 		);
 
@@ -98,6 +99,6 @@ export const scaffoldReact = ({
 	);
 
 	const cssOutputFile = join(stylesIndexesDirectory, 'react-example.css');
-	const reactCSS = generateMarkupCSS('react', '#61dafbaa');
+	const reactCSS = `${generateMarkupCSS('react', '#61dafbaa')}${starterFontCSS}`;
 	writeFileSync(cssOutputFile, reactCSS, 'utf-8');
 };

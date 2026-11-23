@@ -100,7 +100,9 @@ export const scaffoldAngular = ({
 
 	writeFileSync(
 		join(componentsDirectory, 'counter.component.ts'),
-		generateCounterComponent(relative(componentsDirectory, stylesDirectory).replaceAll('\\', '/')),
+		generateCounterComponent(
+			relative(componentsDirectory, stylesDirectory).replaceAll('\\', '/')
+		),
 		'utf-8'
 	);
 

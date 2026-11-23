@@ -11,8 +11,7 @@ import {
 	availableDatabaseEngines,
 	availableDatabaseHosts,
 	availableDirectoryConfigurations,
-	availableORMs,
-	availablePrismaDialects
+	availableORMs
 } from '../data';
 import {
 	isValidAuthOption,
@@ -20,8 +19,7 @@ import {
 	isDatabaseHost,
 	isDirectoryConfig,
 	isGithubLinkOption,
-	isORM,
-	isPrismaDialect
+	isORM
 } from '../typeGuards';
 import type {
 	ArgumentConfiguration,
@@ -174,7 +172,10 @@ export const parseCommandLineOptions = () => {
 	}
 
 	const defaultDirectory = values.skip ? ('default' as const) : undefined;
-	const directoryConfig = values.directory !== undefined && isDirectoryConfig(values.directory) ? values.directory : defaultDirectory;
+	const directoryConfig =
+		values.directory !== undefined && isDirectoryConfig(values.directory)
+			? values.directory
+			: defaultDirectory;
 	if (values.directory !== undefined && directoryConfig === undefined) {
 		errors.push(
 			`Invalid directory configuration: "${values.directory}". Expected: [ ${availableDirectoryConfigurations.join(', ')} ]`
@@ -188,17 +189,6 @@ export const parseCommandLineOptions = () => {
 	});
 	({ databaseEngine } = databaseSelection);
 	errors.push(...databaseSelection.errors);
-
-	if (
-		values.orm === 'prisma' &&
-		databaseEngine !== undefined &&
-		databaseEngine !== 'none' &&
-		!isPrismaDialect(databaseEngine)
-	) {
-		errors.push(
-			`Invalid database engine for Prisma ORM: "${databaseEngine}". Expected: [ ${availablePrismaDialects.join(', ')} ]`
-		);
-	}
 
 	if (errors.length > 0) {
 		console.error(errors.join('\n'));
@@ -234,7 +224,7 @@ export const parseCommandLineOptions = () => {
 	}
 
 	const selectedFrontends: Frontend[] = [];
-	// if (values.angular) selectedFrontends.push('angular')
+	if (values.angular) selectedFrontends.push('angular');
 	if (values.html) selectedFrontends.push('html');
 	if (values.htmx) selectedFrontends.push('htmx');
 	if (values.react) selectedFrontends.push('react');
@@ -242,9 +232,9 @@ export const parseCommandLineOptions = () => {
 	if (values.vue) selectedFrontends.push('vue');
 
 	const frontendDirectories: FrontendDirectories = {};
-	// if (values['angular-dir'] !== undefined) {
-	// 	frontendDirectories.angular = values['angular-dir']
-	// }
+	if (values['angular-dir'] !== undefined) {
+		frontendDirectories.angular = values['angular-dir'];
+	}
 	if (values['html-dir'] !== undefined) {
 		frontendDirectories.html = values['html-dir'];
 	}
@@ -264,8 +254,17 @@ export const parseCommandLineOptions = () => {
 	if (values.plugin === undefined && values.skip) {
 		values.plugin = ['none'];
 	}
+	/* elysia-rate-limit 5.x needs a newer Elysia than the 2.0.0-rc.1 new
+	 * projects run on (it crashes at startup), so the rate-limit plugin is
+	 * @absolutejs/rate-limit; the old name still picks it. */
 	const plugins =
-		values.plugin && values.plugin[0] === 'none' ? [] : values.plugin;
+		values.plugin && values.plugin[0] === 'none'
+			? []
+			: values.plugin?.map((plugin) =>
+					plugin === 'elysia-rate-limit'
+						? '@absolutejs/rate-limit'
+						: plugin
+				);
 
 	const hasTailwindFiles =
 		values['tailwind-input'] !== undefined ||
@@ -276,7 +275,8 @@ export const parseCommandLineOptions = () => {
 		: undefined;
 
 	const defaultTailwind = values.skip ? false : undefined;
-	const useTailwind = values.tailwind ?? (hasTailwindFiles ? true : defaultTailwind);
+	const useTailwind =
+		values.tailwind ?? (hasTailwindFiles ? true : defaultTailwind);
 
 	if (useTailwind === false && hasTailwindFiles) {
 		console.warn(
@@ -329,7 +329,9 @@ export const parseCommandLineOptions = () => {
 		databaseHost,
 		directoryConfig,
 		frontendDirectories,
-		frontends: selectedFrontends.length ? selectedFrontends : defaultFrontends,
+		frontends: selectedFrontends.length
+			? selectedFrontends
+			: defaultFrontends,
 		githubLink: isGithubLinkOption(values.github)
 			? values.github
 			: undefined,
@@ -343,7 +345,9 @@ export const parseCommandLineOptions = () => {
 		plugins,
 		projectName,
 		tailwind,
-		useHTMLScripts: values['html-scripts'],
+		/* The prompt's own default (clack's confirm starts on yes). */
+		useHTMLScripts:
+			values['html-scripts'] ?? (values.skip ? true : undefined),
 		useTailwind
 	};
 

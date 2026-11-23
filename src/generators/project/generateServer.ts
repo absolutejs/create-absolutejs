@@ -66,16 +66,25 @@ export const generateServerFile = ({
 		dbBlock = generateDBBlock({ databaseEngine, databaseHost, orm });
 	}
 
-	const useBlock = deps
+	const pluginExpressions = deps
 		.flatMap((dependency) => dependency.imports ?? [])
 		.filter(
 			(pluginImport) =>
 				pluginImport.isPlugin &&
-				pluginImport.packageName !== 'networking' && pluginImport.packageName !== 'openapi'
+				pluginImport.packageName !== 'networking' &&
+				pluginImport.packageName !== 'openapi'
 		)
 		.map((pluginImport) => {
 			if (pluginImport.packageName === 'auth') {
 				return 'authPlugin';
+			}
+
+			if (pluginImport.packageName === 'rateLimit') {
+				return 'rateLimiter';
+			}
+
+			if (pluginImport.packageName === 'scopedState') {
+				return 'visitorState';
 			}
 
 			if (pluginImport.config === undefined) {
@@ -89,8 +98,34 @@ export const generateServerFile = ({
 			return `${pluginImport.packageName}(${JSON.stringify(
 				pluginImport.config
 			)})`;
-		})
-		.join(', ');
+		});
+	const useBlock = pluginExpressions.join(', ');
+
+	/* 100 requests a minute per visitor, bursts of 20. Behind the
+	 * AbsoluteJS edge the visitor's address arrives as X-Real-IP from a
+	 * private address; it is read only from there, so off the platform (or
+	 * reaching the app directly) each connection is keyed by its own
+	 * address and a client can't choose its key. */
+	const rateLimitBlock = pluginExpressions.includes('rateLimiter')
+		? `const rateLimiter = rateLimit({
+	algorithm: gcra({ burst: 20, periodMs: 60_000, requestsPerPeriod: 100 }),
+	clientIpHeader: 'x-real-ip',
+	key: 'ip',
+	trustedProxies: 1,
+	trustedProxyCidrs: ['10.0.0.0/8']
+})
+`
+		: '';
+
+	/* Its own top-level const, not an inline call in the .use([...]) array.
+	 * Backend HMR re-runs that statement on every server.ts edit; an unchanged
+	 * top-level const keeps its plugin, so visitors keep their state. (The
+	 * framework also matches inline literal calls since beta.171, but the
+	 * hoisted form is the one its docs recommend and survives edited args.) */
+	const scopedStateBlock = pluginExpressions.includes('visitorState')
+		? `const visitorState = scopedState({ count: { value: 0 } })
+`
+		: '';
 
 	const guardBlock = `.guard({
 			cookie: t.Cookie({
@@ -116,19 +151,19 @@ export const generateServerFile = ({
 			? `const authPlugin = await auth(absoluteAuthConfig(${hasDatabase ? 'db' : ''}))\n`
 			: '';
 
+	/* No app-level onError: while the app has none of its own, wherever it is
+	 * registered, AbsoluteJS logs every route that throws, renders error.html
+	 * for page requests, and keeps 404s quiet. */
 	const content = `${importsBlock}
 import { ${hasDatabase && authOption !== 'abs' ? 'createApi' : 'api'} } from './api'
 
 ${manifestBlock}
-${dbBlock ? `${dbBlock}\n` : ''}${hasDatabase && authOption !== 'abs' ? 'const api = createApi(db)\n' : ''}${authBlock}
+${dbBlock ? `${dbBlock}\n` : ''}${hasDatabase && authOption !== 'abs' ? 'const api = createApi(db)\n' : ''}${authBlock}${rateLimitBlock}${scopedStateBlock}
 export const server = new Elysia()
 .use([absolutejs, api${useBlock ? `, ${useBlock}` : ''}])
 ${authOption === 'abs' ? `\n${guardBlock}` : ''}
   ${routesBlock}
   ${plugins.includes('@elysia/openapi') ? '.use(openapi())' : ''}
-  .error(({ request, error }) => {
-    console.error(\`Server error on \${request.method} \${request.url}\`, error)
-  })
   .use(networking)
 
 `;

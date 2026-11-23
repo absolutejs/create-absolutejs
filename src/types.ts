@@ -55,8 +55,7 @@ export type AvailableDrizzleDialect = (typeof availableDrizzleDialects)[number];
 export type AvailablePrismaDialect = (typeof availablePrismaDialects)[number];
 
 export type DatabaseEngine =
-	| (typeof availableDatabaseEngines)[number]
-	| undefined;
+	(typeof availableDatabaseEngines)[number] | undefined;
 
 export type DatabaseHost = (typeof availableDatabaseHosts)[number] | undefined;
 export type DirectoryConfiguration =
@@ -105,8 +104,7 @@ type DeepUndefined<T> = T extends object
 
 export type ArgumentConfiguration = {
 	[K in keyof CreateConfiguration]:
-		| DeepUndefined<CreateConfiguration[K]>
-		| undefined;
+		DeepUndefined<CreateConfiguration[K]> | undefined;
 };
 
 // The canonical PackageJson shape lives in the framework; re-export it so this

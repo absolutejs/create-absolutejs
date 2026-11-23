@@ -8,6 +8,7 @@ import { generatePrettierrc } from './generatePrettierrc';
 
 type AddConfigurationProps = Pick<
 	CreateConfiguration,
+	| 'buildDirectory'
 	| 'tailwind'
 	| 'initializeGitNow'
 	| 'codeQualityTool'
@@ -17,13 +18,12 @@ type AddConfigurationProps = Pick<
 	| 'databaseHost'
 > & {
 	templatesDirectory: string;
-	buildDirectory?: string;
 	envVariables: string[] | undefined;
 };
 
 export const scaffoldConfigurationFiles = ({
+	buildDirectory,
 	tailwind,
-	buildDirectory = 'build',
 	templatesDirectory,
 	databaseEngine,
 	envVariables,
@@ -35,10 +35,12 @@ export const scaffoldConfigurationFiles = ({
 }: AddConfigurationProps) => {
 	const hasAngular = frontends.includes('angular');
 
-	const raw = readFileSync(
-		join(templatesDirectory, 'configurations', 'tsconfig.example.json'),
-		'utf-8'
+	const templatePath = join(
+		templatesDirectory,
+		'configurations',
+		'tsconfig.example.json'
 	);
+	const raw = readFileSync(templatePath, 'utf-8');
 	const stripped = raw
 		.replace(/\/\*[\s\S]*?\*\//g, '')
 		.replace(/\/\/[^\n]*/g, '')
@@ -46,15 +48,36 @@ export const scaffoldConfigurationFiles = ({
 	const tsconfig = JSON.parse(stripped) as {
 		compilerOptions: Record<string, unknown>;
 		exclude?: string[];
+		include?: string[];
 		angularCompilerOptions?: Record<string, unknown>;
 	};
+	// Dev entrypoints contain browser-only module URLs and are not application sources.
+	// Respect the chosen output directory instead of assuming the default "build".
 	tsconfig.exclude = [
-		'node_modules',
-		buildDirectory,
-		'dist',
-		'.absolutejs',
-		'**/.absolutejs-hmr-*'
+		...new Set([
+			...(tsconfig.exclude ?? []),
+			'node_modules',
+			buildDirectory,
+			'dist',
+			// The dev server's transient copies of server files.
+			'**/.absolutejs-hmr-*'
+		])
 	];
+	/* `absolute dev`, `build` and `typecheck` write the project's manifest keys
+	   to .absolutejs/types/manifest.d.ts, which narrows `asset(manifest, key)`;
+	   listing it gives editors the same check. `**` already skips dot-folders,
+	   so the rest of .absolutejs stays out; excluding .absolutejs would also
+	   drop this file, and a missing file (before the first command) is fine. */
+	tsconfig.include = ['**/*', '.absolutejs/types/manifest.d.ts'];
+	/* `absolute typecheck` and `absolute dev` write a declaration per Svelte
+	   component under .absolutejs/types/svelte; listing that mirror in
+	   rootDirs lets tsc and editors check Svelte page props in server files. */
+	if (frontends.includes('svelte')) {
+		tsconfig.compilerOptions['rootDirs'] = [
+			'.',
+			'.absolutejs/types/svelte'
+		];
+	}
 	if (hasAngular) {
 		tsconfig.compilerOptions['emitDecoratorMetadata'] = true;
 		tsconfig.compilerOptions['experimentalDecorators'] = true;

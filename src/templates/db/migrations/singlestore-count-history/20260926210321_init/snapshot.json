@@ -1,65 +1,61 @@
 {
-  "version": "2",
-  "dialect": "singlestore",
-  "id": "d815e1ce-94b0-4fb1-8829-97431461c2b8",
-  "prevIds": [
-    "00000000-0000-0000-0000-000000000000"
-  ],
-  "ddl": [
-    {
-      "name": "count_history",
-      "entityType": "tables"
-    },
-    {
-      "type": "int",
-      "notNull": true,
-      "autoIncrement": true,
-      "default": null,
-      "onUpdateNow": false,
-      "onUpdateNowFsp": null,
-      "charSet": null,
-      "collation": null,
-      "generated": null,
-      "name": "uid",
-      "entityType": "columns",
-      "table": "count_history"
-    },
-    {
-      "type": "int",
-      "notNull": true,
-      "autoIncrement": false,
-      "default": null,
-      "onUpdateNow": false,
-      "onUpdateNowFsp": null,
-      "charSet": null,
-      "collation": null,
-      "generated": null,
-      "name": "count",
-      "entityType": "columns",
-      "table": "count_history"
-    },
-    {
-      "type": "timestamp",
-      "notNull": true,
-      "autoIncrement": false,
-      "default": "CURRENT_TIMESTAMP",
-      "onUpdateNow": false,
-      "onUpdateNowFsp": null,
-      "charSet": null,
-      "collation": null,
-      "generated": null,
-      "name": "created_at",
-      "entityType": "columns",
-      "table": "count_history"
-    },
-    {
-      "columns": [
-        "uid"
-      ],
-      "name": "PRIMARY",
-      "table": "count_history",
-      "entityType": "pks"
-    }
-  ],
-  "renames": []
+	"version": "2",
+	"dialect": "singlestore",
+	"id": "d815e1ce-94b0-4fb1-8829-97431461c2b8",
+	"prevIds": ["00000000-0000-0000-0000-000000000000"],
+	"ddl": [
+		{
+			"name": "count_history",
+			"entityType": "tables"
+		},
+		{
+			"type": "int",
+			"notNull": true,
+			"autoIncrement": true,
+			"default": null,
+			"onUpdateNow": false,
+			"onUpdateNowFsp": null,
+			"charSet": null,
+			"collation": null,
+			"generated": null,
+			"name": "uid",
+			"entityType": "columns",
+			"table": "count_history"
+		},
+		{
+			"type": "int",
+			"notNull": true,
+			"autoIncrement": false,
+			"default": null,
+			"onUpdateNow": false,
+			"onUpdateNowFsp": null,
+			"charSet": null,
+			"collation": null,
+			"generated": null,
+			"name": "count",
+			"entityType": "columns",
+			"table": "count_history"
+		},
+		{
+			"type": "timestamp",
+			"notNull": true,
+			"autoIncrement": false,
+			"default": "CURRENT_TIMESTAMP",
+			"onUpdateNow": false,
+			"onUpdateNowFsp": null,
+			"charSet": null,
+			"collation": null,
+			"generated": null,
+			"name": "created_at",
+			"entityType": "columns",
+			"table": "count_history"
+		},
+		{
+			"columns": ["uid"],
+			"name": "PRIMARY",
+			"table": "count_history",
+			"entityType": "pks"
+		}
+	],
+	"renames": []
 }

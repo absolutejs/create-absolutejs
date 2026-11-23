@@ -42,11 +42,16 @@ package-lock.json
 /build
 /drizzle
 
+# generated Prisma client (rebuilt by postinstall / db:generate)
+/src/generated
+# scratch database Prisma Migrate authors libSQL migrations against
+/db/prisma-migrate-dev.db
+
 # index files
 **/indexes/*
 
 # dist folder
 /dist
-# AbsoluteJS caches and transient server bootstraps
+# AbsoluteJS development runtime artifacts
 .absolutejs/
 **/.absolutejs-hmr-*

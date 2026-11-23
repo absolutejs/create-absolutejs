@@ -81,10 +81,13 @@ export const availablePlugins: AvailableDependency[] = [
 		value: '@elysia/openapi'
 	},
 	{
-		imports: [{ config: null, isPlugin: true, packageName: 'rateLimit' }],
-		label: green('🛠️ elysia-rate-limit'),
-		latestVersion: versions['elysia-rate-limit'],
-		value: 'elysia-rate-limit'
+		imports: [
+			{ config: null, isPlugin: true, packageName: 'rateLimit' },
+			{ config: null, isPlugin: false, packageName: 'gcra' }
+		],
+		label: green('🛠️ @absolutejs/rate-limit'),
+		latestVersion: versions['@absolutejs/rate-limit'],
+		value: '@absolutejs/rate-limit'
 	}
 ];
 export const availablePrismaDialects = [
@@ -140,10 +143,6 @@ export const eslintAndPrettierDependencies: AvailableDependency[] = [
 		value: 'globals'
 	},
 	{
-		latestVersion: versions['prettier'],
-		value: 'prettier'
-	},
-	{
 		latestVersion: versions['@stylistic/eslint-plugin'],
 		value: '@stylistic/eslint-plugin'
 	},
@@ -180,10 +179,6 @@ export const eslintReactDependencies: AvailableDependency[] = [
 	{
 		latestVersion: versions['eslint-plugin-react'],
 		value: 'eslint-plugin-react'
-	},
-	{
-		latestVersion: versions['eslint-plugin-react-compiler'],
-		value: 'eslint-plugin-react-compiler'
 	},
 	{
 		latestVersion: versions['eslint-plugin-react-hooks'],

@@ -70,6 +70,5 @@ export const scaffoldBackend = ({
 			absoluteAuthConfig,
 			'utf-8'
 		);
-
 	}
 };

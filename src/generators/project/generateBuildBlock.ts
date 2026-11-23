@@ -1,6 +1,7 @@
 import { writeFileSync } from 'fs';
 import { join } from 'path';
 import type { CreateConfiguration, FrontendDirectories } from '../../types';
+import { starterFontConfig } from './starterFont';
 
 type GenerateBuildBlockProps = {
 	assetsDirectory: string;
@@ -27,6 +28,9 @@ export const generateBuildBlock = ({
 		),
 		`publicDirectory: '${publicDirectory}'`,
 		`stylesConfig: 'src/styles/indexes'`,
+		'react' in frontendDirectories || 'svelte' in frontendDirectories
+			? starterFontConfig
+			: '',
 		tailwind ? `tailwind: ${JSON.stringify(tailwind)}` : ''
 	]
 		.filter(Boolean)

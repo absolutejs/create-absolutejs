@@ -7,7 +7,10 @@ export const getAuthOption = async () => {
 		message: 'Auth provider:',
 		options: [
 			{ label: 'None', value: 'none' },
-			{ label: cyan('Absolute Auth (Google; requires a database)'), value: 'abs' }
+			{
+				label: cyan('Absolute Auth (Google; requires a database)'),
+				value: 'abs'
+			}
 		]
 	});
 	if (isCancel(authOption)) abort();

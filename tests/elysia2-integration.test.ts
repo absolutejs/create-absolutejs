@@ -53,9 +53,9 @@ test('database routes execute with Elysia 2 validation before the handler', asyn
 });
 
 test('registry channels cannot downgrade Elysia or cross incompatible compiler majors', () => {
-	expect(registryChannel('elysia')).toBe('2.0.0-beta.6');
+	expect(registryChannel('elysia')).toBe('rc');
 	expect(registryChannel('@absolutejs/absolute')).toBe('beta');
-	expect(registryChannel('@elysia/eden')).toBe('next');
+	expect(registryChannel('@elysia/eden')).toBe('rc');
 	expect(registryChannel('drizzle-orm')).toBe('rc');
 	expect(registryChannel('typescript')).toBe('5.9.3');
 	expect(registryChannel('@angular/core')).toBe('v21-lts');

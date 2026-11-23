@@ -170,8 +170,7 @@ export const generateDatabaseTypes = ({
 				break;
 			case 'mssql':
 				dbImport = `import type { NodeMsSqlDatabase } from 'drizzle-orm/node-mssql';`;
-				dbTypeLine =
-					'export type DatabaseType = NodeMsSqlDatabase;';
+				dbTypeLine = 'export type DatabaseType = NodeMsSqlDatabase;';
 				break;
 			case 'postgresql':
 				dbImport = `import type { drizzle } from 'drizzle-orm/bun-sql';`;
@@ -180,7 +179,8 @@ export const generateDatabaseTypes = ({
 				break;
 			case 'singlestore':
 				dbImport = `import type { SingleStoreDriverDatabase } from 'drizzle-orm/singlestore';`;
-				dbTypeLine = 'export type DatabaseType = SingleStoreDriverDatabase;';
+				dbTypeLine =
+					'export type DatabaseType = SingleStoreDriverDatabase;';
 				break;
 			case 'sqlite':
 				dbImport = `import type { drizzle } from 'drizzle-orm/bun-sqlite';`;

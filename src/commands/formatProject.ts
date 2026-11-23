@@ -1,7 +1,6 @@
-import { exit } from 'process';
 import { spinner } from '@clack/prompts';
 import { $ } from 'bun';
-import { green, red } from 'picocolors';
+import { green, yellow } from 'picocolors';
 import { PackageManager } from '../types';
 import { formatCommands } from '../utils/commandMaps';
 
@@ -30,8 +29,13 @@ export const formatProject = async ({
 		await $`${bin} ${args}`.cwd(projectName).quiet();
 		spin.stop(green('Files formatted'));
 	} catch (err) {
-		spin.cancel(red('Failed to format files'));
-		console.error('Error formatting:', err);
-		exit(1);
+		// The project is complete without formatting: `absolute fmt` needs Bun
+		// 1.4.4+, so an older Bun skips this step with its own explanation.
+		spin.stop(yellow('Files not formatted'));
+		const detail =
+			err && typeof err === 'object' && 'stderr' in err
+				? String(err.stderr).trim()
+				: String(err);
+		if (detail) console.warn(detail);
 	}
 };

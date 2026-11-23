@@ -1,5 +1,8 @@
 import { availableDrizzleDialects } from '../../data';
+import { isPrismaDialect } from '../../typeGuards';
 import type { CreateConfiguration } from '../../types';
+import { generatePrismaDBBlock } from '../prisma/generatePrismaCode';
+import { getPrismaTarget } from '../prisma/prismaTargets';
 
 type DBExpr = { expr: string };
 
@@ -72,6 +75,11 @@ export const generateDBBlock = ({
 			'Internal type error: Expected a valid database engine'
 		);
 	}
+
+	if (orm === 'prisma' && isPrismaDialect(databaseEngine))
+		return generatePrismaDBBlock(
+			getPrismaTarget(databaseEngine, databaseHost)
+		);
 
 	const hostKey = databaseHost ?? 'none';
 	const engineGroup = connectionMap[databaseEngine];

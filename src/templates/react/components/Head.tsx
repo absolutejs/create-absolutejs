@@ -1,8 +1,11 @@
+import type { FontAssets } from '@absolutejs/absolute';
+
 type HeadProps = {
 	title?: string;
 	description?: string;
 	icon?: string;
-	font?: string;
+	/* Self-hosted fonts from absolute.config.ts: pass `fontAssets(manifest)`. */
+	fonts?: FontAssets;
 	cssPath?: string;
 };
 
@@ -10,7 +13,7 @@ export const Head = ({
 	title = 'AbsoluteJS + React',
 	description = 'AbsoluteJS React Example',
 	icon = '/assets/ico/favicon.ico',
-	font = 'Poppins',
+	fonts,
 	cssPath
 }: HeadProps) => (
 	<head>
@@ -19,16 +22,18 @@ export const Head = ({
 		<meta content={description} name="description" />
 		<meta content="width=device-width, initial-scale=1" name="viewport" />
 		<link href={icon} rel="icon" />
-		<link href="https://fonts.googleapis.com" rel="preconnect" />
-		<link
-			crossOrigin="anonymous"
-			href="https://fonts.gstatic.com"
-			rel="preconnect"
-		/>
-		<link
-			href={`https://fonts.googleapis.com/css2?family=${font}:wght@100..900&display=swap`}
-			rel="stylesheet"
-		/>
+		{fonts?.preload.map((href) => (
+			<link
+				as="font"
+				crossOrigin="anonymous"
+				href={href}
+				key={href}
+				rel="preload"
+			/>
+		))}
+		{fonts?.stylesheets.map((href) => (
+			<link href={href} key={href} rel="stylesheet" />
+		))}
 		{cssPath && <link href={cssPath} rel="stylesheet" type="text/css" />}
 	</head>
 );

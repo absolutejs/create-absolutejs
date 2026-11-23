@@ -25,7 +25,7 @@ Options:
   ${cyan('--db-dir')} ${dim(cyan('<directory>'))}            Directory name for your database files
   ${cyan('--db-host')} ${dim(cyan('<host>'))}                Database host provider (neon | planetscale) or 'none'
   ${cyan('--directory')} ${dim(cyan('<mode>'))}              Directory-naming strategy: "default" or "custom"
-  ${cyan('--eslint+prettier')}               Use ESLint + Prettier for code quality and formatting
+  ${cyan('--eslint+prettier')}               Use ESLint + bun fmt (Prettier-compatible) for code quality and formatting
   ${cyan('--git')}                           Initialize a Git repository
   ${cyan('--html')}                          Include a plain HTML frontend
   ${cyan('--html-dir')} ${dim(cyan('<directory>'))}          Specify the directory for and use the HTML frontend
@@ -123,7 +123,7 @@ export const getDebugMessage = ({
 		['Agent-first Stack',    agentic ? green('Yes') : dim('No')],
 		['Package Manager',      packageManager],
 		['Config Type',          isCustomConfig ? green('Custom') : dim('Default')],
-		['Linting',              codeQualityTool === 'eslint+prettier' ? 'ESLint + Prettier' : 'Biome'],
+		['Linting',              codeQualityTool === 'eslint+prettier' ? 'ESLint + bun fmt' : 'Biome'],
 		['Tailwind Configuration', tailwindSection],
 		[frontends.length === 1 ? 'Frontend' : 'Frontends', frontends.map((name) => frontendLabels[name]).join(', ')],
 		['HTML Scripting',       frontends.includes('html') ? htmlScriptingValue : dim('None')],

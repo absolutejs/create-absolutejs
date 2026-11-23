@@ -1,65 +1,61 @@
 {
-  "version": "6",
-  "dialect": "mysql",
-  "id": "74e2d582-26d7-4879-aff9-8f2c140b5eab",
-  "prevIds": [
-    "00000000-0000-0000-0000-000000000000"
-  ],
-  "ddl": [
-    {
-      "name": "users",
-      "entityType": "tables"
-    },
-    {
-      "type": "varchar(255)",
-      "notNull": true,
-      "autoIncrement": false,
-      "default": null,
-      "onUpdateNow": false,
-      "onUpdateNowFsp": null,
-      "charSet": null,
-      "collation": null,
-      "generated": null,
-      "name": "auth_sub",
-      "entityType": "columns",
-      "table": "users"
-    },
-    {
-      "type": "timestamp",
-      "notNull": true,
-      "autoIncrement": false,
-      "default": "(now())",
-      "onUpdateNow": false,
-      "onUpdateNowFsp": null,
-      "charSet": null,
-      "collation": null,
-      "generated": null,
-      "name": "created_at",
-      "entityType": "columns",
-      "table": "users"
-    },
-    {
-      "type": "json",
-      "notNull": false,
-      "autoIncrement": false,
-      "default": "('{}')",
-      "onUpdateNow": false,
-      "onUpdateNowFsp": null,
-      "charSet": null,
-      "collation": null,
-      "generated": null,
-      "name": "metadata",
-      "entityType": "columns",
-      "table": "users"
-    },
-    {
-      "columns": [
-        "auth_sub"
-      ],
-      "name": "PRIMARY",
-      "table": "users",
-      "entityType": "pks"
-    }
-  ],
-  "renames": []
+	"version": "6",
+	"dialect": "mysql",
+	"id": "74e2d582-26d7-4879-aff9-8f2c140b5eab",
+	"prevIds": ["00000000-0000-0000-0000-000000000000"],
+	"ddl": [
+		{
+			"name": "users",
+			"entityType": "tables"
+		},
+		{
+			"type": "varchar(255)",
+			"notNull": true,
+			"autoIncrement": false,
+			"default": null,
+			"onUpdateNow": false,
+			"onUpdateNowFsp": null,
+			"charSet": null,
+			"collation": null,
+			"generated": null,
+			"name": "auth_sub",
+			"entityType": "columns",
+			"table": "users"
+		},
+		{
+			"type": "timestamp",
+			"notNull": true,
+			"autoIncrement": false,
+			"default": "(now())",
+			"onUpdateNow": false,
+			"onUpdateNowFsp": null,
+			"charSet": null,
+			"collation": null,
+			"generated": null,
+			"name": "created_at",
+			"entityType": "columns",
+			"table": "users"
+		},
+		{
+			"type": "json",
+			"notNull": false,
+			"autoIncrement": false,
+			"default": "('{}')",
+			"onUpdateNow": false,
+			"onUpdateNowFsp": null,
+			"charSet": null,
+			"collation": null,
+			"generated": null,
+			"name": "metadata",
+			"entityType": "columns",
+			"table": "users"
+		},
+		{
+			"columns": ["auth_sub"],
+			"name": "PRIMARY",
+			"table": "users",
+			"entityType": "pks"
+		}
+	],
+	"renames": []
 }

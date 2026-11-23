@@ -55,7 +55,8 @@ export const generateAngularPageHtml = (includeExamples: boolean) => {
 <app-root [initialCount]="initialCount"></app-root>
 `;
 };
-export const generateAppComponent = () => `import { Component, Input, ViewEncapsulation } from '@angular/core';
+export const generateAppComponent =
+	() => `import { Component, Input, ViewEncapsulation } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { CounterComponent } from './counter.component';
 
@@ -165,7 +166,8 @@ export const generateCounterComponentHtml =
 	count is <span class="counter-value">{{ count }}</span>
 </button>
 `;
-export const generateDropdownComponent = () => `import { Component } from '@angular/core';
+export const generateDropdownComponent =
+	() => `import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 @Component({

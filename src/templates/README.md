@@ -30,6 +30,19 @@ bun install
 # 3. Start the development server
 bun run dev
 
-# 4. Build for production
+# 4. Build for production, then serve the build
 bun run build
+bun run start
 ```
+
+### Type checking
+
+`bun run typecheck` runs `absolute typecheck`, which checks TypeScript and each
+framework's components.
+<!-- vue -->
+
+Vue components are checked with vue-check, which comes with AbsoluteJS, on Bun
+1.4.4 or newer. On older Bun, or with `ABSOLUTE_TYPECHECK_CHECKER=tsc`, it uses
+`vue-tsc` instead, which is why this project lists it in `devDependencies`. On
+Bun 1.4.4+ you can remove it.
+<!-- /vue -->

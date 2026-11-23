@@ -53,10 +53,7 @@ export const generateHTMXPage = (
 	>
 		<header>
 			<a href="/">AbsoluteJS</a>
-			<details
-				onpointerenter="if(event.pointerType==='mouse')this.open=true"
-				onpointerleave="if(event.pointerType==='mouse')this.open=false"
-			>
+			<details>
 				<summary>Pages</summary>
 				<nav>
 					${navLinks}
@@ -117,6 +114,7 @@ ${
 				Click on the AbsoluteJS and HTML logos to learn more.
 			</p>
 		</main>
+		<script src="../scripts/htmx-example.ts"></script>
 	</body>
 </html>
 `;

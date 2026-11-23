@@ -9,6 +9,7 @@ import {
 import type {
 	AuthOption,
 	AvailableDrizzleDialect,
+	AvailablePrismaDialect,
 	CodeQualityTool,
 	DatabaseEngine,
 	DatabaseHost,
@@ -44,7 +45,9 @@ export const isGithubLinkOption = (
 	value === 'existing' || value === 'create' || value === 'skip';
 export const isORM = (value: string | undefined): value is ORM =>
 	value === undefined || availableORMs.some((orm) => orm === value);
-export const isPrismaDialect = (value: string | undefined): value is string =>
+export const isPrismaDialect = (
+	value: string | undefined
+): value is AvailablePrismaDialect =>
 	availablePrismaDialects.some((dialect) => dialect === value);
 export const isValidAuthOption = (
 	value: string | undefined

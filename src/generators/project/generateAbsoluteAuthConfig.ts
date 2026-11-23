@@ -64,11 +64,28 @@ export const generateAbsoluteAuthConfig = (
 			searchParams: ${JSON.stringify(config.searchParams)}`
 					: '';
 
-			return `        ${provider}: {
-			credentials: {
+			/* A provider turns on when every setting it reads is present, so a
+			   new project (no OAuth app registered yet) still starts. */
+			const settings = [
+				...new Set(
+					[...credentialsLines.matchAll(/getEnv\('([A-Z0-9_]+)'\)/g)].map(
+						(match) => match[1]
+					)
+				)
+			];
+			const configured = settings
+				.map((name) => `process.env.${name}`)
+				.join(' && ');
+
+			return `        ...(${configured}
+			? {
+					${provider}: {
+						credentials: {
 ${credentialsLines}
-			}${scopePart}${searchParamsPart}
-		}`;
+						}${scopePart}${searchParamsPart}
+					}
+				}
+			: {})`;
 		})
 		.filter((entry): entry is string => entry !== null)
 		.join(',\n');

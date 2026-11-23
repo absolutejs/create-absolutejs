@@ -1,68 +1,64 @@
 {
-  "version": "2",
-  "dialect": "mssql",
-  "id": "425df2f4-c774-4d68-870e-936662d9c250",
-  "prevIds": [
-    "00000000-0000-0000-0000-000000000000"
-  ],
-  "ddl": [
-    {
-      "name": "count_history",
-      "entityType": "tables",
-      "schema": "dbo"
-    },
-    {
-      "type": "int",
-      "notNull": true,
-      "generated": null,
-      "identity": {
-        "seed": 1,
-        "increment": 1
-      },
-      "name": "uid",
-      "schema": "dbo",
-      "entityType": "columns",
-      "table": "count_history"
-    },
-    {
-      "type": "int",
-      "notNull": true,
-      "generated": null,
-      "identity": null,
-      "name": "count",
-      "schema": "dbo",
-      "entityType": "columns",
-      "table": "count_history"
-    },
-    {
-      "type": "datetime2",
-      "notNull": true,
-      "generated": null,
-      "identity": null,
-      "name": "created_at",
-      "schema": "dbo",
-      "entityType": "columns",
-      "table": "count_history"
-    },
-    {
-      "nameExplicit": false,
-      "columns": [
-        "uid"
-      ],
-      "name": "count_history_pkey",
-      "table": "count_history",
-      "schema": "dbo",
-      "entityType": "pks"
-    },
-    {
-      "column": "created_at",
-      "nameExplicit": false,
-      "default": "(sysdatetime())",
-      "name": "count_history_created_at_default",
-      "entityType": "defaults",
-      "schema": "dbo",
-      "table": "count_history"
-    }
-  ],
-  "renames": []
+	"version": "2",
+	"dialect": "mssql",
+	"id": "425df2f4-c774-4d68-870e-936662d9c250",
+	"prevIds": ["00000000-0000-0000-0000-000000000000"],
+	"ddl": [
+		{
+			"name": "count_history",
+			"entityType": "tables",
+			"schema": "dbo"
+		},
+		{
+			"type": "int",
+			"notNull": true,
+			"generated": null,
+			"identity": {
+				"seed": 1,
+				"increment": 1
+			},
+			"name": "uid",
+			"schema": "dbo",
+			"entityType": "columns",
+			"table": "count_history"
+		},
+		{
+			"type": "int",
+			"notNull": true,
+			"generated": null,
+			"identity": null,
+			"name": "count",
+			"schema": "dbo",
+			"entityType": "columns",
+			"table": "count_history"
+		},
+		{
+			"type": "datetime2",
+			"notNull": true,
+			"generated": null,
+			"identity": null,
+			"name": "created_at",
+			"schema": "dbo",
+			"entityType": "columns",
+			"table": "count_history"
+		},
+		{
+			"nameExplicit": false,
+			"columns": ["uid"],
+			"name": "count_history_pkey",
+			"table": "count_history",
+			"schema": "dbo",
+			"entityType": "pks"
+		},
+		{
+			"column": "created_at",
+			"nameExplicit": false,
+			"default": "(sysdatetime())",
+			"name": "count_history_created_at_default",
+			"entityType": "defaults",
+			"schema": "dbo",
+			"table": "count_history"
+		}
+	],
+	"renames": []
 }

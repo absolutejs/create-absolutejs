@@ -8,12 +8,15 @@ export const generateSveltePage = (
 ) => {
 	if (!includeExamples) {
 		return `<script lang="ts">
+	import type { FontAssets } from '@absolutejs/absolute';
+
 	type SvelteExampleProps = {
 		initialCount: number;
 		cssPath: string;
+		fonts: FontAssets;
 	};
 
-	let { cssPath }: SvelteExampleProps = $props();
+	let { cssPath, fonts }: SvelteExampleProps = $props();
 </script>
 
 <svelte:head>
@@ -21,6 +24,12 @@ export const generateSveltePage = (
 	<title>AbsoluteJS + Svelte</title>
 	<meta name="viewport" content="width=device-width, initial-scale=1" />
 	<link rel="icon" href="/assets/ico/favicon.ico" />
+	{#each fonts.preload as href (href)}
+		<link rel="preload" {href} as="font" crossorigin="anonymous" />
+	{/each}
+	{#each fonts.stylesheets as href (href)}
+		<link rel="stylesheet" {href} />
+	{/each}
 	<link rel="stylesheet" href={cssPath} type="text/css" />
 </svelte:head>
 
@@ -31,13 +40,16 @@ export const generateSveltePage = (
 	const navLinks = frontends.map(formatNavLink).join('\n\t\t\t');
 
 	return `<script lang="ts">
+	import type { FontAssets } from '@absolutejs/absolute';
+	import Counter from '../components/Counter.svelte';
+
 	type SvelteExampleProps = {
 		initialCount: number;
 		cssPath: string;
+		fonts: FontAssets;
 	};
-	import Counter from '../components/Counter.svelte';
 
-	let { initialCount, cssPath }: SvelteExampleProps = $props();
+	let { initialCount, cssPath, fonts }: SvelteExampleProps = $props();
 	let dropdown: HTMLDetailsElement;
 
 	const openDropdown = (event: PointerEvent) => {
@@ -59,16 +71,12 @@ export const generateSveltePage = (
 	<meta name="description" content="AbsoluteJS Svelte Example" />
 	<meta name="viewport" content="width=device-width, initial-scale=1" />
 	<link rel="icon" href="/assets/ico/favicon.ico" />
-	<link rel="preconnect" href="https://fonts.googleapis.com" />
-	<link
-		rel="preconnect"
-		href="https://fonts.gstatic.com"
-		crossOrigin="anonymous"
-	/>
-	<link
-		href={\`https://fonts.googleapis.com/css2?family=Poppins:wght@100..900&display=swap\`}
-		rel="stylesheet"
-	/>
+	{#each fonts.preload as href (href)}
+		<link rel="preload" {href} as="font" crossorigin="anonymous" />
+	{/each}
+	{#each fonts.stylesheets as href (href)}
+		<link rel="stylesheet" {href} />
+	{/each}
 	<link rel="stylesheet" href={cssPath} type="text/css" />
 </svelte:head>
 
