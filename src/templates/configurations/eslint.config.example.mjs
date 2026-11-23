@@ -55,17 +55,7 @@ export default defineConfig([
 		files: ['src/frontend/**/*.{ts,tsx,js,jsx}'],
 		rules: {
 			'absolute/eden-requires-react-query': 'error',
-			'no-restricted-syntax': [
-				'error',
-				{
-					message: 'Use a directly typed Eden subapp client.',
-					selector: "CallExpression[callee.name='fetch']"
-				},
-				{
-					message: 'Use a directly typed Eden subapp client.',
-					selector: "CallExpression[callee.property.name='fetch']"
-				}
-			]
+			'absolute/no-raw-browser-fetch': 'error'
 		}
 	},
 	{

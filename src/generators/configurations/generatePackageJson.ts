@@ -433,6 +433,7 @@ export const createPackageJson = async ({
 
 	const scripts: PackageJson['scripts'] = {
 		build: 'absolute build',
+		'check:migrations': 'absolute migrate --target elysia-2 --check',
 		dev: 'absolute dev',
 		format: 'absolute fmt',
 		'format:check': 'absolute fmt --check',
