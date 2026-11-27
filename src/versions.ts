@@ -112,7 +112,7 @@ export const versions = {
 	'drizzle-orm': '1.0.0-rc.4',
 	elysia: '2.0.0-rc.1',
 	eslint: '10.11.0',
-	'eslint-plugin-absolute': '0.14.3',
+	'eslint-plugin-absolute': '0.14.4',
 	'eslint-plugin-import': '2.32.0',
 	/* ── ESLint React ─────────────────────────────────────── */
 	'eslint-plugin-jsx-a11y': '6.10.2',

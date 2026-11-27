@@ -5,6 +5,16 @@
 		{
 			"changes": [
 				{
+					"kind": "fixed",
+					"summary": "Projects with every framework pass their own lint"
+				}
+			],
+			"date": "2026-11-27",
+			"version": "0.21.3"
+		},
+		{
+			"changes": [
+				{
 					"kind": "changed",
 					"summary": "New projects start on AbsoluteJS 0.20.0-beta.435 and current @absolutejs packages"
 				}
