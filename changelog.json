@@ -5,6 +5,16 @@
 		{
 			"changes": [
 				{
+					"kind": "changed",
+					"summary": "New projects start on AbsoluteJS 0.20.0-beta.435 and current @absolutejs packages"
+				}
+			],
+			"date": "2026-11-27",
+			"version": "0.21.2"
+		},
+		{
+			"changes": [
+				{
 					"kind": "fixed",
 					"summary": "Exclude configured build output and temporary HMR files from scaffold typechecking and formatting, including custom build directories"
 				}
